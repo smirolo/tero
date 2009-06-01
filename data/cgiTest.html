@@ -1,0 +1,61 @@
+<html>
+<head>
+<title>cgiTest</title>
+
+<script type="text/javascript">
+function resize(){  
+var frame = document.getElementById("frame1");  
+var htmlheight = document.body.parentNode.scrollheight;  
+var windowheight = window.innerheight;  
+if ( htmlheight < windowheight ) { document.body.style.height = windowheight + "px"; frame.style.height = windowheight + "px"; }  
+else { document.body.style.height = htmlheight + "px"; frame.style.height = htmlheight + "px"; }  
+} 
+<!--http://www.howtocreate.co.uk/tutorials/javascript/browserwindow-->
+function alertSize() {
+  var myWidth = 0, myHeight = 0;
+  if( typeof( window.innerWidth ) == 'number' ) {
+    //Non-IE
+    myWidth = window.innerWidth;
+    myHeight = window.innerHeight;
+  } else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+    //IE 6+ in 'standards compliant mode'
+    myWidth = document.documentElement.clientWidth;
+    myHeight = document.documentElement.clientHeight;
+  } else if( document.body && ( document.body.clientWidth || document.body.clientHeight ) ) {
+    //IE 4 compatible
+    myWidth = document.body.clientWidth;
+    myHeight = document.body.clientHeight;
+  }
+  document.editor.RowsInputName.value = myHeight;
+ // window.alert('width: ' + myWidth + 'px; height: ' + myHeight + 'px');
+  myWidth -= 50;
+  myHeight -= 50;
+  document.editor.editedText.style.width = myWidth + 'px';
+  document.editor.editedText.style.height = myHeight + 'px';
+}
+function changeHeight() {
+  document.editor.editedText.rows = document.editor.RowsInputName.value;
+}
+</script>
+<!-- document.editor.editedText.style = 'width: ' + myWidth + 'px; height: ' + myHeight + 'px';-->
+</head>
+</head>
+<!-- onresize="alertSize()" -->
+<body onload="alertSize()" onresize="alertSize()"> 
+
+<ilayer id="body">
+*** Place your page contents in here ***
+
+<!-- http://www.willmaster.com/library/tutorials/change_textarea_size.php?ColsInputName=200&TextareaName= -->
+
+<form name="editor" action="cgi-bin/cgiTest/whatTheHell" method="POST">
+<div>Number of text rows to display: 
+<input type="text" name="RowsInputName" size="6" onkeyup="changeHeight()" /></div>
+<div><input type="submit" value="submit"></div><!--cols="40" rows="5"--><!--style="width: 900px; height: 900px"-->
+<div><textarea name="editedText" style="width: 400px">default text</textarea></div>
+</form>
+
+</ilayer>
+
+</body>
+</html>

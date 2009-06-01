@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title>Edit Page</title>
+<style type="text/css" media="all">@import "/dev/seed/data/style.css";</style>
+
+<script type="text/javascript">
+
+<!--http://www.howtocreate.co.uk/tutorials/javascript/browserwindow-->
+function alertSize() {
+  var myWidth = 0, myHeight = 0;
+  if( typeof( window.innerWidth ) == 'number' ) {
+    //Non-IE
+    myWidth = window.innerWidth;
+    myHeight = window.innerHeight;
+  } else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+    //IE 6+ in 'standards compliant mode'
+    myWidth = document.documentElement.clientWidth;
+    myHeight = document.documentElement.clientHeight;
+  } else if( document.body && ( document.body.clientWidth || document.body.clientHeight ) ) {
+    //IE 4 compatible
+    myWidth = document.body.clientWidth;
+    myHeight = document.body.clientHeight;
+  }
+  // window.alert('width: ' + myWidth + 'px; height: ' + myHeight + 'px');
+  myWidth -= 200;
+  myHeight -= 150;
+  document.editor.editedText.style.width = myWidth + 'px';
+  document.editor.editedText.style.height = myHeight + 'px';
+}
+
+</script>
+<!-- document.editor.editedText.style = 'width: ' + myWidth + 'px; height: ' + myHeight + 'px';-->
+
+</head>
+
+<body onload="alertSize()" onresize="alertSize()">
+
+<div id="Header"><a href="http://localhost/" title="Code Demo Home Page">CODERS.COM</a></div>
+
+<form name="editor" action="/dev/bin/wiki/save" method="POST">
+<div id="sidebar">
+  <div id="Menu">
+	<a href="/dev/bin/wiki/logout" title="close session">logout</a><br />
+	<a href="/dev/bin/wiki/cancel?document=${document}" title="cancel edits">cancel</a><br />
+	<br />
+	<input type="hidden" name="document" value="${document}" />
+	<input type="submit" name="save" value="save" style="width:150px;" />
+  </div>
+</div>
+<div class="entry">
+  <textarea name="editedText" style="width: 400px"><a href="#document"/></textarea>
+</div>
+</form>
+
+</body>
+</html>

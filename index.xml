@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<book>
+  <section id="seed">
+	<xref linkend="drop"/>
+	<xref linkend="boost">
+      <include name="./boost/version.hpp" />
+      <lib name="boost_filesystem" />
+      <lib name="boost_program_options" />
+      <lib name="boost_regex" />
+      <lib name="boost_system" />
+	</xref>
+	<xref linkend="git">
+      <bin name="git" />
+	</xref>
+	<sccs name="git">
+	  <url>/Volumes/DIESEL/workspace/reps/codeSpin/seed</url>
+	</sccs>
+  </section>
+</book>

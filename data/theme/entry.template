@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+	  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="content-type" 
+	       content="text/html; charset=iso-8859-1" />
+	<title><!-- tmpl_var name='blog_title' -->: <!-- tmpl_var name='title' --></title>
+	<style type="text/css" media="all">@import "/dev/seed/data/style.css";</style>
+</head>
+
+<body>
+
+<div id="header"><a href="http://localhost/">CODESPIN</a></div>
+<div id="title"><a href="<!-- tmpl_var name='top' -->"><!-- tmpl_var name='blog_title' --></a></div>
+
+<div id="sidebar">
+     <!-- tmpl_if name='datecloud' -->
+     <h2>Archive</h2>
+     <ul>
+     <!-- tmpl_loop name='datecloud' -->
+     <li><!-- tmpl_var name='year' -->
+     <ul>
+     <!-- tmpl_loop name='months' -->
+     <li><a href="<!-- tmpl_var name='top' -->archive/<!-- tmpl_var name='year' -->/<!-- tmpl_var name='month' -->/"><!-- tmpl_var name='month_name' --> (<!-- tmpl_var name='count' -->)</a></li>
+     <!-- /tmpl_loop -->
+     </ul></li>
+     <!-- /tmpl_loop -->
+     </ul>
+     <!-- /tmpl_if name='datecloud' -->
+
+     <!-- tmpl_if name='tagcloud' -->
+     <h2>Tags</h2>
+     <ul>
+     <!-- tmpl_loop name='tagcloud' -->
+     <li><a href="<!-- tmpl_var name='top' -->tags/<!-- tmpl_var name='tag' escape='html' -->"><!-- tmpl_var name='tag' escape='html' --> (<!-- tmpl_var name='count' -->)</a></li>
+     <!-- /tmpl_loop -->
+     </ul>
+     <!-- /tmpl_if -->
+</div>
+
+<div class="entry">
+       <div class="title"><!-- tmpl_var name='title' --></div>
+       <div class="date"><!-- tmpl_var name='date' --></div>
+       <div class="body"><!-- tmpl_var name='body' --></div>
+       <!-- tmpl_if name='tags' -->
+       <div class="tags">Tags: <!-- tmpl_loop name='tags' --><a href="<!-- tmpl_var name='top' -->tags/<!-- tmpl_var name='tag' escape='html' -->"><!-- tmpl_var name='tag' escape='html' --></a><!-- tmpl_if name="__last__" -->.<!-- tmpl_else -->, <!-- /tmpl_if --><!-- /tmpl_loop -->
+       </div>
+       <!-- /tmpl_if -->
+</div>
+
+</body>
+</html>

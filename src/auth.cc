@@ -1,0 +1,96 @@
+#include <iostream>
+#include <sstream>
+#include <boost/date_time.hpp>
+#include <boost/system/error_code.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include "auth.hh"
+#include "composer.hh"
+
+void login::fetch( session& s, const boost::filesystem::path& pathname ) {
+    using namespace boost::system;
+    using namespace boost::posix_time;
+    using namespace boost::filesystem;
+    
+    session::variables::const_iterator username = s.vars.find("username");
+    session::variables::const_iterator credentials = s.vars.find("credentials");
+    if( username == s.vars.end() ) {
+	throw invalidAuthentication();
+    }  
+    
+    path hours(s.vars["topSrc"] + std::string("/personal/") 
+	       + username->second 
+	       + std::string("/hours"));
+    if( exists(hours) ) {
+		std::stringstream buffer;
+		buffer << "touch " << hours;
+		system(buffer.str().c_str());
+    } else {
+		ofstream file(hours);
+		if( !file.fail() ) {
+			file << time_duration(0,0,0,0) << std::endl;
+		} else {
+			boost::throw_exception(basic_filesystem_error<path>(std::string("unable to open file"),
+																hours, 
+																error_code()));
+		}
+		file.close();
+    }
+    
+    /* \todo generate a random unique session id */
+    uint64_t sessionId = 12345678;
+	s.id = sessionId;
+	s.username = username->second;
+    s.store();
+    
+    /* Set a session cookie */
+    std::stringstream id;
+    id << sessionId;
+    std::cout << cookie("session",id.str());
+	std::cout << redirect(s.docAsUrl()) << '\n';
+}
+
+
+void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
+    using namespace boost::system;
+    using namespace boost::posix_time;
+    using namespace boost::filesystem;
+
+	if( s.id != 0 ) {
+		std::stringstream id;
+		id << s.id;
+		std::cout << cookie("session",id.str(),boost::posix_time::ptime::date_duration_type(-1));
+	}
+
+    time_duration logged;
+    ptime stop = second_clock::universal_time();
+
+    path hours(s.vars["topSrc"] + std::string("/personal/") 
+	       + s.username
+	       + std::string("/hours"));
+    ptime start = from_time_t(last_write_time(hours));
+    fstream file(hours);
+    if( file.fail() ) {
+	boost::throw_exception(basic_filesystem_error<path>(
+				 std::string("error opening file"),
+				 hours, 
+				 error_code()));
+    }
+    file >> logged;
+    file.seekp(0);
+    logged += stop - start;
+    file << logged;
+    file.close();
+
+	std::stringstream logstr;
+	logstr << logged.hours() << " hours logged." << std::endl;
+
+	std::cout << htmlContent << std::endl;
+#if 1
+	s.vars["hours"] = logstr.str();
+ 	path uiPath(s.vars["uiDir"] + std::string("/logout.ui"));
+	composer pres(uiPath,composer::error);
+	pres.fetch(s,"document");
+#endif
+}
+
+

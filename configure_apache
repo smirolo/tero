@@ -1,0 +1,117 @@
+#!/bin/sh
+# Look for apache and update the configuration
+# by putting our script in an appropriate directory.
+
+. `dcontext`
+
+# Make sure we are running apache
+httpd -v
+err=$?
+if [ $err -ne 0 ] ; then 
+    echo "error: cannot find the httpd server."
+    exit 1
+fi
+
+# find the main configuration file
+# and search for an 'Include *' directive
+serverConfigFile=`httpd -V | grep 'SERVER_CONFIG_FILE' | cut -d '"' -f 2`
+includePath=`grep 'Include.*\*.conf' $serverConfigFile | cut -d ' ' -f 2 | cut -d '*' -f 1`
+    
+# Look for the alias module
+# Insert our .conf fragment there
+echo "
+The following command will install al configration snipset 
+into the apache setup.";
+grep '<IfModule alias_module>' $serverConfigFile > /dev/null
+aliasModule=$?
+if [ $aliasModule -ne 0 ] ; then 
+    sed -e 's/<IfModule alias_module>/<IfModule mod_alias.c>/' \
+	-e "s,\$binDir,$binDir,g" \
+	-e "s,\$topSrc,$topSrc,g" \
+	-e "s,\$topBuild,$topBuild,g" \
+	$topSrc/seed/data/dev.conf > dev.conf
+else
+    sed \
+	-e "s,\$binDir,$binDir,g" \
+	-e "s,\$topSrc,$topSrc,g" \
+	-e "s,\$topBuild,$topBuild,g" \
+	$topSrc/seed/data/dev.conf > dev.conf
+fi
+
+# Setting up https
+# http://www.informit.com/articles/article.aspx?p=30115
+
+# 1. Create key pair
+# genrsa Generate a key pair
+# des3   Private key should be encrypted by passphrase
+# rand   Sources of randomness
+# 1024   Number of bits of the generated key.
+openssl genrsa -des3 \
+	-rand /mach_kernel:/Users/smirolo/.emacs -out www.codespin.com.key 1024
+
+# 2. Creating a Certificate Signing Request
+openssl req -new -key www.codespin.com.key -out www.codespin.com.csr
+
+# 3. Self-signing the certificate
+openssl x509 -req -days 90 -in www.codespin.com.csr -signkey www.codespin.com.key -out www.codespin.com.crt
+
+# 4. Unprotect the key in order to start apache through GUI.
+openssl rsa -in www.codespin.com.key -out www.codespin.com.key.unsecure
+
+opensslDir=/System/Library/OpenSSL
+
+# 1. Make sure the mod_ssl module is present in the httpd.conf file.
+grep 'LoadModule ssl_module' $serverConfigFile
+found=$?
+if [ $found -eq 1 ] ; then
+	echo "Could not found dynamically loaded ssl_module in httpd config file."
+	exit 1
+fi
+
+# 2. Make sure we enable ssl configuration
+localServerConfigFile=`basename $serverConfigFile`
+sed -e 's,#\(Include .*-ssl.conf\),\1,' $serverConfigFile > $localServerConfigFile
+
+# 3. Configure the ssl module
+sslConfigFile=`grep 'Include.*-ssl.conf' $serverConfigFile | cut -d ' ' -f 2 | cut -d '*' -f 1`
+if [ "x$sslConfigFile" == "x" ] ; then
+    # Could not find an include statement 
+    # in the apache configuration file.
+    configDir=`dirname $serverConfigFile`
+    sslConfigFile=`find ${configDir} -name '*ssl*.conf'`
+    sslConfigFile=${sslConfigFile%%
+/*.conf}
+    echo "WARNING: find selects ${sslConfigFile}"
+fi
+localSslConfigFile=`basename $sslConfigFile`
+
+sed -e 's,ServerName .*,ServerName www.codespin.com:443,' \
+    -e 's,ServerAdmin .*,ServerAdmin admin@codespin.com,' \
+    -e "s,SSLCertificateFile .*,SSLCertificateFile $opensslDir/certs/www.codespin.com.crt," \
+	-e 's,SSLCertificateKeyFile .*,SSLCertificateKeyFile $opensslDir/private/www.codespin.com.key,' $sslConfigFile > $localSslConfigFile
+
+# Create directory structure
+#sudo mkdir -p /private/var/run/ssl_scache
+#sudo touch /private/var/run/ssl_mutex
+
+echo
+echo
+echo "The following files will be updated by issuing sudo commands..."
+echo "    ${includePath}dev.conf"
+echo "    $opensslDir/certs/www.codespin.com.crt"
+echo "    $opensslDir/private/www.codespin.com.key"
+echo "    $serverConfigFile"
+echo "    $sslConfigFile"
+
+sudo cp dev.conf ${includePath}
+sudo cp www.codespin.com.crt $opensslDir/certs
+sudo cp www.codespin.com.key $opensslDir/private
+sudo chmod 400 $opensslDir/private/www.codespin.com.key
+sudo cp $localServerConfigFile $serverConfigFile
+sudo cp $localSslConfigFile $sslConfigFile
+
+# Restart the server
+echo "You will need to restart the apache server now."
+sudo launchctl stop org.apache.httpd
+sudo launchctl start org.apache.httpd
+
