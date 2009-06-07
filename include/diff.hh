@@ -1,7 +1,7 @@
 #ifndef guarddiff
 #define guarddiff
 
-#if 0
+#if 1
 #include "document.hh"
 
 class diff : public document {

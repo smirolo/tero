@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 
 include $(shell dcontext)
-include $(topSrc)/drop/src/prefix.mk
+include $(shell dcontext prefix.mk)
 
 .PHONY: configure_apache
 
@@ -9,7 +9,7 @@ bins 		:=	wiki
 libs		:=	libseed.a libwind.a
 
 libseed.a: auth.o composer.o changelist.o xmltok.o cpptok.o \
-	   document.o gitcmd.o projfiles.o session.o webserve.o
+	   document.o gitcmd.o projfiles.o session.o webserve.o diff.o
 
 libwind.a: xslview.o
 
@@ -23,4 +23,4 @@ wiki: wiki.cc libseed.a libwind.a \
 configure_apache:
 	$(srcDir)/configure_apache
 
-include $(topSrc)/drop/src/suffix.mk
+include $(shell dcontext suffix.mk)

@@ -35,9 +35,11 @@ protected:
     std::basic_streambuf<charT, traitsT>* nextBuf;
     std::basic_ostream<charT, traitsT> *next;
 
+	bool pre;
+
 public:
-    explicit basicDecorator( std::basic_streambuf<charT,traitsT> *sb )
-		: super(sb), next(NULL), nextBuf(sb) {
+    explicit basicDecorator( std::basic_streambuf<charT,traitsT> *sb, bool formated = false )
+		: super(sb), next(NULL), nextBuf(sb), pre(formated) {
 	}
 
 	virtual ~basicDecorator() {}
@@ -55,6 +57,14 @@ public:
 		sent to the basic_ostream.
 	 */
 	virtual void detach() = 0;
+
+	/** True when the decorator formats the underlying stream layout.
+
+		When *formated* is True, an HTML processor will emit <pre> and </pre>
+		tags around the decorated text. When *formated* is false, an HTML 
+		processor will assume that spaces and carriage returns are not formatters.
+	 */
+	bool formated() const { return pre; }
 
 };
 
@@ -123,9 +133,9 @@ protected:
 	void scan();
 
 public:
-	basicHighLight();
+	explicit basicHighLight( bool formated );
 
-    explicit basicHighLight( std::basic_ostream<charT,traitsT>& o );
+    explicit basicHighLight( std::basic_ostream<charT,traitsT>& o, bool formated = false );
 
 	virtual ~basicHighLight() {
 		detach();
@@ -156,12 +166,13 @@ protected:
 	session* context;
     
 public:
-	explicit basicLinkLight( session& s ) : context(&s) { 
+	explicit basicLinkLight( session& s ) 
+		: super(false), context(&s) { 
 		super::tokenizer.attach(*this); 
 	}
 
     explicit basicLinkLight(  session& s, std::basic_ostream<charT,traitsT>& o )
-		: super(o), context(&s) { super::tokenizer.attach(*this); }
+		: super(o,false), context(&s) { super::tokenizer.attach(*this); }
 
 	void newline() {
 		super::nextBuf->sputc('\n');
@@ -213,27 +224,54 @@ template<typename charT, typename traitsT = std::char_traits<charT> >
 class basicCppLight : public basicHighLight<cppTokenizer,charT,traitsT>,
                        public cppTokListener {
 protected:
+	bool preprocessing;
+	bool virtualLineBreak;
     typedef basicHighLight<cppTokenizer,charT, traitsT>  super;
 
 public:
-	basicCppLight() { super::tokenizer.attach(*this); }
+	basicCppLight() 
+		: super(true), preprocessing(false), virtualLineBreak(false) { 
+		super::tokenizer.attach(*this); 
+	}
 
     explicit basicCppLight( std::basic_ostream<charT,traitsT>& o )
-		: super(o) { super::tokenizer.attach(*this); }
+		: super(o,true), preprocessing(false), virtualLineBreak(false) { 
+		super::tokenizer.attach(*this); 
+	}
 
 	void newline() {
+		if( preprocessing ) {
+			std::string endSpan("</span>");
+			super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
+		}
 		super::nextBuf->sputc('\n');
+		if( virtualLineBreak ) {
+			std::string staSpan("<span class=\"");
+			super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
+			super::nextBuf->sputn(cppTokenTitles[cppPreprocessing],
+								  strlen(cppTokenTitles[cppPreprocessing]));
+			super::nextBuf->sputc('"');
+			super::nextBuf->sputc('>');
+		} else {
+			preprocessing = false;
+		}
 	}
 
 	void token( cppToken token, const char *line, int first, int last, bool fragment ) {
 		std::string staSpan("<span class=\"");
 		std::string endSpan("</span>");
-		super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
-	    super::nextBuf->sputn(cppTokenTitles[token],strlen(cppTokenTitles[token]));
-		super::nextBuf->sputc('"');
-		super::nextBuf->sputc('>');
-		super::nextBuf->sputn(&line[first],last - first);
-		super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
+		if( !preprocessing ) {
+			super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
+			super::nextBuf->sputn(cppTokenTitles[token],strlen(cppTokenTitles[token]));
+			super::nextBuf->sputc('"');
+			super::nextBuf->sputc('>');
+			if( token == cppPreprocessing ) preprocessing = true;
+		}
+		super::nextBuf->sputn(&line[first],last - first);	
+		if( !preprocessing ) {
+			super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
+		}
+		virtualLineBreak = fragment;
 	}
 };
 

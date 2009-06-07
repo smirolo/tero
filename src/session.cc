@@ -78,13 +78,13 @@ void session::restore( const boost::program_options::variables_map& params )
     using namespace boost::filesystem;
     using namespace boost::program_options;
 
-	/* 1. load global information from the configuration file on the server */
+    /* 1. load global information from the configuration file on the server */
     variables_map configVars;
     ifstream istr(CONFIG_FILE);
     if( istr.fail() ) {
-		boost::throw_exception(basic_filesystem_error<path>(std::string("file not found"),
-															CONFIG_FILE, 
-															boost::system::error_code()));
+	boost::throw_exception(basic_filesystem_error<path>(std::string("file not found"),
+							    CONFIG_FILE, 
+							    boost::system::error_code()));
     }
     
     /* parse command line arguments */
@@ -100,67 +100,68 @@ void session::restore( const boost::program_options::variables_map& params )
 		vars[param->first] = param->second.as<std::string>();
     }
 	
-	/* 2. initialize more configuration from the script input */
-	for( variables_map::const_iterator param = params.begin(); 
-		 param != params.end(); ++param ) {
-		vars[param->first] = param->second.as<std::string>();
-	}
-	/* If no document is present, set document 
-	   as view in order to catch default dispatch 
-	   clause. */
-	if( params["document"].empty() ) {
-		vars["document"] = vars["view"];
-	}
-
-	/* 3. load session specific information */
-	session::storage = vars["topSrc"] + std::string("/personal/sessions");
-	if( vars.find("session") != vars.end() ) {
-		id = atol(vars["session"].c_str());
-
-		std::cerr << "session::restore..." << std::endl;     
-		static boost::regex format("(.*):(.*)");
-		bool found = false;
-		
-		std::cerr << "format done..." << std::endl;     
-		if( boost::filesystem::exists(session::storage) ) {
-			/* 1. open session file */
-			ifstream sessions(session::storage);
-			if( sessions.fail() ) {
-				boost::throw_exception(basic_filesystem_error<path>(std::string("error opening file"),
-																	session::storage, 
-																	error_code()));
-			}
-			
-			/* 2. search for id */
-			while( !sessions.eof() ) {
-				smatch m;
-				std::string line;
-				getline(sessions,line);
-				if( regex_search(line,m,format) ) {
-					if( id == atol(m[1].str().c_str()) ) {
-						found = true;
-						username = m[2].str();
-						break;
-					}
-				}
-			}
-			sessions.close();
+    /* 2. initialize more configuration from the script input */
+    for( variables_map::const_iterator param = params.begin(); 
+	 param != params.end(); ++param ) {
+	vars[param->first] = param->second.as<std::string>();
+    }
+    /* If no document is present, set document 
+       as view in order to catch default dispatch 
+       clause. */
+    if( params["document"].empty() ) {
+	vars["document"] = vars["view"];
+    }
+    
+    /* 3. load session specific information */
+    session::storage = vars["topSrc"] + std::string("/personal/sessions");
+    if( vars.find("session") != vars.end() ) {
+	id = atol(vars["session"].c_str());
+	
+	std::cerr << "session::restore..." << std::endl;     
+	static boost::regex format("(.*):(.*)");
+	bool found = false;
+	
+	std::cerr << "format done..." << std::endl;     
+	if( boost::filesystem::exists(session::storage) ) {
+	    /* 1. open session file */
+	    ifstream sessions(session::storage);
+	    if( sessions.fail() ) {
+		boost::throw_exception(basic_filesystem_error<path>(std::string("error opening file"),
+								    session::storage, 
+								    error_code()));
+	    }
+	    
+	    /* 2. search for id */
+	    while( !sessions.eof() ) {
+		smatch m;
+		std::string line;
+		getline(sessions,line);
+		if( regex_search(line,m,format) ) {
+		    if( id == atol(m[1].str().c_str()) ) {
+			found = true;
+			username = m[2].str();
+			break;
+		    }
 		}
+	    }
+	    sessions.close();
 	}
+    }
 }
 
 
 void session::show( std::ostream& ostr ) {
-	if( id != 0 ) {
-		ostr << "session " << id << " for " << username << std::endl;
-	} else {
-		ostr << "no session id" << std::endl;
-	}
-	for( variables::const_iterator var = vars.begin(); 
-		 var != vars.end(); ++var ) {
-		ostr << var->first << ": " << var->second << std::endl;
-	}
+    if( id != 0 ) {
+	ostr << "session " << id << " for " << username << std::endl;
+    } else {
+	ostr << "no session id" << std::endl;
+    }
+    for( variables::const_iterator var = vars.begin(); 
+	 var != vars.end(); ++var ) {
+	ostr << var->first << ": " << var->second << std::endl;
+    }
 }
+
 
 void session::store() {
     using namespace boost::system;

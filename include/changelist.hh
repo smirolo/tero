@@ -13,6 +13,9 @@ public:
 
 class revisionsys {
 public:
+	boost::filesystem::path rootpath;
+
+public:
 	virtual void diff( std::ostream& ostr, 
 					   const std::string& leftCommit, 
 					   const std::string& rightCommit, 
@@ -20,6 +23,12 @@ public:
 
 	virtual void history( std::ostream& ostr, 
 						  const boost::filesystem::path& pathname ) = 0;
+
+	/* Sets the path to the root of the source code control system.
+	 */
+	void rootPath( const boost::filesystem::path& p ) {
+		rootpath = p;
+	}
 };
 
 /** \brief generate git commands to the revision control system.
@@ -27,12 +36,10 @@ public:
 class gitcmd : public revisionsys {
 protected:
 	boost::filesystem::path executable;
-	boost::filesystem::path topSrc;
 
 public:
-	gitcmd( const boost::filesystem::path& exec,
-			const boost::filesystem::path& root ) 
-		: executable(exec), topSrc(root) {}
+	gitcmd( const boost::filesystem::path& exec ) 
+		: executable(exec) {}
 
 	void diff( std::ostream& ostr, 
 			  const std::string& leftCommit, 

@@ -4,19 +4,63 @@
 #include <boost/system/error_code.hpp>
 #include "document.hh"
 
-void document::open( boost::filesystem::ifstream& strm, 
-				 const boost::filesystem::path& pathname ) const {
-	using namespace boost::system;
-	using namespace boost::filesystem;
-	strm.open(pathname);
-	if( strm.fail() ) {
-		boost::throw_exception(basic_filesystem_error<path>(std::string("file not found"),
-															pathname, 
-															error_code()));
-#if 0
-		error_code(posix_error::no_such_file_or_directory)));
-#endif
+boost::filesystem::path 
+document::relativePath( const boost::filesystem::path& pathname,
+			const boost::filesystem::path& base ) {
+    boost::filesystem::path::iterator first = pathname.begin();
+    boost::filesystem::path::iterator second = base.begin();
+    boost::filesystem::path result;
+    
+    for( ; first != pathname.end() & second != base.end(); ++first, ++second ) {
+	if( *first != *second ) break;
+    }
+    for( ; first != pathname.end(); ++first ) {
+	result /= *first;
+    }
+    return result;
+}
+
+
+boost::filesystem::path document::root( const session& s,
+					const boost::filesystem::path& leaf,
+					const boost::filesystem::path& trigger )
+{
+    using namespace boost::filesystem;
+    std::string topSrc = s.vars.find("topSrc")->second;
+    path dirname = leaf;
+    if( !is_directory(dirname) ) {
+	dirname.remove_leaf();
+    }
+    bool foundProject = exists(dirname.string() / trigger);
+    while( !foundProject & dirname.string() != topSrc ) {
+	std::cerr << "look for " << trigger << " into " << dirname << std::endl;
+	dirname.remove_leaf();
+	if( dirname.string().empty() ) {
+	    boost::throw_exception(basic_filesystem_error<path>(
+			std::string("no trigger from path up"),
+			leaf, 
+			boost::system::error_code())); 
 	}
+	foundProject = exists(dirname.string() / trigger);
+    }
+    return foundProject ? dirname : path("");
+}
+
+void document::open( boost::filesystem::ifstream& strm, 
+		     const boost::filesystem::path& pathname ) const {
+    using namespace boost::system;
+    using namespace boost::filesystem;
+    if( is_regular_file(pathname) ) {
+	strm.open(pathname);
+	if( !strm.fail() ) return;
+    }
+    boost::throw_exception(
+        basic_filesystem_error<path>(std::string("file not found"),
+				     pathname, 
+				     error_code()));
+#if 0
+    error_code(posix_error::no_such_file_or_directory)));
+#endif
 }
 
 
@@ -73,8 +117,10 @@ void text::showSideBySide( std::istream& input,
 	char leftMarker = inputIsLeftSide ? '-' : '+';
 	char rightMarker = inputIsLeftSide ? '+' : '-';
 
+#if 1
 	leftDec->attach(left);
 	rightDec->attach(right);
+#endif
     while( !diff.eof() ) {
 		std::string line;
 		getline(diff,line);
@@ -85,21 +131,25 @@ void text::showSideBySide( std::istream& input,
 			if( areDiffBlocks ) {
 				cout << "<tr class=\"diffConflict\">" << endl;
 				cout << "<td>" << endl;
+				if( leftDec->formated() ) cout << "<pre>" << endl;
 				cout << left.str();
 				if( nbLeftLinesAhead < nbRightLinesAhead ) {
 					for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
 						cout << std::endl;
 					}
 				} 
+				if( leftDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				
 				cout << "<td>" << endl;
+				if( rightDec->formated() ) cout << "<pre>" << endl;
 				cout << right.str();
 				if(  nbLeftLinesAhead > nbRightLinesAhead ) {
 					for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
 						cout << endl;
 					}
 				}
+				if( rightDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				cout << "</tr>" << endl;
 				left.str("");
@@ -109,11 +159,12 @@ void text::showSideBySide( std::istream& input,
 			char *p = strchr(line.c_str(),leftMarker);
 			size_t start = atoi(&p[1]);
 			/* read left file until we hit the start line */
+			std::cerr << "read " << (start - leftLine)  << " lines from input file." << std::endl; 
 			while( leftLine < start ) {
 				std::string l;
 				getline(input,l);
-				*leftDec << l;
-				*rightDec << l;
+				left << l << endl;
+				right << l << endl;
 				++leftLine;
 			}
 			nbLeftLinesAhead = nbRightLinesAhead = 0;
@@ -123,10 +174,14 @@ void text::showSideBySide( std::istream& input,
 			if( !areDiffBlocks & !left.str().empty() ) {
 				cout << "<tr>" << endl;
 				cout << "<td>" << endl;
+				if( leftDec->formated() ) cout << "<pre>" << endl;
 				cout << left.str();
+				if( leftDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				cout << "<td>" << endl;
+				if( rightDec->formated() ) cout << "<pre>" << endl;
 				cout << right.str();
+				if( rightDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				cout << "</tr>" << endl;
 				left.str("");
@@ -134,16 +189,20 @@ void text::showSideBySide( std::istream& input,
 			}
 			++nbRightLinesAhead;
 			areDiffBlocks = true;
-			*rightDec << line.substr(1);
+			right << line.substr(1) << endl;
 
 		} else if( line[0] == leftMarker ) {
 			if( !areDiffBlocks & !left.str().empty() ) {
 				cout << "<tr>" << endl;
 				cout << "<td>" << endl;
+				if( leftDec->formated() ) cout << "<pre>" << endl;
 				cout << left.str();
+				if( leftDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				cout << "<td>" << endl;
+				if( rightDec->formated() ) cout << "<pre>" << endl;
 				cout << right.str();
+				if( rightDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				cout << "</tr>" << endl;
 				left.str("");
@@ -153,7 +212,7 @@ void text::showSideBySide( std::istream& input,
 			getline(input,l);
 			++nbLeftLinesAhead;
 			areDiffBlocks = true;
-			*leftDec << l;
+			left << l << endl;
 			++leftLine;
 
 		} else if( line[0] == ' ' ) {
@@ -162,21 +221,25 @@ void text::showSideBySide( std::istream& input,
 					 << ((!left.str().empty() & !right.str().empty()) ? "" : "No") 
 					 << "Conflict\">" << endl;
 				cout << "<td>" << endl;
+				if( leftDec->formated() ) cout << "<pre>" << endl;
 				cout << left.str();
 				if( nbLeftLinesAhead < nbRightLinesAhead ) {
 					for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
 						cout << std::endl;
 					}
 				} 
+				if( leftDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				
 				cout << "<td>" << endl;
+				if( rightDec->formated() ) cout << "<pre>" << endl;
 				cout << right.str();
 				if(  nbLeftLinesAhead > nbRightLinesAhead ) {
 					for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
 						cout << endl;
 					}
 				}
+				if( rightDec->formated() ) cout << "</pre>" << endl;
 				cout << "</td>" << endl;
 				cout << "</tr>" << endl;
 				left.str("");
@@ -186,9 +249,9 @@ void text::showSideBySide( std::istream& input,
 			}
 			std::string l;
 			getline(input,l);
-			*leftDec << l;
+			left << l << endl;
 			++leftLine;
-			*rightDec << line.substr(1);
+			right << line.substr(1) << endl;
 		}
     }
 	if( !left.str().empty() | !right.str().empty() ) {
@@ -200,25 +263,33 @@ void text::showSideBySide( std::istream& input,
 			cout << "<tr>" << endl;
 		}
 		cout << "<td>" << endl;
+		if( leftDec->formated() ) cout << "<pre>" << endl;
 		cout << left.str();
 		if( nbLeftLinesAhead < nbRightLinesAhead ) {
 			for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
 				cout << std::endl;
 			}
 		} 
+		if( leftDec->formated() ) cout << "</pre>" << endl;
 		cout << "</td>" << endl;
 		cout << "<td>" << endl;
+		if( rightDec->formated() ) cout << "<pre>" << endl;
 		cout << right.str();
 		if(  nbLeftLinesAhead > nbRightLinesAhead ) {
 			for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
 				cout << endl;
 			}
 		}
+		if( rightDec->formated() ) cout << "</pre>" << endl;
 		cout << "</td>" << endl;
 		cout << "</tr>" << endl;
 		left.str("");
 		right.str("");
 	}
+#if 1
+	leftDec->detach();
+	rightDec->detach();
+#endif
 }
 
 
@@ -232,6 +303,7 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 	std::cout << htmlContent;
 
 #if 1
+	if( leftDec->formated() ) std::cout << "<pre>" << std::endl;
 	leftDec->attach(std::cout);
 #endif
     while( !strm.eof() ) {
@@ -239,8 +311,9 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 		std::getline(strm,line);
 		std::cout << line << std::endl;
     }
-#if 2
+#if 1
 	leftDec->detach();
+	if( leftDec->formated() ) std::cout << "</pre>" << std::endl;
 #endif
     strm.close();
 }

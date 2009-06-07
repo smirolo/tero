@@ -4,16 +4,17 @@
 
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title>Demo User Interface Page</title>
-<style type="text/css" media="all">@import "/dev/seed/data/theme/style.css";</style>
+<title>CODESPIN</title>
+<link rel="stylesheet" type="text/css" media="screen" href="/dev/seed/data/theme/style.css" />
 </head>
 
 <body>
 
-<div id="header"><a href="http://localhost/">CODERS.COM</a></div>
-<div id="title"><a href="http://localhost/">Page Title</a></div>
+<div id="header"><a href="/index">CODESPIN</a></div>
+<div id="title"><!-- tmpl_var name='blog_title' -->${document}</div>
 
 <div id="sidebar">
+  <!--
   <div id="Menu">
 	<form name="login" action="/dev/bin/wiki/login" method="POST">
 	  <input type="hidden" name="document" value="${document}" />
@@ -24,17 +25,24 @@
 	  </p>
 	</form>
   </div>
+  -->
   <div class="MenuWidget">
-	<p>history</p>
-    <a href="#history"></a>
+    <h3>contributor</h3>
+    <p>
+    <a href="http://www.linkedin.com/pub/sebastien-mirolo/0/224/976">profile</a>
+    <br />
+    <a href="/personal/smirolo/blog">blog</a><br />
+    </p>
+    <h3>project</h3>
+<p>
+    <a href="/seed/src/wiki.cc">seed</a>
+</p>
   </div>
-  <div class="MenuWidget">
-    <a href="#projfiles"></a>
-  </div>
+  <a href="#history"></a>
+  <a href="#projfiles"></a>
 </div>
 
 <div class="entry">
-	<h1>${document}</h1>
 	<a href="#document"></a>
 </div>
 

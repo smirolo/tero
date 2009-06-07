@@ -35,20 +35,21 @@ void basicDecoratorChain<charT,traitsT>::push_back( basicDecorator<charT, traits
 	    last = &d;
     }
 	first = &d;
+	super::pre |= d.formated();
 }
 
 
 template<typename tokenizerT, typename charT, typename traitsT>
-basicHighLight<tokenizerT,charT,traitsT>::basicHighLight()
-    : super(&buf),
+basicHighLight<tokenizerT,charT,traitsT>::basicHighLight( bool formated )
+    : super(&buf,formated),
       buf(*this)
 {
 }
 
 
 template<typename tokenizerT, typename charT, typename traitsT>
-basicHighLight<tokenizerT,charT,traitsT>::basicHighLight( std::basic_ostream<charT,traitsT>& o ) 
-    : super(&buf),
+basicHighLight<tokenizerT,charT,traitsT>::basicHighLight( std::basic_ostream<charT,traitsT>& o, bool formated ) 
+    : super(&buf,formated),
       buf(*this)
 {
 	attach(o);

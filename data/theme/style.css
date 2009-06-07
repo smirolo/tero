@@ -190,8 +190,6 @@ div.MenuWidget {
 tr.diffConflict { background-color:#ff6c6c; }
 tr.diffNoConflict { background-color:#a0ff6d; }
 
-.err { color:#000099; }
-
 
 div.entry .title {
 	background-color: #eee;
@@ -232,3 +230,25 @@ pre {
 	border-width:	thin;
 	padding: 5px  10px;
 }
+
+
+/* token highlighting for C/C++ (see cpptok.cc )
+ */
+.err { color:#0000FF; 
+	  font-weight: bold;
+}
+.booleanLiteral { font-weight: bold; }
+.characterLiteral { font-weight: italic; }
+/*.floatingLiteral { } */
+/*.decimalLiteral { } */
+.octalLiteral { color:#000099; }
+/*.hexadecimalLiteral { } */
+/*.identifier { } */
+.keyword { font-weight: bold; }
+/*.operator { } */
+/*.punctuator { } */
+.comment { color:#990000; }
+/*.space { } */
+/*.tab { } */
+.preprocessing { color:#227711; }
+.stringLiteral { font-weight: italic; }

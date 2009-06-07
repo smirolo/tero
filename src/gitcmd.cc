@@ -5,9 +5,10 @@ void gitcmd::diff( std::ostream& ostr,
 				   const std::string& leftCommit, 
 				   const std::string& rightCommit, 
 				   const boost::filesystem::path& pathname ) {
-	/* The git command needs to be issued from within a directory where .git can be found
-	   by walking up the tree structure. */ 
-	boost::filesystem::current_path(topSrc);
+	/* The git command needs to be issued from within a directory where .git
+	   can be found by walking up the tree structure. */
+	boost::filesystem::initial_path(); 
+	boost::filesystem::current_path(rootpath);
 
 	std::stringstream cmd;
 	cmd << executable << " diff " << leftCommit << " " << rightCommit << " " << pathname; 
@@ -25,15 +26,17 @@ void gitcmd::diff( std::ostream& ostr,
 		ostr << line;
 	}
 	pclose(diffFile);
+	boost::filesystem::current_path(boost::filesystem::initial_path());
 }
 
 
 void gitcmd::history( std::ostream& ostr, 
 					  const boost::filesystem::path& pathname ) {
 
-	/* The git command needs to be issued from within a directory where .git can be found
-	   by walking up the tree structure. */ 
-	boost::filesystem::current_path(topSrc);
+	/* The git command needs to be issued from within a directory 
+	   where .git can be found by walking up the tree structure. */ 
+	boost::filesystem::initial_path();
+	boost::filesystem::current_path(rootpath);
 
 	std::stringstream sstm;
 	sstm << executable << " show --summary --pretty=oneline " << pathname; 
@@ -47,4 +50,5 @@ void gitcmd::history( std::ostream& ostr,
 	}
 	pclose(summary);
 
+	boost::filesystem::current_path(boost::filesystem::initial_path());
 }

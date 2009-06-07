@@ -16,9 +16,10 @@ void diff::showSideBySide( document *doc,
     int nbLeftLinesAhead, nbRightLinesAhead;
 	char leftMarker = inputIsLeftSide ? '-' : '+';
 	char rightMarker = inputIsLeftSide ? '+' : '-';
+#if 0
 	document::decorator* leftBlock = doc->decorate(left);
 	document::decorator* rightBlock = doc->decorate(right);
-
+#endif
     while( !diff.eof() ) {
 		std::string line;
 		getline(diff,line);
@@ -56,8 +57,8 @@ void diff::showSideBySide( document *doc,
 			while( leftLine < start ) {
 				std::string l;
 				getline(input,l);
-				leftBlock->write(l);
-				rightBlock->write(l);
+				left << l;
+				right << l;
 				++leftLine;
 			}
 			nbLeftLinesAhead = nbRightLinesAhead = 0;
@@ -78,7 +79,7 @@ void diff::showSideBySide( document *doc,
 			}
 			++nbRightLinesAhead;
 			areDiffBlocks = true;
-			rightBlock->write(line.substr(1));
+			right << line.substr(1);
 
 		} else if( line[0] == leftMarker ) {
 			if( !areDiffBlocks & !left.str().empty() ) {
@@ -97,7 +98,7 @@ void diff::showSideBySide( document *doc,
 			getline(input,l);
 			++nbLeftLinesAhead;
 			areDiffBlocks = true;
-			leftBlock->write(l);
+			left << l;
 			++leftLine;
 
 		} else if( line[0] == ' ' ) {
@@ -130,9 +131,9 @@ void diff::showSideBySide( document *doc,
 			}
 			std::string l;
 			getline(input,l);
-			leftBlock->write(l);
+			left << l;
 			++leftLine;
-			rightBlock->write(line.substr(1));
+			right << line.substr(1);
 		}
     }
 	if( !left.str().empty() | !right.str().empty() ) {
@@ -163,8 +164,10 @@ void diff::showSideBySide( document *doc,
 		left.str("");
 		right.str("");
 	}
+#if 0
 	if( leftBlock != NULL ) delete leftBlock;
 	if( rightBlock != NULL ) delete rightBlock;
+#endif
 
 }
 
@@ -201,8 +204,11 @@ void diff::betweenFiles( const boost::filesystem::path& leftPath,
 
 	/* \todo the session is not a parameter to between files... */
 	document *doc = dispatch::instance->select("document",leftPath.string());
+#if 0
 	showSideBySide(doc,input,diff);
-
+#else
+	((::text*)doc)->showSideBySide(input,diff,true);
+#endif
 	cout << "</table>" << endl;
     input.close();
 }

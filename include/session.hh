@@ -56,7 +56,7 @@ public:
 	void restore( const boost::program_options::variables_map& params );
 
 	std::string root() const {
-		return std::string("/dev/bin/wiki");
+	    return std::string("");
 	}
 
 	/** \brief Display debug information for the session
