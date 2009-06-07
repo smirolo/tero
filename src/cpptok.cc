@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <string>
+#include <algorithm>
 #include <iostream>
 #include "cpptok.hh"
 

@@ -17,8 +17,8 @@ session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dcontext)\" $(OUTPUT_OPTION) $<
 
 wiki: wiki.cc libseed.a libwind.a \
-	-lboost_regex -lboost_program_options \
-	-lboost_filesystem -lboost_system
+	libboost_regex.a libboost_program_options.a \
+	libboost_filesystem.a libboost_system.a
 
 configure_apache:
 	$(srcDir)/configure_apache
