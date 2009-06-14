@@ -1,3 +1,28 @@
+/* Copyright (c) 2009, Sebastien Mirolo
+   All rights reserved.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are met:
+     * Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+     * Neither the name of codespin nor the
+       names of its contributors may be used to endorse or promote products
+       derived from this software without specific prior written permission.
+
+   THIS SOFTWARE IS PROVIDED BY Sebastien Mirolo ''AS IS'' AND ANY
+   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL Sebastien Mirolo BE LIABLE FOR ANY
+   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #ifndef guarddecorator
 #define guarddecorator
 
@@ -38,7 +63,8 @@ protected:
 	bool pre;
 
 public:
-    explicit basicDecorator( std::basic_streambuf<charT,traitsT> *sb, bool formated = false )
+    explicit basicDecorator( std::basic_streambuf<charT,traitsT> *sb, 
+							 bool formated = false )
 		: super(sb), next(NULL), nextBuf(sb), pre(formated) {
 	}
 
@@ -53,8 +79,8 @@ public:
 
 	/** Detach the decorator from a basic_ostream
 
-		After the call returns, the decorator will no longer preprocess the text
-		sent to the basic_ostream.
+		After the call returns, the decorator will no longer preprocess 
+		the text sent to the basic_ostream.
 	 */
 	virtual void detach() = 0;
 
@@ -62,7 +88,8 @@ public:
 
 		When *formated* is True, an HTML processor will emit <pre> and </pre>
 		tags around the decorated text. When *formated* is false, an HTML 
-		processor will assume that spaces and carriage returns are not formatters.
+		processor will assume that spaces and carriage returns are not 
+		formatters.
 	 */
 	bool formated() const { return pre; }
 
@@ -99,7 +126,8 @@ typedef basicDecoratorChain<char> decoratorChain;
 
 /** \brief Base class to decorate streams of tokens.
  */
-template<typename tokenizerT, typename charT, typename traitsT = std::char_traits<charT> >
+template<typename tokenizerT, typename charT, 
+		 typename traitsT = std::char_traits<charT> >
 class basicHighLight : public basicDecorator<charT, traitsT> {
 protected:
 	typedef basicDecorator<charT, traitsT> super;
@@ -135,7 +163,8 @@ protected:
 public:
 	explicit basicHighLight( bool formated );
 
-    explicit basicHighLight( std::basic_ostream<charT,traitsT>& o, bool formated = false );
+    explicit basicHighLight( std::basic_ostream<charT,traitsT>& o, 
+							 bool formated = false );
 
 	virtual ~basicHighLight() {
 		detach();
@@ -178,7 +207,8 @@ public:
 		super::nextBuf->sputc('\n');
 	}
 
-	void token( xmlToken token, const char *line, int first, int last, bool fragment ) {
+	void token( xmlToken token, const char *line, 
+				int first, int last, bool fragment ) {
 		super::nextBuf->sputn(&line[first],last - first);
 		switch( token ) {
 		case xmlStartDecl:
@@ -262,12 +292,24 @@ public:
 		std::string endSpan("</span>");
 		if( !preprocessing ) {
 			super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
-			super::nextBuf->sputn(cppTokenTitles[token],strlen(cppTokenTitles[token]));
+			super::nextBuf->sputn(cppTokenTitles[token],
+								  strlen(cppTokenTitles[token]));
 			super::nextBuf->sputc('"');
 			super::nextBuf->sputc('>');
 			if( token == cppPreprocessing ) preprocessing = true;
 		}
-		super::nextBuf->sputn(&line[first],last - first);	
+		for( ; first != last; ++first ) {
+			switch( line[first] ) {
+			case '<':
+				super::nextBuf->sputn("&lt;",4);
+				break;
+			case '>':
+				super::nextBuf->sputn("&gt;",4);
+				break;
+			default:
+				super::nextBuf->sputc(line[first]);
+			}
+		}
 		if( !preprocessing ) {
 			super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
 		}

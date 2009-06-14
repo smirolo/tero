@@ -1,3 +1,28 @@
+/* Copyright (c) 2009, Sebastien Mirolo
+   All rights reserved.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are met:
+     * Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+     * Neither the name of codespin nor the
+       names of its contributors may be used to endorse or promote products
+       derived from this software without specific prior written permission.
+
+   THIS SOFTWARE IS PROVIDED BY Sebastien Mirolo ''AS IS'' AND ANY
+   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL Sebastien Mirolo BE LIABLE FOR ANY
+   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include <set>
 #include <iostream>
 #include "projfiles.hh"
@@ -13,7 +38,8 @@ bool projfiles::selects( const boost::filesystem::path& pathname ) const {
 }
 
 
-void projfiles::dirLink( const session& s, const boost::filesystem::path& dir ) const {
+void projfiles::dirLink( const session& s, 
+						 const boost::filesystem::path& dir ) const {
     std::string href = dir.string();
     std::string topSrc = s.vars.find("topSrc")->second;
     if( href.compare(0,topSrc.size(),topSrc) == 0 ) {
@@ -28,13 +54,15 @@ void projfiles::dirLink( const session& s, const boost::filesystem::path& dir ) 
 }
 
 
-void projfiles::fileLink( const session& s, const boost::filesystem::path& file ) const {
+void projfiles::fileLink( const session& s, 
+						  const boost::filesystem::path& file ) const {
     std::string href = file.string();
     std::string topSrc = s.vars.find("topSrc")->second;
     if( href.compare(0,topSrc.size(),topSrc) == 0 ) {
 	href = s.root() + file.string().substr(topSrc.size());
     }
-    std::cout << "<a href=\"" << href << "\">" << file.leaf() << "</a><br />" << std::endl;
+    std::cout << "<a href=\"" << href << "\">" << file.leaf() 
+			  << "</a><br />" << std::endl;
 }
 
 
@@ -53,7 +81,8 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 	   iterated in alphabetically sorted order. */
 	std::set<path> topdirs;
 	std::set<path> topfiles;
-	for( directory_iterator entry = directory_iterator(dirname); entry != directory_iterator(); ++entry ) {
+	for( directory_iterator entry = directory_iterator(dirname); 
+		 entry != directory_iterator(); ++entry ) {
 	    if( is_directory(*entry) ) {
 		topdirs.insert(*entry);
 	    } else {
@@ -62,11 +91,13 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 	}
 	
 	std::cout << htmlContent;
-	for( std::set<path>::const_iterator entry = topfiles.begin(); entry != topfiles.end(); ++entry ) {
+	for( std::set<path>::const_iterator entry = topfiles.begin(); 
+		 entry != topfiles.end(); ++entry ) {
 	    fileLink(s,*entry);
 	}
 	
-	for( std::set<path>::const_iterator entry = topdirs.begin(); entry != topdirs.end(); ++entry ) {
+	for( std::set<path>::const_iterator entry = topdirs.begin(); 
+		 entry != topdirs.end(); ++entry ) {
 	    std::set<path> files;
 	    /* Insert all filename which match a filter */
 	    for( directory_iterator file = directory_iterator(*entry); 
@@ -77,7 +108,8 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 	    }
 	    if( !files.empty() ) {
 		dirLink(s,*entry);
-		for( std::set<path>::const_iterator file = files.begin(); file != files.end(); ++file ) {
+		for( std::set<path>::const_iterator file = files.begin(); 
+			 file != files.end(); ++file ) {
 		    fileLink(s,*file);
 		}
 	    }

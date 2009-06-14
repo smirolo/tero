@@ -13,7 +13,7 @@
       <bin name="git" />
 	</xref>
 	<sccs name="git">
-	  <url>/Volumes/DIESEL/workspace/reps/codeSpin/seed</url>
+	  <url>ssh://codespin.is-a-geek.com/var/codespin/reps/seed</url>
 	</sccs>
   </section>
 </book>

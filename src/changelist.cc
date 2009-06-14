@@ -1,3 +1,28 @@
+/* Copyright (c) 2009, Sebastien Mirolo
+   All rights reserved.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are met:
+     * Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+     * Neither the name of codespin nor the
+       names of its contributors may be used to endorse or promote products
+       derived from this software without specific prior written permission.
+
+   THIS SOFTWARE IS PROVIDED BY Sebastien Mirolo ''AS IS'' AND ANY
+   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL Sebastien Mirolo BE LIABLE FOR ANY
+   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include <cstdio>
 #include "changelist.hh"
 
@@ -14,7 +39,8 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
 	session::variables::const_iterator document = s.vars.find("document");
 	session::variables::const_iterator text = s.vars.find("editedText");
 	if( text != s.vars.end() ) {
-		path docName(s.vars["topSrc"] + document->second + std::string(".edits")); 
+		path docName(s.vars["topSrc"] + document->second 
+					 + std::string(".edits")); 
 
 		if( !exists(docName) ) {
 		    create_directories(docName);
@@ -22,9 +48,10 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
 
 		ofstream file(docName);
 		if( file.fail() ) {
-			boost::throw_exception(basic_filesystem_error<path>(std::string("unable to open file"),
-																docName, 
-																error_code()));
+			boost::throw_exception(basic_filesystem_error<path>(
+				  std::string("unable to open file"),
+				  docName, 
+				  error_code()));
 		}
 		file << text->second;
 		file.close();
@@ -33,9 +60,10 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
 		path changesPath(s.userPath().string() + std::string("/changes"));
 		ofstream changes(changesPath,std::ios::app);
 		if( file.fail() ) {
-		    boost::throw_exception(basic_filesystem_error<path>(std::string("unable to open file"),
-									changesPath, 
-									error_code()));
+		    boost::throw_exception(basic_filesystem_error<path>(
+				  std::string("unable to open file"),
+				  changesPath, 
+				  error_code()));
 		}
 		file << docName;
 		file.close();
@@ -60,7 +88,8 @@ void changediff::embed( session& s, const std::string& varname ) {
 		boost::filesystem::path docname(s.valueOf("topSrc") 
 										+ s.valueOf(varname));
 		cerr << "docname: " << docname << std::endl;
-		boost::filesystem::path gitrelname = document::relativePath(docname,revision->rootpath);
+		boost::filesystem::path 
+			gitrelname = document::relativePath(docname,revision->rootpath);
 #endif
 		revision->diff(text,leftRevision,rightRevision,gitrelname);
 		
@@ -131,7 +160,7 @@ changehistory::fetch( session& s, const boost::filesystem::path& pathname )
 		
 		/* \todo '\n' at end of line? */
 		std::cout << "<a";
-		std::cout << " href=\"/dev/bin/wiki/diff?document=/" << s.docAsUrl() 
+		std::cout << " href=\"/diff?document=/" << s.docAsUrl() 
 			  << "&right=" << rightRevision << "\""; 		
 		std::cout << " title=\"" << title << "\"";
 		std::cout << ">";
