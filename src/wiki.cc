@@ -123,7 +123,7 @@ int main( int argc, char *argv[] )
 	} else {	    
 	    path uiPath(s.vars["uiDir"] + std::string(s.exists() ? 
 						      "/maintainer.ui" : "/browser.ui"));
-	    dispatch docs(s.vars["topSrc"]);
+	    dispatch docs(s.vars["srcTop"]);
 	    login li;
 	    logout lo;
 	    composer edit(s.vars["uiDir"] + std::string("/edit.ui"),
