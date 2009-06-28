@@ -41,9 +41,9 @@ bool projfiles::selects( const boost::filesystem::path& pathname ) const {
 void projfiles::dirLink( const session& s, 
 						 const boost::filesystem::path& dir ) const {
     std::string href = dir.string();
-    std::string topSrc = s.vars.find("topSrc")->second;
-    if( href.compare(0,topSrc.size(),topSrc) == 0 ) {
-	href = s.root() + dir.string().substr(topSrc.size()) + "/index.xml";
+    std::string srcTop = s.vars.find("srcTop")->second;
+    if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
+	href = s.root() + dir.string().substr(srcTop.size()) + "/index.xml";
     }
     if( boost::filesystem::exists(dir.string() + "/index.xml") ) {
 	std::cout << "<a href=\"" << href << "\"><h2>" 
@@ -57,9 +57,9 @@ void projfiles::dirLink( const session& s,
 void projfiles::fileLink( const session& s, 
 						  const boost::filesystem::path& file ) const {
     std::string href = file.string();
-    std::string topSrc = s.vars.find("topSrc")->second;
-    if( href.compare(0,topSrc.size(),topSrc) == 0 ) {
-	href = s.root() + file.string().substr(topSrc.size());
+    std::string srcTop = s.vars.find("srcTop")->second;
+    if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
+	href = s.root() + file.string().substr(srcTop.size());
     }
     std::cout << "<a href=\"" << href << "\">" << file.leaf() 
 			  << "</a><br />" << std::endl;

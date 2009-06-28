@@ -27,15 +27,15 @@ aliasModule=$?
 if [ $aliasModule -ne 0 ] ; then 
     sed -e 's/<IfModule alias_module>/<IfModule mod_alias.c>/' \
 	-e "s,\$binDir,$binDir,g" \
-	-e "s,\$topSrc,$topSrc,g" \
+	-e "s,\$srcTop,$srcTop,g" \
 	-e "s,\$topBuild,$topBuild,g" \
-	$topSrc/seed/data/dev.conf > dev.conf
+	$srcTop/seed/data/dev.conf > dev.conf
 else
     sed \
 	-e "s,\$binDir,$binDir,g" \
-	-e "s,\$topSrc,$topSrc,g" \
+	-e "s,\$srcTop,$srcTop,g" \
 	-e "s,\$topBuild,$topBuild,g" \
-	$topSrc/seed/data/dev.conf > dev.conf
+	$srcTop/seed/data/dev.conf > dev.conf
 fi
 
 # Setting up https

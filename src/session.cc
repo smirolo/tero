@@ -48,9 +48,9 @@ const std::string& session::valueOf( const std::string& name ) const {
 
 
 boost::filesystem::path session::userPath() const {
-    variables::const_iterator topSrc = vars.find("topSrc");
-    assert( topSrc != vars.end() );
-    return boost::filesystem::path(topSrc->second 
+    variables::const_iterator srcTop = vars.find("srcTop");
+    assert( srcTop != vars.end() );
+    return boost::filesystem::path(srcTop->second 
 				   + std::string("/personal/") 
 				   + username);
 }
@@ -72,16 +72,16 @@ boost::filesystem::path session::findFile( const boost::filesystem::path& name )
 	}
 
 	variables::const_iterator v;
-	v = vars.find("topSrc");
+	v = vars.find("srcTop");
 	assert( v != vars.end() );
-	boost::filesystem::path topSrc(v->second);
+	boost::filesystem::path srcTop(v->second);
 
 	// string_type  leaf() const;
 	v = vars.find("document");
 	assert( v != vars.end() );
 	boost::filesystem::path document(v->second);
 
-    boost::filesystem::path fromTopSrc = topSrc;
+    boost::filesystem::path fromTopSrc = srcTop;
 	fromTopSrc /= document.branch_path();
 	fromTopSrc /= name;
 	if( boost::filesystem::exists(fromTopSrc) ) { 
@@ -116,7 +116,7 @@ void session::restore( const boost::program_options::variables_map& params )
     options_description	opts;
     opts.add_options()
 		("binDir",value<std::string>(),"path to outside executables")
-		("topSrc",value<std::string>(),"path to document top")
+		("srcTop",value<std::string>(),"path to document top")
 		("uiDir",value<std::string>(),"path to user interface elements");
     boost::program_options::store(parse_config_file(istr,opts,true),configVars);
 	
@@ -138,7 +138,7 @@ void session::restore( const boost::program_options::variables_map& params )
     }
     
     /* 3. load session specific information */
-    session::storage = vars["topSrc"] + std::string("/personal/sessions");
+    session::storage = vars["srcTop"] + std::string("/personal/sessions");
     if( vars.find("session") != vars.end() ) {
 	id = atol(vars["session"].c_str());
 	

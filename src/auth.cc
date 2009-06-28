@@ -42,7 +42,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
 	throw invalidAuthentication();
     }  
     
-    path hours(s.vars["topSrc"] + std::string("/personal/") 
+    path hours(s.vars["srcTop"] + std::string("/personal/") 
 	       + username->second 
 	       + std::string("/hours"));
     if( exists(hours) ) {
@@ -89,7 +89,7 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
     time_duration logged;
     ptime stop = second_clock::universal_time();
 
-    path hours(s.vars["topSrc"] + std::string("/personal/") 
+    path hours(s.vars["srcTop"] + std::string("/personal/") 
 	       + s.username
 	       + std::string("/hours"));
     ptime start = from_time_t(last_write_time(hours));

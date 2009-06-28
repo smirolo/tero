@@ -39,7 +39,7 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
 	session::variables::const_iterator document = s.vars.find("document");
 	session::variables::const_iterator text = s.vars.find("editedText");
 	if( text != s.vars.end() ) {
-		path docName(s.vars["topSrc"] + document->second 
+		path docName(s.vars["srcTop"] + document->second 
 					 + std::string(".edits")); 
 
 		if( !exists(docName) ) {
@@ -85,7 +85,7 @@ void changediff::embed( session& s, const std::string& varname ) {
 #if 0
 		boost::filesystem::path docname(s.valueOf(varname).substr(1));
 #else
-		boost::filesystem::path docname(s.valueOf("topSrc") 
+		boost::filesystem::path docname(s.valueOf("srcTop") 
 										+ s.valueOf(varname));
 		cerr << "docname: " << docname << std::endl;
 		boost::filesystem::path 

@@ -52,13 +52,13 @@ boost::filesystem::path document::root( const session& s,
 					const boost::filesystem::path& trigger )
 {
     using namespace boost::filesystem;
-    std::string topSrc = s.vars.find("topSrc")->second;
+    std::string srcTop = s.vars.find("srcTop")->second;
     path dirname = leaf;
     if( !is_directory(dirname) ) {
 	dirname.remove_leaf();
     }
     bool foundProject = exists(dirname.string() / trigger);
-    while( !foundProject & dirname.string() != topSrc ) {
+    while( !foundProject & dirname.string() != srcTop ) {
 	std::cerr << "look for " << trigger << " into " << dirname << std::endl;
 	dirname.remove_leaf();
 	if( dirname.string().empty() ) {
