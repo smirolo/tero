@@ -298,16 +298,20 @@ public:
 			super::nextBuf->sputc('>');
 			if( token == cppPreprocessing ) preprocessing = true;
 		}
-		for( ; first != last; ++first ) {
-			switch( line[first] ) {
-			case '<':
-				super::nextBuf->sputn("&lt;",4);
-				break;
-			case '>':
-				super::nextBuf->sputn("&gt;",4);
-				break;
-			default:
-				super::nextBuf->sputc(line[first]);
+		if( token != cppComment ) {
+			/* Special caracters are not replaced within comments
+			   such that they can be used to mark up text as html. */
+			for( ; first != last; ++first ) {
+				switch( line[first] ) {
+				case '<':
+					super::nextBuf->sputn("&lt;",4);
+					break;
+				case '>':
+					super::nextBuf->sputn("&gt;",4);
+					break;
+				default:
+					super::nextBuf->sputc(line[first]);
+				}
 			}
 		}
 		if( !preprocessing ) {

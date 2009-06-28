@@ -1,3 +1,4 @@
+// -*- C++ -*-
 /* Copyright (c) 2009, Sebastien Mirolo
    All rights reserved.
 
@@ -22,8 +23,6 @@
    ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
-
-// -*- C++ -*-
 
 template<typename charT, typename traitsT>
 basicDecoratorChain<charT,traitsT>::~basicDecoratorChain() {

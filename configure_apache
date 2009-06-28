@@ -2,7 +2,7 @@
 # Look for apache and update the configuration
 # by putting our script in an appropriate directory.
 
-. `dcontext`
+. `dws context`
 
 # Make sure we are running apache
 httpd -v

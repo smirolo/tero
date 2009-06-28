@@ -25,8 +25,8 @@
 
 # -*- Makefile -*-
 
-include $(shell dcontext)
-include $(shell dcontext prefix.mk)
+include $(shell dws context)
+include $(shell dws context prefix.mk)
 
 .PHONY: configure_apache
 
@@ -37,7 +37,7 @@ libseed.a: auth.o composer.o changelist.o xmltok.o cpptok.o \
 	   document.o gitcmd.o projfiles.o session.o xslview.o webserve.o
 
 session.o: session.cc
-	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dcontext)\" $(OUTPUT_OPTION) $<
+	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dws context)\" $(OUTPUT_OPTION) $<
 
 wiki: wiki.cc libseed.a \
 	libboost_regex.a libboost_program_options.a \
@@ -46,4 +46,4 @@ wiki: wiki.cc libseed.a \
 configure_apache:
 	$(srcDir)/configure_apache
 
-include $(shell dcontext suffix.mk)
+include $(shell dws context suffix.mk)
