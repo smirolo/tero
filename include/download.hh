@@ -23,58 +23,22 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardxmltok
-#define guardxmltok
+#ifndef guarddownload
+#define guarddownload
 
-#include <iterator>
+#include "document.hh"
 
-enum xmlToken {
-    xmlErr,
-    xmlName,
-    xmlSpace,
-    xmlAssign,
-    xmlContent,
-    xmlEndDecl,
-    xmlAttValue,
-    xmlStartDecl   
-};
-
-extern const char *xmlTokenTitles[];
-
-
-/** Interface for callbacks from the xmlTokenizer
+/** A page that permits to download the packaged project.
  */
-class xmlTokListener {
-public:
-    xmlTokListener() {}
-    
-    virtual void newline() = 0;
-    
-    virtual void token( xmlToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
-};
-
-
-class xmlTokenizer {
+class download : public document {
 protected:
-	void *state;
-	int first;
-	xmlToken tok;
-	int hexQuads;
-	char expects;
-	xmlTokListener *listener;
 
 public:
-    xmlTokenizer() 
-	: state(NULL), first(0), tok(xmlErr), listener(NULL) {}
+    download() {}
 
-    xmlTokenizer( xmlTokListener& l ) 
-	: state(NULL), first(0), tok(xmlErr), listener(&l) {}
-    
-    void attach( xmlTokListener& l ) { listener = &l; }
+    void packages( const boost::filesystem::path& dirname );
 
-    void tokenize( const char *line, size_t n );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
-
 
 #endif

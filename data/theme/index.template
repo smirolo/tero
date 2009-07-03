@@ -17,7 +17,7 @@
 <h3>Content</h3>
 <ul>
   <li><a href="<!-- tmpl_var name='top' -->">blog</a>
-  <li><a href="http://www.linkedin.com/pub/sebastien-mirolo/0/224/976">profile</a>
+  <li><a href="/contributors/smirolo/profile.book">profile</a>
     <!--  <li><a href="bookmarks.html">bookmarks</a> -->
 </ul>
 

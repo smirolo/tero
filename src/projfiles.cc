@@ -55,7 +55,7 @@ void projfiles::dirLink( const session& s,
 
 
 void projfiles::fileLink( const session& s, 
-						  const boost::filesystem::path& file ) const {
+			  const boost::filesystem::path& file ) const {
     std::string href = file.string();
     std::string srcTop = s.vars.find("srcTop")->second;
     if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
@@ -91,10 +91,12 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 	}
 	
 	std::cout << htmlContent;
+	std::cout << "<p>" << std::endl;
 	for( std::set<path>::const_iterator entry = topfiles.begin(); 
 		 entry != topfiles.end(); ++entry ) {
 	    fileLink(s,*entry);
 	}
+	std::cout << "</p>" << std::endl;
 	
 	for( std::set<path>::const_iterator entry = topdirs.begin(); 
 		 entry != topdirs.end(); ++entry ) {
@@ -108,10 +110,12 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 	    }
 	    if( !files.empty() ) {
 		dirLink(s,*entry);
+		std::cout << "<p>" << std::endl;
 		for( std::set<path>::const_iterator file = files.begin(); 
 			 file != files.end(); ++file ) {
 		    fileLink(s,*file);
 		}
+		std::cout << "</p>" << std::endl;
 	    }
 	}
 	std::cout << "</div>" << std::endl;

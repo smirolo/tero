@@ -23,58 +23,42 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardxmltok
-#define guardxmltok
+#include "download.hh"
 
-#include <iterator>
-
-enum xmlToken {
-    xmlErr,
-    xmlName,
-    xmlSpace,
-    xmlAssign,
-    xmlContent,
-    xmlEndDecl,
-    xmlAttValue,
-    xmlStartDecl   
-};
-
-extern const char *xmlTokenTitles[];
-
-
-/** Interface for callbacks from the xmlTokenizer
- */
-class xmlTokListener {
-public:
-    xmlTokListener() {}
+void download::packages( const boost::filesystem::path& dirname ) {
+    using namespace boost;
+    using namespace boost::system;
+    using namespace boost::filesystem; 
     
-    virtual void newline() = 0;
-    
-    virtual void token( xmlToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
-};
+    for( directory_iterator entry = directory_iterator(dirname); 
+	 entry != directory_iterator(); ++entry ) {
+	std::cout << "<tr><td>"
+		  << "<a href=\"" << *entry << "\">" 
+		  << *entry << "</a></td></tr>\n";
+    }
+}
 
+void download::fetch( session& s, const boost::filesystem::path& pathname ) 
+{
+    using namespace boost;
+    using namespace boost::system;
+    using namespace boost::filesystem; 
 
-class xmlTokenizer {
-protected:
-	void *state;
-	int first;
-	xmlToken tok;
-	int hexQuads;
-	char expects;
-	xmlTokListener *listener;
+    std::cout << htmlContent;
 
-public:
-    xmlTokenizer() 
-	: state(NULL), first(0), tok(xmlErr), listener(NULL) {}
-
-    xmlTokenizer( xmlTokListener& l ) 
-	: state(NULL), first(0), tok(xmlErr), listener(&l) {}
-    
-    void attach( xmlTokListener& l ) { listener = &l; }
-
-    void tokenize( const char *line, size_t n );
-};
-
-
-#endif
+    path dirname(s.valueOf("cacheTop"));
+    std::cout << "<h1>Downloads</h1>\n";
+    if( !dirname.empty() ) {
+	std::cout << "<table>\n";
+	for( directory_iterator entry = directory_iterator(dirname); 
+	     entry != directory_iterator(); ++entry ) {
+	    path packagesDir(*entry);
+	    path dbFile(packagesDir);
+	    dbFile /= "db.xml";
+	    if( is_directory(packagesDir) && exists(dbFile) ) {
+		packages(packagesDir);
+	    }
+	}
+	std::cout << "</table>\n";
+    }
+}

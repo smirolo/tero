@@ -144,33 +144,35 @@ changehistory::fetch( session& s, const boost::filesystem::path& pathname )
     if( !sccsRoot.empty() ) {
 	revision->rootPath(sccsRoot);
 	revision->history(text,pathname);
-	std::cout << "<div class=\"MenuWidget\">" << std::endl;
-	std::cout << "<p>history</p>" << std::endl;
+	if( !text.eof() ) { 
+	    std::cout << "<div class=\"MenuWidget\">" << std::endl;
+	    std::cout << "<p>history</p>" << std::endl;
 
-	while( !text.eof() ) {
-	    std::string line;
-	    getline(text,line);
-	    /* Parse the summary line in order to split the commit tag 
-	       from the commit message. */
+	    while( !text.eof() ) {
+		std::string line;
+		getline(text,line);
+		/* Parse the summary line in order to split the commit tag 
+		   from the commit message. */
 	    
-	    size_t splitPos = line.find(' ');
-	    if( splitPos != std::string::npos ) {
-		std::string rightRevision = line.substr(0,splitPos);
-		std::string title = line.substr(splitPos);
+		size_t splitPos = line.find(' ');
+		if( splitPos != std::string::npos ) {
+		    std::string rightRevision = line.substr(0,splitPos);
+		    std::string title = line.substr(splitPos);
 		
-		/* \todo '\n' at end of line? */
-		std::cout << "<a";
-		std::cout << " href=\"/diff?document=/" << s.docAsUrl() 
-			  << "&right=" << rightRevision << "\""; 		
-		std::cout << " title=\"" << title << "\"";
-		std::cout << ">";
-		std::cout << rightRevision.substr(0,10);
-		std::cout << "...</a>";
+		    /* \todo '\n' at end of line? */
+		    std::cout << "<a";
+		    std::cout << " href=\"/diff?document=/" << s.docAsUrl() 
+			      << "&right=" << rightRevision << "\""; 		
+		    std::cout << " title=\"" << title << "\"";
+		    std::cout << ">";
+		    std::cout << rightRevision.substr(0,10);
+		    std::cout << "...</a>";
+		}
 	    }
+	    std::cout << std::endl;
+	    std::cout << "</div>" << std::endl;
+	    std::cout << std::endl;
 	}
-	std::cout << std::endl;
-	std::cout << "</div>" << std::endl;
-	std::cout << std::endl;
     }
 }
 

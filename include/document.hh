@@ -31,27 +31,27 @@
 
 class document {
 protected:
-	void open( boost::filesystem::ifstream& strm, 
-			   const boost::filesystem::path& pathname ) const;
-
+    void open( boost::filesystem::ifstream& strm, 
+	       const boost::filesystem::path& pathname ) const;
+    
 public:
-	virtual void fetch( session& s, 
-						const boost::filesystem::path& pathname ) = 0;
-
-	/** returns *pathname* as a relative path from *base*.
-	 */
-	static boost::filesystem::path relativePath( 
-		      const boost::filesystem::path& pathname,
-			  const boost::filesystem::path& base );
-
-	/** Directory root of a tree starting from *leaf* looking for a file 
-		named *trigger*. The search will stop once we reach *topSrc*.
-
-		If the trigger cannot be found, the method returns an empty path.
-	*/
-	boost::filesystem::path root( const session& s,
-								  const boost::filesystem::path& leaf,
-								  const boost::filesystem::path& trigger );
+    virtual void fetch( session& s, 
+			const boost::filesystem::path& pathname ) = 0;
+    
+    /** returns *pathname* as a relative path from *base*.
+     */
+    static boost::filesystem::path relativePath( 
+		const boost::filesystem::path& pathname,
+		const boost::filesystem::path& base );
+    
+    /** Directory root of a tree starting from *leaf* looking for a file 
+	named *trigger*. The search will stop once we reach *topSrc*.
+	
+	If the trigger cannot be found, the method returns an empty path.
+    */
+    boost::filesystem::path root( const session& s,
+				  const boost::filesystem::path& leaf,
+				  const boost::filesystem::path& trigger );
 };
 
 

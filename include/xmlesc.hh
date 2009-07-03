@@ -23,55 +23,49 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardxmltok
-#define guardxmltok
+#ifndef guardxmlesc
+#define guardxmlesc
 
 #include <iterator>
 
-enum xmlToken {
-    xmlErr,
-    xmlName,
-    xmlSpace,
-    xmlAssign,
-    xmlContent,
-    xmlEndDecl,
-    xmlAttValue,
-    xmlStartDecl   
+enum xmlEscToken {
+    escErr,
+    escData,
+    escLtEscape,
+    escGtEscape
 };
 
-extern const char *xmlTokenTitles[];
+extern const char *xmlEscTokenTitles[];
 
 
 /** Interface for callbacks from the xmlTokenizer
  */
-class xmlTokListener {
+class xmlEscTokListener {
 public:
-    xmlTokListener() {}
+    xmlEscTokListener() {}
     
     virtual void newline() = 0;
     
-    virtual void token( xmlToken token, const char *line, 
+    virtual void token( xmlEscToken token, const char *line, 
 			int first, int last, bool fragment ) = 0;
 };
 
 
-class xmlTokenizer {
+class xmlEscTokenizer {
 protected:
 	void *state;
 	int first;
-	xmlToken tok;
-	int hexQuads;
-	char expects;
-	xmlTokListener *listener;
+	xmlEscToken tok;
+	xmlEscTokListener *listener;
 
 public:
-    xmlTokenizer() 
-	: state(NULL), first(0), tok(xmlErr), listener(NULL) {}
+    xmlEscTokenizer() 
+	: state(NULL), first(0), tok(escErr), listener(NULL) {}
 
-    xmlTokenizer( xmlTokListener& l ) 
-	: state(NULL), first(0), tok(xmlErr), listener(&l) {}
+    xmlEscTokenizer( xmlEscTokListener& l ) 
+	: state(NULL), first(0), tok(escErr), listener(&l) {}
     
-    void attach( xmlTokListener& l ) { listener = &l; }
+    void attach( xmlEscTokListener& l ) { listener = &l; }
 
     void tokenize( const char *line, size_t n );
 };

@@ -30,16 +30,17 @@ include $(shell dws context prefix.mk)
 
 .PHONY: configure_apache
 
-bins 		:=	wiki
+bins 		:=	seed
 libs		:=	libseed.a
 
-libseed.a: auth.o composer.o changelist.o xmltok.o cpptok.o \
-	   document.o gitcmd.o projfiles.o session.o xslview.o webserve.o
+libseed.a: auth.o composer.o changelist.o download.o xmltok.o cpptok.o \
+	   document.o gitcmd.o projfiles.o session.o xmlesc.o \
+	   xslview.o webserve.o
 
 session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dws context)\" $(OUTPUT_OPTION) $<
 
-wiki: wiki.cc libseed.a \
+seed: seed.cc libseed.a \
 	libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 

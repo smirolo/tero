@@ -35,6 +35,7 @@
 #include "changelist.hh"
 #include "composer.hh"
 #include "cppcode.hh"
+#include "download.hh"
 #include "projfiles.hh"
 #include "xslview.hh"
 #include "webserve.hh"
@@ -118,7 +119,7 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
 	    || s.vars["view"] == "/" ) {
-	    cout << redirect("index") << htmlContent << endl;
+	    cout << redirect("index.book") << htmlContent << endl;
 	    
 	} else {	    
 	    path uiPath(s.vars["uiDir"] + std::string(s.exists() ? 
@@ -173,20 +174,27 @@ int main( int argc, char *argv[] )
 	    
 	    xslview xslt;
 	    docs.add("document",boost::regex(".*\\.xslt"),xslt);
+
+	    linkLight leftFormatedText(s);
+	    linkLight rightFormatedText(s);
+	    text formatedText(leftFormatedText,rightFormatedText);
+	    docs.add("document",boost::regex(".*\\.book"),formatedText);
 	    
-	    linkLight leftLinkText(s);
-	    linkLight rightLinkText(s);
+	    htmlEscaper leftLinkText;
+	    htmlEscaper rightLinkText;
 	    text rawtext(leftLinkText,rightLinkText);
 	    docs.add("document",boost::regex(".*"),rawtext);
-	    
+
+	    download dlcmd;
+
 	    docs.add("view",boost::regex("/cancel"),cel);
+	    docs.add("view",boost::regex("/download"),dlcmd);
 	    docs.add("view",boost::regex("/edit"),edit);
 	    docs.add("view",boost::regex("/login"),li);
 	    docs.add("view",boost::regex("/logout"),lo);
 	    docs.add("view",boost::regex("/save"),chg);
 	    docs.add("view",boost::regex(".*"),pres);
 	    
-	    s.show(cerr);			
 	    docs.fetch(s,"view");
 	}
 	

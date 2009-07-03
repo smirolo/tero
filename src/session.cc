@@ -23,6 +23,7 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include <unistd.h>
 #include "session.hh"
 
 static std::string nullString("");
@@ -116,6 +117,7 @@ void session::restore( const boost::program_options::variables_map& params )
     options_description	opts;
     opts.add_options()
 		("binDir",value<std::string>(),"path to outside executables")
+		("cacheTop",value<std::string>(),"path to packages repository")
 		("srcTop",value<std::string>(),"path to document top")
 		("uiDir",value<std::string>(),"path to user interface elements");
     boost::program_options::store(parse_config_file(istr,opts,true),configVars);
@@ -135,6 +137,11 @@ void session::restore( const boost::program_options::variables_map& params )
        clause. */
     if( params["document"].empty() ) {
 	vars["document"] = vars["view"];
+    }
+
+    session::variables::const_iterator v = vars.find("username");
+    if( v != vars.end() ) {
+	username = v->second;
     }
     
     /* 3. load session specific information */
@@ -170,6 +177,16 @@ void session::restore( const boost::program_options::variables_map& params )
 		}
 	    }
 	    sessions.close();
+	}
+    }
+
+    /* set the username to the value of LOGNAME in case no information
+       can be retrieved for the session. It helps with keeping track
+       of time spent with a shell command line. */
+    if( username.empty() ) {
+	char *logName = getenv("LOGNAME");
+	if( logName != NULL ) {
+	    username = logName;
 	}
     }
 }

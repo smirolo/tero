@@ -30,6 +30,7 @@
 #include "session.hh"
 #include "cpptok.hh"
 #include "xmltok.hh"
+#include "xmlesc.hh"
 
 /* Decorators are used to highjack the underlying buffer of an ostream
    in order to format the text sent to the ostream.
@@ -64,35 +65,35 @@ protected:
 
 public:
     explicit basicDecorator( std::basic_streambuf<charT,traitsT> *sb, 
-							 bool formated = false )
-		: super(sb), next(NULL), nextBuf(sb), pre(formated) {
-	}
-
-	virtual ~basicDecorator() {}
-
-	/** \brief Attach the decorator to a basic_ostream
-
-		After the call returns, all text sent to the basic_ostream will appear
-		decorated in the final output.
-	 */
-	virtual void attach(  std::basic_ostream<charT, traitsT>& o ) = 0;
-
-	/** Detach the decorator from a basic_ostream
-
-		After the call returns, the decorator will no longer preprocess 
-		the text sent to the basic_ostream.
-	 */
-	virtual void detach() = 0;
-
-	/** True when the decorator formats the underlying stream layout.
-
-		When *formated* is True, an HTML processor will emit <pre> and </pre>
-		tags around the decorated text. When *formated* is false, an HTML 
-		processor will assume that spaces and carriage returns are not 
-		formatters.
-	 */
-	bool formated() const { return pre; }
-
+			     bool formated = false )
+	: super(sb), next(NULL), nextBuf(sb), pre(formated) {
+    }
+    
+    virtual ~basicDecorator() {}
+    
+    /** \brief Attach the decorator to a basic_ostream
+	
+	After the call returns, all text sent to the basic_ostream will appear
+	decorated in the final output.
+    */
+    virtual void attach(  std::basic_ostream<charT, traitsT>& o ) = 0;
+    
+    /** Detach the decorator from a basic_ostream
+	
+	After the call returns, the decorator will no longer preprocess 
+	the text sent to the basic_ostream.
+    */
+    virtual void detach() = 0;
+    
+    /** True when the decorator formats the underlying stream layout.
+	
+	When *formated* is True, an HTML processor will emit <pre> and </pre>
+	tags around the decorated text. When *formated* is false, an HTML 
+	processor will assume that spaces and carriage returns are not 
+	formatters.
+    */
+    bool formated() const { return pre; }
+    
 };
 
 typedef basicDecorator<char> decorator;
@@ -131,50 +132,43 @@ template<typename tokenizerT, typename charT,
 class basicHighLight : public basicDecorator<charT, traitsT> {
 protected:
 	typedef basicDecorator<charT, traitsT> super;
-	using basicDecorator<charT, traitsT>::next;
-	using basicDecorator<charT, traitsT>::nextBuf;
-	
+
 private:
     class buffer : public std::basic_stringbuf<charT, traitsT> {
     public:
-		using		std::basic_stringbuf<charT, traitsT>::gbump;
-		using		std::basic_stringbuf<charT, traitsT>::gptr;
-		using		std::basic_stringbuf<charT, traitsT>::pptr;
-
-		explicit buffer( basicHighLight& d ) 
-			: std::basic_stringbuf<charT, traitsT>(),
-			  decorator(d) {}
-		
-		int sync() { return decorator.sync(); }
-		
-		basicHighLight& decorator;
+	using std::basic_stringbuf<charT, traitsT>::gbump;
+	using std::basic_stringbuf<charT, traitsT>::gptr;
+	using std::basic_stringbuf<charT, traitsT>::pptr;
+	
+	explicit buffer( basicHighLight& d ) 
+	    : std::basic_stringbuf<charT, traitsT>(),
+	      decorator(d) {}
+	
+	int sync() { return decorator.sync(); }
+	
+	basicHighLight& decorator;
     };
-    
-	basicHighLight( const basicHighLight& ); // not defined
-    basicHighLight& operator=(const basicHighLight& ); // not defined
-   
-    buffer buf;
+
+   buffer buf;
 
 protected:
-	tokenizerT tokenizer;
-
-	void scan();
-
+    tokenizerT tokenizer;
+    
+    void scan();
+    
 public:
-	explicit basicHighLight( bool formated );
-
+    explicit basicHighLight( bool formated );
+    
     explicit basicHighLight( std::basic_ostream<charT,traitsT>& o, 
-							 bool formated = false );
+			     bool formated = false ); 
 
-	virtual ~basicHighLight() {
-		detach();
-	}
+    ~basicHighLight();
 
-	virtual void attach( std::ostream& o );
+    virtual void attach( std::ostream& o );
 
-	virtual void detach();
+    void detach();
 
-    int	sync();
+    int sync();
 
 };
 
@@ -182,67 +176,63 @@ public:
 /** \brief Decorate links with load, create and external. 
  */
 template<typename charT, typename traitsT = std::char_traits<charT> >
+class basicHtmlEscaper : public basicHighLight<xmlEscTokenizer, charT, traitsT>,
+			 public xmlEscTokListener {
+protected:
+    typedef basicHighLight<xmlEscTokenizer, charT, traitsT> super;
+    
+public:
+    basicHtmlEscaper() 
+	: super(true) { 
+	super::tokenizer.attach(*this); 
+    }
+    
+    explicit basicHtmlEscaper(  std::basic_ostream<charT,traitsT>& o )
+	: super(o,true) { super::tokenizer.attach(*this); }
+    
+    void newline() {
+	super::nextBuf->sputc('\n');
+    }
+    
+    void token( xmlEscToken token, const char *line, 
+		int first, int last, bool fragment );
+    
+};
+
+typedef basicHtmlEscaper<char> htmlEscaper;
+
+
+/** \brief Decorate links with load, create and external. 
+ */
+template<typename charT, typename traitsT = std::char_traits<charT> >
 class basicLinkLight : public basicHighLight<xmlTokenizer, charT, traitsT>,
-					   public xmlTokListener {
+		       public xmlTokListener {
 protected:
     typedef basicHighLight<xmlTokenizer, charT, traitsT> super;
 
-	enum {
-		linkStartState,
-		linkWaitAttState
-	} state;
-
-	session* context;
+    enum {
+	linkStartState,
+	linkWaitAttState
+    } state;
+    
+    session* context;
     
 public:
-	explicit basicLinkLight( session& s ) 
-		: super(false), context(&s) { 
-		super::tokenizer.attach(*this); 
-	}
-
+    explicit basicLinkLight( session& s ) 
+	: super(false), context(&s) { 
+	super::tokenizer.attach(*this); 
+    }
+    
     explicit basicLinkLight(  session& s, std::basic_ostream<charT,traitsT>& o )
-		: super(o,false), context(&s) { super::tokenizer.attach(*this); }
-
-	void newline() {
-		super::nextBuf->sputc('\n');
-	}
-
-	void token( xmlToken token, const char *line, 
-				int first, int last, bool fragment ) {
-		super::nextBuf->sputn(&line[first],last - first);
-		switch( token ) {
-		case xmlStartDecl:
-		case xmlEndDecl:
-			/* Reset the state machine */ 
-			state = linkStartState;
-			break;
-		case xmlName:
-			if( strncmp(&line[first],"href",std::min(last - first,4)) == 0 ) {
-				/* Wait for attribute value */
-				state = linkWaitAttState;
-			}
-			break;
-		case xmlAttValue:
-			/* Categorize link */ 
-			if( state == linkWaitAttState ) {
-				std::string name(&line[first + 1],last - first - 2);
-				url u(name);
-				if( u.absolute() ) {
-					std::string absolute(" class=\"outside\"");
-					super::nextBuf->sputn(absolute.c_str(),absolute.size());
-				} else {
-					boost::filesystem::path f = context->findFile(name);
-					if( f.empty() ) {
-						std::string absolute(" class=\"new\"");
-						super::nextBuf->sputn(absolute.c_str(),absolute.size());
-					}
-				}
-			}
-			state = linkStartState;
-			break;
-		}	
-	}
-
+	: super(o,false), context(&s) { super::tokenizer.attach(*this); }
+    
+    void newline() {
+	super::nextBuf->sputc('\n');
+    }
+    
+    void token( xmlToken token, const char *line, 
+		int first, int last, bool fragment );
+    
 };
 
 typedef basicLinkLight<char> linkLight;
@@ -254,71 +244,25 @@ template<typename charT, typename traitsT = std::char_traits<charT> >
 class basicCppLight : public basicHighLight<cppTokenizer,charT,traitsT>,
                        public cppTokListener {
 protected:
-	bool preprocessing;
-	bool virtualLineBreak;
+    bool preprocessing;
+    bool virtualLineBreak;
     typedef basicHighLight<cppTokenizer,charT, traitsT>  super;
-
+    
 public:
-	basicCppLight() 
-		: super(true), preprocessing(false), virtualLineBreak(false) { 
-		super::tokenizer.attach(*this); 
-	}
-
+    basicCppLight() 
+	: super(true), preprocessing(false), virtualLineBreak(false) { 
+	super::tokenizer.attach(*this); 
+    }
+    
     explicit basicCppLight( std::basic_ostream<charT,traitsT>& o )
-		: super(o,true), preprocessing(false), virtualLineBreak(false) { 
-		super::tokenizer.attach(*this); 
-	}
-
-	void newline() {
-		if( preprocessing ) {
-			std::string endSpan("</span>");
-			super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
-		}
-		super::nextBuf->sputc('\n');
-		if( virtualLineBreak ) {
-			std::string staSpan("<span class=\"");
-			super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
-			super::nextBuf->sputn(cppTokenTitles[cppPreprocessing],
-								  strlen(cppTokenTitles[cppPreprocessing]));
-			super::nextBuf->sputc('"');
-			super::nextBuf->sputc('>');
-		} else {
-			preprocessing = false;
-		}
-	}
-
-	void token( cppToken token, const char *line, int first, int last, bool fragment ) {
-		std::string staSpan("<span class=\"");
-		std::string endSpan("</span>");
-		if( !preprocessing ) {
-			super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
-			super::nextBuf->sputn(cppTokenTitles[token],
-								  strlen(cppTokenTitles[token]));
-			super::nextBuf->sputc('"');
-			super::nextBuf->sputc('>');
-			if( token == cppPreprocessing ) preprocessing = true;
-		}
-		if( token != cppComment ) {
-			/* Special caracters are not replaced within comments
-			   such that they can be used to mark up text as html. */
-			for( ; first != last; ++first ) {
-				switch( line[first] ) {
-				case '<':
-					super::nextBuf->sputn("&lt;",4);
-					break;
-				case '>':
-					super::nextBuf->sputn("&gt;",4);
-					break;
-				default:
-					super::nextBuf->sputc(line[first]);
-				}
-			}
-		}
-		if( !preprocessing ) {
-			super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
-		}
-		virtualLineBreak = fragment;
-	}
+	: super(o,true), preprocessing(false), virtualLineBreak(false) { 
+	super::tokenizer.attach(*this); 
+    }
+    
+    void newline();
+    
+    void token( cppToken token, const char *line, 
+		int first, int last, bool fragment );
 };
 
 typedef basicCppLight<char> cppLight;

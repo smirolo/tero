@@ -10,7 +10,7 @@
 
 <body>
 
-<div id="header"><a href="/index">CODESPIN</a></div>
+<div id="header"><a href="/index.book">CODESPIN</a></div>
 <div id="title"><!-- tmpl_var name='blog_title' -->${document}</div>
 
 <div id="sidebar">
@@ -29,15 +29,18 @@
   <div class="MenuWidget">
     <h3>contributor</h3>
     <p>
-    <a href="http://www.linkedin.com/pub/sebastien-mirolo/0/224/976">profile</a>
+    <a href="/contributors/smirolo/profile.book">profile</a>
     <br />
     <a href="/personal/smirolo/blog">blog</a><br />
     </p>
-    <h3>project</h3>
+    <h3>projects</h3>
 <p>
-    <a href="/drop/index">drop</a><br />
-    <a href="/seed/index">seed</a>
+    <a href="/drop/index.book">drop</a><br />
+    <a href="/seed/index.book">seed</a>
 </p>
+<!--<p>
+    <a href="/download">downloads</a><br />
+</p>-->
   </div>
   <a href="#history"></a>
   <a href="#projfiles"></a>
