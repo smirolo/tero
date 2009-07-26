@@ -70,9 +70,37 @@ p {
 	}
 
 table {
+    border-width: 1px;
+    border-spacing: 0px;
+	border-style: solid;
+	border-collapse: collapse;
 	font-size:12px;
 	text-align: center;
 	}
+
+
+td {
+    border-width: 1px;
+	border-style: inset;
+	padding: 3px;
+}
+
+th {
+    border-width: 1px;
+	border-style: inset;
+padding: 3px;
+}
+
+table.entry {
+	border-style: none;
+}
+
+td.entry {
+    padding: 5px;
+    vertical-align: top;
+    text-align: left;
+    border-style: none;
+}
 
 #header {
 }
@@ -131,18 +159,18 @@ p {
 	}
 */
 
-div.entry {
-	margin-left: 200px;
-/*	margin:0px 50px 50px 200px; */
-/*	padding:10px; */
-}
 
 #sidebar {
-	float: left;
-	width: 150px;
-	margin:10px 10px 10px 10px;
-/*	margin:0px 50px 50px 200px; */
-/*	padding:10px; */
+ display: inline;
+ width: 150px;
+ float: left;
+ margin:10px 10px 10px 10px;
+}
+
+
+#entry {
+    margin-left: 200px;
+    
 }
 
 #Change {
@@ -154,9 +182,6 @@ div.entry {
 	line-height:17px; 
 	padding:10px; 
 	margin:10px 0px 0px 0px;
-/* Again, the ugly brilliant hack. 
-	voice-family: "\"}\"";
-	voice-family:inherit; */
 	}
 
 div.MenuWidget {
@@ -168,9 +193,6 @@ div.MenuWidget {
 	line-height:17px; 
 	padding:10px; 
 	margin:10px 0px 0px 0px;
-/* Again, the ugly brilliant hack. 
-	voice-family: "\"}\"";
-	voice-family:inherit; */
 	}
 
 #Menu {
@@ -182,10 +204,8 @@ div.MenuWidget {
 	margin:10px 0px 0px 0px;
 	line-height:17px; 
 	padding:10px;
-/* Again, the ugly brilliant hack.
-	voice-family: "\"}\"";
-	voice-family:inherit;*/ 
 	}
+
 
 tr.diffConflict { background-color:#ff6c6c; }
 tr.diffNoConflict { background-color:#a0ff6d; }

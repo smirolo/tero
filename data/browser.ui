@@ -46,8 +46,17 @@
   <a href="#projfiles"></a>
 </div>
 
-<div class="entry">
+<div id="entry">
+  <table class="entry">
+    <tr>
+      <td class="entry">
 	<a href="#document"></a>
+      </td>
+      <td class="entry">
+	<img src="/dev/seed/data/120_600_ad.png" />
+      </td>
+    </tr>
+    </table>
 </div>
 
 </body>

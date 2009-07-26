@@ -34,7 +34,6 @@
 #include "auth.hh"
 #include "changelist.hh"
 #include "composer.hh"
-#include "cppcode.hh"
 #include "download.hh"
 #include "projfiles.hh"
 #include "xslview.hh"
