@@ -70,9 +70,11 @@ public:
 	be interpreted as a relative path, the following directories
 	are searched until a match is found:
 	- pwd
-	- topSrc
+	- buildTop
+	- srcTop
     */
-    boost::filesystem::path pathname( const std::string& name ) const;
+    boost::filesystem::path 
+    abspath( const std::string& name ) const;
     
     boost::filesystem::path 
     findFile( const boost::filesystem::path& name ) const;

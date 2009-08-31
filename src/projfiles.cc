@@ -39,7 +39,7 @@ bool projfiles::selects( const boost::filesystem::path& pathname ) const {
 
 
 void projfiles::dirLink( const session& s, 
-						 const boost::filesystem::path& dir ) const {
+			 const boost::filesystem::path& dir ) const {
     std::string href = dir.string();
     std::string srcTop = s.vars.find("srcTop")->second;
     if( href.compare(0,srcTop.size(),srcTop) == 0 ) {

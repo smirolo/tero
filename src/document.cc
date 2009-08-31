@@ -29,30 +29,13 @@
 #include <boost/system/error_code.hpp>
 #include "document.hh"
 
-boost::filesystem::path 
-document::relativePath( const boost::filesystem::path& pathname,
-			const boost::filesystem::path& base ) {
-    boost::filesystem::path::iterator first = pathname.begin();
-    boost::filesystem::path::iterator second = base.begin();
-    boost::filesystem::path result;
-    
-    for( ; first != pathname.end() & second != base.end(); 
-		 ++first, ++second ) {
-		if( *first != *second ) break;
-    }
-    for( ; first != pathname.end(); ++first ) {
-		result /= *first;
-    }
-    return result;
-}
-
 
 boost::filesystem::path document::root( const session& s,
 					const boost::filesystem::path& leaf,
 					const boost::filesystem::path& trigger )
 {
     using namespace boost::filesystem;
-    std::string srcTop = s.vars.find("srcTop")->second;
+    std::string srcTop = s.valueOf("srcTop");
     path dirname = leaf;
     if( !is_directory(dirname) ) {
 	dirname.remove_leaf();
@@ -110,209 +93,214 @@ void dispatch::add( const std::string& varname, const boost::regex& r,
 
 
 void dispatch::fetch( session& s, const std::string& varname ) {
-	document* doc = select(varname,s.vars[varname]);
-	if( doc != NULL ) {
-		doc->fetch(s,boost::filesystem::path(root.string() + s.vars[varname]));
-	}
+    document* doc = select(varname,s.vars[varname]);
+    if( doc != NULL ) {
+#if 1
+	boost::filesystem::path docname = s.abspath(varname);
+#else
+	boost::filesystem::path docname(root.string() + s.vars[varname]);
+#endif
+	doc->fetch(s,docname);
+    }
 }
 
 
 document* dispatch::select( const std::string& name, 
-							const std::string& value ) const {
-	presentationSet::const_iterator view = views.find(name);
+			    const std::string& value ) const {
+    presentationSet::const_iterator view = views.find(name);
     if( view != views.end() ) {
-		const aliasSet& aliases = view->second;
-		for( aliasSet::const_iterator alias = aliases.begin(); 
-			 alias != aliases.end(); ++alias ) {
-			if( regex_match(value,alias->first) ) {
-				return alias->second;
-			}
-		}
+	const aliasSet& aliases = view->second;
+	for( aliasSet::const_iterator alias = aliases.begin(); 
+	     alias != aliases.end(); ++alias ) {
+	    if( regex_match(value,alias->first) ) {
+		return alias->second;
+	    }
+	}
     }
-	return NULL;
+    return NULL;
 }
 
 
 void text::showSideBySide( std::istream& input,
-						    std::istream& diff,
-						    bool inputIsLeftSide ) {
-	using namespace std;
-
-	std::stringstream left, right;
-	size_t leftLine = 1;
-	bool areDiffBlocks = false;
+			   std::istream& diff,
+			   bool inputIsLeftSide ) {
+    using namespace std;
+    
+    std::stringstream left, right;
+    size_t leftLine = 1;
+    bool areDiffBlocks = false;
     int nbLeftLinesAhead, nbRightLinesAhead;
-	char leftMarker = inputIsLeftSide ? '-' : '+';
-	char rightMarker = inputIsLeftSide ? '+' : '-';
-
+    char leftMarker = inputIsLeftSide ? '-' : '+';
+    char rightMarker = inputIsLeftSide ? '+' : '-';
+    
 #if 1
 	leftDec->attach(left);
 	rightDec->attach(right);
 #endif
-    while( !diff.eof() ) {
-		std::string line;
-		getline(diff,line);
-		if( line.compare(0,3,"+++") == 0
-			|| line.compare(0,3,"---") == 0 ) {
-			
-		} else if( line.compare(0,2,"@@") == 0 ) {
-			if( areDiffBlocks ) {
-				cout << "<tr class=\"diffConflict\">" << endl;
-				cout << "<td>" << endl;
-				if( leftDec->formated() ) cout << "<pre>" << endl;
-				cout << left.str();
-				if( nbLeftLinesAhead < nbRightLinesAhead ) {
-					for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
-						cout << std::endl;
-					}
-				} 
-				if( leftDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				
-				cout << "<td>" << endl;
-				if( rightDec->formated() ) cout << "<pre>" << endl;
-				cout << right.str();
-				if(  nbLeftLinesAhead > nbRightLinesAhead ) {
-					for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
-						cout << endl;
-					}
-				}
-				if( rightDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				cout << "</tr>" << endl;
-				left.str("");
-				right.str("");
-			}
-
-			char *p = strchr(line.c_str(),leftMarker);
-			size_t start = atoi(&p[1]);
-			/* read left file until we hit the start line */
-			std::cerr << "read " << (start - leftLine)  << " lines from input file." << std::endl; 
-			while( leftLine < start ) {
-				std::string l;
-				getline(input,l);
-				left << l << endl;
-				right << l << endl;
-				++leftLine;
-			}
-			nbLeftLinesAhead = nbRightLinesAhead = 0;
-			areDiffBlocks = false;
-
-		} else if( line[0] == rightMarker ) {
-			if( !areDiffBlocks & !left.str().empty() ) {
-				cout << "<tr>" << endl;
-				cout << "<td>" << endl;
-				if( leftDec->formated() ) cout << "<pre>" << endl;
-				cout << left.str();
-				if( leftDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				cout << "<td>" << endl;
-				if( rightDec->formated() ) cout << "<pre>" << endl;
-				cout << right.str();
-				if( rightDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				cout << "</tr>" << endl;
-				left.str("");
-				right.str("");
-			}
-			++nbRightLinesAhead;
-			areDiffBlocks = true;
-			right << line.substr(1) << endl;
-
-		} else if( line[0] == leftMarker ) {
-			if( !areDiffBlocks & !left.str().empty() ) {
-				cout << "<tr>" << endl;
-				cout << "<td>" << endl;
-				if( leftDec->formated() ) cout << "<pre>" << endl;
-				cout << left.str();
-				if( leftDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				cout << "<td>" << endl;
-				if( rightDec->formated() ) cout << "<pre>" << endl;
-				cout << right.str();
-				if( rightDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				cout << "</tr>" << endl;
-				left.str("");
-				right.str("");
-			}
-			std::string l;
-			getline(input,l);
-			++nbLeftLinesAhead;
-			areDiffBlocks = true;
-			left << l << endl;
-			++leftLine;
-
-		} else if( line[0] == ' ' ) {
-			if( areDiffBlocks ) {
-				cout << "<tr class=\"diff" 
-					 << ((!left.str().empty() & !right.str().empty()) ? "" : "No") 
-					 << "Conflict\">" << endl;
-				cout << "<td>" << endl;
-				if( leftDec->formated() ) cout << "<pre>" << endl;
-				cout << left.str();
-				if( nbLeftLinesAhead < nbRightLinesAhead ) {
-					for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
-						cout << std::endl;
-					}
-				} 
-				if( leftDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				
-				cout << "<td>" << endl;
-				if( rightDec->formated() ) cout << "<pre>" << endl;
-				cout << right.str();
-				if(  nbLeftLinesAhead > nbRightLinesAhead ) {
-					for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
-						cout << endl;
-					}
-				}
-				if( rightDec->formated() ) cout << "</pre>" << endl;
-				cout << "</td>" << endl;
-				cout << "</tr>" << endl;
-				left.str("");
-				right.str("");
-				areDiffBlocks = false;
-				nbLeftLinesAhead = nbRightLinesAhead = 0;
-			}
-			std::string l;
-			getline(input,l);
-			left << l << endl;
-			++leftLine;
-			right << line.substr(1) << endl;
-		}
-    }
-	if( !left.str().empty() | !right.str().empty() ) {
+	while( !diff.eof() ) {
+	    std::string line;
+	    getline(diff,line);
+	    if( line.compare(0,3,"+++") == 0
+		|| line.compare(0,3,"---") == 0 ) {
+		
+	    } else if( line.compare(0,2,"@@") == 0 ) {
 		if( areDiffBlocks ) {
-			cout << "<tr class=\"diff" 
-				 << ((!left.str().empty() & !right.str().empty()) ? "" : "No") 
-				 << "Conflict\">" << endl;
-		} else {
-			cout << "<tr>" << endl;
-		}
-		cout << "<td>" << endl;
-		if( leftDec->formated() ) cout << "<pre>" << endl;
-		cout << left.str();
-		if( nbLeftLinesAhead < nbRightLinesAhead ) {
+		    cout << "<tr class=\"diffConflict\">" << endl;
+		    cout << "<td>" << endl;
+		    if( leftDec->formated() ) cout << "<pre>" << endl;
+		    cout << left.str();
+		    if( nbLeftLinesAhead < nbRightLinesAhead ) {
 			for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
-				cout << std::endl;
+			    cout << std::endl;
 			}
-		} 
-		if( leftDec->formated() ) cout << "</pre>" << endl;
-		cout << "</td>" << endl;
-		cout << "<td>" << endl;
-		if( rightDec->formated() ) cout << "<pre>" << endl;
-		cout << right.str();
-		if(  nbLeftLinesAhead > nbRightLinesAhead ) {
+		    } 
+		    if( leftDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    
+		    cout << "<td>" << endl;
+		    if( rightDec->formated() ) cout << "<pre>" << endl;
+		    cout << right.str();
+		    if(  nbLeftLinesAhead > nbRightLinesAhead ) {
 			for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
-				cout << endl;
+			    cout << endl;
 			}
+		    }
+		    if( rightDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    cout << "</tr>" << endl;
+		    left.str("");
+		    right.str("");
 		}
-		if( rightDec->formated() ) cout << "</pre>" << endl;
-		cout << "</td>" << endl;
-		cout << "</tr>" << endl;
-		left.str("");
-		right.str("");
+		
+		char *p = strchr(line.c_str(),leftMarker);
+		size_t start = atoi(&p[1]);
+		/* read left file until we hit the start line */
+		std::cerr << "read " << (start - leftLine)  << " lines from input file." << std::endl; 
+		while( leftLine < start ) {
+		    std::string l;
+		    getline(input,l);
+		    left << l << endl;
+		    right << l << endl;
+		    ++leftLine;
+		}
+		nbLeftLinesAhead = nbRightLinesAhead = 0;
+		areDiffBlocks = false;
+		
+	    } else if( line[0] == rightMarker ) {
+		if( !areDiffBlocks & !left.str().empty() ) {
+		    cout << "<tr>" << endl;
+		    cout << "<td>" << endl;
+		    if( leftDec->formated() ) cout << "<pre>" << endl;
+		    cout << left.str();
+		    if( leftDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    cout << "<td>" << endl;
+		    if( rightDec->formated() ) cout << "<pre>" << endl;
+		    cout << right.str();
+		    if( rightDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    cout << "</tr>" << endl;
+		    left.str("");
+		    right.str("");
+		}
+		++nbRightLinesAhead;
+		areDiffBlocks = true;
+		right << line.substr(1) << endl;
+		
+	    } else if( line[0] == leftMarker ) {
+		if( !areDiffBlocks & !left.str().empty() ) {
+		    cout << "<tr>" << endl;
+		    cout << "<td>" << endl;
+		    if( leftDec->formated() ) cout << "<pre>" << endl;
+		    cout << left.str();
+		    if( leftDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    cout << "<td>" << endl;
+		    if( rightDec->formated() ) cout << "<pre>" << endl;
+		    cout << right.str();
+		    if( rightDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    cout << "</tr>" << endl;
+		    left.str("");
+		    right.str("");
+		}
+		std::string l;
+		getline(input,l);
+		++nbLeftLinesAhead;
+		areDiffBlocks = true;
+		left << l << endl;
+		++leftLine;
+		
+	    } else if( line[0] == ' ' ) {
+		if( areDiffBlocks ) {
+		    cout << "<tr class=\"diff" 
+			 << ((!left.str().empty() & !right.str().empty()) ? "" : "No") 
+			 << "Conflict\">" << endl;
+		    cout << "<td>" << endl;
+		    if( leftDec->formated() ) cout << "<pre>" << endl;
+		    cout << left.str();
+		    if( nbLeftLinesAhead < nbRightLinesAhead ) {
+			for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
+			    cout << std::endl;
+			}
+		    } 
+		    if( leftDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    
+		    cout << "<td>" << endl;
+		    if( rightDec->formated() ) cout << "<pre>" << endl;
+		    cout << right.str();
+		    if(  nbLeftLinesAhead > nbRightLinesAhead ) {
+			for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
+			    cout << endl;
+			}
+		    }
+		    if( rightDec->formated() ) cout << "</pre>" << endl;
+		    cout << "</td>" << endl;
+		    cout << "</tr>" << endl;
+		    left.str("");
+		    right.str("");
+		    areDiffBlocks = false;
+		    nbLeftLinesAhead = nbRightLinesAhead = 0;
+		}
+		std::string l;
+		getline(input,l);
+		left << l << endl;
+		++leftLine;
+		right << line.substr(1) << endl;
+	    }
+	}
+	if( !left.str().empty() | !right.str().empty() ) {
+	    if( areDiffBlocks ) {
+		cout << "<tr class=\"diff" 
+		     << ((!left.str().empty() & !right.str().empty()) ? "" : "No") 
+		     << "Conflict\">" << endl;
+	    } else {
+		cout << "<tr>" << endl;
+	    }
+	    cout << "<td>" << endl;
+	    if( leftDec->formated() ) cout << "<pre>" << endl;
+	    cout << left.str();
+	    if( nbLeftLinesAhead < nbRightLinesAhead ) {
+		for( int i = 0; i < (nbRightLinesAhead - nbLeftLinesAhead); ++i ) { 
+		    cout << std::endl;
+		}
+	    } 
+	    if( leftDec->formated() ) cout << "</pre>" << endl;
+	    cout << "</td>" << endl;
+	    cout << "<td>" << endl;
+	    if( rightDec->formated() ) cout << "<pre>" << endl;
+	    cout << right.str();
+	    if(  nbLeftLinesAhead > nbRightLinesAhead ) {
+		for( int i = 0; i < (nbLeftLinesAhead - nbRightLinesAhead); ++i ) { 
+		    cout << endl;
+		}
+	    }
+	    if( rightDec->formated() ) cout << "</pre>" << endl;
+	    cout << "</td>" << endl;
+	    cout << "</tr>" << endl;
+	    left.str("");
+	    right.str("");
 	}
 #if 1
 	leftDec->detach();
@@ -322,26 +310,26 @@ void text::showSideBySide( std::istream& input,
 
 
 void text::fetch( session& s, const boost::filesystem::path& pathname ) {
-	using namespace boost;
+    using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem; 
 
     ifstream strm;
     open(strm,pathname);
-	std::cout << htmlContent;
+    std::cout << htmlContent;
 
 #if 1
-	if( leftDec->formated() ) std::cout << "<pre>" << std::endl;
-	leftDec->attach(std::cout);
+    if( leftDec->formated() ) std::cout << "<pre>" << std::endl;
+    leftDec->attach(std::cout);
 #endif
     while( !strm.eof() ) {
-		std::string line;
-		std::getline(strm,line);
-		std::cout << line << std::endl;
+	std::string line;
+	std::getline(strm,line);
+	std::cout << line << std::endl;
     }
 #if 1
-	leftDec->detach();
-	if( leftDec->formated() ) std::cout << "</pre>" << std::endl;
+    leftDec->detach();
+    if( leftDec->formated() ) std::cout << "</pre>" << std::endl;
 #endif
     strm.close();
 }

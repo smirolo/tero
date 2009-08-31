@@ -38,12 +38,6 @@ public:
     virtual void fetch( session& s, 
 			const boost::filesystem::path& pathname ) = 0;
     
-    /** returns *pathname* as a relative path from *base*.
-     */
-    static boost::filesystem::path relativePath( 
-		const boost::filesystem::path& pathname,
-		const boost::filesystem::path& base );
-    
     /** Directory root of a tree starting from *leaf* looking for a file 
 	named *trigger*. The search will stop once we reach *topSrc*.
 	
@@ -57,56 +51,56 @@ public:
 
 class dispatch {
 public:
-	typedef std::map<std::string,std::string> variables;
+    typedef std::map<std::string,std::string> variables;
 
 protected:
-	typedef std::list<std::pair<boost::regex,document*> > aliasSet;
-	typedef std::map<std::string,aliasSet> presentationSet;
+    typedef std::list<std::pair<boost::regex,document*> > aliasSet;
+    typedef std::map<std::string,aliasSet> presentationSet;
 
-	boost::filesystem::path root;
-	presentationSet views;
+    boost::filesystem::path root;
+    presentationSet views;
 
 public:
-	explicit dispatch( const boost::filesystem::path& root );
+    explicit dispatch( const boost::filesystem::path& root );
 
-	static dispatch *instance;
+    static dispatch *instance;
 
-	void add( const std::string& varname, const boost::regex& r, 
-			  std::ostream& d );
+    void add( const std::string& varname, const boost::regex& r, 
+	      std::ostream& d );
 
-	void add( const std::string& varname, const boost::regex& r, 
-			  document& d );
+    void add( const std::string& varname, const boost::regex& r, 
+	      document& d );
 
-	void fetch( session& s, const std::string& varname );
+    void fetch( session& s, const std::string& varname );
 
-	/** \brief handler based on the type of document as filtered by dispatch.
-	 */
-	document* select( const std::string& name, const std::string& value ) const;
+    /** \brief handler based on the type of document as filtered by dispatch.
+     */
+    document* select( const std::string& name, const std::string& value ) const;
 
 };
 
 
 class text : public document {
 protected:
-	decorator *leftDec;
-	decorator *rightDec;
+    decorator *leftDec;
+    decorator *rightDec;
 
 public:
 
-	text( decorator& l,  decorator& r ) 
-		: leftDec(&l), rightDec(&r) {}
+    text( decorator& l,  decorator& r ) 
+	: leftDec(&l), rightDec(&r) {}
 
-	/** \brief show difference between two texts side by side 
+    /** \brief show difference between two texts side by side 
 
-		\param  doc              document to do syntax coloring
-		\param  input            showing on the left pane
-		\param  diff             difference between left and right pane
-		\param  inputIsLeftSide  true when input stream is left side
-	 */
-	void showSideBySide( std::istream& input, std::istream& diff, 
-						  bool inputIsLeftSide= true );
+	\param  doc              document to do syntax coloring
+	\param  input            showing on the left pane
+	\param  diff             difference between left and right pane
+	\param  inputIsLeftSide  true when input stream is left side
+    */
+    void showSideBySide( std::istream& input, std::istream& diff, 
+			 bool inputIsLeftSide= true );
 
-	virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
 
 };
 

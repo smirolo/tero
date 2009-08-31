@@ -23,9 +23,41 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include <time.h>
+#include <utime.h>
+#include <sys/stat.h>
 #include <sstream>
 #include <boost/regex.hpp>
 #include "webserve.hh"
+
+boost::posix_time::ptime
+getmtime( const boost::filesystem::path& pathname )
+{
+    using namespace boost::posix_time;
+
+    struct stat s; 
+    stat(pathname.string().c_str(), &s);
+    return from_time_t(s.st_mtime);       /* seconds since the epoch */
+}
+
+
+boost::filesystem::path 
+relpath( const boost::filesystem::path& pathname,
+	 const boost::filesystem::path& base ) {
+    boost::filesystem::path::iterator first = pathname.begin();
+    boost::filesystem::path::iterator second = base.begin();
+    boost::filesystem::path result;
+    
+    for( ; first != pathname.end() & second != base.end(); 
+		 ++first, ++second ) {
+		if( *first != *second ) break;
+    }
+    for( ; first != pathname.end(); ++first ) {
+		result /= *first;
+    }
+    return result;
+}
+
 
 htmlContentServe htmlContent;
 

@@ -9,6 +9,7 @@
 		<bin name="dws" />
 		<etc name="./prefix.mk" />
 		<etc name="./suffix.mk" />
+		<etc name="./configure.sh" />
 	  </xref>
       <xref linkend="contrib/boost">
 		<include name="./boost/version.hpp" />

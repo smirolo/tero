@@ -102,6 +102,22 @@ td.entry {
     border-style: none;
 }
 
+table.download {
+    border-width: 0px;
+    border-spacing: 0px;
+	border-style: none;
+	border-collapse: collapse;
+	font-size:12px;
+	text-align: left;
+	}
+
+td.download {
+    border-width: 0px;
+	border-style: inset;
+	padding: 3px;
+}
+
+
 #header {
 }
 

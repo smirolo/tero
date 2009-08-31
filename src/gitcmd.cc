@@ -47,7 +47,6 @@ void gitcmd::diff( std::ostream& ostr,
 		return;
 	}
 	char line[256];
-	std::stringstream diff;
 	while( fgets(line,sizeof(line),diffFile) != NULL ) {
 		ostr << line;
 	}

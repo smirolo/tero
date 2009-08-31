@@ -36,39 +36,39 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
 
-	session::variables::const_iterator document = s.vars.find("document");
-	session::variables::const_iterator text = s.vars.find("editedText");
-	if( text != s.vars.end() ) {
-		path docName(s.vars["srcTop"] + document->second 
-					 + std::string(".edits")); 
+    session::variables::const_iterator document = s.vars.find("document");
+    session::variables::const_iterator text = s.vars.find("editedText");
+    if( text != s.vars.end() ) {
+	path docName(s.vars["srcTop"] + document->second 
+		     + std::string(".edits")); 
 
-		if( !exists(docName) ) {
-		    create_directories(docName);
-		}
+	if( !exists(docName) ) {
+	    create_directories(docName);
+	}
 
-		ofstream file(docName);
-		if( file.fail() ) {
-			boost::throw_exception(basic_filesystem_error<path>(
-				  std::string("unable to open file"),
-				  docName, 
-				  error_code()));
-		}
-		file << text->second;
-		file.close();
+	ofstream file(docName);
+	if( file.fail() ) {
+	    boost::throw_exception(basic_filesystem_error<path>(
+		std::string("unable to open file"),
+		docName, 
+		error_code()));
+	}
+	file << text->second;
+	file.close();
 
-		/* add entry in the changelist */
-		path changesPath(s.userPath().string() + std::string("/changes"));
-		ofstream changes(changesPath,std::ios::app);
-		if( file.fail() ) {
-		    boost::throw_exception(basic_filesystem_error<path>(
-				  std::string("unable to open file"),
-				  changesPath, 
-				  error_code()));
-		}
-		file << docName;
-		file.close();
+	/* add entry in the changelist */
+	path changesPath(s.userPath().string() + std::string("/changes"));
+	ofstream changes(changesPath,std::ios::app);
+	if( file.fail() ) {
+	    boost::throw_exception(basic_filesystem_error<path>(
+		std::string("unable to open file"),
+		changesPath, 
+		error_code()));
+	}
+	file << docName;
+	file.close();
     }
-	std::cout << redirect(s.docAsUrl() + std::string(".edits")) << '\n';
+    std::cout << redirect(s.docAsUrl() + std::string(".edits")) << '\n';
 }
 
 
@@ -89,7 +89,7 @@ void changediff::embed( session& s, const std::string& varname ) {
 										+ s.valueOf(varname));
 		cerr << "docname: " << docname << std::endl;
 		boost::filesystem::path 
-			gitrelname = document::relativePath(docname,revision->rootpath);
+			gitrelname = relpath(docname,revision->rootpath);
 #endif
 		revision->diff(text,leftRevision,rightRevision,gitrelname);
 		

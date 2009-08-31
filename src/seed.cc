@@ -170,6 +170,12 @@ int main( int argc, char *argv[] )
 	    
 	    changediff diff(uiPath,&revision);
 	    docs.add("view",boost::regex("/diff"),diff);
+
+	    /* The pattern need to be inserted in more specific to more 
+	       generic order since the matcher will apply each the first
+	       one that yields a positive match. */
+	    download dlcmd;
+	    docs.add("document",boost::regex("/download"),dlcmd);
 	    
 	    xslview xslt;
 	    docs.add("document",boost::regex(".*\\.xslt"),xslt);
@@ -184,10 +190,7 @@ int main( int argc, char *argv[] )
 	    text rawtext(leftLinkText,rightLinkText);
 	    docs.add("document",boost::regex(".*"),rawtext);
 
-	    download dlcmd;
-
 	    docs.add("view",boost::regex("/cancel"),cel);
-	    docs.add("view",boost::regex("/download"),dlcmd);
 	    docs.add("view",boost::regex("/edit"),edit);
 	    docs.add("view",boost::regex("/login"),li);
 	    docs.add("view",boost::regex("/logout"),lo);

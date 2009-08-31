@@ -26,17 +26,17 @@
 #ifndef guarddownload
 #define guarddownload
 
-#include "document.hh"
+#include "projfiles.hh"
 
 /** A page that permits to download the packaged project.
  */
-class download : public document {
+class download : public projfiles {
 protected:
 
-public:
-    download() {}
+    void packages( session& s, const boost::filesystem::path& dirname );
 
-    void packages( const boost::filesystem::path& dirname );
+public:
+    download();
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };

@@ -25,16 +25,40 @@
 
 #include "download.hh"
 
-void download::packages( const boost::filesystem::path& dirname ) {
+download::download()
+{
+    filters.push_back(boost::regex(".*\\.dmg"));
+    filters.push_back(boost::regex(".*\\.deb"));
+    filters.push_back(boost::regex(".*\\.rpm"));
+    /* This filter only works to pick-up matching basenames because 
+       if there are any '-' character in the absolute pathname, that 
+       pattern will match even when it wasn't the intent. */
+    filters.push_back(boost::regex(".+-.+\\.tar\\.bz2"));
+}
+
+
+void download::packages( session& s, const boost::filesystem::path& dirname ) {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem; 
     
+    bool first = true;
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
-	std::cout << "<tr><td>"
-		  << "<a href=\"" << *entry << "\">" 
-		  << *entry << "</a></td></tr>\n";
+	/* Use the basename because selects() uses a pattern that can
+	   only match basenames. */
+	if( selects(entry->leaf()) ) {
+	    if( first ) {
+		std::cout << "<h2>" << dirname.leaf() << " packages</h2>\n";
+		first = false;
+	    }
+	    path relativeName = relpath(*entry,s.valueOf("cacheTop"));
+	    std::cout << "<tr><td class=\"download\">"
+		      << "<a href=\"" << relativeName << "\">" 
+		      << entry->leaf() << "</a></td>" << std::endl;
+	    std::cout << "<td>" << getmtime(*entry) << "</td>"  << std::endl;
+	    std::cout << "</tr>\n";
+	}
     }
 }
 
@@ -48,15 +72,19 @@ void download::fetch( session& s, const boost::filesystem::path& pathname )
 
     path dirname(s.valueOf("cacheTop"));
     std::cout << "<h1>Downloads</h1>\n";
+    std::cout << "<p>\n";
+    std::cout << "These are project's binary and source distribution packages for different platform.\n";
+    std::cout << "</p>\n";
+
     if( !dirname.empty() ) {
-	std::cout << "<table>\n";
+	std::cout << "<table class=\"download\">\n";
 	for( directory_iterator entry = directory_iterator(dirname); 
 	     entry != directory_iterator(); ++entry ) {
 	    path packagesDir(*entry);
 	    path dbFile(packagesDir);
 	    dbFile /= "db.xml";
 	    if( is_directory(packagesDir) && exists(dbFile) ) {
-		packages(packagesDir);
+		packages(s,packagesDir);
 	    }
 	}
 	std::cout << "</table>\n";

@@ -57,38 +57,63 @@ boost::filesystem::path session::userPath() const {
 }
 
 
-boost::filesystem::path session::pathname( const std::string& name ) const {
-	variables::const_iterator iter = vars.find(name);
-	if( iter != vars.end() ) {
-		return findFile(iter->second);
+boost::filesystem::path 
+session::abspath( const std::string& name ) const {
+    using namespace boost::filesystem;
+
+    variables::const_iterator iter = vars.find(name);
+    if( iter != vars.end() ) {
+	path relpath(iter->second);
+	path fromBuildTop(valueOf("buildTop"));
+	fromBuildTop /= relpath;
+	if( boost::filesystem::exists(fromBuildTop) ) { 
+	    return fromBuildTop;
 	}
-	return boost::filesystem::path();
+	std::cerr << "not found: " << fromBuildTop << std::endl;
+
+	path fromSrcTop(valueOf("srcTop"));
+	fromSrcTop /= relpath;
+	if( boost::filesystem::exists(fromSrcTop) ) { 
+	    return fromSrcTop;
+	}	
+	std::cerr << "not found: " << fromSrcTop << std::endl;
+    }
+    boost::throw_exception(
+        basic_filesystem_error<path>(std::string("file not found"),
+				     name, 
+				     boost::system::error_code()));
+    return boost::filesystem::path();
 }
 
 
-boost::filesystem::path session::findFile( const boost::filesystem::path& name ) const {
-	boost::filesystem::path fromPwd(name);
-	if( boost::filesystem::exists(fromPwd) ) { 
-		return fromPwd;
-	}
+boost::filesystem::path 
+session::findFile( const boost::filesystem::path& name ) const {
+    boost::filesystem::path fromPwd(name);
+    std::cerr << "findFile(fromPwd): " << fromPwd << std::endl;
+    if( boost::filesystem::exists(fromPwd) ) { 
+	return fromPwd;
+    }
 
-	variables::const_iterator v;
-	v = vars.find("srcTop");
-	assert( v != vars.end() );
-	boost::filesystem::path srcTop(v->second);
+    variables::const_iterator v;
+    v = vars.find("srcTop");
+    assert( v != vars.end() );
+    boost::filesystem::path srcTop(v->second);
 
-	// string_type  leaf() const;
-	v = vars.find("document");
-	assert( v != vars.end() );
-	boost::filesystem::path document(v->second);
+    // string_type  leaf() const;
+    v = vars.find("document");
+    assert( v != vars.end() );
+    boost::filesystem::path document(v->second);
+    std::cerr << "findFile(document): " << document << std::endl;	
 
     boost::filesystem::path fromTopSrc = srcTop;
-	fromTopSrc /= document.branch_path();
-	fromTopSrc /= name;
-	if( boost::filesystem::exists(fromTopSrc) ) { 
-		return fromTopSrc;
-	}
-	return boost::filesystem::path();
+    fromTopSrc /= document.branch_path();
+    fromTopSrc /= name;
+
+    std::cerr << "findFile(fromTopSrc): " << fromTopSrc << std::endl;	
+    if( boost::filesystem::exists(fromTopSrc) ) { 
+	return fromTopSrc;
+    }
+    return boost::filesystem::path();
 }
 
 
@@ -117,6 +142,7 @@ void session::restore( const boost::program_options::variables_map& params )
     options_description	opts;
     opts.add_options()
 		("binDir",value<std::string>(),"path to outside executables")
+		("buildTop",value<std::string>(),"path to build root")
 		("cacheTop",value<std::string>(),"path to packages repository")
 		("srcTop",value<std::string>(),"path to document top")
 		("uiDir",value<std::string>(),"path to user interface elements");
