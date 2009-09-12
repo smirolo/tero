@@ -118,15 +118,15 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
 	    || s.vars["view"] == "/" ) {
-	    cout << redirect("index.book") << htmlContent << endl;
+	    cout << redirect("corporate/index.book") << htmlContent << endl;
 	    
 	} else {	    
-	    path uiPath(s.vars["uiDir"] + std::string(s.exists() ? 
-						      "/maintainer.ui" : "/browser.ui"));
+	    path uiPath(s.vars["themeDir"] + std::string(s.exists() ? 
+						      "/maintainer.ui" : "/entry.html"));
 	    dispatch docs(s.vars["srcTop"]);
 	    login li;
 	    logout lo;
-	    composer edit(s.vars["uiDir"] + std::string("/edit.ui"),
+	    composer edit(s.vars["themeDir"] + std::string("/edit.ui"),
 			  composer::create);
 	    composer pres(uiPath,composer::error);
 	    cancel cel;

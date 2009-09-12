@@ -43,9 +43,14 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem;
-    
+
+#if 0    
     static const boost::regex embed("<a href=\"#(\\S+)\">.*</a>");
     static const boost::regex link("\\$\\{(\\S+)\\}");
+#else
+    static const boost::regex embed("<!-- tmpl_var name='(\\S+)' -->");
+    static const boost::regex link("<!-- tmpl_var name=\"(\\S+)\" -->");
+#endif
 
     std::cerr << "composer::fetch(" << pathname << ")" << std::endl;     
     ifstream strm;

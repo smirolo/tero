@@ -1,74 +1,102 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
- <head>
-  <title><!-- tmpl_var name='blog_title' -->: entries from <!-- tmpl_var name='month_name' --> <!-- tmpl_var name='year' --></title>
-  <link rel="stylesheet" type="text/css" media="screen" href="<!-- tmpl_var name='top' -->style.css">
-  <link rel="alternate" title="RSS Feed" href="<!-- tmpl_var name='month' escape='html' -->.rss" type="application/rss+xml">
- </head>
- <body>
-<!-- XML FEED -->
-
-<div id="header"><a href="http://localhost/">CODESPIN</a></div>
-<div id="title"><a href="<!-- tmpl_var name='top' -->"><!-- tmpl_var name='blog_title' --></a></div>
-
- <p>Entries from <!-- tmpl_var name='month_name' escape='html' --> <!-- tmpl_var name='year' escape='html' -->.</p>
-
-<!-- tmpl_loop name='entries' -->
-<div class="entry">
- <div class="title">
- <a href="<!-- tmpl_var name='top' --><!-- tmpl_var name='link' escape='html' -->"><!-- tmpl_var name='title' --></a>
- </div>
- <div class="date">
-  <!-- tmpl_var name='date' -->
- </div>
-
- <div class="body">
-  <!-- tmpl_var name='body' -->
- </div>
- <div class="tags">
- <!-- tmpl_if name='comment_count' -->
-   <span class="comments">
-    <!-- tmpl_var name='comment_count' --> comments.  
-   </span>
- <!-- /tmpl_if -->
-
- <!-- tmpl_if name='tags' -->
-  Tags: <!-- tmpl_loop name='tags' --><a href="<!-- tmpl_var name='top' -->tags/<!-- tmpl_var name='tag' escape='html' -->"><!-- tmpl_var name='tag' escape='html' --></a><!-- tmpl_if name="__last__" -->.<!-- tmpl_else -->, <!-- /tmpl_if --><!-- /tmpl_loop -->
- <!-- tmpl_else -->
-  No tags
- <!-- /tmpl_if -->
- </div>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title><!-- tmpl_var name='blog_title' --></title>
+<link rel="stylesheet" type="text/css" media="screen" href="resources/style.css" />
+<link rel="alternate" title="RSS Feed" href="<!-- tmpl_var name='top' -->index.rss" type="application/rss+xml">
+</head>
+<body>
+<div id="header">
+  <img src="resources/logo.png" width="128" height="128">
 </div>
- <div class="padding"></div>
-<!-- /tmpl_loop -->
- <p style="text-align: right;"><a href="<!-- tmpl_var name='month' escape='html' -->.rss"><img src="<!-- tmpl_var name='top' -->xml.gif" alt="RSS Feed" width="36" height="14"></a></p>
-
-
 
 <div id="sidebar">
-<!-- tmpl_if name='datecloud' -->
-<h2>Archive</h2>
-<ul>
-<!-- tmpl_loop name='datecloud' -->
-<li><!-- tmpl_var name='year' -->
-<ul>
-<!-- tmpl_loop name='months' -->
-<li><a href="<!-- tmpl_var name='top' -->archive/<!-- tmpl_var name='year' -->/<!-- tmpl_var name='month' -->/"><!-- tmpl_var name='month_name' --> (<!-- tmpl_var name='count' -->)</a></li>
-<!-- /tmpl_loop -->
-</ul></li>
-<!-- /tmpl_loop -->
-</ul>
-<!-- /tmpl_if name='datecloud' -->
+  <div class="MenuWidget">
+    <h3>Links</h3>
+    <p>
+      <a href="/contributors/smirolo/profile.book">about</a><br />
+      <a href="/personal/smirolo/blog">seb's blog</a><br />
+    </p>
+    <h3>Awereness</h3>
+    <p>
+      <a href="/drop/index.book">building software</a><br />
+      <a href="/seed/src/seed.cc">browse sources</a>
+    </p>
+  </div>
+  
+  <!-- tmpl_if name='datecloud' -->
+  <div class="MenuWidget">
+    <h3>Archive</h3>
+    <p>
+      <!-- tmpl_loop name='datecloud' -->
+      <!-- tmpl_var name='year' --><br />
+      <!-- tmpl_loop name='months' -->
+      <a href="<!-- tmpl_var name='top' -->archive/<!-- tmpl_var name='year' -->/<!-- tmpl_var name='month' -->/"><!-- tmpl_var name='month_name' --> (<!-- tmpl_var name='count' -->)</a><br />
+      <!-- /tmpl_loop -->
+      <!-- /tmpl_loop -->
+    </p>
+  </div>
+  <!-- /tmpl_if name='datecloud' -->
 
-<!-- tmpl_if name='tagcloud' -->
-<h2>Tags</h2>
-<ul>
-<!-- tmpl_loop name='tagcloud' -->
- <li><a href="<!-- tmpl_var name='top' -->tags/<!-- tmpl_var name='tag' escape='html' -->"><!-- tmpl_var name='tag' escape='html' --> (<!-- tmpl_var name='count' -->)</a></li>
-<!-- /tmpl_loop -->
-</ul>
-<!-- /tmpl_if -->
+  <!-- tmpl_if name='tagcloud' -->
+  <div class="MenuWidget">  
+    <h3>Tags</h3>
+    <p>
+    <!-- tmpl_loop name='tagcloud' -->
+    <a href="<!-- tmpl_var name='top' -->tags/<!-- tmpl_var name='tag' escape='html' -->"><!-- tmpl_var name='tag' escape='html' --> (<!-- tmpl_var name='count' -->)</a><br />
+    <!-- /tmpl_loop -->
+    </p>
+  </div>
+  <!-- /tmpl_if -->
 </div>
+
+<div id="entry">
+  <div id="title"><!-- tmpl_var name='blog_title' -->, entries from <!-- tmpl_var name='month_name' escape='html' --> <!-- tmpl_var name='year' escape='html' -->.
+  </div>
+  <div>
+  <table class="entry" width="100%">
+    <tr>
+      <td class="entry">
+	<table class="entry">
+	  <!-- tmpl_loop name='entries' -->
+	  <tr>
+	    <th class="title">
+	    <a href="<!-- tmpl_var name='top' --><!-- tmpl_var name='link' escape='html' -->"><!-- tmpl_var name='title' --></a>
+	    </th>
+	  </tr>
+	  <tr>
+	    <th class="date"><!-- tmpl_var name='date' --></th>
+	  </tr>
+	  <tr>
+	    <td class="entry">
+	      <!-- tmpl_var name='body' -->
+	    </td>
+	  </tr>
+	  <tr>
+	    <th class="tags">
+	    <!-- tmpl_if name='tags' -->
+	    Tags: <!-- tmpl_loop name='tags' --><a href="<!-- tmpl_var name='top' -->tags/<!-- tmpl_var name='tag' escape='html' -->"><!-- tmpl_var name='tag' escape='html' --></a><!-- tmpl_if name="__last__" -->.<!-- tmpl_else -->, <!-- /tmpl_if --><!-- /tmpl_loop --> 
+	    <!-- tmpl_else -->
+	    No tags
+	    <!-- /tmpl_if -->
+	    </th>
+	  </tr>
+	  <!-- /tmpl_loop --> 
+	</table>
+      </td>
+      <td class="entry" width="120px">
+	<img src="resources/120_600_ad.png" />  
+      </td>
+    </tr>
+  </table>
+  </div>
+</div>
+
+ <p style="text-align: right;"><a href="index.rss"><img src="<!-- tmpl_var name='top' -->xml.gif" alt="RSS feed" width="36" height="14"></a></p>
+<p style="text-align: right">
+Created by <a href="http://steve.org.uk/Software/chronicle">Chronicle v<!-- tmpl_var name='release' --></a>
+</p>
 </body>
 </html>

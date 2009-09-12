@@ -88,8 +88,11 @@ session::abspath( const std::string& name ) const {
 
 boost::filesystem::path 
 session::findFile( const boost::filesystem::path& name ) const {
+    /** \todo using std::cerr statements here yelds to recursive
+	call to the decorator. That should not happen. Only reasonable
+	explanation if that cout and cerr buffers are shared...
+     */
     boost::filesystem::path fromPwd(name);
-    std::cerr << "findFile(fromPwd): " << fromPwd << std::endl;
     if( boost::filesystem::exists(fromPwd) ) { 
 	return fromPwd;
     }
@@ -103,13 +106,11 @@ session::findFile( const boost::filesystem::path& name ) const {
     v = vars.find("document");
     assert( v != vars.end() );
     boost::filesystem::path document(v->second);
-    std::cerr << "findFile(document): " << document << std::endl;	
 
     boost::filesystem::path fromTopSrc = srcTop;
     fromTopSrc /= document.branch_path();
     fromTopSrc /= name;
 
-    std::cerr << "findFile(fromTopSrc): " << fromTopSrc << std::endl;	
     if( boost::filesystem::exists(fromTopSrc) ) { 
 	return fromTopSrc;
     }
@@ -145,7 +146,7 @@ void session::restore( const boost::program_options::variables_map& params )
 		("buildTop",value<std::string>(),"path to build root")
 		("cacheTop",value<std::string>(),"path to packages repository")
 		("srcTop",value<std::string>(),"path to document top")
-		("uiDir",value<std::string>(),"path to user interface elements");
+		("themeDir",value<std::string>(),"path to user interface elements");
     boost::program_options::store(parse_config_file(istr,opts,true),configVars);
 	
     for( variables_map::const_iterator param = configVars.begin(); 
