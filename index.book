@@ -1,3 +1,4 @@
+title: Browse Sources
 <h1>Introduction</h1>
 <p>
 While source code and documentation are usually maintained and published separately, Seed has been started as a web-based source code browser where source code and web documentation can reference each other easily.
@@ -8,7 +9,7 @@ The main feature of seed is that urls embedded in comments can be traversed. Lin
 <p>For example</p>
 <pre>
 /* 
-   This is a reference to &lt;a href="index"&gt;web-based documentation&lt;/a&gt;. 
+   This is a reference to &lt;a href="index.book"&gt;web-based documentation&lt;/a&gt;. 
 */
 
 int main( int argc, char *argv[] ) {
@@ -18,10 +19,13 @@ int main( int argc, char *argv[] ) {
 <p>is published as</p>
 <pre>
 <span class="comment">/* </span>
-<span class="comment">   This is a reference to <a href="index">web-based documentation</a>.</span>
+<span class="comment">   This is a reference to <a href="index.book">web-based documentation</a>.</span>
 <span class="comment">*/</span>
 
 <span class="identifier">int</span> <span class="identifier">main</span><span class="punctuator">(</span> <span class="identifier">int</span> <span class="identifier">argc</span><span class="punctuator">,</span> <span class="keyword">char</span> <span class="operator">*</span><span class="identifier">argv</span><span class="punctuator">[</span><span class="punctuator">]</span> <span class="punctuator">)</span> <span class="punctuator">{</span>
     <span class="keyword">return</span> <span class="decimalLiteral">0</span><span class="punctuator">;</span>
 <span class="punctuator">}</span>
 </pre>
+<p>
+<a href="src/seed.cc">browse sample repository</a>
+</p>

@@ -56,24 +56,28 @@ void gitcmd::diff( std::ostream& ostr,
 
 
 void gitcmd::history( std::ostream& ostr, 
-					  const boost::filesystem::path& pathname ) {
+		      const boost::filesystem::path& pathname ) {
+    
+    /* The git command needs to be issued from within a directory 
+       where .git can be found by walking up the tree structure. */ 
+    boost::filesystem::initial_path();
+    boost::filesystem::current_path(rootpath);
 
-	/* The git command needs to be issued from within a directory 
-	   where .git can be found by walking up the tree structure. */ 
-	boost::filesystem::initial_path();
-	boost::filesystem::current_path(rootpath);
+    std::stringstream sstm;
+    sstm << executable << " log --pretty=oneline " 
+	 << relpath(pathname,rootpath); 
 
-	std::stringstream sstm;
-	sstm << executable << " show --summary --pretty=oneline " << pathname; 
+    std::cerr << "git command: " << sstm.str() << std::endl;
 
-	char line[256];
-	FILE *summary = popen(sstm.str().c_str(),"r");
-	assert( summary != NULL );
+    char line[256];
+    FILE *summary = popen(sstm.str().c_str(),"r");
+    assert( summary != NULL );
 
-	while( fgets(line,sizeof(line),summary) != NULL ) {
-		ostr << line;
-	}
-	pclose(summary);
+    while( fgets(line,sizeof(line),summary) != NULL ) {
+	std::cerr << "fgets: " << line << std::endl;
+	ostr << line;
+    }
+    pclose(summary);
 
-	boost::filesystem::current_path(boost::filesystem::initial_path());
+    boost::filesystem::current_path(boost::filesystem::initial_path());
 }

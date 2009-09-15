@@ -18,8 +18,11 @@
     <p>
       <a href="/contributors/smirolo/profile.book">about</a><br />
       <a href="/personal/smirolo/blog">seb's blog</a><br />
+    </p>
+    <h3>Concepts in code</h3>
+    <p>
       <a href="/drop/index.book">building software</a><br />
-      <a href="/seed/src/seed.cc">browse sources</a>
+      <a href="/seed/index.book">browse sources</a>
     </p>
   </div>
   

@@ -78,10 +78,9 @@ session::abspath( const std::string& name ) const {
 	}	
 	std::cerr << "not found: " << fromSrcTop << std::endl;
     }
-    boost::throw_exception(
-        basic_filesystem_error<path>(std::string("file not found"),
-				     name, 
-				     boost::system::error_code()));
+    /* We used to throw an exception at this point. That does
+       not sit very well with dispatch::fetch() because the value
+       of a "document" might not be an actual file. */
     return boost::filesystem::path();
 }
 

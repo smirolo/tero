@@ -73,42 +73,39 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
 
 
 void changediff::embed( session& s, const std::string& varname ) {
-	using namespace std;
+    using namespace std;
 
-	if( varname != "document" ) {
-		composer::embed(s,varname);
-	} else {
-		std::stringstream text;
-		std::string leftRevision = s.valueOf("left");
-		std::string rightRevision = s.valueOf("right");
+    std::cerr << "changediff::embed(...," << varname << ")" << std::endl;
 
-#if 0
-		boost::filesystem::path docname(s.valueOf(varname).substr(1));
-#else
-		boost::filesystem::path docname(s.valueOf("srcTop") 
-										+ s.valueOf(varname));
-		cerr << "docname: " << docname << std::endl;
-		boost::filesystem::path 
-			gitrelname = relpath(docname,revision->rootpath);
-#endif
-		revision->diff(text,leftRevision,rightRevision,gitrelname);
+    if( varname != "document" ) {
+	composer::embed(s,varname);
+    } else {
+	std::stringstream text;
+	std::string leftRevision = s.valueOf("left");
+	std::string rightRevision = s.valueOf("right");
+	boost::filesystem::path docname(s.valueOf("srcTop") 
+					+ s.valueOf(varname));
+	cerr << "docname: " << docname << std::endl;
+	boost::filesystem::path 
+	    gitrelname = relpath(docname,revision->rootpath);
+	revision->diff(text,leftRevision,rightRevision,gitrelname);
 		
-		cout << "<table>" << endl;
-		cout << "<tr>" << endl;
-		cout << "<td>" << leftRevision << "</td>" << endl;
-		cout << "<td>" << rightRevision << "</td>" << endl;
-		cout << "</tr>" << endl;
+	cout << "<table style=\"text-align: left;\">" << endl;
+	cout << "<tr>" << endl;
+	cout << "<th>" << leftRevision << "</th>" << endl;
+	cout << "<th>" << rightRevision << "</th>" << endl;
+	cout << "</tr>" << endl;
 
-		boost::filesystem::ifstream input;
-		open(input,docname);
+	boost::filesystem::ifstream input;
+	open(input,docname);
 
-		/* \todo the session is not a parameter to between files... */	
-		document *doc = dispatch::instance->select("document",docname.string());
-		((::text*)doc)->showSideBySide(input,text,false);
+	/* \todo the session is not a parameter to between files... */	
+	document *doc = dispatch::instance->select("document",docname.string());
+	((::text*)doc)->showSideBySide(input,text,false);
 		
-		cout << "</table>" << endl;
-		input.close();
-	}
+	cout << "</table>" << endl;
+	input.close();
+    }
 }
 
 
@@ -146,7 +143,7 @@ changehistory::fetch( session& s, const boost::filesystem::path& pathname )
 	revision->history(text,pathname);
 	if( !text.eof() ) { 
 	    std::cout << "<div class=\"MenuWidget\">" << std::endl;
-	    std::cout << "<p>history</p>" << std::endl;
+	    std::cout << "<h3>history</h3>" << std::endl;
 
 	    while( !text.eof() ) {
 		std::string line;
@@ -166,7 +163,7 @@ changehistory::fetch( session& s, const boost::filesystem::path& pathname )
 		    std::cout << " title=\"" << title << "\"";
 		    std::cout << ">";
 		    std::cout << rightRevision.substr(0,10);
-		    std::cout << "...</a>";
+		    std::cout << "...</a><br />";
 		}
 	    }
 	    std::cout << std::endl;

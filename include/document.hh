@@ -37,6 +37,11 @@ protected:
 public:
     virtual void fetch( session& s, 
 			const boost::filesystem::path& pathname ) = 0;
+
+    /** Add meta information about the document to the session. It includes
+	modification date, file revision as well as tags read in the file.
+    */
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) {}
     
     /** Directory root of a tree starting from *leaf* looking for a file 
 	named *trigger*. The search will stop once we reach *topSrc*.
@@ -101,6 +106,8 @@ public:
 			 bool inputIsLeftSide= true );
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
+
+    virtual void meta( session& s, const boost::filesystem::path& pathname );
 
 };
 

@@ -122,13 +122,21 @@ int main( int argc, char *argv[] )
 	    
 	} else {	    
 	    path uiPath(s.vars["themeDir"] + std::string(s.exists() ? 
-						      "/maintainer.ui" : "/entry.html"));
+						      "/maintainer.ui" : "/document.template"));
 	    dispatch docs(s.vars["srcTop"]);
 	    login li;
 	    logout lo;
 	    composer edit(s.vars["themeDir"] + std::string("/edit.ui"),
 			  composer::create);
-	    composer pres(uiPath,composer::error);
+
+	    /* Composer for view on source code files */
+	    path sourceTmpl(s.vars["themeDir"] 
+			    + std::string("/source.template"));
+	    composer source(sourceTmpl,
+			    composer::error);
+
+	    /* Composer for view on all other documents */
+	    composer entry(uiPath,composer::error);
 	    cancel cel;
 	    change chg;
 	    
@@ -153,6 +161,7 @@ int main( int argc, char *argv[] )
 	    for( projfiles::filterContainer::const_iterator f = filters.begin();
 		 f != filters.end(); ++f ) {
 		docs.add("document",*f,cpp);
+		docs.add("view",*f,source);
 	    }
 	    
 	    changelist cl;
@@ -168,7 +177,7 @@ int main( int argc, char *argv[] )
 	    docs.add("history",boost::regex(".*"),history);
 	    s.vars["history"] = s.vars["document"];
 	    
-	    changediff diff(uiPath,&revision);
+	    changediff diff(sourceTmpl,&revision);
 	    docs.add("view",boost::regex("/diff"),diff);
 
 	    /* The pattern need to be inserted in more specific to more 
@@ -195,7 +204,7 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("/login"),li);
 	    docs.add("view",boost::regex("/logout"),lo);
 	    docs.add("view",boost::regex("/save"),chg);
-	    docs.add("view",boost::regex(".*"),pres);
+	    docs.add("view",boost::regex(".*"),entry);
 	    
 	    docs.fetch(s,"view");
 	}

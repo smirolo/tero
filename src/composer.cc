@@ -44,13 +44,7 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
 
-#if 0    
-    static const boost::regex embed("<a href=\"#(\\S+)\">.*</a>");
-    static const boost::regex link("\\$\\{(\\S+)\\}");
-#else
-    static const boost::regex embed("<!-- tmpl_var name='(\\S+)' -->");
-    static const boost::regex link("<!-- tmpl_var name=\"(\\S+)\" -->");
-#endif
+    static const boost::regex tmplvar("<!-- tmpl_var name='(\\S+)' -->");
 
     std::cerr << "composer::fetch(" << pathname << ")" << std::endl;     
     ifstream strm;
@@ -61,20 +55,39 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	std::string line;
 	bool found = false;
 	std::getline(strm,line);
-	if( regex_search(line,m,embed) ) {
-	    session::variables::const_iterator v = s.vars.find(m.str(1));
-	    if( v != s.vars.end() ) {
+	if( regex_search(line,m,tmplvar) ) {
+	
+	    std::string varname = m.str(1);
+	    session::variables::const_iterator v = s.vars.find(varname);
+	    if( v == s.vars.end() ) {
+		document* 
+		    doc = dispatch::instance->select("document",
+						     s.valueOf("document"));
+		doc->meta(s,s.abspath("document"));
+	    }
+
+	    document* doc 
+		= dispatch::instance->select(varname,s.valueOf(varname));
+	    if( doc != NULL ) {
+		boost::filesystem::path docname = s.abspath(varname);
 		std::cout << m.prefix();
-		this->embed(s,m.str(1));
+		/* \todo code could be:
+		           doc->fetch(s,docname);  
+			 but that would skip over the override 
+			 of changediff::embed(). */
+		embed(s,varname);
 		std::cout << m.suffix() << std::endl;
 		found = true;
+	    
+	    } else {
+		v = s.vars.find(varname);
+		if( v != s.vars.end() ) {
+		    std::cout << m.prefix();
+		    std::cout << s.valueOf(varname);
+		    std::cout << m.suffix() << std::endl;
+		    found = true;
+		}
 	    }
-	} else if( regex_search(line,m,link) ) {
-	    session::variables::const_iterator v = s.vars.find(m.str(1));
-	    std::cout << m.prefix() 
-		      << ((v != s.vars.end()) ? v->second : m.str(1)) 
-		      << m.suffix() << std::endl;
-	    found = true;
 	}
 	if( !found ) {
 	    std::cout << line << std::endl;

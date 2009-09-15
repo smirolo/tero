@@ -93,15 +93,15 @@ public:
  */
 class changediff : public composer {
 protected:
-	revisionsys *revision;
+    revisionsys *revision;
 	
-	/** Embed the content of a variable into a page. 
-	 */
-	virtual void embed( session& s, const std::string& value );
+    /** Embed the content of a variable into a page. 
+     */
+    virtual void embed( session& s, const std::string& value );
 
 public:
-	changediff( const boost::filesystem::path& f, revisionsys *r ) 
-		: composer(f,error), revision(r) {}
+    changediff( const boost::filesystem::path& f, revisionsys *r ) 
+	: composer(f,error), revision(r) {}
 
 };
 
