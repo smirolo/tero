@@ -1,26 +1,27 @@
 <?xml version="1.0" ?>
 <book>
   <section id="seed">
-    <xref linkend="git">
+    <xref linkend="git-core">
       <bin name="git" />
     </xref>
     <build>
+      <xref linkend="git-core">
+	<bin name="git" />
+	<url>seed</url>
+      </xref>      
       <xref linkend="drop">
-		<bin name="dws" />
-		<etc name="./prefix.mk" />
-		<etc name="./suffix.mk" />
-		<etc name="./configure.sh" />
-	  </xref>
-      <xref linkend="contrib/boost">
-		<include name="./boost/version.hpp" />
-		<lib name="boost_filesystem" />
-		<lib name="boost_program_options" />
-		<lib name="boost_regex" />
-		<lib name="boost_system" />
+	<bin name="dws" />
+	<etc name="./prefix.mk" />
+	<etc name="./suffix.mk" />
+	<etc name="./configure.sh" />
       </xref>
-      <sccs name="git">
-		<url>seed</url>
-      </sccs>
+      <xref linkend="contrib/boost">
+	<include name="./boost/version.hpp" />
+	<lib name="boost_filesystem" />
+	<lib name="boost_program_options" />
+	<lib name="boost_regex" />
+	<lib name="boost_system" />
+      </xref>
     </build>
   </section>
 </book>

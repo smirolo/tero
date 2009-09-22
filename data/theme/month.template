@@ -11,18 +11,19 @@
 <div id="header">
   <img src="resources/logo.png" width="128" height="128">
 </div>
+<div id="title"><!-- tmpl_var name='blog_title' -->, entries from <!-- tmpl_var name='month_name' escape='html' --> <!-- tmpl_var name='year' escape='html' -->.
+  </div>
 
 <div id="sidebar">
   <div class="MenuWidget">
     <h3>Links</h3>
     <p>
+      <a href="/">home</a><br />
       <a href="/contributors/smirolo/profile.book">about</a><br />
+      <a href="/corporate/contact.book">contact</a><br />
+      <a href="/corporate/services.book">services</a><br />
+      <br />
       <a href="/personal/smirolo/blog">seb's blog</a><br />
-    </p>
-    <h3>Concepts in code</h3>
-    <p>
-      <a href="/drop/index.book">building software</a><br />
-      <a href="/seed/index.book">browse sources</a>
     </p>
   </div>
   
@@ -53,8 +54,6 @@
 </div>
 
 <div id="entry">
-  <div id="title"><!-- tmpl_var name='blog_title' -->, entries from <!-- tmpl_var name='month_name' escape='html' --> <!-- tmpl_var name='year' escape='html' -->.
-  </div>
   <div>
   <table class="entry" width="100%">
     <tr>
