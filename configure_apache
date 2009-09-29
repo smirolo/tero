@@ -47,16 +47,16 @@ fi
 # rand   Sources of randomness
 # 1024   Number of bits of the generated key.
 openssl genrsa -des3 \
-	-rand /mach_kernel:/Users/smirolo/.emacs -out www.codespin.com.key 1024
+	-rand /mach_kernel:/Users/smirolo/.emacs -out www.fortylines.com.key 1024
 
 # 2. Creating a Certificate Signing Request
-openssl req -new -key www.codespin.com.key -out www.codespin.com.csr
+openssl req -new -key www.fortylines.com.key -out www.fortylines.com.csr
 
 # 3. Self-signing the certificate
-openssl x509 -req -days 90 -in www.codespin.com.csr -signkey www.codespin.com.key -out www.codespin.com.crt
+openssl x509 -req -days 90 -in www.fortylines.com.csr -signkey www.fortylines.com.key -out www.fortylines.com.crt
 
 # 4. Unprotect the key in order to start apache through GUI.
-openssl rsa -in www.codespin.com.key -out www.codespin.com.key.unsecure
+openssl rsa -in www.fortylines.com.key -out www.fortylines.com.key.unsecure
 
 opensslDir=/System/Library/OpenSSL
 
@@ -85,10 +85,10 @@ if [ "x$sslConfigFile" == "x" ] ; then
 fi
 localSslConfigFile=`basename $sslConfigFile`
 
-sed -e 's,ServerName .*,ServerName www.codespin.com:443,' \
-    -e 's,ServerAdmin .*,ServerAdmin admin@codespin.com,' \
-    -e "s,SSLCertificateFile .*,SSLCertificateFile $opensslDir/certs/www.codespin.com.crt," \
-	-e 's,SSLCertificateKeyFile .*,SSLCertificateKeyFile $opensslDir/private/www.codespin.com.key,' $sslConfigFile > $localSslConfigFile
+sed -e 's,ServerName .*,ServerName www.fortylines.com:443,' \
+    -e 's,ServerAdmin .*,ServerAdmin admin@fortylines.com,' \
+    -e "s,SSLCertificateFile .*,SSLCertificateFile $opensslDir/certs/www.fortylines.com.crt," \
+	-e 's,SSLCertificateKeyFile .*,SSLCertificateKeyFile $opensslDir/private/www.fortylines.com.key,' $sslConfigFile > $localSslConfigFile
 
 # Create directory structure
 #sudo mkdir -p /private/var/run/ssl_scache
@@ -98,15 +98,15 @@ echo
 echo
 echo "The following files will be updated by issuing sudo commands..."
 echo "    ${includePath}dev.conf"
-echo "    $opensslDir/certs/www.codespin.com.crt"
-echo "    $opensslDir/private/www.codespin.com.key"
+echo "    $opensslDir/certs/www.fortylines.com.crt"
+echo "    $opensslDir/private/www.fortylines.com.key"
 echo "    $serverConfigFile"
 echo "    $sslConfigFile"
 
 sudo cp dev.conf ${includePath}
-sudo cp www.codespin.com.crt $opensslDir/certs
-sudo cp www.codespin.com.key $opensslDir/private
-sudo chmod 400 $opensslDir/private/www.codespin.com.key
+sudo cp www.fortylines.com.crt $opensslDir/certs
+sudo cp www.fortylines.com.key $opensslDir/private
+sudo chmod 400 $opensslDir/private/www.fortylines.com.key
 sudo cp $localServerConfigFile $serverConfigFile
 sudo cp $localSslConfigFile $sslConfigFile
 

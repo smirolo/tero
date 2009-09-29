@@ -5,7 +5,7 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <title>Demo User Interface Page</title>
-<style type="text/css" media="all">@import "/dev/seed/data/style.css";</style>
+<style type="text/css" media="all">@import "resources/style.css";</style>
 </head>
 
 <body>
@@ -14,10 +14,10 @@
 
 <div id="sidebar">
   <div id="Menu">
-	<a href="/dev/bin/wiki/logout" title="close session">logout</a><br />
-	<a href="/dev/bin/wiki/diff?document=${document}&ref=${document}" 
+	<a href="/logout" title="close session">logout</a><br />
+	<a href="/diff?document=${document}&ref=${document}" 
 	   title="difference with a previous version">diff</a><br />
-	<a href="/dev/bin/wiki/edit?document=${document}" title="edit current page">edit</a><br />
+	<a href="/edit?document=${document}" title="edit current page">edit</a><br />
   </div>
   <div id="Change">
     <a href="#session"/>
