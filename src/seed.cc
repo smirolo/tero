@@ -118,7 +118,7 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
 	    || s.vars["view"] == "/" ) {
-	    cout << redirect("corporate/index.book") << htmlContent << endl;
+	    cout << redirect("corporate/index.corp") << htmlContent << endl;
 	    
 	} else {	    
 	    path uiPath(s.vars["themeDir"] + std::string(s.exists() ? 
@@ -134,6 +134,11 @@ int main( int argc, char *argv[] )
 			    + std::string("/source.template"));
 	    composer source(sourceTmpl,
 			    composer::error);
+
+	    /* Composer for corporate presentations */
+	    path corpTmpl(s.vars["themeDir"] 
+			  + std::string("/corporate.template"));
+	    composer corporate(corpTmpl,composer::error);
 
 	    /* Composer for view on all other documents */
 	    composer entry(uiPath,composer::error);
@@ -193,6 +198,7 @@ int main( int argc, char *argv[] )
 	    linkLight rightFormatedText(s);
 	    text formatedText(leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.book"),formatedText);
+	    docs.add("document",boost::regex(".*\\.corp"),formatedText);
 	    
 	    htmlEscaper leftLinkText;
 	    htmlEscaper rightLinkText;
@@ -204,6 +210,7 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("/login"),li);
 	    docs.add("view",boost::regex("/logout"),lo);
 	    docs.add("view",boost::regex("/save"),chg);
+	    docs.add("view",boost::regex(".*\\.corp"),corporate);
 	    docs.add("view",boost::regex(".*"),entry);
 	    
 	    docs.fetch(s,"view");
