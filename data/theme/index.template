@@ -14,18 +14,7 @@
 <div id="title"><!-- tmpl_var name='blog_title' --></div>
 
 <div id="sidebar">
-  <div class="MenuWidget">
-    <h3>Links</h3>
-    <p>
-      <a href="/">home</a><br />
-      <a href="/corporate/about.corp">about</a><br />
-      <a href="/corporate/contact.corp">contact</a><br />
-      <a href="/corporate/services.corp">services</a><br />
-      <br />
-      <a href="/corporate/articles.book">articles</a><br />
-      <a href="/personal/smirolo/blog">seb's blog</a><br />
-    </p>
-  </div>
+  <!-- tmpl_include name='topMenu.template' -->
   
   <!-- tmpl_if name='datecloud' -->
   <div class="MenuWidget">

@@ -1,0 +1,12 @@
+  <div class="MenuWidget">
+    <h3>Links</h3>
+    <p>
+      <a href="/">home</a><br />
+      <a href="/services/about.html">about</a><br />
+      <a href="/services/contact.html">contact</a><br />
+      <a href="/services/services.html">services</a><br />
+      <br />
+      <a href="/services/articles.book">articles</a><br />
+      <a href="/personal/smirolo/blog">seb's blog</a><br />
+    </p>
+  </div>
