@@ -73,7 +73,7 @@
 	</table>
       </td>
       <td class="entry" width="120px">
-	<!-- tmpl_include name=adCode.template' -->
+	<!-- tmpl_include name='adCode.template' -->
       </td>
     </tr>
   </table>
