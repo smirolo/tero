@@ -41,7 +41,7 @@ session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dws context)\" $(OUTPUT_OPTION) $<
 
 seed: seed.cc libseed.a \
-	libboost_regex.a libboost_program_options.a \
+	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 
 configure_apache:

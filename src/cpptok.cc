@@ -28,6 +28,7 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
+#include <boost/regex.hpp>
 #include "cpptok.hh"
 
 #if 0
@@ -56,6 +57,7 @@ const char *cppTokenTitles[] = {
     "octalLiteral",
     "hexadecimalLiteral",
     "identifier",
+    "unstyledIdentifier",
     "keyword",
     "operator",
     "punctuator",
@@ -102,7 +104,6 @@ idenTokenType idenTokenClass[] = {
 	{ "for", cppKeyword },
 	{ "friend", cppKeyword },
 	{ "goto", cppKeyword },
-	{ "return", cppKeyword },
 	{ "inline", cppKeyword },
 	{ "int", cppKeyword },
 	{ "long", cppKeyword },
@@ -143,15 +144,21 @@ idenTokenType idenTokenClass[] = {
 };
 
 cppToken identifierToken( const std::string& str ) {
-	// \todo classify keyword, bool literals
-	idenTokenType look;
-	look.identifier = str;
-	idenTokenType *last = &idenTokenClass[sizeof(idenTokenClass)/sizeof(idenTokenType)];
-	idenTokenType *found = std::lower_bound(idenTokenClass,last,look);
-	if( found != last & found->identifier == look.identifier ) {
-		return found->token;
-	}
+    idenTokenType look;
+    look.identifier = str;
+    idenTokenType *last 
+	= &idenTokenClass[sizeof(idenTokenClass)/sizeof(idenTokenType)];
+    idenTokenType *found = std::lower_bound(idenTokenClass,last,look);
+    if( found != last & found->identifier == look.identifier ) {
+	return found->token;
+    }
+    /* If the identifier does not match accepted style (here camelCase
+       starting with a lowercase), mark it with a slightly different tag. */
+    static const boost::regex pat("[a-z,0-9]+([A-Z][a-z,0-9]+)*");
+    if( boost::regex_match(str,pat) ) {
 	return cppIdentifier;
+    }
+    return cppIncorrectIdentifier;
 }
 
 

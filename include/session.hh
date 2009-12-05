@@ -55,6 +55,8 @@ public:
      */
     const std::string& valueOf( const std::string& name ) const;
     
+    boost::filesystem::path contributorLog() const;
+
     /** absolute name to the user personal directory
      */
     boost::filesystem::path userPath() const;
@@ -90,6 +92,13 @@ public:
     /** \brief Display debug information for the session
      */
     void show( std::ostream& ostr );
+
+   /* session start time */
+    void start();
+
+    /* stop counter and return session time. */
+    boost::posix_time::time_duration stop();
+
     
     /** Store session information into persistent storage 
      */

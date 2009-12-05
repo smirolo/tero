@@ -74,6 +74,7 @@ int main( int argc, char *argv[] )
 	    ("right",value<std::string>(),"commit tag for right pane of diff")
 	    ("session",value<std::string>(),"session")
 	    ("username",value<std::string>(),"username")
+	    ("message,m",value<std::string>(),"message")
 	    ("view",value<std::string>(),"view")
 	    ("editedText",value<std::string>(),"text submitted after an online edit");
 	positional_options_description pd; 
@@ -210,6 +211,16 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("/login"),li);
 	    docs.add("view",boost::regex("/logout"),lo);
 	    docs.add("view",boost::regex("/save"),chg);
+
+	    /* Login and Logout pages generates HTML to be displayed
+	       in a web browser. It is very often convinient to quickly
+	       start and stop recording worked hours from the command line.
+	       In that case, "work" and "rest" can be used as substitute. */
+	    auth work;
+	    deauth rest;
+	    docs.add("view",boost::regex("work"),work);
+	    docs.add("view",boost::regex("rest"),rest);
+
 	    docs.add("view",boost::regex(".*\\.html"),corporate);
 	    docs.add("view",boost::regex(".*"),entry);
 	    

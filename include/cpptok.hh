@@ -37,6 +37,7 @@ enum cppToken {
     cppOctalLiteral,
     cppHexadecimalLiteral,
     cppIdentifier,
+    cppIncorrectIdentifier,
     cppKeyword,
     cppOperator,
     cppPunctuator,

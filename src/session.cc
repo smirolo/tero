@@ -51,9 +51,13 @@ const std::string& session::valueOf( const std::string& name ) const {
 boost::filesystem::path session::userPath() const {
     variables::const_iterator srcTop = vars.find("srcTop");
     assert( srcTop != vars.end() );
-    return boost::filesystem::path(srcTop->second 
-				   + std::string("/personal/") 
-				   + username);
+    return boost::filesystem::path(srcTop->second) 
+	/ boost::filesystem::path("contributors") 
+	/ username;
+}
+
+boost::filesystem::path session::contributorLog() const {
+    return userPath() / boost::filesystem::path("hours");
 }
 
 
@@ -248,4 +252,49 @@ void session::store() {
 	sessions << id << ':' << username << std::endl;
 	sessions.close();
 	/* \todo unlock session file */
+}
+
+
+void session::start() {
+    using namespace boost::filesystem;
+
+    variables::const_iterator iter = vars.find("message");
+    if( iter == vars.end() ) {
+	std::stringstream buffer;
+	buffer << "touch " << contributorLog();
+	system(buffer.str().c_str());
+    } else {
+	ofstream file(contributorLog(),std::ios_base::app);
+	if( file.fail() ) {
+	    boost::throw_exception(basic_filesystem_error<path>(
+				 std::string("error opening file"),
+				 contributorLog(), 
+				 boost::system::error_code()));
+	}
+	file << iter->second << ':' << std::endl;
+	file.close();
+    }
+}
+
+
+boost::posix_time::time_duration session::stop() {
+    using namespace boost::system;
+    using namespace boost::posix_time;
+    using namespace boost::filesystem;
+
+    ptime start = from_time_t(last_write_time(contributorLog()));
+    ptime stop = second_clock::universal_time();
+
+    ofstream file(contributorLog(),std::ios_base::app);
+    if( file.fail() ) {
+	boost::throw_exception(basic_filesystem_error<path>(
+				 std::string("error opening file"),
+				 contributorLog(), 
+				 error_code()));
+    }
+    time_duration aggregate = stop - start;
+    file << start << ' ' << stop << ' ' << valueOf("message") << std::endl;
+    file.close();
+
+    return aggregate;
 }

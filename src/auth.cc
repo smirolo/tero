@@ -32,6 +32,12 @@
 #include "auth.hh"
 #include "composer.hh"
 
+
+void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
+    s.start();
+}
+
+
 void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::posix_time;
@@ -42,23 +48,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
 	throw invalidAuthentication();
     }
 
-    path hours(s.userPath());
-    hours /= "hours";
-    if( exists(hours) ) {
-	std::stringstream buffer;
-	buffer << "touch " << hours;
-	system(buffer.str().c_str());
-    } else {
-	ofstream file(hours);
-	if( !file.fail() ) {
-	    file << time_duration(0,0,0,0) << std::endl;
-	} else {
-	    boost::throw_exception(basic_filesystem_error<path>(std::string("unable to open file"),
-								hours, 
-								error_code()));
-	}
-	file.close();
-    }
+    s.start();
     
     /* \todo generate a random unique session id */
     uint64_t sessionId = 12345678;
@@ -73,6 +63,84 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
 }
 
 
+boost::posix_time::time_duration
+deauth::aggregate( const session& s ) const {
+    using namespace boost::system;
+    using namespace boost::posix_time;
+    using namespace boost::filesystem;
+
+    ifstream file(s.contributorLog());
+    if( file.fail() ) {
+	boost::throw_exception(basic_filesystem_error<path>(
+				 std::string("error opening file"),
+				 s.contributorLog(), 
+				 error_code()));
+    }
+
+    time_duration aggr;
+    ptime start, stop, prev;
+    while( !file.eof() ) {
+	std::string line;
+	getline(file,line);
+	try {
+	    size_t first = 0;
+	    size_t last = line.find_first_of(' ',first);
+	    last = line.find_first_of(' ',last + 1);
+	    start = time_from_string(line.substr(first,last));
+
+	    first = last + 1;
+	    last = line.find_first_of(' ',first);
+	    last = line.find_first_of(' ',last + 1);
+	    stop = time_from_string(line.substr(first,last-first));
+
+	    aggr += stop - start;
+	    if( !prev.date().is_not_a_date() 
+		&& start.date().month() != prev.date().month() ) {
+		aggr = hours(aggr.hours()) 
+		    + (( aggr.minutes() > 0 ) ? hours(1) : hours(0));
+		std::cout << prev.date().year() << ' ' 
+			  << prev.date().month() << ": " 
+			  << aggr.hours() << " hours"  << std::endl;
+		aggr = time_duration();
+	    }
+	    prev = start;
+	} catch(...) {
+	    /* It is ok if we cannot interpret some lines in the log;
+	       most notably the last empty line. */
+	}
+    }
+    file.close();
+    aggr = hours(aggr.hours())
+	+ (( aggr.minutes() > 0 ) ? hours(1) : hours(0));
+    std::cout << prev.date().year() << ' ' 
+	      << prev.date().month() << ": " 
+	      << aggr.hours() << " hours" << std::endl;
+
+    return aggr;
+}
+
+
+void deauth::fetch( session& s, const boost::filesystem::path& pathname ) {
+    using namespace boost::posix_time;
+    time_duration logged = s.stop();
+    aggregate(s);
+    std::cout << "last session ran for ";
+    const char *sep = "";
+    if( logged.hours() > 0 ) {
+	std::cout << logged.hours() << " hours";
+	sep = " ";
+    }
+    if( logged.minutes() > 0 ) {
+	std::cout << sep << logged.minutes() << " mins";
+	sep = " ";
+    }
+    if( strlen(sep) == 0 ) {
+	std::cout << "less than a minute";
+    }
+    std::cout << "." << std::endl;
+}
+
+
 void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::posix_time;
@@ -83,26 +151,7 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
 	id << s.id;
 	std::cout << cookie("session",id.str(),boost::posix_time::ptime::date_duration_type(-1));
     }
-    
-    time_duration logged;
-    ptime stop = second_clock::universal_time();
-
-    path hours(s.userPath());
-    hours /= "hours";
-    ptime start = from_time_t(last_write_time(hours));
-    fstream file(hours);
-    if( file.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-				 std::string("error opening file"),
-				 hours, 
-				 error_code()));
-    }
-    file >> logged;
-    file.seekp(0);
-    logged += stop - start;
-    file << logged;
-    file.close();
-
+    time_duration logged = s.stop();
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
     

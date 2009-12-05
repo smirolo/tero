@@ -33,18 +33,33 @@ class invalidAuthentication : public std::exception {
 public:
 
     virtual const char* what() const throw() {
-		return "invalidAuthentication";
+	return "invalidAuthentication";
     }
 };
 
 
-class login : public document {
+class auth : public document {
+public:
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+class login : public auth {
 public:
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 
-class logout : public document {
+class deauth : public document {
+protected:
+     /* print out monthly aggregates and return last one. */
+    boost::posix_time::time_duration aggregate( const session& s ) const;
+
+public:
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+class logout : public deauth {
 public:
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };

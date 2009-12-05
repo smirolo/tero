@@ -5,6 +5,9 @@
       <bin name="git" />
     </xref>
     <build>
+      <xref linkend="build-essential">
+	<bin name="g++" />
+      </xref>
       <xref linkend="git-core">
 	<bin name="git" />
 	<url>seed</url>
@@ -17,6 +20,7 @@
       </xref>
       <xref linkend="contrib/boost">
 	<include name="./boost/version.hpp" />
+	<lib name="boost_date_time" />
 	<lib name="boost_filesystem" />
 	<lib name="boost_program_options" />
 	<lib name="boost_regex" />
