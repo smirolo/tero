@@ -95,11 +95,7 @@ void dispatch::add( const std::string& varname,
 void dispatch::fetch( session& s, const std::string& varname ) {
     document* doc = select(varname,s.vars[varname]);
     if( doc != NULL ) {
-#if 1
 	boost::filesystem::path docname = s.abspath(varname);
-#else
-	boost::filesystem::path docname(root.string() + s.vars[varname]);
-#endif
 	doc->fetch(s,docname);
     }
 }

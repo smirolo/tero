@@ -25,7 +25,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import re, os, StringIO, sys
+import re, os, StringIO, sys, subprocess, tempfile, xml.sax
 
 licensePats = {
     'BSD': '''\S?\S?\s*Copyright \(c\) (?P<date>\d+), (?P<grantor>.*)
@@ -86,7 +86,7 @@ def findLicense(filename):
     return None, {}
 
 def findAllLicenses(base):
-    if not os.path.isdir(base):
+    if os.path.isfile(base):
             sys.stdout.write(base + '... ')
             lic, fields = findLicense(base)
             if lic:
@@ -95,11 +95,65 @@ def findAllLicenses(base):
                                      + ' by ' + fields['grantor'] + ')\n')
             else:
                 sys.stdout.write('no or unknown license\n')
-    else:
+            reportStyleBreakage(base)
+    elif os.path.isdir(base):
         for p in os.listdir(base):            
             findAllLicenses(os.path.join(base,p))
+
+class styleBreakageHandler(xml.sax.ContentHandler):
+
+    def __init__(self):
+        self.identifier = None
+        self.identifiers = []
+
+    def startElement(self, name, attrs):
+        self.identifier = None
+        if name == 'span':
+            if 'class' in attrs and attrs['class'] == 'unstyledIdentifier':
+                self.identifier = ''
+
+    def characters(self, ch):
+        if self.identifier != None:
+            self.identifier = self.identifier + ch
+
+    def endElement(self, name):
+        if self.identifier != None:
+            if not self.identifier in self.identifiers:
+                self.identifiers += [ self.identifier ] 
+            self.identifier = None 
+
+def reportStyleBreakage(base):
+    basename, ext = os.path.splitext(base)
+    if ext in [ '.cc', '.c', '.hh', '.h' ]:
+        style = styleBreakageHandler()
+        parser = xml.sax.make_parser()
+        parser.setFeature(xml.sax.handler.feature_namespaces, 0)
+        parser.setContentHandler(style)
+        cmdline = [ 'seed', base ]
+        tmpout = tempfile.NamedTemporaryFile(delete=False)
+        print "write output in " + tmpout.name + "..."
+        cmd = subprocess.Popen(cmdline,
+                               stdout=subprocess.PIPE)
+        written = False
+        line = cmd.stdout.readline()
+        while line != '':
+            if line.startswith('<'):
+                written = True
+            if written:
+                tmpout.write(line)
+            line = cmd.stdout.readline()
+        cmd.wait()
+        if cmd.returncode != 0:
+            raise "Command returned error"
+        tmpout.close()
+        parser.parse(tmpout.name)
+        for identifier in style.identifiers:
+            sys.stdout.write(identifier + '\n')
 
 
 # Main Entry Point
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        sys.stderr.write('usage: ' + sys.argv[0] + ' root');
+        sys.exit(1)
     findAllLicenses(sys.argv[1])

@@ -114,37 +114,37 @@ std::string reverseCGIFormatting( const std::string& str ) {
 
 
 void parse_cgi_line( std::vector<boost::program_options::option>& opts, 
-					 const boost::program_options::options_description& descr,
-					 const char* input, size_t len, const char sep = '&' ) {
+		     const boost::program_options::options_description& descr,
+		     const char* input, size_t len, const char sep = '&' ) {
     using namespace boost::program_options;
-
-	bool final = false;
-	const char *last = &input[len];
-	const char *nameFirst = input;
-	while( nameFirst != last ) {
-		const char *valueLast = last;
-		const char *nameLast = strchr(nameFirst,'=');
-		if( nameLast != NULL ) {
-			option opt;
-			const char *valueFirst = nameLast + 1;
-			valueLast = strchr(valueFirst,sep);
-			if( valueLast == NULL ) {
-				valueLast = last;
-				final = true;
-			}
-			std::string key(nameFirst,std::distance(nameFirst,nameLast));
-			const option_description* optDescr = descr.find_nothrow(key,false);
-			if( optDescr != NULL ) {
-				opt.string_key = key;
-				opt.value.push_back(reverseCGIFormatting(std::string(valueFirst,
-														 std::distance(valueFirst,valueLast))));
-				opts.push_back(opt);
-			}
-		}
-		nameFirst = final ? valueLast : (valueLast + 1);
-		// cookies (name=value) are separated by a semi-colon and a space
-		while( *nameFirst == ' ' ) ++nameFirst;
+    
+    bool final = false;
+    const char *last = &input[len];
+    const char *nameFirst = input;
+    while( nameFirst != last ) {
+	const char *valueLast = last;
+	const char *nameLast = strchr(nameFirst,'=');
+	if( nameLast != NULL ) {
+	    option opt;
+	    const char *valueFirst = nameLast + 1;
+	    valueLast = strchr(valueFirst,sep);
+	    if( valueLast == NULL ) {
+		valueLast = last;
+		final = true;
+	    }
+	    std::string key(nameFirst,std::distance(nameFirst,nameLast));
+	    const option_description* optDescr = descr.find_nothrow(key,false);
+	    if( optDescr != NULL ) {
+		opt.string_key = key;
+		opt.value.push_back(reverseCGIFormatting(std::string(valueFirst,
+								     std::distance(valueFirst,valueLast))));
+		opts.push_back(opt);
+	    }
 	}
+	nameFirst = final ? valueLast : (valueLast + 1);
+	// cookies (name=value) are separated by a semi-colon and a space
+	while( *nameFirst == ' ' ) ++nameFirst;
+    }
 }
 
 
@@ -152,47 +152,47 @@ boost::program_options::basic_parsed_options<char>
 parse_cgi_options( const boost::program_options::options_description& descr ) 
 {
     using namespace boost::program_options;
-	std::vector<option> opts;
-	
-	char *cookie = getenv("HTTP_COOKIE");
-	if( cookie != NULL ) {
-	    parse_cgi_line(opts,descr,cookie,strlen(cookie),';');
+    std::vector<option> opts;
+    
+    char *cookie = getenv("HTTP_COOKIE");
+    if( cookie != NULL ) {
+	parse_cgi_line(opts,descr,cookie,strlen(cookie),';');
+    }
+    
+    char *cPathInfo = getenv("PATH_INFO");
+    if( cPathInfo != NULL ) {
+	std::string command("view");   // \todo hardcoded for wiki
+	std::string pathInfo(cPathInfo);
+	const option_description* optDescr = descr.find_nothrow(command,false);
+	if( optDescr != NULL ) {
+	    option opt;
+	    opt.string_key = command;
+	    opt.position_key = 1;
+	    opt.value.push_back(pathInfo);
+	    opt.original_tokens.push_back(pathInfo);
+	    opts.push_back(opt);
 	}
 	
-	char *cPathInfo = getenv("PATH_INFO");
-	if( cPathInfo != NULL ) {
-		std::string command("view");   // \todo hardcoded for wiki
-		std::string pathInfo(cPathInfo);
-		const option_description* optDescr = descr.find_nothrow(command,false);
-		if( optDescr != NULL ) {
-			option opt;
-			opt.string_key = command;
-			opt.position_key = 1;
-			opt.value.push_back(pathInfo);
-			opt.original_tokens.push_back(pathInfo);
-			opts.push_back(opt);
-		}
-		
-		char *cQueryString = getenv("QUERY_STRING");
-		if( cQueryString != NULL ) {
-			std::cerr << "QUERY_STRING=" << cQueryString << std::endl;
-			parse_cgi_line(opts,descr,cQueryString,strlen(cQueryString));
-		}
+	char *cQueryString = getenv("QUERY_STRING");
+	if( cQueryString != NULL ) {
+	    std::cerr << "QUERY_STRING=" << cQueryString << std::endl;
+	    parse_cgi_line(opts,descr,cQueryString,strlen(cQueryString));
 	}
-
-	long len;
+    }
+    
+    long len;
     char *lenstr = getenv("CONTENT_LENGTH");
     if( lenstr != NULL && sscanf(lenstr,"%ld",&len) == 1 ) {
-		char input[len];
-		fgets(input, len + 1, stdin);
-		std::cerr << "STDIN=" << input << std::endl;
-		parse_cgi_line(opts,descr,input,len);
-	}
-
-	parsed_options result(&descr);
-	result.options = opts;
-	
-	// Presense of parsed_options -> wparsed_options conversion
-	// does the trick.
-	return basic_parsed_options<char>(result);
+	char input[len];
+	fgets(input, len + 1, stdin);
+	std::cerr << "STDIN=" << input << std::endl;
+	parse_cgi_line(opts,descr,input,len);
+    }
+    
+    parsed_options result(&descr);
+    result.options = opts;
+    
+    // Presense of parsed_options -> wparsed_options conversion
+    // does the trick.
+    return basic_parsed_options<char>(result);
 }

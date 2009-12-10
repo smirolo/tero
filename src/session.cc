@@ -68,19 +68,33 @@ session::abspath( const std::string& name ) const {
     variables::const_iterator iter = vars.find(name);
     if( iter != vars.end() ) {
 	path relpath(iter->second);
+	std::cerr << relpath << "... ";
+
+	/* First we try to access the file from cwd. */
+	path fromCwd = current_path() / relpath;
+	if( boost::filesystem::exists(fromCwd) ) { 
+	    std::cerr << "cwd" << std::endl;
+	    return fromCwd;
+	}	
+
+	/* Second we try to access the file as a relative pathname 
+	   from buildTop. */
 	path fromBuildTop(valueOf("buildTop"));
 	fromBuildTop /= relpath;
 	if( boost::filesystem::exists(fromBuildTop) ) { 
+	    std::cerr << "buildTop" << std::endl;
 	    return fromBuildTop;
 	}
-	std::cerr << "not found: " << fromBuildTop << std::endl;
 
+	/* Third we try to access the file as a relative pathname 
+	   from srcTop. */	
 	path fromSrcTop(valueOf("srcTop"));
 	fromSrcTop /= relpath;
 	if( boost::filesystem::exists(fromSrcTop) ) { 
+	    std::cerr << "srcTop" << std::endl;
 	    return fromSrcTop;
 	}	
-	std::cerr << "not found: " << fromSrcTop << std::endl;
+	std::cerr << "not found" << std::endl;
     }
     /* We used to throw an exception at this point. That does
        not sit very well with dispatch::fetch() because the value
