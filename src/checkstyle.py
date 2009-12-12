@@ -125,6 +125,8 @@ class styleBreakageHandler(xml.sax.ContentHandler):
 def reportStyleBreakage(base):
     basename, ext = os.path.splitext(base)
     if ext in [ '.cc', '.c', '.hh', '.h' ]:
+        if not re.match('([a-z,0-9]+([A-Z][a-z,0-9]+)*)',basename):
+            sys.stdout.write(base + ' does not match filename style\n')
         style = styleBreakageHandler()
         parser = xml.sax.make_parser()
         parser.setFeature(xml.sax.handler.feature_namespaces, 0)
