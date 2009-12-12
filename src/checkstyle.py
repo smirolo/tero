@@ -28,7 +28,7 @@
 import re, os, StringIO, sys, subprocess, tempfile, xml.sax
 
 licensePats = {
-    'BSD': '''\S?\S?\s*Copyright \(c\) (?P<date>\d+), (?P<grantor>.*)
+    'BSD': '''\S?\S?\s*Copyright \(c\) (?P<date>(\d+)(-\d+)*), (?P<grantor>.*)
 \S?\s*All rights reserved.
 \S?\s*
 \S?\s*Redistribution and use in source and binary forms, with or without
@@ -95,7 +95,7 @@ def findAllLicenses(base):
                                      + ' by ' + fields['grantor'] + ')\n')
             else:
                 sys.stdout.write('no or unknown license\n')
-            reportStyleBreakage(base)
+            # reportStyleBreakage(base)
     elif os.path.isdir(base):
         for p in os.listdir(base):            
             findAllLicenses(os.path.join(base,p))

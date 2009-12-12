@@ -168,7 +168,7 @@ void text::showSideBySide( std::istream& input,
 		right.str("");
 	    }
 		
-	    char *p = strchr(line.c_str(),leftMarker);
+	    const char *p = strchr(line.c_str(),leftMarker);
 	    size_t start = atoi(&p[1]);
 	    /* read left file until we hit the start line */
 	    while( leftLine < start ) {
