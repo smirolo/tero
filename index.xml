@@ -1,6 +1,11 @@
 <?xml version="1.0" ?>
 <book>
   <section id="seed">
+    <pathname name="themeDir">
+      <description>
+	themeDir is a directory containing templates and css for the site
+      </description>
+    </pathname>
     <xref linkend="git-core">
       <bin name="git" />
     </xref>
