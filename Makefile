@@ -34,7 +34,7 @@ bins 		:=	seed
 libs		:=	libseed.a
 
 libseed.a: auth.o composer.o changelist.o download.o xmltok.o cpptok.o \
-	   document.o gitcmd.o projfiles.o session.o xmlesc.o \
+	   document.o gitcmd.o logview.o projfiles.o session.o xmlesc.o \
 	   xslview.o webserve.o
 
 session.o: session.cc

@@ -37,6 +37,7 @@
 #include "download.hh"
 #include "projfiles.hh"
 #include "xslview.hh"
+#include "logview.hh"
 #include "webserve.hh"
 
 
@@ -194,6 +195,9 @@ int main( int argc, char *argv[] )
 	    
 	    xslview xslt;
 	    docs.add("document",boost::regex(".*\\.xslt"),xslt);
+
+	    logview logv;
+	    docs.add("document",boost::regex(".*\\.log"),logv);
 
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
