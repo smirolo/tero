@@ -6,7 +6,6 @@
     </description>
     <maintainer name="Sebastien Mirolo" email="smirolo@fortylines.com" />
     <repository>
-      <sync>seed</sync>
       <pathname name="themeDir">
 	<description>
 	  themeDir is a directory containing templates and css for the site
