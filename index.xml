@@ -1,36 +1,40 @@
 <?xml version="1.0" ?>
-<book>
-  <section id="seed">
-    <pathname name="themeDir">
-      <description>
-	themeDir is a directory containing templates and css for the site
-      </description>
-    </pathname>
-    <xref linkend="git-core">
-      <bin name="git" />
-    </xref>
-    <build>
-      <xref linkend="build-essential">
-	<bin name="g++" />
-      </xref>
-      <xref linkend="git-core">
-	<bin name="git" />
-	<url>seed</url>
-      </xref>      
-      <xref linkend="drop">
-	<bin name="dws" />
-	<etc name="./prefix.mk" />
-	<etc name="./suffix.mk" />
-	<etc name="./configure.sh" />
-      </xref>
-      <xref linkend="contrib/boost">
-	<include name="./boost/version.hpp" />
-	<lib name="boost_date_time" />
-	<lib name="boost_filesystem" />
-	<lib name="boost_program_options" />
-	<lib name="boost_regex" />
-	<lib name="boost_system" />
-      </xref>
-    </build>
-  </section>
-</book>
+<projects>
+  <project name="seed">
+    <description>
+      CGI for presenting documents, source code and build results
+    </description>
+    <maintainer name="Sebastien Mirolo" email="smirolo@fortylines.com" />
+    <repository>
+      <sync>seed</sync>
+      <pathname name="themeDir">
+	<description>
+	  themeDir is a directory containing templates and css for the site
+	</description>
+      </pathname>
+      <dep name="git-core">
+	<bin>git</bin>
+      </dep>
+      <dep name="build-essential">
+	<bin>g++</bin>
+      </dep>
+      <dep name="git-core">
+	<bin>git</bin>
+      </dep>      
+      <dep name="drop">
+	<bin>dws</bin>
+	<etc>.*/prefix.mk</etc>
+	<etc>.*/suffix.mk</etc>
+	<etc>.*/configure.sh</etc>
+      </dep>
+      <dep name="contrib/boost">
+	<include>.*/(boost)/version.hpp</include>
+	<lib>boost_date_time</lib>
+	<lib>boost_filesystem</lib>
+	<lib>boost_program_options</lib>
+	<lib>boost_regex</lib>
+	<lib>boost_system</lib>
+      </dep>
+    </repository>
+  </project>
+</projects>
