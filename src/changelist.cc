@@ -150,6 +150,6 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
     boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
     if( !sccsRoot.empty() ) {
 	revision->rootPath(sccsRoot);
-	revision->rss(std::cout,pathname);
+	revision->rss(std::cout,s,pathname);
     }
 }

@@ -39,6 +39,12 @@ undefVariableError::undefVariableError( const std::string& varname )
 			 + varname) {}
 
 
+url session::asUrl( const boost::filesystem::path& p ) const
+{
+    return url("http","fortylines.com",boost::filesystem::path("/") / p);
+}
+
+
 bool session::prefix( const boost::filesystem::path& left, 
 		      const boost::filesystem::path& right ) const 
 {
@@ -343,6 +349,13 @@ boost::posix_time::time_duration session::stop() {
     file.close();
 
     return aggregate;
+}
+
+
+boost::filesystem::path 
+session::subdirpart( const boost::filesystem::path& root,
+		     const boost::filesystem::path& leaf ) const {
+    return leaf.string().substr(root.string().size() + 1);
 }
 
 

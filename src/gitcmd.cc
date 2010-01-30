@@ -115,6 +115,7 @@ void gitcmd::history( std::ostream& ostr,
 
 
 void gitcmd::rss( std::ostream& ostr, 
+		  const session& s,
 		  const boost::filesystem::path& pathname ) {
     /* Reference: http://www.rssboard.org/rss-specification */
     
@@ -122,7 +123,9 @@ void gitcmd::rss( std::ostream& ostr,
        where .git can be found by walking up the tree structure. */ 
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
-    
+
+    boost::filesystem::path project = s.subdirpart(s.valueOf("srcTop"),rootpath);
+
     /* shows only the last 2 commits */
     std::stringstream sstm;
     sstm << executable << " log --name-only -2 "; 
@@ -136,7 +139,7 @@ void gitcmd::rss( std::ostream& ostr,
     /* http://www.feedicons.com/ */
     ostr << ::rss().version("2.0")
 	 << channel()
-	 << rsslink() << "http://fortylines.com" << rsslink::end
+	 << rsslink() << s.asUrl("") << rsslink::end
 	 << title() << "Fortylines Solutions" << title::end;
     
     bool itemStarted = false;
@@ -154,7 +157,7 @@ void gitcmd::rss( std::ostream& ostr,
 	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
 	    ostr << title() << lcstr << title::end;
 	    ostr << rsslink() << "http://fortylines.com" << rsslink::end;
-	    ostr << guid() << line.substr(7) << guid::end;
+	    ostr << guid() << strip(line.substr(7)) << guid::end;
 	    
 	} else if ( line.compare(0,7,"Author:") == 0 ) {
 	    ostr << author();
@@ -174,7 +177,9 @@ void gitcmd::rss( std::ostream& ostr,
 	    }
 	    if( !isspace(line[0]) ) {
 		/* We are dealing with a file that was part of this commit. */
-		ostr << html::a().href(line) << strip(line) << html::a::end;
+		std::stringstream hrefs;
+		hrefs << s.asUrl(project / boost::filesystem::path(strip(line)));
+		ostr << html::a().href(hrefs.str()) << strip(line) << html::a::end;
 	    } else {
 		esc.attach(ostr);
 		ostr << lcstr;

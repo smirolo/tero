@@ -151,7 +151,7 @@ class url {
 public:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
-    operator<<(std::basic_ostream<ch, tr>& ostr, url& u ) {
+    operator<<(std::basic_ostream<ch, tr>& ostr, const url& u ) {
 	if( u.absolute() ) ostr << u.protocol << ':';
 	if( !u.host.empty() ) ostr << "//" << u.host;
 	if( u.port > 0 ) ostr << ':' << u.port;
@@ -169,6 +169,10 @@ public:
 public:
     explicit url( const std::string& name );
     
+    url( const std::string& pprotocol, const std::string& phost, 
+	 const boost::filesystem::path& ppathname ) 
+	: protocol(pprotocol), host(phost), port(0), pathname(ppathname) {} 
+
     url( const std::string& pprotocol, const std::string& phost, int pport, 
 	 const boost::filesystem::path& ppathname ) 
 	: protocol(pprotocol), host(phost), port(pport), pathname(ppathname) {} 

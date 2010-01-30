@@ -67,6 +67,10 @@ public:
     
     session() : id(0) {}
 
+    /** Transforms the path *p* into a fully qualified URL to access
+	the file through an HTTP connection. */
+    url asUrl( const boost::filesystem::path& p ) const;
+
     /** document name as an url 
      */
     std::string docAsUrl() const;
@@ -116,7 +120,6 @@ public:
     root( const boost::filesystem::path& leaf,
 	  const boost::filesystem::path& trigger ) const;
 
-    
     std::string root() const {
 	return std::string("");
     }
@@ -134,11 +137,18 @@ public:
 
     /* stop counter and return session time. */
     boost::posix_time::time_duration stop();
-
     
     /** Store session information into persistent storage 
      */
     void store();
+
+    /** returns the path relative to *root* of *leaf* when both *root*
+	and *leaf* are absolute paths and *root* is a leading prefix 
+	of *leaf*.
+    */
+    boost::filesystem::path 
+    subdirpart( const boost::filesystem::path& root,
+		  const boost::filesystem::path& leaf ) const;
 
     /* Returns the value of a variable as an absolute pathname. */
     boost::filesystem::path valueAsPath( const std::string& name ) const;

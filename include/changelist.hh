@@ -48,7 +48,8 @@ public:
 			  const session& s, 
 			  const boost::filesystem::path& pathname ) = 0;
     
-    virtual void rss( std::ostream& ostr, 
+    virtual void rss( std::ostream& ostr,
+		      const session& s, 
 		      const boost::filesystem::path& pathname ) = 0;
     
     /* Sets the path to the root of the source code control system.
@@ -79,6 +80,7 @@ public:
 		  const boost::filesystem::path& pathname );
 
     void rss( std::ostream& ostr, 
+	      const session& s,
 	      const boost::filesystem::path& pathname );
 	
 }; 
@@ -128,6 +130,16 @@ public:
 
     virtual void 
     fetch( session& s, const boost::filesystem::path& pathname ) = 0;
+};
+
+
+/** Detailed description of a single changelist
+ */
+class changedescr : public changelist {
+public:
+    explicit changedescr( revisionsys *r ) : changelist(r) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );	
 };
 
 

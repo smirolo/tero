@@ -29,9 +29,16 @@ namespace html {
 
     const char* a::name = "a";
     const detail::nodeEnd a::end(a::name);
+    const char *a::attrNames[] = {
+	"href",
+	"title"
+    };
 
     const char* div::name = "div";
     const detail::nodeEnd div::end(div::name);
+    const char *div::attrNames[] = {
+	"class"
+    };
 
     const char *h::names[] = {
 	"h1",
@@ -72,6 +79,10 @@ const detail::nodeEnd pubDate::end(pubDate::name);
 
 const char* rss::name = "rss";
 const detail::nodeEnd rss::end(rss::name);
+const char *rss::attrNames[] = {
+    "version"
+};
+
 
 const char* title::name = "title";
 const detail::nodeEnd title::end(title::name);

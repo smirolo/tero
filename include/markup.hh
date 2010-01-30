@@ -72,17 +72,30 @@ namespace detail {
 	bool newline;
 	const char *name;
 
-	template<typename ch, typename tr>
-	void printAttributes(std::basic_ostream<ch, tr>& ostr ) const {}
+	const size_t attrArrayLength;
+	const char **attrNames;
+	std::string *attrValues;
 
-    public:		
-	markup( const char *n, bool nl ) : newline(nl), name(n) {}
+   public:		
+	markup( const char *n, 
+		const char **attrNs,
+		std::string *attrVs,
+		const size_t attrNbs,
+		bool nl = false ) : newline(nl), name(n), 
+				    attrNames(attrNs), attrValues(attrVs), 
+				    attrArrayLength(attrNbs) {}
 	
 	template<typename ch, typename tr>
 	friend std::basic_ostream<ch, tr>&
 	operator<<(std::basic_ostream<ch, tr>& ostr, const markup& v ) {
 	    ostr << "<" << v.name;
-	    v.printAttributes(ostr);
+	    if( v.attrNames != NULL & v.attrValues != NULL ) {
+		for( size_t i = 0; i < v.attrArrayLength; ++i ) {
+		    if( !v.attrValues[i].empty() ) {
+			ostr << ' ' << v.attrNames[i] << "=\"" << v.attrValues[i] << '\"';
+		    }
+		}
+	    }
 	    ostr << '>';
 	    if( v.newline ) ostr << std::endl;
 	    return ostr;
@@ -97,30 +110,30 @@ namespace html {
      */
     class a : public detail::markup {    
     protected:
-	detail::attribute hrefAttr;
-	detail::attribute titleAttr;
-	
-	template<typename ch, typename tr>
-	void printAttributes(std::basic_ostream<ch, tr>& ostr ) const {
-	    ostr << hrefAttr;
-	    ostr << titleAttr;
-	}
+	enum attributes {
+	    hrefAttr,
+	    titleAttr
+	};
+
+	static const size_t attrLength = 2;
+
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+
 
     public:  
 	static const char* name;
 	static const detail::nodeEnd end;
     
-	a() : markup(name,false), hrefAttr("href"), titleAttr("title") {}
+	a() : markup(name,attrNames,attrValues,attrLength) {}
 
 	a& href( const std::string& v ) {
-	    hrefAttr.value = v;
-	    hrefAttr.valid = true;
+	    attrValues[hrefAttr] = v;
 	    return *this;
 	}
 
 	a& title( const std::string& v ) {
-	    titleAttr.value = v;
-	    titleAttr.valid = true;
+	    attrValues[titleAttr] = v;
 	    return *this;
 	}
     };
@@ -130,22 +143,24 @@ namespace html {
      */
     class div : public detail::markup {    
     protected:  
-	detail::attribute classAttr;
+	enum attributes {
+	    classAttr,
+	};
 
-	template<typename ch, typename tr>
-	void printAttributes(std::basic_ostream<ch, tr>& ostr ) const {
-	    ostr << classAttr;
-	}
+	static const size_t attrLength = 1;
 
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+
+	
     public:  
 	static const char* name;
 	static const detail::nodeEnd end;
     
-	div() : markup(name,true), classAttr("class") {}
+	div() : markup(name,attrNames,attrValues,attrLength,true) {}
 
 	div& classref( const char *v ) {
-	    classAttr.value = v;
-	    classAttr.valid = true;
+	    attrValues[classAttr] = v;
 	    return *this;
 	}
     };
@@ -160,7 +175,7 @@ namespace html {
 
     public:
 	/* \todo assert than n < 5. */
-	explicit h( int n ) : markup(names[n],false), num(n) {}
+	explicit h( int n ) : markup(names[n],NULL,NULL,0), num(n) {}
 
 	detail::nodeEnd end() const {
 	    return detail::nodeEnd(names[num]);
@@ -175,7 +190,7 @@ namespace html {
 	static const char* name;
 	static const detail::nodeEnd end;
     
-	p() : markup(name,true) {}
+	p() : markup(name,NULL,NULL,0,true) {}
     };
 
 } // namespace html
@@ -187,7 +202,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    author() : markup(name,false) {}
+    author() : markup(name,NULL,NULL,0) {}
 };
 
 
@@ -198,7 +213,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    channel() : markup(name,true) {}
+    channel() : markup(name,NULL,NULL,0,true) {}
 };
 
 
@@ -209,7 +224,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    description() : markup(name,true) {}
+    description() : markup(name,NULL,NULL,0,true) {}
 };
 
 
@@ -220,7 +235,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    guid() : markup(name,false) {}
+    guid() : markup(name,NULL,NULL,0) {}
 };
 
 
@@ -231,7 +246,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    item() : markup(name,true) {}
+    item() : markup(name,NULL,NULL,0,true) {}
 };
 
 
@@ -242,7 +257,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    rsslink() : markup(name,false) {}
+    rsslink() : markup(name,NULL,NULL,0) {}
 };
 
 
@@ -253,7 +268,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    pre() : markup(name,true) {}
+    pre() : markup(name,NULL,NULL,0,true) {}
 };
 
 
@@ -279,7 +294,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    pubDate() : markup(name,false) {}
+    pubDate() : markup(name,NULL,NULL,0) {}
 };
 
 
@@ -287,22 +302,24 @@ public:
  */
 class rss : public detail::markup {    
 protected:
-    detail::attribute versionAttr;
-
-    template<typename ch, typename tr>
-    void printAttributes(std::basic_ostream<ch, tr>& ostr ) const {
-	ostr << versionAttr;
-    }
+    enum attributes {
+	versionAttr,
+    };
+    
+    static const size_t attrLength = 1;
+    
+    static const char *attrNames[];
+    std::string attrValues[attrLength];
+    
 
 public:  
     static const char* name;
     static const detail::nodeEnd end;
     
-    rss() : markup(name,true), versionAttr("version") {}
+    rss() : markup(name,attrNames,attrValues,attrLength,true) {}
 
     rss& version( const char *v ) {
-	versionAttr.value = v;
-	versionAttr.valid = true;
+	attrValues[versionAttr] = v;
 	return *this;
     }
 };
@@ -315,7 +332,7 @@ public:
     static const char* name;
     static const detail::nodeEnd end;
     
-    title() : markup(name,false) {}
+    title() : markup(name,NULL,NULL,0) {}
 };
 
 #endif
