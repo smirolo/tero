@@ -32,17 +32,37 @@
 #include <boost/filesystem/fstream.hpp>
 #include "webserve.hh"
 
+/** This error is thrown when we are trying to retrieve the value 
+    of a variable from the current session and that variable does
+    not exist in the variables map.
+*/
+class undefVariableError : public std::runtime_error {
+public:
+    explicit undefVariableError( const std::string& varname );
+};
+
+
+/** A session instance is used to store "global variables" as defined
+    when the CGI script is invoked and translate relative pathnames 
+    into absolute pathnames to files on the server.
+ */
 class session {
 public:
     typedef std::map<std::string,std::string> variables;
-    
+
+public:
+    /* \todo workout details of auth.cc first before making private. */
+    /* map of variable names to values */
+    variables vars;
+
 public:
     
     static boost::filesystem::path storage;
-    
+
+    /* unique identifier for the session */
     uint64_t id;
+
     std::string username;
-    variables vars;
     
     
     session() : id(0) {}
@@ -50,11 +70,7 @@ public:
     /** document name as an url 
      */
     std::string docAsUrl() const;
-    
-    /** returns the value of a variable
-     */
-    const std::string& valueOf( const std::string& name ) const;
-    
+        
     boost::filesystem::path contributorLog() const;
 
     /** absolute name to the user personal directory
@@ -67,23 +83,39 @@ public:
 	
 	If the variable exists in the session and its value can
 	be interpreted as an absolute path, that value is returned 
-	as such.
-	If the variable exists in the session and its value can
-	be interpreted as a relative path, the following directories
-	are searched until a match is found:
-	- pwd
-	- buildTop
-	- srcTop
+	as such else if the variable exists in the session and its value 
+	can be interpreted as a relative path, the pwd, buildTop and srcTop
+	directories are searched in order until a match is found.
+
+	If no match can be found, there is no actual files associated
+	with that variable, we assume the file will be generated and
+	thus return buildTop + value.
     */
     boost::filesystem::path 
-    abspath( const std::string& name ) const;
-    
-    boost::filesystem::path 
-    findFile( const boost::filesystem::path& name ) const;
+    abspath( const boost::filesystem::path& name ) const;
+
+    /* returns the equivalent to path *p* within the build tree 
+       rooted at buildTop. */
+    boost::filesystem::path build( const boost::filesystem::path& p ) const;
+
+    /** returns true if *left* is a prefix of *right*.
+     */
+    bool prefix( const boost::filesystem::path& left, 
+		 const boost::filesystem::path& right ) const;
     
     /** \brief Load a session from persistent storage 
      */
     void restore( const boost::program_options::variables_map& params );
+
+    /* look for a relative pathname *trigger* from *leaf* to the root
+       of the filesystem and return the stem such that stem / *trigger*
+       is the absolute pathname to the trigger. 
+       If *trigger* cannot be found, the method returns an empty path.
+    */
+    boost::filesystem::path 
+    root( const boost::filesystem::path& leaf,
+	  const boost::filesystem::path& trigger ) const;
+
     
     std::string root() const {
 	return std::string("");
@@ -92,6 +124,10 @@ public:
     /** \brief Display debug information for the session
      */
     void show( std::ostream& ostr );
+
+    /* returns the equivalent to path *p* within the source tree 
+       rooted at srcTop. */
+    boost::filesystem::path src( const boost::filesystem::path& p ) const;
 
    /* session start time */
     void start();
@@ -103,6 +139,14 @@ public:
     /** Store session information into persistent storage 
      */
     void store();
+
+    /* Returns the value of a variable as an absolute pathname. */
+    boost::filesystem::path valueAsPath( const std::string& name ) const;
+
+    /** returns the value of a variable
+     */
+    const std::string& valueOf( const std::string& name ) const;
+
 };
 
 #endif

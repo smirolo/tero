@@ -174,7 +174,7 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 		std::string absolute(" class=\"outside\"");
 		super::nextBuf->sputn(absolute.c_str(),absolute.size());
 	    } else {
-		boost::filesystem::path f = context->findFile(name);
+		boost::filesystem::path f = context->abspath(name);
 		if( f.empty() ) {
 		    std::string absolute(" class=\"new\"");
 		    super::nextBuf->sputn(absolute.c_str(),absolute.size());

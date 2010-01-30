@@ -29,6 +29,8 @@
 #include "session.hh"
 #include "decorator.hh"
 
+/* Base class to generate HTML presentation of documents.
+ */
 class document {
 protected:
     void open( boost::filesystem::ifstream& strm, 
@@ -42,18 +44,12 @@ public:
 	modification date, file revision as well as tags read in the file.
     */
     virtual void meta( session& s, const boost::filesystem::path& pathname ) {}
-    
-    /** Directory root of a tree starting from *leaf* looking for a file 
-	named *trigger*. The search will stop once we reach *topSrc*.
-	
-	If the trigger cannot be found, the method returns an empty path.
-    */
-    boost::filesystem::path root( const session& s,
-				  const boost::filesystem::path& leaf,
-				  const boost::filesystem::path& trigger );
 };
 
 
+/* Pick the appropriate subclass of *document* based on regular expressions
+   applied to the document name.
+ */
 class dispatch {
 public:
     typedef std::map<std::string,std::string> variables;

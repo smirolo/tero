@@ -28,6 +28,9 @@
 
 #include "composer.hh"
 
+/* change implementation of command with revisionsys implementation 
+   of repository specifics. 
+ */
 
 /** Base class definition for interacting with a source code control system.    
  */
@@ -36,19 +39,23 @@ public:
 	boost::filesystem::path rootpath;
 	
 public:
-	virtual void diff( std::ostream& ostr, 
-					   const std::string& leftCommit, 
-					   const std::string& rightCommit, 
-					   const boost::filesystem::path& pathname ) = 0;
-	
-	virtual void history( std::ostream& ostr, 
-						  const boost::filesystem::path& pathname ) = 0;
-	
-	/* Sets the path to the root of the source code control system.
-	 */
-	void rootPath( const boost::filesystem::path& p ) {
-		rootpath = p;
-	}
+    virtual void diff( std::ostream& ostr, 
+		       const std::string& leftCommit, 
+		       const std::string& rightCommit, 
+		       const boost::filesystem::path& pathname ) = 0;
+    
+    virtual void history( std::ostream& ostr,
+			  const session& s, 
+			  const boost::filesystem::path& pathname ) = 0;
+    
+    virtual void rss( std::ostream& ostr, 
+		      const boost::filesystem::path& pathname ) = 0;
+    
+    /* Sets the path to the root of the source code control system.
+     */
+    void rootPath( const boost::filesystem::path& p ) {
+	rootpath = p;
+    }
 };
 
 
@@ -59,16 +66,20 @@ protected:
 	boost::filesystem::path executable;
 
 public:
-	gitcmd( const boost::filesystem::path& exec ) 
-		: executable(exec) {}
+    gitcmd( const boost::filesystem::path& exec ) 
+	: executable(exec) {}
 	
-	void diff( std::ostream& ostr, 
-			   const std::string& leftCommit, 
-			   const std::string& rightCommit, 
-			   const boost::filesystem::path& pathname );
-	
-	void history( std::ostream& ostr, 
-				  const boost::filesystem::path& pathname );
+    void diff( std::ostream& ostr, 
+	       const std::string& leftCommit, 
+	       const std::string& rightCommit, 
+	       const boost::filesystem::path& pathname );
+    
+    void history( std::ostream& ostr, 
+		  const session& s, 
+		  const boost::filesystem::path& pathname );
+
+    void rss( std::ostream& ostr, 
+	      const boost::filesystem::path& pathname );
 	
 }; 
 
@@ -106,20 +117,35 @@ public:
 };
 
 
+/** Base class for commands displaying changelists.
+ */
 class changelist : public document {
+protected:
+    revisionsys *revision;
+    
 public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    explicit changelist( revisionsys *r ) : revision(r) {}
+
+    virtual void 
+    fetch( session& s, const boost::filesystem::path& pathname ) = 0;
 };
 
 
 /** History of changes to a file under revision control
  */
-class changehistory : public document {
-protected:
-	revisionsys *revision;
-
+class changehistory : public changelist {
 public:
-	explicit changehistory( revisionsys *r ) : revision(r) {}
+    explicit changehistory( revisionsys *r ) : changelist(r) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );	
+};
+
+
+/** RSS of changes to a file under revision control
+ */
+class changerss : public changelist {
+public:
+    explicit changerss( revisionsys *r ) : changelist(r) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );	
 };

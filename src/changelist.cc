@@ -109,6 +109,7 @@ void changediff::embed( session& s, const std::string& varname ) {
 }
 
 
+#if 0
 void changelist::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
@@ -131,45 +132,24 @@ void changelist::fetch( session& s, const boost::filesystem::path& pathname ) {
 	std::cout << "<i>empty</i><br />" << std::endl;
     }
 }
-
+#endif
 
 void 
 changehistory::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    std::stringstream text;
-    boost::filesystem::path sccsRoot = document::root(s,pathname,".git");
+    boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
     if( !sccsRoot.empty() ) {
 	revision->rootPath(sccsRoot);
-	revision->history(text,pathname);
-	if( !text.eof() ) { 
-	    std::cout << "<div class=\"MenuWidget\">" << std::endl;
-	    std::cout << "<h3>history</h3>" << std::endl;
-
-	    while( !text.eof() ) {
-		std::string line;
-		getline(text,line);
-		/* Parse the summary line in order to split the commit tag 
-		   from the commit message. */
-	    
-		size_t splitPos = line.find(' ');
-		if( splitPos != std::string::npos ) {
-		    std::string rightRevision = line.substr(0,splitPos);
-		    std::string title = line.substr(splitPos);
-		
-		    /* \todo '\n' at end of line? */
-		    std::cout << "<a";
-		    std::cout << " href=\"/diff?document=/" << s.docAsUrl() 
-			      << "&right=" << rightRevision << "\""; 		
-		    std::cout << " title=\"" << title << "\"";
-		    std::cout << ">";
-		    std::cout << rightRevision.substr(0,10);
-		    std::cout << "...</a><br />";
-		}
-	    }
-	    std::cout << std::endl;
-	    std::cout << "</div>" << std::endl;
-	    std::cout << std::endl;
-	}
+	revision->history(std::cout,s,pathname);
     }
 }
 
+void 
+changerss::fetch( session& s, const boost::filesystem::path& pathname ) 
+{
+    boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
+    if( !sccsRoot.empty() ) {
+	revision->rootPath(sccsRoot);
+	revision->rss(std::cout,pathname);
+    }
+}

@@ -25,59 +25,171 @@
 
 #include <cstdio>
 #include "changelist.hh"
+#include "markup.hh"
+
+namespace {
+
+    /* \todo review memory usage for this function. */
+    std::string strip( const std::string& s ) {
+	const char *seps = " \t\n\r";
+	std::string::size_type first = s.find_first_not_of(seps);
+	return ( first == std::string::npos ) ? std::string()
+	    : s.substr(first,s.find_last_not_of(seps) - first + 1);
+    }
+
+} // anonymous namespace
+
 
 void gitcmd::diff( std::ostream& ostr, 
-				   const std::string& leftCommit, 
-				   const std::string& rightCommit, 
-				   const boost::filesystem::path& pathname ) {
-	/* The git command needs to be issued from within a directory where .git
-	   can be found by walking up the tree structure. */
-	boost::filesystem::initial_path(); 
-	boost::filesystem::current_path(rootpath);
-
-	std::stringstream cmd;
-	cmd << executable << " diff " << leftCommit << " " << rightCommit 
-		<< " " << pathname; 
-
-	std::cerr << "git cmd: " << cmd.str() << std::endl;
-
-	FILE *diffFile = popen(cmd.str().c_str(),"r");
-	if( diffFile == NULL ) {
-		std::cerr << "error opening command: " << cmd.str() << std::endl;
-		return;
-	}
-	char line[256];
-	while( fgets(line,sizeof(line),diffFile) != NULL ) {
-		ostr << line;
-	}
-	pclose(diffFile);
-	boost::filesystem::current_path(boost::filesystem::initial_path());
+		   const std::string& leftCommit, 
+		   const std::string& rightCommit, 
+		   const boost::filesystem::path& pathname ) {
+    /* The git command needs to be issued from within a directory where .git
+       can be found by walking up the tree structure. */
+    boost::filesystem::initial_path(); 
+    boost::filesystem::current_path(rootpath);
+    
+    std::stringstream cmd;
+    cmd << executable << " diff " << leftCommit << " " << rightCommit 
+	<< " " << pathname;
+    
+    FILE *diffFile = popen(cmd.str().c_str(),"r");
+    if( diffFile == NULL ) {
+	std::cerr << "error opening command: " << cmd.str() << std::endl;
+	return;
+    }
+    char line[256];
+    while( fgets(line,sizeof(line),diffFile) != NULL ) {
+	ostr << line;
+    }
+    pclose(diffFile);
+    boost::filesystem::current_path(boost::filesystem::initial_path());
 }
 
 
 void gitcmd::history( std::ostream& ostr, 
+		      const session& s,
 		      const boost::filesystem::path& pathname ) {
     
     /* The git command needs to be issued from within a directory 
        where .git can be found by walking up the tree structure. */ 
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
-
+    
     std::stringstream sstm;
     sstm << executable << " log --pretty=oneline " 
-	 << relpath(pathname,rootpath); 
+	 << relpath(pathname,rootpath);    
+    
+    char lcstr[256];
+    FILE *summary = popen(sstm.str().c_str(),"r");
+    assert( summary != NULL );
+    
+    ostr << html::div().classref("MenuWidget");
+    ostr << html::h(3) << "history" << html::h(3).end() << std::endl;
+    while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
+	std::string line(lcstr);
+	
+	/* Parse the summary line in order to split the commit tag 
+	   from the commit message. */
+	
+	size_t splitPos = line.find(' ');
+	if( splitPos != std::string::npos ) {
+	    std::string rightRevision = line.substr(0,splitPos);
+	    std::string title = line.substr(splitPos);
 
-    std::cerr << "git command: " << sstm.str() << std::endl;
+	    std::stringstream hrefs;
+	    hrefs << "/diff?document=/" << s.docAsUrl() 
+		  << "&right=" << rightRevision; 
 
-    char line[256];
+	    /* \todo '\n' at end of line? */
+	    ostr << html::a().href(hrefs.str()).title(title)
+		 << rightRevision.substr(0,10) << "..." 
+		 << html::a::end << "<br />";
+	}
+    }
+    pclose(summary);
+    ostr << html::div::end << std::endl;
+    
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+}
+
+
+void gitcmd::rss( std::ostream& ostr, 
+		  const boost::filesystem::path& pathname ) {
+    /* Reference: http://www.rssboard.org/rss-specification */
+    
+    /* The git command needs to be issued from within a directory 
+       where .git can be found by walking up the tree structure. */ 
+    boost::filesystem::initial_path();
+    boost::filesystem::current_path(rootpath);
+    
+    /* shows only the last 2 commits */
+    std::stringstream sstm;
+    sstm << executable << " log --name-only -2 "; 
+    
+    char lcstr[256];
     FILE *summary = popen(sstm.str().c_str(),"r");
     assert( summary != NULL );
 
-    while( fgets(line,sizeof(line),summary) != NULL ) {
-	std::cerr << "fgets: " << line << std::endl;
-	ostr << line;
+    htmlEscaper esc;
+    
+    /* http://www.feedicons.com/ */
+    ostr << ::rss().version("2.0")
+	 << channel()
+	 << rsslink() << "http://fortylines.com" << rsslink::end
+	 << title() << "Fortylines Solutions" << title::end;
+    
+    bool itemStarted = false;
+    bool descrStarted = false;
+    while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
+	std::string line(lcstr);
+	if( strncmp(lcstr,"commit",6) == 0 ) {
+	    if( descrStarted ) {
+		ostr << description::end;
+		descrStarted = false;
+	    }
+	    if( itemStarted ) ostr << item::end;
+	    ostr << item();
+	    itemStarted = true;
+	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
+	    ostr << title() << lcstr << title::end;
+	    ostr << rsslink() << "http://fortylines.com" << rsslink::end;
+	    ostr << guid() << line.substr(7) << guid::end;
+	    
+	} else if ( line.compare(0,7,"Author:") == 0 ) {
+	    ostr << author();
+	    esc.attach(ostr);
+	    ostr << strip(line.substr(7));
+	    esc.detach();
+	    ostr << author::end;
+
+	} else if ( line.compare(0,5,"Date:") == 0 ) {
+	    ostr << pubDate() << strip(line.substr(5)) << pubDate::end;
+
+	} else {
+	    /* more description */
+	    if( !descrStarted ) {
+		ostr << description();
+		descrStarted = true;
+	    }
+	    if( !isspace(line[0]) ) {
+		/* We are dealing with a file that was part of this commit. */
+		ostr << html::a().href(line) << strip(line) << html::a::end;
+	    } else {
+		esc.attach(ostr);
+		ostr << lcstr;
+		esc.detach();
+	    }
+	}
     }
     pclose(summary);
-
+    if( descrStarted ) {
+	ostr << description::end;
+	descrStarted = false;
+    }
+    if( itemStarted ) ostr << item::end;
+    ostr << channel::end
+	 << rss::end;
+    
     boost::filesystem::current_path(boost::filesystem::initial_path());
 }

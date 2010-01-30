@@ -23,46 +23,55 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardformatter
-#define guardformatter
+#include "markup.hh"
 
+namespace html {
 
-/** write the ending of a section
- */
-class endt {
-private:
-    const std::string name;
-  
-public:  
+    const char* a::name = "a";
+    const detail::nodeEnd a::end(a::name);
 
-    /** initialize a tag instance marking the end of section *name*.
-     */
-    explicit endt( const std::string& c ) 
-	: name(c) {}
-    
-    template<typename ch, typename tr>
-    friend std::basic_ostream<ch, tr>&
-    operator<<(std::basic_ostream<ch, tr>& ostr, const endt& v ) {
-	ostr << '<' << '/' << v.name << '>' << std::endl;
-	return ostr;
-    }
-};
+    const char* div::name = "div";
+    const detail::nodeEnd div::end(div::name);
 
+    const char *h::names[] = {
+	"h1",
+	"h2",
+	"h3",
+	"h4",
+	"h5"
+    };
 
-/** write the opening of a source code listing section
- */
-class code {
-public:  
+    const char* p::name = "p";
+    const detail::nodeEnd p::end(p::name);
 
-    explicit code() {}
-    
-    template<typename ch, typename tr>
-    friend std::basic_ostream<ch, tr>&
-    operator<<(std::basic_ostream<ch, tr>& ostr, const code& v ) {
-	ostr << "<pre class=\"code\">" << std::endl;
-	return ostr;
-    }
-};
+} // namespace html
 
+const char* author::name = "author";
+const detail::nodeEnd author::end(author::name);
 
-#endif
+const char* channel::name = "channel";
+const detail::nodeEnd channel::end(channel::name);
+
+const char* description::name = "description";
+const detail::nodeEnd description::end(description::name);
+
+const char* guid::name = "guid";
+const detail::nodeEnd guid::end(guid::name);
+
+const char* item::name = "item";
+const detail::nodeEnd item::end(item::name);
+
+const char* rsslink::name = "link";
+const detail::nodeEnd rsslink::end(rsslink::name);
+
+const char* pre::name = "pre";
+const detail::nodeEnd pre::end(pre::name);
+
+const char* pubDate::name = "pubDate";
+const detail::nodeEnd pubDate::end(pubDate::name);
+
+const char* rss::name = "rss";
+const detail::nodeEnd rss::end(rss::name);
+
+const char* title::name = "title";
+const detail::nodeEnd title::end(title::name);

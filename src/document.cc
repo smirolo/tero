@@ -28,31 +28,8 @@
 #include <boost/program_options.hpp>
 #include <boost/system/error_code.hpp>
 #include "document.hh"
-#include "formatter.hh"
+#include "markup.hh"
 
-boost::filesystem::path document::root( const session& s,
-					const boost::filesystem::path& leaf,
-					const boost::filesystem::path& trigger )
-{
-    using namespace boost::filesystem;
-    std::string srcTop = s.valueOf("srcTop");
-    path dirname = leaf;
-    if( !is_directory(dirname) ) {
-	dirname.remove_leaf();
-    }
-    bool foundProject = exists(dirname.string() / trigger);
-    while( !foundProject & dirname.string() != srcTop ) {
-	dirname.remove_leaf();
-	if( dirname.string().empty() ) {
-	    boost::throw_exception(basic_filesystem_error<path>(
-			std::string("no trigger from path up"),
-			leaf, 
-			boost::system::error_code())); 
-	}
-	foundProject = exists(dirname.string() / trigger);
-    }
-    return foundProject ? dirname : path("");
-}
 
 void document::open( boost::filesystem::ifstream& strm, 
 		     const boost::filesystem::path& pathname ) const {
@@ -93,10 +70,11 @@ void dispatch::add( const std::string& varname,
 
 
 void dispatch::fetch( session& s, const std::string& varname ) {
-    document* doc = select(varname,s.vars[varname]);
+    document* doc = select(varname,s.valueOf(varname));
+    std::cerr << "doc=" << doc << std::endl;
     if( doc != NULL ) {
-	boost::filesystem::path docname = s.abspath(varname);
-	doc->fetch(s,docname);
+	std::cerr << "fetch " << s.valueAsPath(varname) << std::endl;
+	doc->fetch(s,s.valueAsPath(varname));
     }
 }
 
@@ -150,7 +128,7 @@ void text::showSideBySide( std::istream& input,
 			cout << std::endl;
 		    }
 		} 
-		if( leftDec->formated() ) cout << endt("pre");
+		if( leftDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		    
 		cout << "<td>" << endl;
@@ -161,7 +139,7 @@ void text::showSideBySide( std::istream& input,
 			cout << endl;
 		    }
 		}
-		if( rightDec->formated() ) cout << endt("pre");
+		if( rightDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		cout << "</tr>" << endl;
 		left.str("");
@@ -187,12 +165,12 @@ void text::showSideBySide( std::istream& input,
 		cout << "<td>" << endl;
 		if( leftDec->formated() ) cout << code();
 		cout << left.str();
-		if( leftDec->formated() ) cout << endt("pre");
+		if( leftDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		cout << "<td>" << endl;
 		if( rightDec->formated() ) cout << code();
 		cout << right.str();
-		if( rightDec->formated() ) cout << endt("pre");
+		if( rightDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		cout << "</tr>" << endl;
 		left.str("");
@@ -208,12 +186,12 @@ void text::showSideBySide( std::istream& input,
 		cout << "<td>" << endl;
 		if( leftDec->formated() ) cout << code();
 		cout << left.str();
-		if( leftDec->formated() ) cout << endt("pre");
+		if( leftDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		cout << "<td>" << endl;
 		if( rightDec->formated() ) cout << code();
 		cout << right.str();
-		if( rightDec->formated() ) cout << endt("pre");
+		if( rightDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		cout << "</tr>" << endl;
 		left.str("");
@@ -239,7 +217,7 @@ void text::showSideBySide( std::istream& input,
 			cout << std::endl;
 		    }
 		} 
-		if( leftDec->formated() ) cout << endt("pre");
+		if( leftDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		    
 		cout << "<td>" << endl;
@@ -250,7 +228,7 @@ void text::showSideBySide( std::istream& input,
 			cout << endl;
 		    }
 		}
-		if( rightDec->formated() ) cout << endt("pre");
+		if( rightDec->formated() ) cout << pre::end;
 		cout << "</td>" << endl;
 		cout << "</tr>" << endl;
 		left.str("");
@@ -281,7 +259,7 @@ void text::showSideBySide( std::istream& input,
 		cout << std::endl;
 	    }
 	} 
-	if( leftDec->formated() ) cout << endt("pre");
+	if( leftDec->formated() ) cout << pre::end;
 	cout << "</td>" << endl;
 	cout << "<td>" << endl;
 	if( rightDec->formated() ) cout << code();
@@ -291,7 +269,7 @@ void text::showSideBySide( std::istream& input,
 		cout << endl;
 	    }
 	}
-	if( rightDec->formated() ) cout << endt("pre");
+	if( rightDec->formated() ) cout << pre::end;
 	cout << "</td>" << endl;
 	cout << "</tr>" << endl;
 	left.str("");
@@ -308,12 +286,12 @@ void text::showSideBySide( std::istream& input,
 	cout << "<td>" << endl;
 	if( leftDec->formated() ) cout << code();	
 	cout << left.str();
-	if( leftDec->formated() ) cout << endt("pre");
+	if( leftDec->formated() ) cout << pre::end;
 	cout << "</td>" << endl;
 	cout << "<td>" << endl;
 	if( rightDec->formated() ) cout << code();	
 	cout << right.str();
-	if( rightDec->formated() ) cout << endt("pre");
+	if( rightDec->formated() ) cout << pre::end;
 	cout << "</td>" << endl;
 	cout << "</tr>" << endl;
     }
@@ -387,7 +365,7 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     }
 #if 1
     leftDec->detach();
-    if( leftDec->formated() ) std::cout << endt("pre");
+    if( leftDec->formated() ) std::cout << pre::end;
 #endif
     strm.close();
 }

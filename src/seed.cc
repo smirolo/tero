@@ -36,7 +36,6 @@
 #include "composer.hh"
 #include "download.hh"
 #include "projfiles.hh"
-#include "xslview.hh"
 #include "logview.hh"
 #include "webserve.hh"
 
@@ -171,9 +170,6 @@ int main( int argc, char *argv[] )
 		docs.add("view",*f,source);
 	    }
 	    
-	    changelist cl;
-	    docs.add("session",boost::regex(".*"),cl);
-	    
 	    filters.push_back(boost::regex(".*Makefile"));			
 	    projfiles filelist(filters.begin(),filters.end());
 	    docs.add("projfiles",boost::regex(".*"),filelist);
@@ -193,8 +189,6 @@ int main( int argc, char *argv[] )
 	    download dlcmd;
 	    docs.add("document",boost::regex("/download"),dlcmd);
 	    
-	    xslview xslt;
-	    docs.add("document",boost::regex(".*\\.xslt"),xslt);
 
 	    logview logv;
 	    docs.add("document",boost::regex(".*\\.log"),logv);
@@ -209,6 +203,9 @@ int main( int argc, char *argv[] )
 	    htmlEscaper rightLinkText;
 	    text rawtext(leftLinkText,rightLinkText);
 	    docs.add("document",boost::regex(".*"),rawtext);
+
+	    changerss rss(&revision);
+	    docs.add("view",boost::regex(".*rss\\.xml"),rss);
 
 	    docs.add("view",boost::regex("/cancel"),cel);
 	    docs.add("view",boost::regex("/edit"),edit);

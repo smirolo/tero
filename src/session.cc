@@ -24,7 +24,27 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <unistd.h>
+#include <boost/date_time/c_local_time_adjustor.hpp>
 #include "session.hh"
+
+/* For security, we want to store the absolute path to the config
+   file into the executable binary. */
+#ifndef CONFIG_FILE
+#error CONFIG_FILE should be defined when compiling this file
+#endif
+
+
+undefVariableError::undefVariableError( const std::string& varname ) 
+    : std::runtime_error(std::string("undefined variable in session ") 
+			 + varname) {}
+
+
+bool session::prefix( const boost::filesystem::path& left, 
+		      const boost::filesystem::path& right ) const 
+{
+    return right.string().compare(0,left.string().size(),left.string()) == 0;
+}
+
 
 static std::string nullString("");
 boost::filesystem::path session::storage;
@@ -62,82 +82,53 @@ boost::filesystem::path session::contributorLog() const {
 
 
 boost::filesystem::path 
-session::abspath( const std::string& name ) const {
-    using namespace boost::filesystem;
+session::abspath( const boost::filesystem::path& relpath ) const {
 
-    variables::const_iterator iter = vars.find(name);
-    if( iter != vars.end() ) {
-	path relpath(iter->second);
-	std::cerr << relpath << "... ";
-
-	/* First we try to access the file from cwd. */
-	path fromCwd = current_path() / relpath;
-	if( boost::filesystem::exists(fromCwd) ) { 
-	    std::cerr << "cwd" << std::endl;
-	    return fromCwd;
-	}	
-
-	/* Second we try to access the file as a relative pathname 
-	   from buildTop. */
-	path fromBuildTop(valueOf("buildTop"));
-	fromBuildTop /= relpath;
-	if( boost::filesystem::exists(fromBuildTop) ) { 
-	    std::cerr << "buildTop" << std::endl;
-	    return fromBuildTop;
-	}
-
-	/* Third we try to access the file as a relative pathname 
-	   from srcTop. */	
-	path fromSrcTop(valueOf("srcTop"));
-	fromSrcTop /= relpath;
-	if( boost::filesystem::exists(fromSrcTop) ) { 
-	    std::cerr << "srcTop" << std::endl;
-	    return fromSrcTop;
-	}	
-	std::cerr << "not found" << std::endl;
+    /* This is an absolute path so it is safe to return it as such. */
+    if( relpath.is_complete() ) {
+	return relpath;
     }
+
+    /* First we try to access the file from cwd. */
+    boost::filesystem::path fromCwd 
+	= boost::filesystem::current_path() / relpath;
+    if( boost::filesystem::exists(fromCwd) ) { 	
+	return fromCwd;
+    }	
+
+    /* Second we try to access the file as a relative pathname 
+       from buildTop. */
+    boost::filesystem::path fromBuildTop(valueOf("buildTop"));
+    fromBuildTop /= relpath;
+    if( boost::filesystem::exists(fromBuildTop) ) {        
+	return fromBuildTop;
+    }
+
+    /* Third we try to access the file as a relative pathname 
+       from srcTop. */	
+    boost::filesystem::path fromSrcTop(valueOf("srcTop"));
+    fromSrcTop /= relpath;
+    if( boost::filesystem::exists(fromSrcTop) ) {        
+	return fromSrcTop;
+    }	
+    
     /* We used to throw an exception at this point. That does
        not sit very well with dispatch::fetch() because the value
        of a "document" might not be an actual file. */
-    return boost::filesystem::path();
+    return fromBuildTop;
 }
 
 
 boost::filesystem::path 
-session::findFile( const boost::filesystem::path& name ) const {
-    /** \todo using std::cerr statements here yelds to recursive
-	call to the decorator. That should not happen. Only reasonable
-	explanation if that cout and cerr buffers are shared...
-     */
-    boost::filesystem::path fromPwd(name);
-    if( boost::filesystem::exists(fromPwd) ) { 
-	return fromPwd;
+session::build( const boost::filesystem::path& p ) const
+{
+    boost::filesystem::path buildTop = valueOf("buildTop");
+    boost::filesystem::path srcTop = valueOf("srcTop");
+    if( prefix(srcTop,p) ) {
+	return buildTop / p.string().substr(srcTop.string().size() + 1);
     }
-
-    variables::const_iterator v;
-    v = vars.find("srcTop");
-    assert( v != vars.end() );
-    boost::filesystem::path srcTop(v->second);
-
-    // string_type  leaf() const;
-    v = vars.find("document");
-    assert( v != vars.end() );
-    boost::filesystem::path document(v->second);
-
-    boost::filesystem::path fromTopSrc = srcTop;
-    fromTopSrc /= document.branch_path();
-    fromTopSrc /= name;
-
-    if( boost::filesystem::exists(fromTopSrc) ) { 
-	return fromTopSrc;
-    }
-    return boost::filesystem::path();
+    return p;
 }
-
-
-#ifndef CONFIG_FILE
-#error CONFIG_FILE should be defined when compiling this file
-#endif
 
 
 void session::restore( const boost::program_options::variables_map& params )
@@ -236,6 +227,31 @@ void session::restore( const boost::program_options::variables_map& params )
 }
 
 
+boost::filesystem::path 
+session::root( const boost::filesystem::path& leaf,
+	       const boost::filesystem::path& trigger ) const
+{
+    using namespace boost::filesystem;
+    std::string srcTop = valueOf("srcTop");
+    path dirname = leaf;
+    if( !is_directory(dirname) ) {
+	dirname.remove_leaf();
+    }
+    bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
+    while( !foundProject & dirname.string() != srcTop ) {
+	dirname.remove_leaf();
+	if( dirname.string().empty() ) {
+	    boost::throw_exception(basic_filesystem_error<path>(
+			std::string("no trigger from path up"),
+			leaf, 
+			boost::system::error_code())); 
+	}
+	foundProject = boost::filesystem::exists(dirname.string() / trigger);
+    }
+    return foundProject ? dirname : path("");
+}
+
+
 void session::show( std::ostream& ostr ) {
     if( id != 0 ) {
 	ostr << "session " << id << " for " << username << std::endl;
@@ -246,6 +262,18 @@ void session::show( std::ostream& ostr ) {
 	 var != vars.end(); ++var ) {
 	ostr << var->first << ": " << var->second << std::endl;
     }
+}
+
+
+boost::filesystem::path 
+session::src( const boost::filesystem::path& p ) const
+{
+    boost::filesystem::path buildTop = valueOf("buildTop");
+    boost::filesystem::path srcTop = valueOf("srcTop");
+    if( prefix(buildTop,p) ) {
+	return srcTop / p.string().substr(buildTop.string().size() + 1);
+    }
+    return p;
 }
 
 
@@ -296,8 +324,12 @@ boost::posix_time::time_duration session::stop() {
     using namespace boost::posix_time;
     using namespace boost::filesystem;
 
-    ptime start = from_time_t(last_write_time(contributorLog()));
-    ptime stop = second_clock::universal_time();
+    /* This local adjustor depends on the machine TZ settings
+       and that seems the right thing to do in this context. */
+    typedef boost::date_time::c_local_adjustor<ptime> local_adj;
+    ptime start = local_adj::utc_to_local(
+		       from_time_t(last_write_time(contributorLog())));
+    ptime stop = second_clock::local_time();
 
     ofstream file(contributorLog(),std::ios_base::app);
     if( file.fail() ) {
@@ -311,4 +343,14 @@ boost::posix_time::time_duration session::stop() {
     file.close();
 
     return aggregate;
+}
+
+
+boost::filesystem::path 
+session::valueAsPath( const std::string& name ) const {
+    variables::const_iterator iter = vars.find(name);
+    if( iter == vars.end() ) {
+	boost::throw_exception(undefVariableError(name));
+    }
+    return abspath(boost::filesystem::path(iter->second));
 }

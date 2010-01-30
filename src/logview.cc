@@ -33,24 +33,88 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace rapidxml;
     using namespace boost::filesystem;
 
-    size_t fileSize = boost::filesystem::file_size(pathname);
-    char text[ fileSize + 1 ];
+    /* Each log contains the results gathered on a build server. We prefer
+       to present one build results per column but need to write std::cout
+       one table row at a time so we create the table entirely in memory 
+       before we display it. 
+       If we were to present build results per row, we would still need
+       to preprocess the log files once but only to determine the column
+       headers. */
 
-    boost::filesystem::ifstream file(pathname);
-    if( file.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-							    std::string("error opening file"),
-							    pathname, 
-							    boost::system::error_code()));
+
+    /* build as column headers */
+    typedef std::set<path> colHeadersType;
+    colHeadersType colHeaders;
+
+    /* (project,(build,status))  */
+    typedef std::map<path,std::string> colType;
+    typedef std::map<std::string,colType> tableType;
+    tableType table;
+
+    path dirname(is_directory(pathname) ? pathname : pathname.parent_path());
+    for( directory_iterator entry = directory_iterator(dirname); 
+	 entry != directory_iterator(); ++entry ) {
+	path p(*entry);
+	if( p.extension() == ".log" ) {
+	    /* \todo because we check the extension ".log", we will
+	       also pick-up the empty file that is used to dispatch
+	       into this method. Needs fixing of the design? */
+	    size_t fileSize = file_size(*entry);
+	    char text[ fileSize + 1 ];
+	    ifstream file(*entry);
+	    if( file.fail() ) {
+		boost::throw_exception(basic_filesystem_error<path>(
+				       std::string("error opening file"),
+				       *entry, 
+				       boost::system::error_code()));
+	    }
+	    file.read(text,fileSize);
+	    text[fileSize] = '\0';
+	    xml_document<> doc;    // character type defaults to char
+	    doc.parse<0>(text);     // 0 means default parse flags
+
+	    colHeaders.insert(*entry);
+	    xml_node<> *root = doc.first_node();
+	    if( root != NULL ) {
+		for( xml_node<> *project = root->first_node("section");
+		     project != NULL; project = project->next_sibling() ) {
+		    xml_attribute<> *name = project->first_attribute("id");
+		    if( name != NULL ) {
+			xml_node<> *status = project->first_node("status");
+			if( status != NULL ) {
+			    table[name->value()][*entry] = status->value();
+			}
+		    }
+		}	
+	    }
+	}
     }
-    file.read(text,fileSize);
-    text[fileSize] = '\0';
 
-    xml_document<> doc;    // character type defaults to char
-    doc.parse<0>(text);    // 0 means default parse flags
 
-    xml_node<> *node = doc.first_node("section");
-    xml_attribute<> *attr = node->first_attribute("id");
-    std::cout << "project " << attr->value() << "\n";
+    /* Let's write the table, one row at a time. */
+    std::cout << "<table>" << std::endl;
+    std::cout << "<tr>" << std::endl;
+    std::cout << "<th></th>";
+    for( colHeadersType::const_iterator col = colHeaders.begin();
+	 col != colHeaders.end(); ++col ) {
+	std::cout << "<th>" << *col << "</th>";
+    }
+    std::cout << "</tr>" << std::endl;
+    for( tableType::const_iterator row = table.begin();
+	 row != table.end(); ++row ) {
+	std::cout << "<tr>" << std::endl;
+	std::cout << "<th>" << row->first << "</th>" << std::endl;
+	for( colHeadersType::const_iterator col = colHeaders.begin();
+	     col != colHeaders.end(); ++col ) {
+	    colType::const_iterator value = row->second.find(*col);
+	    if( value != row->second.end() ) {
+		std::cout << "<td>" << value->second << "</td>" << std::endl;	
+	    } else {
+		std::cout << "<td>" << "</td>" << std::endl;
+	    }
+	}
+	std::cout << "</tr>" << std::endl;
+    }
+    std::cout << "</table>" << std::endl;
 }
 

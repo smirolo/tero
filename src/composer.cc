@@ -45,8 +45,7 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::filesystem;
 
     static const boost::regex tmplvar("<!-- tmpl_var name='(\\S+)' -->");
-
-    std::cerr << "composer::fetch(" << pathname << ")" << std::endl;     
+    
     ifstream strm;
     open(strm,fixed.empty() ? pathname : fixed);
     std::cout << htmlContent;
@@ -63,13 +62,13 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 		document* 
 		    doc = dispatch::instance->select("document",
 						     s.valueOf("document"));
-		doc->meta(s,s.abspath("document"));
+		doc->meta(s,s.valueAsPath("document"));
 	    }
 
 	    document* doc 
 		= dispatch::instance->select(varname,s.valueOf(varname));
 	    if( doc != NULL ) {
-		boost::filesystem::path docname = s.abspath(varname);
+		boost::filesystem::path docname = s.valueAsPath(varname);
 		std::cout << m.prefix();
 		/* \todo code could be:
 		           doc->fetch(s,docname);  
