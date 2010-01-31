@@ -1,13 +1,20 @@
-title: Browse Sources
-<h1>Introduction</h1>
-<p>
+<?xml version="1.0"?>
+<article xmlns="http://docbook.org/ns/docbook" 
+	 xmlns:xlink="http://www.w3.org/1999/xlink">
+  <info>
+    <author>Sebastien Mirolo</author>
+    <title>Browse Sources</title>
+</info>
+<section>
+<title>Introduction</title>
+<para>
 While source code and documentation are usually maintained and published separately, Seed has been started as a web-based source code browser where source code and web documentation can reference each other easily.
-</p>
-<p>
+</para>
+<para>
 The main feature of seed is that urls embedded in comments can be traversed. Links to a source code automatically generates a nice web looking presentation of the associated file.
-</p>
-<p>For example</p>
-<pre>
+</para>
+<para>For example</para>
+<para role="code">
 /* 
    This is a reference to &lt;a href="index.book"&gt;web-based documentation&lt;/a&gt;. 
 */
@@ -15,9 +22,9 @@ The main feature of seed is that urls embedded in comments can be traversed. Lin
 int main( int argc, char *argv[] ) {
     return 0;
 }
-</pre>
-<p>is published as</p>
-<pre>
+</para>
+<para>is published as</para>
+<para role="code">
 <span class="comment">/* </span>
 <span class="comment">   This is a reference to <a href="index.book">web-based documentation</a>.</span>
 <span class="comment">*/</span>
@@ -25,7 +32,9 @@ int main( int argc, char *argv[] ) {
 <span class="identifier">int</span> <span class="identifier">main</span><span class="punctuator">(</span> <span class="identifier">int</span> <span class="identifier">argc</span><span class="punctuator">,</span> <span class="keyword">char</span> <span class="operator">*</span><span class="identifier">argv</span><span class="punctuator">[</span><span class="punctuator">]</span> <span class="punctuator">)</span> <span class="punctuator">{</span>
     <span class="keyword">return</span> <span class="decimalLiteral">0</span><span class="punctuator">;</span>
 <span class="punctuator">}</span>
-</pre>
-<p>
-<a href="src/seed.cc">browse sample repository</a>
-</p>
+</para>
+<para>
+<link xlink:href="src/seed.cc">browse sample repository</link>
+</para>
+</section>
+</article>

@@ -193,10 +193,12 @@ int main( int argc, char *argv[] )
 	    logview logv;
 	    docs.add("document",boost::regex(".*\\.log"),logv);
 
+	    docbook formatedDoc;
+	    docs.add("document",boost::regex(".*\\.book"),formatedDoc);
+
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
 	    text formatedText(leftFormatedText,rightFormatedText);
-	    docs.add("document",boost::regex(".*\\.book"),formatedText);
 	    docs.add("document",boost::regex(".*\\.html"),formatedText);
 	    
 	    htmlEscaper leftLinkText;

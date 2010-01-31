@@ -42,6 +42,10 @@ public:
 
     /** Add meta information about the document to the session. It includes
 	modification date, file revision as well as tags read in the file.
+
+	This method is called before the template is processed because meta
+	information needs to be propagated into different parts of the template
+	and not only in the placeholder for the document.
     */
     virtual void meta( session& s, const boost::filesystem::path& pathname ) {}
 };
