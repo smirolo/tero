@@ -27,6 +27,7 @@
 #define guarddocbook
 
 #include "docbook.hh"
+#include "bookparser.hh"
 
 /** There is an unknown tag at this point of the recursive descendent
     parser. It can either be an unimplemented feature or an error
@@ -37,6 +38,41 @@ public:
     explicit unknownMarkup( const std::string& name )
 	: std::exception(name) {}
 };
+
+
+docbookScanner::docbookScanner( std::istream& is ) 
+  : istr(&is), tok(*this) {
+    tokens.push_back(eof);
+}
+
+
+void docbookScanner::newline() {
+}
+    
+
+void docbookScanner::token( xmlToken token, const char *line, 
+			    int first, int last, bool fragment ) {
+    /* translate XML start and end tags into docbook tokens */
+    switch( token ) {
+    case xmlStartDecl:
+    case xmlEndDecl:
+	keyworSet::const_iterator index 
+	    = std::lower_bound(keywords.begin(),keywords.end(),line[first:last]);
+	tokens.push_back(token == xmlStartDecl ? index : index + keywords.size());
+	break;
+    }
+}
+
+
+int docbookScanner::next() {
+    tokens.pop_front();
+    if( tokens.empty() ) {
+	std::string s;
+	std::getline(*istr,s);
+	tok.tokenize(s.c_str().s.size());
+    }
+    return tokens.first();
+}
 
 
 namespace {

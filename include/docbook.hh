@@ -27,6 +27,37 @@
 #define guarddocbook
 
 #include "document.hh"
+#include "xmltok.hh"
+
+/** *docbookScanner* implements the lexical scanner used
+    by the LL(1) parser used to drive the transformation
+    of documents with docbook markups into HTML.
+*/
+class docbookScanner : public xmlTokListener {
+protected:
+    std::istream *istr;
+    std::list<int> tokens;
+    xmlTokenizer tok;
+
+ public:
+
+    explicit docbookScanner( std::istream& is );
+
+    void newline();
+    
+    void token( xmlToken token, const char *line, 
+		int first, int last, bool fragment );
+
+
+    int current() const { return tokens.first(); }
+
+#if 0
+    const char* GetString() { return m_str; }
+#endif
+
+    int next();
+};
+
 
 /** Presents a file formatted with docbook markup as HTML.
 
