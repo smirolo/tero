@@ -49,14 +49,14 @@ void document::open( boost::filesystem::ifstream& strm,
 }
 
 
-dispatch *dispatch::instance = NULL;
+dispatchDoc *dispatchDoc::instance = NULL;
 
 
-dispatch::dispatch( const boost::filesystem::path& t ) : root(t) {
+dispatchDoc::dispatchDoc( const boost::filesystem::path& t ) : root(t) {
     instance = this;
 }
 
-void dispatch::add( const std::string& varname, 
+void dispatchDoc::add( const std::string& varname, 
 		    const boost::regex& r, 
 		    document& d ) {
     presentationSet::iterator aliases = views.find(varname);
@@ -69,7 +69,7 @@ void dispatch::add( const std::string& varname,
 }
 
 
-void dispatch::fetch( session& s, const std::string& varname ) {
+void dispatchDoc::fetch( session& s, const std::string& varname ) {
     document* doc = select(varname,s.valueOf(varname));
     std::cerr << "doc=" << doc << std::endl;
     if( doc != NULL ) {
@@ -79,7 +79,7 @@ void dispatch::fetch( session& s, const std::string& varname ) {
 }
 
 
-document* dispatch::select( const std::string& name, 
+document* dispatchDoc::select( const std::string& name, 
 			    const std::string& value ) const {
     presentationSet::const_iterator view = views.find(name);
     if( view != views.end() ) {

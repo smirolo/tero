@@ -100,7 +100,7 @@ void changediff::embed( session& s, const std::string& varname ) {
 	open(input,docname);
 
 	/* \todo the session is not a parameter to between files... */	
-	document *doc = dispatch::instance->select("document",docname.string());
+	document *doc = dispatchDoc::instance->select("document",docname.string());
 	((::text*)doc)->showSideBySide(input,text,false);
 		
 	cout << "</table>" << endl;

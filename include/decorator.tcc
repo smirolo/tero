@@ -154,8 +154,8 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 					   bool fragment ) {
     super::nextBuf->sputn(&line[first],last - first);
     switch( token ) {
-    case xmlStartDecl:
-    case xmlEndDecl:
+    case xmlElementStart:
+    case xmlElementEnd:
 	/* Reset the state machine */ 
 	state = linkStartState;
 	break;

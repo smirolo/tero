@@ -34,6 +34,7 @@
 #include "auth.hh"
 #include "changelist.hh"
 #include "composer.hh"
+#include "docbook.hh"
 #include "download.hh"
 #include "projfiles.hh"
 #include "logview.hh"
@@ -124,7 +125,7 @@ int main( int argc, char *argv[] )
 	} else {	    
 	    path uiPath(s.vars["themeDir"] + std::string(s.exists() ? 
 						      "/maintainer.ui" : "/document.template"));
-	    dispatch docs(s.vars["srcTop"]);
+	    dispatchDoc docs(s.vars["srcTop"]);
 	    login li;
 	    logout lo;
 	    composer edit(s.vars["themeDir"] + std::string("/edit.ui"),
@@ -193,11 +194,11 @@ int main( int argc, char *argv[] )
 	    logview logv;
 	    docs.add("document",boost::regex(".*\\.log"),logv);
 
-	    docbook formatedDoc;
-	    docs.add("document",boost::regex(".*\\.book"),formatedDoc);
-
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
+	    docbook formatedDoc(leftFormatedText,rightFormatedText);
+	    docs.add("document",boost::regex(".*\\.book"),formatedDoc);
+
 	    text formatedText(leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.html"),formatedText);
 	    

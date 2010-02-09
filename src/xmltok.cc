@@ -27,15 +27,19 @@
 #include <iostream>
 #include "xmltok.hh"
 
+
 const char *xmlTokenTitles[] = {
     "xmlErr",
+    "xmlComment",
+    "xmlDeclEnd",
+    "xmlDeclStart",
     "xmlName",
     "xmlSpace",
     "xmlAssign",
     "xmlContent",
-    "xmlEndDecl",
-    "xmlAttValue",
-    "xmlStartDecl"   
+    "xmlElementEnd",
+    "xmlElementStart",
+    "xmlAttValue"
 };
 
 
@@ -84,14 +88,36 @@ attValueSingle:
     /* AttValue ::= "'" ([^<&'] | Reference)* "'" */
     if( *p != '"' ) advance(attValueSingle);
     advance(tag);
-    
- content:
+
+comment:
+    if( *p == '-') advance(endComment);
+    advance(comment);
+
+content:
     if( *p != '<' ) advance(content);
     goto token;
 
+endComment:
+    if( *p == '-') advance(endComment2);
+    advance(comment);
+
+endComment2:
+    switch( *p ) {
+    case '>': advance(token);
+    case '-': advance(endComment2);
+    }
+    advance(comment);
+
  endEmptyDecl:
     if( *p == '>' ) {
-	tok = xmlEndDecl;
+	tok = xmlDeclEnd;
+	advance(token);
+    }
+    goto error;
+
+ endEmptyElement:
+    if( *p == '>' ) {
+	tok = xmlElementEnd;
 	advance(token);
     }
     goto error;
@@ -108,13 +134,28 @@ attValueSingle:
  spaces:
     if( *p == ' ' ) advance(spaces);
     goto tag;
+
+startComment:
+    if( *p == '-') advance(startComment2);
+    goto error;
+
+startComment2:
+    if( *p == '-') advance(comment);
+    goto error;
     
  startDecl:
-    if( *p == '/' ) {
-	tok = xmlEndDecl;
+    switch( *p ) {
+    case '/':
+	tok = xmlElementEnd;
 	advance(tag);
+    case '?':
+	tok = xmlDeclStart;
+	advance(tag);
+    case '!':
+	tok = xmlComment;
+	advance(startComment);
     }
-    tok = xmlStartDecl;
+    tok = xmlElementStart;
     goto tag;
     
  tag:
@@ -135,9 +176,9 @@ attValueSingle:
     case '<':
 	advance(startDecl);
     case '/':		
-	advance(endEmptyDecl);
+	advance(endEmptyElement);
     case '>':
-	tok = xmlEndDecl;
+	tok = xmlElementEnd;
 	advance(token);
     case '=':
 	tok = xmlAssign;
@@ -148,6 +189,8 @@ attValueSingle:
     case '\'':
 	tok = xmlAttValue;
 	advance(attValueSingle);
+    case '?':
+	advance(endEmptyDecl);
     }
     goto error;
     

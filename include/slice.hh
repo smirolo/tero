@@ -23,61 +23,41 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardxmltok
-#define guardxmltok
+#ifndef guardslice
+#define guardslice
 
-#include <iterator>
+#include <cassert>
 
-enum xmlToken {
-    xmlErr,
-    xmlComment,
-    xmlDeclEnd,
-    xmlDeclStart,
-    xmlName,
-    xmlSpace,
-    xmlAssign,
-    xmlContent,
-    xmlElementEnd,
-    xmlElementStart,
-    xmlAttValue
-};
-
-extern const char *xmlTokenTitles[];
-
-
-/** Interface for callbacks from the xmlTokenizer
- */
-class xmlTokListener {
+template<typename vT>
+class slice {
 public:
-    xmlTokListener() {}
-    
-    virtual void newline() = 0;
-    
-    virtual void token( xmlToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
-};
+    typedef vT* iterator;
+    typedef const vT* const_iterator;
 
-
-class xmlTokenizer {
 protected:
-	void *state;
-	int first;
-	xmlToken tok;
-	int hexQuads;
-	char expects;
-	xmlTokListener *listener;
+    vT* first;
+    vT* last;
 
 public:
-    xmlTokenizer() 
-	: state(NULL), first(0), tok(xmlErr), listener(NULL) {}
+    slice() : first(NULL), last(NULL) {}
 
-    xmlTokenizer( xmlTokListener& l ) 
-	: state(NULL), first(0), tok(xmlErr), listener(&l) {}
-    
-    void attach( xmlTokListener& l ) { listener = &l; }
+    slice( vT* f, vT* l )
+	: first(f), last(l) {}
 
-    void tokenize( const char *line, size_t n );
+    iterator begin() { return first; }
+    const_iterator begin() const { return first; }
+    iterator end() { return last; }
+    const_iterator end() const { return last; }
+
+    size_t size() const {
+	return last - first;
+    }
+
+    slice& operator+=( const slice& s ) {
+	assert( last == s.first );
+	last = s.last;
+	return *this;
+    }
 };
-
 
 #endif

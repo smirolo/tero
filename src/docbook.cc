@@ -23,61 +23,15 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guarddocbook
-#define guarddocbook
-
 #include "docbook.hh"
-#include "bookparser.hh"
-
-/** There is an unknown tag at this point of the recursive descendent
-    parser. It can either be an unimplemented feature or an error
-    in the file syntax.
- */
-class unknownMarkup : public std::exception {
-public:
-    explicit unknownMarkup( const std::string& name )
-	: std::exception(name) {}
-};
-
-
-docbookScanner::docbookScanner( std::istream& is ) 
-  : istr(&is), tok(*this) {
-    tokens.push_back(eof);
-}
-
-
-void docbookScanner::newline() {
-}
-    
-
-void docbookScanner::token( xmlToken token, const char *line, 
-			    int first, int last, bool fragment ) {
-    /* translate XML start and end tags into docbook tokens */
-    switch( token ) {
-    case xmlStartDecl:
-    case xmlEndDecl:
-	keyworSet::const_iterator index 
-	    = std::lower_bound(keywords.begin(),keywords.end(),line[first:last]);
-	tokens.push_back(token == xmlStartDecl ? index : index + keywords.size());
-	break;
-    }
-}
-
-
-int docbookScanner::next() {
-    tokens.pop_front();
-    if( tokens.empty() ) {
-	std::string s;
-	std::getline(*istr,s);
-	tok.tokenize(s.c_str().s.size());
-    }
-    return tokens.first();
-}
+#include "bookParser.hh"
 
 
 namespace {
 
-    void parseInfo( session& s, const xml_node<>& r ) {
+    void parseInfo( session& s, const rapidxml::xml_node<>& r ) {
+	using namespace rapidxml;
+
 	/* We found an <info> tag, let's parse the meta information 
 	   about the article such as the author, the date, etc. */
 	for( xml_node<> *n = r.first_node();
@@ -92,23 +46,8 @@ namespace {
 	    s.vars["title"] = s.valueOf("document");
 	}
     }
-
-    void parseSimpleList( const xml_node<>& r ) {
-	std::cout << html::ul;
-	for( xml_node<> *n = r.first_node();
-	     n != NULL; n = r.next_sibling() ) {
-	    switch( n->type() ) {
-	    case node_element:
-		if( n->name() == "member" ) {
-		    std::cout << html::li() 
-			      << n->value(); 
-		}
-	    }
-	}	
-	std::cout << html::ul::end;
-    }
-
-    void parseSection( const xml_node<>& r, int level = 1 ) {
+#if 0
+    void parseSection( const rapid_xml::xml_node<>& r, int level = 1 ) {
 	/* We found a <section> tag, let's simply rewrite the title
 	   s <h?> tags and the <para> as <p> tags. */
 	for( xml_node<> *n = r.first_node();
@@ -142,30 +81,13 @@ namespace {
 	    }
 	}
     }
-
-
-    void parseArticle( const xml_node<>& r ) {
-	for( xml_node<> *n = r.first_node();
-	     n != NULL; n = r.next_sibling() ) {
-	    switch( n->type() ) {
-	    case node_element:
-		/* articles are formed of meta information (i.e. <info> tag)
-		 and sections. We already processed the meta information
-		beforehand so we only transforms sections at this point. */
-		if( n->name() == "section" ) {
-		    parseSection(*n);
-		} else {
-		    boost::throw_exception(unknownMarkup(n->name()));
-		}
-	    }
-	}
-    }
+#endif
 
 }  // anonymous namespace
 
 
-docbook::docbook() 
-    : text(leftDec,rightDec), buffer(NULL) {}
+docbook::docbook( decorator& l,  decorator& r ) 
+    : text(l,r), buffer(NULL) {}
 
 docbook::~docbook() {
     if( buffer != NULL ) delete [] buffer;
@@ -173,14 +95,15 @@ docbook::~docbook() {
 
 
 void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
+    using namespace rapidxml;
 
     /* We need the meta information at this point but will only print 
        the formatted text when fetch() is called later on.
        We load the text *buffer* and keep it around in order to parse 
        the XML only once. */
-    size_t fileSize = file_size(*entry);
+    size_t fileSize = file_size(pathname);
     buffer = new char [ fileSize + 1 ];
-    ifstream file;
+    boost::filesystem::ifstream file;
 
     open(file,pathname);
     file.read(buffer,fileSize);
@@ -191,7 +114,7 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
 
     xml_node<> *root = doc.first_node();
     if( root != NULL ) {
-	xml_node<> *info = r.first_node("info");
+	xml_node<> *info = root->first_node("info");
 	if( info != NULL ) {
 	    parseInfo(s,*info);
 	}
@@ -201,8 +124,10 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
 
 void docbook::fetch( session& s, const boost::filesystem::path& pathname )
 {
-    xml_node<> *root = doc.first_node();
-    if( root != NULL ) {
-	parseArticle(*root);
-    }
+    boost::filesystem::ifstream file;
+
+    open(file,pathname);
+    docbookScanner tok(file);
+    docbookParser parser(tok,*this);    
+    parser.llsection();
 }

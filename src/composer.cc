@@ -32,7 +32,7 @@
 void composer::embed( session& s, const std::string& value ) {
     using namespace boost::filesystem;
     try {
-	dispatch::instance->fetch(s,value);
+	dispatchDoc::instance->fetch(s,value);
     } catch( const basic_filesystem_error<path>& e ) {
 	std::cout << "<p>" << e.what() << "</p>" << std::endl;
     }
@@ -60,13 +60,13 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    session::variables::const_iterator v = s.vars.find(varname);
 	    if( v == s.vars.end() ) {
 		document* 
-		    doc = dispatch::instance->select("document",
+		    doc = dispatchDoc::instance->select("document",
 						     s.valueOf("document"));
 		doc->meta(s,s.valueAsPath("document"));
 	    }
 
 	    document* doc 
-		= dispatch::instance->select(varname,s.valueOf(varname));
+		= dispatchDoc::instance->select(varname,s.valueOf(varname));
 	    if( doc != NULL ) {
 		boost::filesystem::path docname = s.valueAsPath(varname);
 		std::cout << m.prefix();

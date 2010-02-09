@@ -26,37 +26,10 @@
 #ifndef guarddocbook
 #define guarddocbook
 
+#include <boost/property_tree/detail/rapidxml.hpp>
 #include "document.hh"
-#include "xmltok.hh"
-
-/** *docbookScanner* implements the lexical scanner used
-    by the LL(1) parser used to drive the transformation
-    of documents with docbook markups into HTML.
-*/
-class docbookScanner : public xmlTokListener {
-protected:
-    std::istream *istr;
-    std::list<int> tokens;
-    xmlTokenizer tok;
-
- public:
-
-    explicit docbookScanner( std::istream& is );
-
-    void newline();
-    
-    void token( xmlToken token, const char *line, 
-		int first, int last, bool fragment );
-
-
-    int current() const { return tokens.first(); }
-
-#if 0
-    const char* GetString() { return m_str; }
-#endif
-
-    int next();
-};
+#include "decorator.hh"
+#include "booktok.hh"
 
 
 /** Presents a file formatted with docbook markup as HTML.
@@ -70,14 +43,11 @@ protected:
 */
 class docbook : public text {
 protected:
-    linkLight leftDec(s);
-    linkLight rightDec(s);
-
     char *buffer;
-    xml_document<> doc;
+    rapidxml::xml_document<> doc;
 
 public:
-    docbook(); : text(leftDec,rightDec) {}
+    docbook( decorator& l,  decorator& r );
 
     ~docbook();
 

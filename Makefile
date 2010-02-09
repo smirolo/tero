@@ -33,16 +33,17 @@ include $(shell dws context prefix.mk)
 bins 		:=	seed
 libs		:=	libseed.a
 
-libseed.a: auth.o composer.o changelist.o download.o xmltok.o cpptok.o \
-	   document.o gitcmd.o logview.o markup.o projfiles.o session.o \
+libseed.a: auth.o bookParser.o booktok.o composer.o changelist.o docbook.o \
+	download.o \
+	xmltok.o cpptok.o document.o gitcmd.o logview.o markup.o projfiles.o \
 	   xmlesc.o webserve.o
+
+seed: seed.cc session.o libseed.a \
+	-lboost_date_time -lboost_regex -lboost_program_options \
+	-lboost_filesystem -lboost_system
 
 session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dws context)\" $(OUTPUT_OPTION) $<
-
-seed: seed.cc libseed.a \
-	-lboost_date_time -lboost_regex -lboost_program_options \
-	-lboost_filesystem -lboost_system
 
 configure_apache:
 	$(srcDir)/configure_apache

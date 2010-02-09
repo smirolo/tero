@@ -54,7 +54,7 @@ public:
 /* Pick the appropriate subclass of *document* based on regular expressions
    applied to the document name.
  */
-class dispatch {
+class dispatchDoc {
 public:
     typedef std::map<std::string,std::string> variables;
 
@@ -66,9 +66,9 @@ protected:
     presentationSet views;
 
 public:
-    explicit dispatch( const boost::filesystem::path& root );
+    explicit dispatchDoc( const boost::filesystem::path& root );
 
-    static dispatch *instance;
+    static dispatchDoc *instance;
 
     void add( const std::string& varname, const boost::regex& r, 
 	      std::ostream& d );
