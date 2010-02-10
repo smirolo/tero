@@ -54,8 +54,13 @@ public:
     }
 
     slice& operator+=( const slice& s ) {
-	assert( last == s.first );
-	last = s.last;
+	if( first == last ) {
+	    first = s.first;
+	    last = s.last;
+	} else {
+	    assert( last == s.first );
+	    last = s.last;
+	}
 	return *this;
     }
 };

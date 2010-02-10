@@ -24,7 +24,6 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cassert>
-#include <iostream>
 #include "xmltok.hh"
 
 
@@ -50,7 +49,7 @@ bool nameStartChar( int c ) {
 }
 
 bool nameChar( int c ) {
-    return isalnum(c);
+    return isalnum(c) | (c == ':');
 }
 
 void xmlTokenizer::tokenize( const char *line, size_t n )
@@ -69,12 +68,12 @@ advancePointer:
 	assert( *p == '\n' | *p == '\0' );
     case '\n':  
 	newline = true;
-    case '\0':  
+    case '\0':
 	if( (p - line) - first > 0 && listener != NULL ) {
-	    listener->token(tok,line,first,p - line,false);
+	    listener->token(tok,line,first,p - line,true);
 	}
 	if( newline && listener != NULL ) listener->newline(); 
-	state = NULL;
+	state = trans;
 	return;	
     } 
     goto *trans;
@@ -135,6 +134,10 @@ endComment2:
     if( *p == ' ' ) advance(spaces);
     goto tag;
 
+ spacesBeforeContent:
+    if( *p == ' ' ) advance(spacesBeforeContent);
+    goto token;    
+
 startComment:
     if( *p == '-') advance(startComment2);
     goto error;
@@ -159,7 +162,7 @@ startComment2:
     goto tag;
     
  tag:
-    if( trans != NULL && listener != NULL ) {
+    if( (p - line) > first && listener != NULL ) {
 	listener->token(tok,line,first,p - line,false);
 	trans = NULL;
     }
@@ -170,6 +173,7 @@ startComment2:
 	advance(name);
     }
     switch( *p ) {
+    case '\t':
     case ' ':
 	tok = xmlSpace;
 	advance(spaces);
@@ -195,7 +199,7 @@ startComment2:
     goto error;
     
  token:
-    if( trans != NULL && listener != NULL ) {
+    if( (p - line) > first && listener != NULL ) {
 	listener->token(tok,line,first,p - line,false);
 	trans = NULL;
     }
@@ -205,7 +209,14 @@ startComment2:
 	--p;
 	advance(token);
     }
-    if( *p == '<' ) goto tag;
+    switch( *p ) {
+    case '\t':
+    case ' ':
+	tok = xmlSpace;
+	advance(spacesBeforeContent);
+    case '<':
+	goto tag;
+    }
     tok = xmlContent;
     advance(content);
 }

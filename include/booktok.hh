@@ -776,6 +776,7 @@ public:
 
 protected:
     std::istream *istr;
+    bool elementStart;
     std::list<docbookToken> tokens;
     xmlTokenizer tok;
     textSlice text;
@@ -788,6 +789,8 @@ protected:
     
     void token( xmlToken token, const char *line, 
 		int first, int last, bool fragment );
+
+    bool eof() const { return tokens.empty(); }
 
     docbookToken read();
 

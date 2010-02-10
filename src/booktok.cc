@@ -23,6 +23,8 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include <cstring>
+#include <iostream>
 #include "booktok.hh"
 
 const char* docbookKeywords[] = {
@@ -398,34 +400,47 @@ docbookScanner::docbookScanner( std::istream& is )
 
 
 void docbookScanner::newline() {
+    std::cerr << "newline()" << std::endl;
 }
     
 
 void docbookScanner::token( xmlToken token, const char *line, 
 			    int first, int last, bool fragment ) {
-
+    char str[255];
+    strncpy(str,&line[first],last-first);
+    str[last-first] = '\0';
+    std::cerr << "xmlToken(" << token << ",\"" << str << "\"[" << first << ',' << last << "]," << fragment << ')' << std::endl; 
     /* translate XML start and end tags into docbook tokens */
     const char **key;
+    const char **lastKeyword = &docbookKeywords[sizeof(docbookKeywords) / sizeof(char*)];	
     textSlice value(&line[first],&line[last]);
     switch( token ) {
     case xmlElementStart:
 	text = textSlice();
+	elementStart = true;
+	break;
     case xmlElementEnd:
+	elementStart = false;
+	break;
+    case xmlName:
 #if 0
 	keyworSet::const_iterator index 
 	    = std::lower_bound(docbookKeywords.begin(),docbookKeywords.end(),
 			       );
 #else
 	for( key = docbookKeywords; 
-	     key != &docbookKeywords[sizeof(docbookKeywords) / sizeof(char*)];
+	     key != lastKeyword;
 	     ++key ) {
 	    if( strncmp(*key,value.begin(),value.size()) == 0 ) {
 		break;
 	    }
 	}
 #endif
-	tokens.push_back((docbookToken)(2 *std::distance(docbookKeywords,key) 
-					+ (token == xmlElementStart ? 0 : 1) + 1));
+	if( key != lastKeyword ) {
+	    std::cerr << "push_back(" << *key << ")" << std::endl;
+	    tokens.push_back((docbookToken)(2 *std::distance(docbookKeywords,key) 
+					    + (elementStart ? 0 : 1) + 1));
+	}
 	break;
     case xmlContent:
 	text += value;
@@ -436,10 +451,10 @@ void docbookScanner::token( xmlToken token, const char *line,
 
 docbookToken docbookScanner::read() {
     tokens.pop_front();
-    if( tokens.empty() ) {
+    while( !istr->eof() && tokens.empty() ) {
 	std::string s;
 	std::getline(*istr,s);
 	tok.tokenize(s.c_str(),s.size());
     }
-    return *tokens.begin();
+    return tokens.empty() ? bookEof : *tokens.begin();
 }

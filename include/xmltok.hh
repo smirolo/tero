@@ -44,6 +44,12 @@ enum xmlToken {
 
 extern const char *xmlTokenTitles[];
 
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, xmlToken v ) {
+    return ostr << xmlTokenTitles[v];
+}
+
 
 /** Interface for callbacks from the xmlTokenizer
  */
