@@ -65,4 +65,29 @@ public:
     }
 };
 
+template<typename ch, typename tr, typename vT>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, const slice<vT>& v ) {
+    ostr << "[" << static_cast<const void*>(v.begin())
+	 << ',' << static_cast<const void*>(v.end()) << "[";
+    return ostr;
+}
+
+
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, const slice<char>& v ) {
+    ostr.write(v.begin(),v.size());
+    return ostr;
+}
+
+
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, const slice<const char>& v ) {
+    ostr.write(v.begin(),v.size());
+    return ostr;
+}
+
+
 #endif

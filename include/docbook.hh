@@ -44,6 +44,7 @@
 class docbook : public text {
 protected:
     char *buffer;
+    size_t length;
     rapidxml::xml_document<> doc;
 
 public:

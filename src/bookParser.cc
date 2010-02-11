@@ -19,15 +19,30 @@ void docbookParser::pass( docbookToken t )
 	if( current == t ) current = scanner->read(); else error();
 }
 
+docbookParser::docbookParser( docbookScanner& s )
+	: scanner(&s), builder(NULL)
+{
+	current = scanner->read();
+}
+
 docbookParser::docbookParser( docbookScanner& s, docbook& b )
 	: scanner(&s), builder(&b)
 {
 	current = scanner->read();
 }
 
+
+void docbookParser::document()
+{
+    if( current == sectionStart ) {
+	llsection();
+    } else if( current == articleStart ) {
+	llarticle();
+    } else error();
+}
+
 void docbookParser::lltitle()
 {
-    std::cerr << "!!! docbookParser::lltitle()" << std::endl;
 	if( current == titleStart ) {
 		pass(titleStart);
 		while( current == remarkStart || current == footnoteStart || current == inlinemediaobjectStart || current == jobtitleStart || current == orgnameStart || current == personnameStart || current == authorStart || current == personStart || current == orgStart || current == dateStart || current == editorStart || current == citebiblioidStart || current == packageStart || current == emailStart || current == parameterStart || current == replaceableStart || current == uriStart || current == abbrevStart || current == acronymStart || current == citationStart || current == citerefentryStart || current == citetitleStart || current == emphasisStart || current == foreignphraseStart || current == phraseStart || current == quoteStart || current == subscriptStart || current == superscriptStart || current == trademarkStart || current == wordaswordStart || current == footnoterefStart || current == xrefStart || current == linkStart || current == olinkStart || current == anchorStart || current == altStart || current == annotationStart || current == firsttermStart || current == glosstermStart || current == termdefStart || current == bibliorefStart || current == indextermStart || current == corefStart || current == nonterminalStart || current == inlineequationStart || current == markupStart || current == tagStart || current == symbolStart || current == tokenStart || current == literalStart || current == codeStart || current == constantStart || current == productnameStart || current == productnumberStart || current == databaseStart || current == applicationStart || current == hardwareStart || current == guibuttonStart || current == guiiconStart || current == guilabelStart || current == guimenuStart || current == guimenuitemStart || current == guisubmenuStart || current == menuchoiceStart || current == mousebuttonStart || current == keycapStart || current == keycodeStart || current == keycomboStart || current == keysymStart || current == accelStart || current == shortcutStart || current == promptStart || current == envarStart || current == filenameStart || current == commandStart || current == computeroutputStart || current == userinputStart || current == functionStart || current == ooclassStart || current == oointerfaceStart || current == ooexceptionStart || current == modifierStart || current == interfacenameStart || current == exceptionnameStart || current == initializerStart || current == methodnameStart || current == varnameStart || current == returnvalueStart || current == typeStart || current == classnameStart || current == errorcodeStart || current == errornameStart || current == errortextStart || current == errortypeStart || current == systemitemStart || current == optionStart || current == optionalStart || current == propertyStart ) {

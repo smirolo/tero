@@ -29,8 +29,10 @@ class docbookParser {
 	void pass( docbookToken t );
 
 public:
+    explicit docbookParser( docbookScanner& s );
 	docbookParser( docbookScanner& s, docbook& b );
 
+    void document();
 	void lltitle();
 	void llinlinemediaobject();
 	void llremark();

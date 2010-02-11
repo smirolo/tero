@@ -102,7 +102,8 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
        We load the text *buffer* and keep it around in order to parse 
        the XML only once. */
     size_t fileSize = file_size(pathname);
-    buffer = new char [ fileSize + 1 ];
+    length = fileSize + 1;
+    buffer = new char [ length ];
     boost::filesystem::ifstream file;
 
     open(file,pathname);
@@ -124,10 +125,14 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
 
 void docbook::fetch( session& s, const boost::filesystem::path& pathname )
 {
+#if 0
     boost::filesystem::ifstream file;
-
     open(file,pathname);
-    docbookScanner tok(file);
+    docbookStreamScanner tok(file);
+#else
+    docbookBufferTokenizer tok(buffer,length);
+#endif
+
     docbookParser parser(tok,*this);    
-    parser.llsection();
+    parser.document();
 }

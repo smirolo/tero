@@ -226,7 +226,7 @@ public:
     explicit basicLinkLight(  session& s, std::basic_ostream<charT,traitsT>& o )
 	: super(o,false), context(&s) { super::tokenizer.attach(*this); }
     
-    void newline() {
+    void newline( const char *line, int first, int last ) {
 	super::nextBuf->sputc('\n');
     }
     

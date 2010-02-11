@@ -28,18 +28,36 @@
 
 #include <iterator>
 
+/** The current XML tokenizer recognize elements, data, comments 
+    and declaration nodes.
+
+    As XML Elements are complex entities beyhond the scope of a lexical
+    tokenizer, the tokens generated are: xmlElementStart ('<'), 
+    xmlName (alphanum identifier), xmlAssign, xmlAttValue ("..."), 
+    xmlCloseTag ('>'), xmlElementEnd ('</') and xmlEmptyElementEnd ('/>').
+
+    xmlError is the first element such that xmlErr == 0, thus consistent 
+    with memset-style initialization.
+    
+    \todo Add rapidxml::node_cdata, rapidxml::node_doctype 
+          (and rapidxml::node_pi?)
+
+     
+*/
 enum xmlToken {
     xmlErr,
+    xmlAssign,
+    xmlAttValue,
+    xmlCloseTag,
     xmlComment,
+    xmlContent,
     xmlDeclEnd,
     xmlDeclStart,
-    xmlName,
-    xmlSpace,
-    xmlAssign,
-    xmlContent,
     xmlElementEnd,
     xmlElementStart,
-    xmlAttValue
+    xmlEmptyElementEnd,
+    xmlName,
+    xmlSpace
 };
 
 extern const char *xmlTokenTitles[];
@@ -57,7 +75,8 @@ class xmlTokListener {
 public:
     xmlTokListener() {}
     
-    virtual void newline() = 0;
+    virtual void newline( const char *line, 
+			  int first, int last ) = 0;
     
     virtual void token( xmlToken token, const char *line, 
 			int first, int last, bool fragment ) = 0;
@@ -82,7 +101,7 @@ public:
     
     void attach( xmlTokListener& l ) { listener = &l; }
 
-    void tokenize( const char *line, size_t n );
+    size_t tokenize( const char *line, size_t n );
 };
 
 

@@ -29,16 +29,18 @@
 
 const char *xmlTokenTitles[] = {
     "xmlErr",
+    "xmlAssign",
+    "xmlAttValue",
+    "xmlCloseTag",
     "xmlComment",
+    "xmlContent",
     "xmlDeclEnd",
     "xmlDeclStart",
-    "xmlName",
-    "xmlSpace",
-    "xmlAssign",
-    "xmlContent",
     "xmlElementEnd",
     "xmlElementStart",
-    "xmlAttValue"
+    "xmlEmptyElementEnd",
+    "xmlName",
+    "xmlSpace"
 };
 
 
@@ -52,29 +54,36 @@ bool nameChar( int c ) {
     return isalnum(c) | (c == ':');
 }
 
-void xmlTokenizer::tokenize( const char *line, size_t n )
+size_t xmlTokenizer::tokenize( const char *line, size_t n )
 {
     void *trans = state;
     const char *p = line;
     bool newline = false;
-    
+    size_t last;
+    first = 0;
+
     if( trans != NULL ) goto *trans; else goto token;
     
 advancePointer:
     ++p;
-    switch( (std::distance(line,p) >= n) ? '\0' : *p ) {
+    last = std::distance(line,p);
+    switch( (last >= n) ? '\0' : *p ) {
     case '\r': 
 	while( *p == '\r' ) ++p; 
 	assert( *p == '\n' | *p == '\0' );
     case '\n':  
+	++p;
 	newline = true;
     case '\0':
-	if( (p - line) - first > 0 && listener != NULL ) {
-	    listener->token(tok,line,first,p - line,true);
+	if( *p == '\0' ) ++p;
+	if( last - first > 0 && listener != NULL ) {
+	    listener->token(tok,line,first,last,true);
 	}
-	if( newline && listener != NULL ) listener->newline(); 
+	if( newline && listener != NULL ) {
+	    listener->newline(line,last,p - line);
+	}
 	state = trans;
-	return;	
+	return p - line;	
     } 
     goto *trans;
 
@@ -116,7 +125,7 @@ endComment2:
 
  endEmptyElement:
     if( *p == '>' ) {
-	tok = xmlElementEnd;
+	tok = xmlEmptyElementEnd;
 	advance(token);
     }
     goto error;
@@ -182,7 +191,7 @@ startComment2:
     case '/':		
 	advance(endEmptyElement);
     case '>':
-	tok = xmlElementEnd;
+	tok = xmlCloseTag;
 	advance(token);
     case '=':
 	tok = xmlAssign;
@@ -210,10 +219,14 @@ startComment2:
 	advance(token);
     }
     switch( *p ) {
+#if 0
+	/* It was introduced for spaces after tag at end of line
+	   but this does not suit very well with formatted text. */
     case '\t':
     case ' ':
 	tok = xmlSpace;
 	advance(spacesBeforeContent);
+#endif
     case '<':
 	goto tag;
     }
