@@ -32,15 +32,17 @@ namespace detail {
 
     class nodeEnd {
     public:
+	bool newline;
 	const char* name;
 
-	explicit nodeEnd( const char* n ) : name(n) {}
+	explicit nodeEnd( const char* n, bool nl = false ) 
+	    : name(n), newline(nl) {}
 
 	template<typename ch, typename tr>
 	friend std::basic_ostream<ch, tr>&
 	operator<<(std::basic_ostream<ch, tr>& ostr, const nodeEnd& v ) {
-	    ostr << "</" << v.name << '>'
-		 << std::endl;
+	    ostr << "</" << v.name << '>';
+	    if( v.newline ) ostr << std::endl;
 	    return ostr;
 	}
     };
@@ -138,6 +140,15 @@ namespace html {
 	}
     };
 
+    /** HTML caption markup
+     */
+    class caption : public detail::markup {    
+    public:  
+	static const char* name;
+	static const detail::nodeEnd end;
+    
+	caption() : markup(name,NULL,NULL,0,true) {}
+    };
 
     /** HTML div markup
      */
@@ -178,9 +189,52 @@ namespace html {
 	explicit h( int n ) : markup(names[n],NULL,NULL,0), num(n) {}
 
 	detail::nodeEnd end() const {
-	    return detail::nodeEnd(names[num]);
+	    return detail::nodeEnd(names[num],true);
 	}
 
+    };
+
+    /** img markup
+     */
+    class img : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr,
+	    srcAttr,
+	};
+	
+	static const size_t attrLength = 2;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	img() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	img& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+
+	img& src( const char *v ) {
+	    attrValues[srcAttr] = v;
+	    return *this;
+	}	
+
+    };
+
+    /** HTML li markup
+     */
+    class li : public detail::markup {    
+    public:  
+	static const char* name;
+	static const detail::nodeEnd end;
+    
+	li() : markup(name,NULL,NULL,0) {}
     };
 
     /** HTML p markup
@@ -192,6 +246,171 @@ namespace html {
     
 	p() : markup(name,NULL,NULL,0,true) {}
     };
+
+    /** pre markup
+     */
+    class pre : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr,
+	};
+	
+	static const size_t attrLength = 1;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	pre() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	pre& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+    };
+
+    /** span markup
+     */
+    class span : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr
+	};
+	
+	static const size_t attrLength = 1;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	span() : markup(name,attrNames,attrValues,attrLength) {}
+	
+	span& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+    };
+
+    /** HTML table markup
+     */
+    class table : public detail::markup {    
+    public:  
+	static const char* name;
+	static const detail::nodeEnd end;
+    
+	table() : markup(name,NULL,NULL,0,true) {}
+    };
+
+    /** td markup
+     */
+    class td : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr,
+	    colspanAttr,
+	};
+	
+	static const size_t attrLength = 2;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	td() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	td& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+
+	td& colspan( const char *v ) {
+	    attrValues[colspanAttr] = v;
+	    return *this;
+	}	
+
+    };
+
+    /** th markup
+     */
+    class th : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr,
+	    colspanAttr,
+	};
+	
+	static const size_t attrLength = 2;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	th() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	th& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+
+	th& colspan( const char *v ) {
+	    attrValues[colspanAttr] = v;
+	    return *this;
+	}	
+
+    };
+
+    /** tr markup
+     */
+    class tr : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr
+	};
+	
+	static const size_t attrLength = 1;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	tr() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	tr& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+    };
+
+    /** HTML ul markup
+     */
+    class ul : public detail::markup {    
+    public:  
+	static const char* name;
+	static const detail::nodeEnd end;
+    
+	ul() : markup(name,NULL,NULL,0,true) {}
+    };
+
 
 } // namespace html
 
@@ -261,20 +480,9 @@ public:
 };
 
 
-/** pre markup
- */
-class pre : public detail::markup {    
-public:  
-    static const char* name;
-    static const detail::nodeEnd end;
-    
-    pre() : markup(name,NULL,NULL,0,true) {}
-};
-
-
 /** a source code listing markup
  */
-class code : public pre {
+class code : public html::pre {
 public:  
     code() {}
     

@@ -91,14 +91,14 @@ boost::filesystem::path
 session::abspath( const boost::filesystem::path& relpath ) const {
 
     /* This is an absolute path so it is safe to return it as such. */
-    if( relpath.is_complete() ) {
+    if( boost::filesystem::exists(relpath) ) {
 	return relpath;
     }
 
     /* First we try to access the file from cwd. */
     boost::filesystem::path fromCwd 
 	= boost::filesystem::current_path() / relpath;
-    if( boost::filesystem::exists(fromCwd) ) { 	
+    if( !relpath.is_complete() && boost::filesystem::exists(fromCwd) ) { 	
 	return fromCwd;
     }	
 

@@ -24,7 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "docbook.hh"
-#include "bookParser.hh"
+#include "markup.hh"
 
 
 namespace {
@@ -35,62 +35,662 @@ namespace {
 	/* We found an <info> tag, let's parse the meta information 
 	   about the article such as the author, the date, etc. */
 	for( xml_node<> *n = r.first_node();
-	     n != NULL; n = r.next_sibling() ) {
+	     n != NULL; n = n->next_sibling() ) {
 	    switch( n->type() ) {
 	    case node_element:
 		/* author, title, date. */
 		s.vars[n->name()] = n->value();
 	    }
 	}
-	if( s.vars.find("title") == s.vars.end() ) {
-	    s.vars["title"] = s.valueOf("document");
-	}
     }
-#if 0
-    void parseSection( const rapid_xml::xml_node<>& r, int level = 1 ) {
-	/* We found a <section> tag, let's simply rewrite the title
-	   s <h?> tags and the <para> as <p> tags. */
-	for( xml_node<> *n = r.first_node();
-	     n != NULL; n = r.next_sibling() ) {
-	    switch( n->type() ) {
-	    case node_element:
-		if( n->name() == "title" ) {
-		    std::cout << html::h(level) 
-			      << n->value() 
-			      << html::h(level).end();
-		} else if( n->name() == "para" ) {
-		    std::cout << html::p << n->value() << html::p::end;
-		} else if( n->name() == "section" ) {
-		    parseSection(*n,level + 1);
-		} else if( n->name() == "simplelist" ) {
-		    parseSimpleList(*n);
-		}
-
-#if 0
-	    case node_data:
-		/* A data node already contains escape codes 
-		   for special characters. */
-		std::cout << n.value();
-		break;
-	    case node_cdata:        
-		/* CDATA nodes might contain characters 
-		   that should be escaped. */
-		std::cout << n.value();
-		break;
-#endif
-	    }
-	}
-    }
-#endif
 
 }  // anonymous namespace
 
 
+docbook::walkNodeEntry docbook::walkers[] = {
+    { "abbrev", &docbook::any, &docbook::any },
+    { "abstract", &docbook::any, &docbook::any },
+    { "accel", &docbook::any, &docbook::any },
+    { "acknowledgements", &docbook::any, &docbook::any },
+    { "acronym", &docbook::any, &docbook::any },
+    { "address", &docbook::any, &docbook::any },
+    { "affiliation", &docbook::any, &docbook::any },
+    { "alt", &docbook::any, &docbook::any },
+    { "anchor", &docbook::any, &docbook::any },
+    { "annotation", &docbook::any, &docbook::any },
+    { "answer", &docbook::any, &docbook::any },
+    { "appendix", &docbook::any, &docbook::any },
+    { "application", &docbook::any, &docbook::any },
+    { "arc", &docbook::any, &docbook::any },
+    { "area", &docbook::any, &docbook::any },
+    { "areaset", &docbook::any, &docbook::any },
+    { "areaspec", &docbook::any, &docbook::any },
+    { "arg", &docbook::any, &docbook::any },
+    { "article", &docbook::any, &docbook::any },
+    { "artpagenums", &docbook::any, &docbook::any },
+    { "attribution", &docbook::any, &docbook::any },
+    { "audiodata", &docbook::any, &docbook::any },
+    { "audioobject", &docbook::any, &docbook::any },
+    { "author", &docbook::any, &docbook::any },
+    { "authorgroup", &docbook::any, &docbook::any },
+    { "authorinitials", &docbook::any, &docbook::any },
+    { "bibliocoverage", &docbook::any, &docbook::any },
+    { "bibliodiv", &docbook::any, &docbook::any },
+    { "biblioentry", &docbook::any, &docbook::any },
+    { "bibliography", &docbook::any, &docbook::any },
+    { "biblioid", &docbook::any, &docbook::any },
+    { "bibliolist", &docbook::any, &docbook::any },
+    { "bibliomisc", &docbook::any, &docbook::any },
+    { "bibliomixed", &docbook::any, &docbook::any },
+    { "bibliomset", &docbook::any, &docbook::any },
+    { "biblioref", &docbook::any, &docbook::any },
+    { "bibliorelation", &docbook::any, &docbook::any },
+    { "biblioset", &docbook::any, &docbook::any },
+    { "bibliosource", &docbook::any, &docbook::any },
+    { "blockquote", &docbook::any, &docbook::any },
+    { "book", &docbook::any, &docbook::any },
+    { "bridgehead", &docbook::any, &docbook::any },
+    { "callout", &docbook::any, &docbook::any },
+    { "calloutlist", &docbook::any, &docbook::any },
+    { "caption", &docbook::captionStart, &docbook::captionEnd },
+    { "caution", &docbook::any, &docbook::any },
+    { "chapter", &docbook::any, &docbook::any },
+    { "citation", &docbook::any, &docbook::any },
+    { "citebiblioid", &docbook::any, &docbook::any },
+    { "citerefentry", &docbook::any, &docbook::any },
+    { "citetitle", &docbook::any, &docbook::any },
+    { "city", &docbook::any, &docbook::any },
+    { "classname", &docbook::any, &docbook::any },
+    { "classsynopsis", &docbook::any, &docbook::any },
+    { "classsynopsisinfo", &docbook::any, &docbook::any },
+    { "cmdsynopsis", &docbook::any, &docbook::any },
+    { "co", &docbook::any, &docbook::any },
+    { "code", &docbook::any, &docbook::any },
+    { "col", &docbook::any, &docbook::any },
+    { "colgroup", &docbook::any, &docbook::any },
+    { "collab", &docbook::any, &docbook::any },
+    { "colophon", &docbook::any, &docbook::any },
+    { "colspec", &docbook::any, &docbook::any },
+    { "command", &docbook::any, &docbook::any },
+    { "computeroutput", &docbook::any, &docbook::any },
+    { "confdates", &docbook::any, &docbook::any },
+    { "confgroup", &docbook::any, &docbook::any },
+    { "confnum", &docbook::any, &docbook::any },
+    { "confsponsor", &docbook::any, &docbook::any },
+    { "conftitle", &docbook::any, &docbook::any },
+    { "constant", &docbook::any, &docbook::any },
+    { "constraint", &docbook::any, &docbook::any },
+    { "constraintdef", &docbook::any, &docbook::any },
+    { "constructorsynopsis", &docbook::any, &docbook::any },
+    { "contractnum", &docbook::any, &docbook::any },
+    { "contractsponsor", &docbook::any, &docbook::any },
+    { "contrib", &docbook::any, &docbook::any },
+    { "copyright", &docbook::any, &docbook::any },
+    { "coref", &docbook::any, &docbook::any },
+    { "country", &docbook::any, &docbook::any },
+    { "cover", &docbook::any, &docbook::any },
+    { "database", &docbook::any, &docbook::any },
+    { "date", &docbook::any, &docbook::any },
+    { "dedication", &docbook::any, &docbook::any },
+    { "destructorsynopsis", &docbook::any, &docbook::any },
+    { "edition", &docbook::any, &docbook::any },
+    { "editor", &docbook::any, &docbook::any },
+    { "email", &docbook::any, &docbook::any },
+    { "emphasis", &docbook::emphasisStart, &docbook::emphasisEnd },
+    { "entry", &docbook::any, &docbook::any },
+    { "entrytbl", &docbook::any, &docbook::any },
+    { "envar", &docbook::any, &docbook::any },
+    { "epigraph", &docbook::any, &docbook::any },
+    { "equation", &docbook::any, &docbook::any },
+    { "errorcode", &docbook::any, &docbook::any },
+    { "errorname", &docbook::any, &docbook::any },
+    { "errortext", &docbook::any, &docbook::any },
+    { "errortype", &docbook::any, &docbook::any },
+    { "example", &docbook::any, &docbook::any },
+    { "exceptionname", &docbook::any, &docbook::any },
+    { "extendedlink", &docbook::any, &docbook::any },
+    { "fax", &docbook::any, &docbook::any },
+    { "fieldsynopsis", &docbook::any, &docbook::any },
+    { "figure", &docbook::any, &docbook::any },
+    { "filename", &docbook::any, &docbook::any },
+    { "firstname", &docbook::any, &docbook::any },
+    { "firstterm", &docbook::any, &docbook::any },
+    { "footnote", &docbook::any, &docbook::any },
+    { "footnoteref", &docbook::any, &docbook::any },
+    { "foreignphrase", &docbook::any, &docbook::any },
+    { "formalpara", &docbook::any, &docbook::any },
+    { "funcdef", &docbook::any, &docbook::any },
+    { "funcparams", &docbook::any, &docbook::any },
+    { "funcprototype", &docbook::any, &docbook::any },
+    { "funcsynopsis", &docbook::any, &docbook::any },
+    { "funcsynopsisinfo", &docbook::any, &docbook::any },
+    { "function", &docbook::any, &docbook::any },
+    { "glossary", &docbook::any, &docbook::any },
+    { "glossdef", &docbook::any, &docbook::any },
+    { "glossdiv", &docbook::any, &docbook::any },
+    { "glossentry", &docbook::any, &docbook::any },
+    { "glosslist", &docbook::any, &docbook::any },
+    { "glosssee", &docbook::any, &docbook::any },
+    { "glossseealso", &docbook::any, &docbook::any },
+    { "glossterm", &docbook::any, &docbook::any },
+    { "group", &docbook::any, &docbook::any },
+    { "guibutton", &docbook::any, &docbook::any },
+    { "guiicon", &docbook::any, &docbook::any },
+    { "guilabel", &docbook::any, &docbook::any },
+    { "guimenu", &docbook::any, &docbook::any },
+    { "guimenuitem", &docbook::any, &docbook::any },
+    { "guisubmenu", &docbook::any, &docbook::any },
+    { "hardware", &docbook::any, &docbook::any },
+    { "holder", &docbook::any, &docbook::any },
+    { "honorific", &docbook::any, &docbook::any },
+    { "imagedata", &docbook::imagedataStart, &docbook::imagedataEnd },
+    { "imageobject", &docbook::any, &docbook::any },
+    { "imageobjectco", &docbook::any, &docbook::any },
+    { "important", &docbook::any, &docbook::any },
+    { "index", &docbook::any, &docbook::any },
+    { "indexdiv", &docbook::any, &docbook::any },
+    { "indexentry", &docbook::any, &docbook::any },
+    { "indexterm", &docbook::any, &docbook::any },
+    { "info", &docbook::infoStart, &docbook::infoEnd },
+    { "informalequation", &docbook::any, &docbook::any },
+    { "informalexample", &docbook::any, &docbook::any },
+    { "informalfigure", &docbook::any, &docbook::any },
+    { "informaltable", &docbook::informaltableStart, 
+      &docbook::informaltableEnd },
+    { "initializer", &docbook::any, &docbook::any },
+    { "inlineequation", &docbook::any, &docbook::any },
+    { "inlinemediaobject", &docbook::any, &docbook::any },
+    { "interfacename", &docbook::any, &docbook::any },
+    { "issuenum", &docbook::any, &docbook::any },
+    { "itemizedlist", &docbook::any, &docbook::any },
+    { "itermset", &docbook::any, &docbook::any },
+    { "jobtitle", &docbook::any, &docbook::any },
+    { "keycap", &docbook::any, &docbook::any },
+    { "keycode", &docbook::any, &docbook::any },
+    { "keycombo", &docbook::any, &docbook::any },
+    { "keysym", &docbook::any, &docbook::any },
+    { "keyword", &docbook::any, &docbook::any },
+    { "keywordset", &docbook::any, &docbook::any },
+    { "label", &docbook::any, &docbook::any },
+    { "legalnotice", &docbook::any, &docbook::any },
+    { "lhs", &docbook::any, &docbook::any },
+    { "lineage", &docbook::any, &docbook::any },
+    { "lineannotation", &docbook::any, &docbook::any },
+    { "link", &docbook::linkStart, &docbook::linkEnd },
+    { "listitem", &docbook::any, &docbook::any },
+    { "literal", &docbook::any, &docbook::any },
+    { "literallayout", &docbook::any, &docbook::any },
+    { "locator", &docbook::any, &docbook::any },
+    { "manvolnum", &docbook::any, &docbook::any },
+    { "markup", &docbook::any, &docbook::any },
+    { "mathphrase", &docbook::any, &docbook::any },
+    { "mediaobject", &docbook::any, &docbook::any },
+    { "member", &docbook::memberStart, &docbook::memberEnd },
+    { "menuchoice", &docbook::any, &docbook::any },
+    { "methodname", &docbook::any, &docbook::any },
+    { "methodparam", &docbook::any, &docbook::any },
+    { "methodsynopsis", &docbook::any, &docbook::any },
+    { "modifier", &docbook::any, &docbook::any },
+    { "mousebutton", &docbook::any, &docbook::any },
+    { "msg", &docbook::any, &docbook::any },
+    { "msgaud", &docbook::any, &docbook::any },
+    { "msgentry", &docbook::any, &docbook::any },
+    { "msgexplan", &docbook::any, &docbook::any },
+    { "msginfo", &docbook::any, &docbook::any },
+    { "msglevel", &docbook::any, &docbook::any },
+    { "msgmain", &docbook::any, &docbook::any },
+    { "msgorig", &docbook::any, &docbook::any },
+    { "msgrel", &docbook::any, &docbook::any },
+    { "msgset", &docbook::any, &docbook::any },
+    { "msgsub", &docbook::any, &docbook::any },
+    { "msgtext", &docbook::any, &docbook::any },
+    { "nonterminal", &docbook::any, &docbook::any },
+    { "note", &docbook::any, &docbook::any },
+    { "olink", &docbook::any, &docbook::any },
+    { "ooclass", &docbook::any, &docbook::any },
+    { "ooexception", &docbook::any, &docbook::any },
+    { "oointerface", &docbook::any, &docbook::any },
+    { "option", &docbook::any, &docbook::any },
+    { "optional", &docbook::any, &docbook::any },
+    { "orderedlist", &docbook::any, &docbook::any },
+    { "org", &docbook::any, &docbook::any },
+    { "orgdiv", &docbook::any, &docbook::any },
+    { "orgname", &docbook::any, &docbook::any },
+    { "otheraddr", &docbook::any, &docbook::any },
+    { "othercredit", &docbook::any, &docbook::any },
+    { "othername", &docbook::any, &docbook::any },
+    { "package", &docbook::any, &docbook::any },
+    { "pagenums", &docbook::any, &docbook::any },
+    { "para", &docbook::paraStart, &docbook::paraEnd },
+    { "paramdef", &docbook::any, &docbook::any },
+    { "parameter", &docbook::any, &docbook::any },
+    { "part", &docbook::any, &docbook::any },
+    { "partintro", &docbook::any, &docbook::any },
+    { "person", &docbook::any, &docbook::any },
+    { "personblurb", &docbook::any, &docbook::any },
+    { "personname", &docbook::any, &docbook::any },
+    { "phone", &docbook::any, &docbook::any },
+    { "phrase", &docbook::phraseStart, &docbook::phraseEnd },
+    { "pob", &docbook::any, &docbook::any },
+    { "postcode", &docbook::any, &docbook::any },
+    { "preface", &docbook::any, &docbook::any },
+    { "primary", &docbook::any, &docbook::any },
+    { "primaryie", &docbook::any, &docbook::any },
+    { "printhistory", &docbook::any, &docbook::any },
+    { "procedure", &docbook::any, &docbook::any },
+    { "production", &docbook::any, &docbook::any },
+    { "productionrecap", &docbook::any, &docbook::any },
+    { "productionset", &docbook::any, &docbook::any },
+    { "productname", &docbook::any, &docbook::any },
+    { "productnumber", &docbook::any, &docbook::any },
+    { "programlisting", &docbook::any, &docbook::any },
+    { "programlistingco", &docbook::any, &docbook::any },
+    { "prompt", &docbook::any, &docbook::any },
+    { "property", &docbook::any, &docbook::any },
+    { "pubdate", &docbook::any, &docbook::any },
+    { "publisher", &docbook::any, &docbook::any },
+    { "publishername", &docbook::any, &docbook::any },
+    { "qandadiv", &docbook::any, &docbook::any },
+    { "qandaentry", &docbook::any, &docbook::any },
+    { "qandaset", &docbook::any, &docbook::any },
+    { "question", &docbook::any, &docbook::any },
+    { "quote", &docbook::any, &docbook::any },
+    { "refclass", &docbook::any, &docbook::any },
+    { "refdescriptor", &docbook::any, &docbook::any },
+    { "refentry", &docbook::any, &docbook::any },
+    { "refentrytitle", &docbook::any, &docbook::any },
+    { "reference", &docbook::any, &docbook::any },
+    { "refmeta", &docbook::any, &docbook::any },
+    { "refmiscinfo", &docbook::any, &docbook::any },
+    { "refname", &docbook::any, &docbook::any },
+    { "refnamediv", &docbook::any, &docbook::any },
+    { "refpurpose", &docbook::any, &docbook::any },
+    { "refsect1", &docbook::any, &docbook::any },
+    { "refsect2", &docbook::any, &docbook::any },
+    { "refsect3", &docbook::any, &docbook::any },
+    { "refsection", &docbook::any, &docbook::any },
+    { "refsynopsisdiv", &docbook::any, &docbook::any },
+    { "releaseinfo", &docbook::any, &docbook::any },
+    { "remark", &docbook::any, &docbook::any },
+    { "replaceable", &docbook::any, &docbook::any },
+    { "returnvalue", &docbook::any, &docbook::any },
+    { "revdescription", &docbook::any, &docbook::any },
+    { "revhistory", &docbook::any, &docbook::any },
+    { "revision", &docbook::any, &docbook::any },
+    { "revnumber", &docbook::any, &docbook::any },
+    { "revremark", &docbook::any, &docbook::any },
+    { "rhs", &docbook::any, &docbook::any },
+    { "row", &docbook::any, &docbook::any },
+    { "sbr", &docbook::any, &docbook::any },
+    { "screen", &docbook::any, &docbook::any },
+    { "screenco", &docbook::any, &docbook::any },
+    { "screenshot", &docbook::any, &docbook::any },
+    { "secondary", &docbook::any, &docbook::any },
+    { "secondaryie", &docbook::any, &docbook::any },
+    { "sect1", &docbook::any, &docbook::any },
+    { "sect2", &docbook::any, &docbook::any },
+    { "sect3", &docbook::any, &docbook::any },
+    { "sect4", &docbook::any, &docbook::any },
+    { "sect5", &docbook::any, &docbook::any },
+    { "section", &docbook::sectionStart, &docbook::sectionEnd },
+    { "see", &docbook::any, &docbook::any },
+    { "seealso", &docbook::any, &docbook::any },
+    { "seealsoie", &docbook::any, &docbook::any },
+    { "seeie", &docbook::any, &docbook::any },
+    { "seg", &docbook::any, &docbook::any },
+    { "seglistitem", &docbook::any, &docbook::any },
+    { "segmentedlist", &docbook::any, &docbook::any },
+    { "segtitle", &docbook::any, &docbook::any },
+    { "seriesvolnums", &docbook::any, &docbook::any },
+    { "set", &docbook::any, &docbook::any },
+    { "setindex", &docbook::any, &docbook::any },
+    { "shortaffil", &docbook::any, &docbook::any },
+    { "shortcut", &docbook::any, &docbook::any },
+    { "sidebar", &docbook::any, &docbook::any },
+    { "simpara", &docbook::any, &docbook::any },
+    { "simplelist", &docbook::simplelistStart, &docbook::simplelistEnd },
+    { "simplemsgentry", &docbook::any, &docbook::any },
+    { "simplesect", &docbook::any, &docbook::any },
+    { "spanspec", &docbook::any, &docbook::any },
+    { "state", &docbook::any, &docbook::any },
+    { "step", &docbook::any, &docbook::any },
+    { "stepalternatives", &docbook::any, &docbook::any },
+    { "street", &docbook::any, &docbook::any },
+    { "subject", &docbook::any, &docbook::any },
+    { "subjectset", &docbook::any, &docbook::any },
+    { "subjectterm", &docbook::any, &docbook::any },
+    { "subscript", &docbook::any, &docbook::any },
+    { "substeps", &docbook::any, &docbook::any },
+    { "subtitle", &docbook::any, &docbook::any },
+    { "superscript", &docbook::any, &docbook::any },
+    { "surname", &docbook::any, &docbook::any },
+    { "symbol", &docbook::any, &docbook::any },
+    { "synopfragment", &docbook::any, &docbook::any },
+    { "synopfragmentref", &docbook::any, &docbook::any },
+    { "synopsis", &docbook::any, &docbook::any },
+    { "systemitem", &docbook::any, &docbook::any },
+    { "table", &docbook::tableStart, &docbook::tableEnd },
+    { "tag", &docbook::any, &docbook::any },
+    { "task", &docbook::any, &docbook::any },
+    { "taskprerequisites", &docbook::any, &docbook::any },
+    { "taskrelated", &docbook::any, &docbook::any },
+    { "tasksummary", &docbook::any, &docbook::any },
+    { "tbody", &docbook::any, &docbook::any },
+    { "td", &docbook::tdStart, &docbook::tdEnd },
+    { "term", &docbook::any, &docbook::any },
+    { "termdef", &docbook::any, &docbook::any },
+    { "tertiary", &docbook::any, &docbook::any },
+    { "tertiaryie", &docbook::any, &docbook::any },
+    { "textdata", &docbook::any, &docbook::any },
+    { "textobject", &docbook::any, &docbook::any },
+    { "tfoot", &docbook::any, &docbook::any },
+    { "tgroup", &docbook::any, &docbook::any },
+    { "th", &docbook::thStart, &docbook::thEnd },
+    { "thead", &docbook::any, &docbook::any },
+    { "tip", &docbook::any, &docbook::any },
+    { "title", &docbook::titleStart, &docbook::titleEnd },
+    { "titleabbrev", &docbook::any, &docbook::any },
+    { "toc", &docbook::any, &docbook::any },
+    { "tocdiv", &docbook::any, &docbook::any },
+    { "tocentry", &docbook::any, &docbook::any },
+    { "token", &docbook::any, &docbook::any },
+    { "tr", &docbook::trStart, &docbook::trEnd },
+    { "trademark", &docbook::any, &docbook::any },
+    { "type", &docbook::any, &docbook::any },
+    { "uri", &docbook::any, &docbook::any },
+    { "userinput", &docbook::any, &docbook::any },
+    { "varargs", &docbook::any, &docbook::any },
+    { "variablelist", &docbook::any, &docbook::any },
+    { "varlistentry", &docbook::any, &docbook::any },
+    { "varname", &docbook::any, &docbook::any },
+    { "videodata", &docbook::any, &docbook::any },
+    { "videoobject", &docbook::any, &docbook::any },
+    { "void", &docbook::any, &docbook::any },
+    { "volumenum", &docbook::any, &docbook::any },
+    { "warning", &docbook::any, &docbook::any },
+    { "wordasword", &docbook::any, &docbook::any },
+    { "xref", &docbook::xrefStart, &docbook::xrefEnd },
+    { "year", &docbook::any, &docbook::any }
+};
+
+bool docbook::walkNodeEntry::operator<( const walkNodeEntry& right ) const {
+    return strcmp(name,right.name) < 0;
+}
+
+
 docbook::docbook( decorator& l,  decorator& r ) 
-    : text(l,r), buffer(NULL) {}
+    : text(l,r), buffer(NULL), info(false), sectionLevel(0) {}
 
 docbook::~docbook() {
     if( buffer != NULL ) delete [] buffer;
+}
+
+void docbook::any( const rapidxml::xml_node<>& node ) {
+    std::cerr << "any: " << node.name() << std::endl;
+}
+
+void docbook::captionEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::caption::end;
+    }
+}
+
+void docbook::captionStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::caption();
+    }
+}
+
+void docbook::emphasisEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::span::end;
+    }
+}
+
+void docbook::emphasisStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::span().classref("emphasis");
+    }
+}
+
+void docbook::imagedataEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::img::end;
+    }
+}
+
+void docbook::imagedataStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	rapidxml::xml_attribute<> *fileref = node.first_attribute("fileref");
+	if( fileref != NULL ) {	
+	    std::cout << html::img().src(fileref->value());
+	} else {
+	    std::cout << html::img();
+	}
+    }
+}
+
+void docbook::infoEnd( const rapidxml::xml_node<>& node ) {
+    info = false;
+}
+
+void docbook::infoStart( const rapidxml::xml_node<>& node ) {
+    info = true;
+}
+
+void docbook::informaltableEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::table::end;
+    }
+}
+
+void docbook::informaltableStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::table();
+    }
+}
+
+void docbook::linkEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::a::end;
+    }
+}
+
+void docbook::linkStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	rapidxml::xml_attribute<> *href = node.first_attribute("xlink:href");
+	if( href != NULL ) {	
+	    std::cout << html::a().href(href->value());
+	} else {
+	    std::cout << html::a();
+	}
+    }
+}
+
+void docbook::memberEnd( const rapidxml::xml_node<>& node ) {
+}
+
+void docbook::memberStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::li();
+    }
+}
+
+void docbook::paraEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	rapidxml::xml_attribute<> *role = node.first_attribute("role");
+	if( role != NULL ) { 
+	    std::cout << html::pre::end;
+	} else {
+	    std::cout << html::p::end;
+	}
+    }
+}
+
+void docbook::paraStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	rapidxml::xml_attribute<> *role = node.first_attribute("role");
+	if( role != NULL ) { 
+	    std::cout << html::pre().classref(role->value());
+	} else {
+	    std::cout << html::p();
+	}
+    }
+}
+
+void docbook::phraseEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::span::end;
+    }
+}
+
+void docbook::phraseStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	rapidxml::xml_attribute<> *role = node.first_attribute("role");
+	if( role != NULL ) { 
+	    std::cout << html::span().classref(role->value());
+	} else {
+	    std::cout << html::span();
+	}
+    }
+}
+
+void docbook::sectionEnd( const rapidxml::xml_node<>& node ) {
+    --sectionLevel;
+}
+
+void docbook::sectionStart( const rapidxml::xml_node<>& node ) {
+    ++sectionLevel;
+}
+
+void docbook::simplelistEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::ul::end;
+    }
+}
+
+void docbook::simplelistStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::ul();
+    }
+}
+
+void docbook::tableEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::table::end;
+    }
+}
+
+void docbook::tableStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::table();
+    }
+}
+
+void docbook::tdEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::td::end;
+    }
+}
+
+void docbook::tdStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::td();
+    }
+}
+
+void docbook::thEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::th::end;
+    }
+}
+
+void docbook::thStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::th();
+    }
+}
+
+void docbook::titleEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::h(sectionLevel - 1).end();
+    }
+}
+
+void docbook::titleStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::h(sectionLevel - 1);
+    }
+}
+
+void docbook::trEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::tr::end;
+    }
+}
+
+void docbook::trStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+        std::cout << html::tr();
+    }
+}
+
+
+void docbook::xrefEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::a::end;
+    }
+}
+
+void docbook::xrefStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	rapidxml::xml_attribute<> *linkend = node.first_attribute("linkend");
+	if( linkend != NULL ) {	
+	    std::cout << html::a().href(std::string("glossary.book#") 
+					+ linkend->value());
+	    std::cout << linkend->value();
+	} else {
+	    std::cout << html::a();
+	}
+    }
+}
+
+void docbook::walk( const rapidxml::xml_node<>& node ) {
+    using namespace rapidxml;
+
+    walkNodeEntry *walkersEnd 
+	= &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
+    walkNodeEntry *d;
+    walkNodeEntry key;
+
+    switch( node.type() ) {
+    case node_element:
+	key.name = node.name();
+	d = std::lower_bound(walkers,walkersEnd,key);
+	if( d != walkersEnd ) (this->*(d->start))(node);
+	break;
+    case node_data:
+    case node_cdata:
+	if( !info ) {
+#if 0
+	std::cerr << "node_data:\"" << node.value() << '"' << std::endl;
+#endif
+	    std::cout << node.value();
+	}
+	break;
+    }
+
+    for( xml_node<> *child = node.first_node();
+	 child != NULL; child = child->next_sibling() ) {
+	walk(*child);
+    }
+
+    switch( node.type() ) {
+    case node_element:
+	if( d != walkersEnd ) (this->*(d->end))(node);
+	break;
+    }
+
 }
 
 
@@ -120,6 +720,9 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
 	    parseInfo(s,*info);
 	}
     }
+    if( s.vars.find("title") == s.vars.end() ) {
+	s.vars["title"] = s.valueOf("document");
+    }
 }
 
 
@@ -132,7 +735,19 @@ void docbook::fetch( session& s, const boost::filesystem::path& pathname )
 #else
     docbookBufferTokenizer tok(buffer,length);
 #endif
-
+#if 0
     docbookParser parser(tok,*this);    
     parser.document();
+#else
+#if 1
+    leftDec->attach(std::cout);
+#endif
+    rapidxml::xml_node<> *root = doc.first_node();
+    if( root != NULL ) {
+	walk(*root);
+    }
+#if 1
+    leftDec->detach();
+#endif
+#endif
 }

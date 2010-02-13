@@ -71,7 +71,6 @@ void dispatchDoc::add( const std::string& varname,
 
 void dispatchDoc::fetch( session& s, const std::string& varname ) {
     document* doc = select(varname,s.valueOf(varname));
-    std::cerr << "doc=" << doc << std::endl;
     if( doc != NULL ) {
 	std::cerr << "fetch " << s.valueAsPath(varname) << std::endl;
 	doc->fetch(s,s.valueAsPath(varname));
@@ -120,7 +119,7 @@ void text::showSideBySide( std::istream& input,
 	} else if( line.compare(0,2,"@@") == 0 ) {
 	    if( areDiffBlocks ) {
 		cout << "<tr class=\"diffConflict\">" << endl;
-		cout << "<td>" << endl;
+		cout << html::td();
 		if( leftDec->formated() ) cout << code();
 		cout << left.str();
 		if( nbLeftLinesAhead < nbRightLinesAhead ) {
@@ -128,10 +127,10 @@ void text::showSideBySide( std::istream& input,
 			cout << std::endl;
 		    }
 		} 
-		if( leftDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
+		if( leftDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
 		    
-		cout << "<td>" << endl;
+		cout << html::td();
 		if( rightDec->formated() ) cout << code();
 		cout << right.str();
 		if(  nbLeftLinesAhead > nbRightLinesAhead ) {
@@ -139,9 +138,9 @@ void text::showSideBySide( std::istream& input,
 			cout << endl;
 		    }
 		}
-		if( rightDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
-		cout << "</tr>" << endl;
+		if( rightDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
+		cout << html::tr::end;
 		left.str("");
 		right.str("");
 	    }
@@ -161,18 +160,18 @@ void text::showSideBySide( std::istream& input,
 		
 	} else if( line[0] == rightMarker ) {
 	    if( !areDiffBlocks & !left.str().empty() ) {
-		cout << "<tr>" << endl;
-		cout << "<td>" << endl;
+		cout << html::tr();
+		cout << html::td();
 		if( leftDec->formated() ) cout << code();
 		cout << left.str();
-		if( leftDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
-		cout << "<td>" << endl;
+		if( leftDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
+		cout << html::td();
 		if( rightDec->formated() ) cout << code();
 		cout << right.str();
-		if( rightDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
-		cout << "</tr>" << endl;
+		if( rightDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
+		cout << html::tr::end;
 		left.str("");
 		right.str("");
 	    }
@@ -182,18 +181,18 @@ void text::showSideBySide( std::istream& input,
 		
 	} else if( line[0] == leftMarker ) {
 	    if( !areDiffBlocks & !left.str().empty() ) {
-		cout << "<tr>" << endl;
-		cout << "<td>" << endl;
+		cout << html::tr();
+		cout << html::td();
 		if( leftDec->formated() ) cout << code();
 		cout << left.str();
-		if( leftDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
-		cout << "<td>" << endl;
+		if( leftDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
+		cout << html::td();
 		if( rightDec->formated() ) cout << code();
 		cout << right.str();
-		if( rightDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
-		cout << "</tr>" << endl;
+		if( rightDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
+		cout << html::tr::end;
 		left.str("");
 		right.str("");
 	    }
@@ -209,7 +208,7 @@ void text::showSideBySide( std::istream& input,
 		cout << "<tr class=\"diff" 
 		     << ((!left.str().empty() & !right.str().empty()) ? "" : "No") 
 		     << "Conflict\">" << endl;
-		cout << "<td>" << endl;
+		cout << html::td();
 		if( leftDec->formated() ) cout << code();
 		cout << left.str();
 		if( nbLeftLinesAhead < nbRightLinesAhead ) {
@@ -217,10 +216,10 @@ void text::showSideBySide( std::istream& input,
 			cout << std::endl;
 		    }
 		} 
-		if( leftDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
+		if( leftDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
 		    
-		cout << "<td>" << endl;
+		cout << html::td();
 		if( rightDec->formated() ) cout << code();
 		cout << right.str();
 		if(  nbLeftLinesAhead > nbRightLinesAhead ) {
@@ -228,9 +227,9 @@ void text::showSideBySide( std::istream& input,
 			cout << endl;
 		    }
 		}
-		if( rightDec->formated() ) cout << pre::end;
-		cout << "</td>" << endl;
-		cout << "</tr>" << endl;
+		if( rightDec->formated() ) cout << html::pre::end;
+		cout << html::td::end;
+		cout << html::tr::end;
 		left.str("");
 		right.str("");
 		areDiffBlocks = false;
@@ -249,9 +248,9 @@ void text::showSideBySide( std::istream& input,
 		 << ((!left.str().empty() & !right.str().empty()) ? "" : "No") 
 		 << "Conflict\">" << endl;
 	} else {
-	    cout << "<tr>" << endl;
+	    cout << html::tr();
 	}
-	cout << "<td>" << endl;
+	cout << html::td();
 	if( leftDec->formated() ) cout << code();
 	cout << left.str();
 	if( nbLeftLinesAhead < nbRightLinesAhead ) {
@@ -259,9 +258,9 @@ void text::showSideBySide( std::istream& input,
 		cout << std::endl;
 	    }
 	} 
-	if( leftDec->formated() ) cout << pre::end;
-	cout << "</td>" << endl;
-	cout << "<td>" << endl;
+	if( leftDec->formated() ) cout << html::pre::end;
+	cout << html::td::end;
+	cout << html::td();
 	if( rightDec->formated() ) cout << code();
 	cout << right.str();
 	if(  nbLeftLinesAhead > nbRightLinesAhead ) {
@@ -269,9 +268,9 @@ void text::showSideBySide( std::istream& input,
 		cout << endl;
 	    }
 	}
-	if( rightDec->formated() ) cout << pre::end;
-	cout << "</td>" << endl;
-	cout << "</tr>" << endl;
+	if( rightDec->formated() ) cout << html::pre::end;
+	cout << html::td::end;
+	cout << html::tr::end;
 	left.str("");
 	right.str("");
     }
@@ -282,18 +281,18 @@ void text::showSideBySide( std::istream& input,
 	    left << line << endl;
 	    right << line << endl;
 	}
-	cout << "<tr>" << endl;
-	cout << "<td>" << endl;
+	cout << html::tr();
+	cout << html::td();
 	if( leftDec->formated() ) cout << code();	
 	cout << left.str();
-	if( leftDec->formated() ) cout << pre::end;
-	cout << "</td>" << endl;
-	cout << "<td>" << endl;
+	if( leftDec->formated() ) cout << html::pre::end;
+	cout << html::td::end;
+	cout << html::td();
 	if( rightDec->formated() ) cout << code();	
 	cout << right.str();
-	if( rightDec->formated() ) cout << pre::end;
-	cout << "</td>" << endl;
-	cout << "</tr>" << endl;
+	if( rightDec->formated() ) cout << html::pre::end;
+	cout << html::td::end;
+	cout << html::tr::end;
     }
 
 #if 1
@@ -365,7 +364,7 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     }
 #if 1
     leftDec->detach();
-    if( leftDec->formated() ) std::cout << pre::end;
+    if( leftDec->formated() ) std::cout << html::pre::end;
 #endif
     strm.close();
 }

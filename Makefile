@@ -33,7 +33,7 @@ include $(shell dws context prefix.mk)
 bins 		:=	seed
 libs		:=	libseed.a
 
-libseed.a: auth.o bookParser.o booktok.o composer.o changelist.o docbook.o \
+libseed.a: auth.o booktok.o composer.o changelist.o docbook.o \
 	download.o \
 	xmltok.o cpptok.o document.o gitcmd.o logview.o markup.o projfiles.o \
 	   xmlesc.o webserve.o

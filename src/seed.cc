@@ -120,7 +120,7 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
 	    || s.vars["view"] == "/" ) {
-	    cout << redirect("services/index.html") << htmlContent << endl;
+	    cout << redirect("services/index.corp") << htmlContent << endl;
 	    
 	} else {	    
 	    path uiPath(s.vars["themeDir"] + std::string(s.exists() ? 
@@ -200,7 +200,9 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex(".*\\.book"),formatedDoc);
 
 	    text formatedText(leftFormatedText,rightFormatedText);
-	    docs.add("document",boost::regex(".*\\.html"),formatedText);
+	    docs.add("document",boost::regex(".*\\.corp"),formatedText);
+	    /* \todo !!! Hack for current tmpl_include implementation */
+	    docs.add("document",boost::regex(".*\\.template"),formatedText);
 	    
 	    htmlEscaper leftLinkText;
 	    htmlEscaper rightLinkText;
@@ -225,7 +227,7 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("work"),work);
 	    docs.add("view",boost::regex("rest"),rest);
 
-	    docs.add("view",boost::regex(".*\\.html"),corporate);
+	    docs.add("view",boost::regex(".*\\.corp"),corporate);
 	    docs.add("view",boost::regex(".*"),entry);
 	    
 	    docs.fetch(s,"view");

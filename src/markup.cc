@@ -34,8 +34,11 @@ namespace html {
 	"title"
     };
 
+    const char* caption::name = "caption";
+    const detail::nodeEnd caption::end(caption::name,true);
+
     const char* div::name = "div";
-    const detail::nodeEnd div::end(div::name);
+    const detail::nodeEnd div::end(div::name,true);
     const char *div::attrNames[] = {
 	"class"
     };
@@ -48,9 +51,57 @@ namespace html {
 	"h5"
     };
 
-    const char* p::name = "p";
-    const detail::nodeEnd p::end(p::name);
+    const char* img::name = "img";
+    const detail::nodeEnd img::end(img::name);
+    const char *img::attrNames[] = {
+	"class",
+	"src"
+    };
 
+    const char* li::name = "li";
+    const detail::nodeEnd li::end(li::name,true);
+
+    const char* p::name = "p";
+    const detail::nodeEnd p::end(p::name,true);
+
+    const char* pre::name = "pre";
+    const detail::nodeEnd pre::end(pre::name,true);
+    const char *pre::attrNames[] = {
+	"class"
+    };
+
+    const char* span::name = "span";
+    const detail::nodeEnd span::end(span::name);
+    const char *span::attrNames[] = {
+	"class"
+    };
+
+    const char* table::name = "table";
+    const detail::nodeEnd table::end(table::name,true);
+
+    const char* td::name = "td";
+    const detail::nodeEnd td::end(td::name,true);
+    const char *td::attrNames[] = {
+	"class",
+	"colspan"
+    };
+
+    const char* th::name = "th";
+    const detail::nodeEnd th::end(th::name,true);
+    const char *th::attrNames[] = {
+	"class",
+	"colspan"
+    };
+
+    const char* tr::name = "tr";
+    const detail::nodeEnd tr::end(tr::name,true);
+    const char *tr::attrNames[] = {
+	"class"
+    };
+
+    const char* ul::name = "ul";
+    const detail::nodeEnd ul::end(ul::name,true);
+    
 } // namespace html
 
 const char* author::name = "author";
@@ -70,9 +121,6 @@ const detail::nodeEnd item::end(item::name);
 
 const char* rsslink::name = "link";
 const detail::nodeEnd rsslink::end(rsslink::name);
-
-const char* pre::name = "pre";
-const detail::nodeEnd pre::end(pre::name);
 
 const char* pubDate::name = "pubDate";
 const detail::nodeEnd pubDate::end(pubDate::name);
