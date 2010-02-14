@@ -190,11 +190,9 @@ void session::restore( const boost::program_options::variables_map& params )
     if( vars.find("session") != vars.end() ) {
 	id = atol(vars["session"].c_str());
 	
-	std::cerr << "session::restore..." << std::endl;     
 	static boost::regex format("(.*):(.*)");
 	bool found = false;
 	
-	std::cerr << "format done..." << std::endl;     
 	if( boost::filesystem::exists(session::storage) ) {
 	    /* 1. open session file */
 	    ifstream sessions(session::storage);

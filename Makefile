@@ -32,11 +32,11 @@ include $(shell dws context prefix.mk)
 
 bins 		:=	seed
 libs		:=	libseed.a
+shares		:=	seed.pdf
 
-libseed.a: auth.o booktok.o composer.o changelist.o docbook.o \
-	download.o \
-	xmltok.o cpptok.o document.o gitcmd.o logview.o markup.o projfiles.o \
-	   xmlesc.o webserve.o
+libseed.a: auth.o composer.o changelist.o docbook.o \
+	 	cpptok.o document.o download.o gitcmd.o logview.o markup.o \
+		projfiles.o xmlesc.o xmltok.o webserve.o
 
 seed: seed.cc session.o libseed.a \
 	-lboost_date_time -lboost_regex -lboost_program_options \
@@ -44,6 +44,8 @@ seed: seed.cc session.o libseed.a \
 
 session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dws context)\" $(OUTPUT_OPTION) $<
+
+seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 
 configure_apache:
 	$(srcDir)/configure_apache

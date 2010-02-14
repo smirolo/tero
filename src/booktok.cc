@@ -403,7 +403,6 @@ void docbookBufferTokenizer::newline( const char *line,
 				      int first, int last ) {
     textSlice value(&line[first],&line[last]);
     text += value;
-    std::cerr << "newline("<< first << "," << last << ")" << std::endl;
 }
     
 
@@ -413,10 +412,6 @@ void docbookBufferTokenizer::token( xmlToken token, const char *line,
     const char **key;
     const char **lastKeyword = &docbookKeywords[sizeof(docbookKeywords) / sizeof(char*)];	
     textSlice value(&line[first],&line[last]);
-
-    std::cerr << "xmlToken(" << token << ",\"" << value 
-	      << "\"[" << first << ',' << last << "]," 
-	      << fragment << ')' << std::endl; 
 
     if( token == xmlContent ) {
 	text += value;
@@ -476,16 +471,11 @@ docbookStreamTokenizer::docbookStreamTokenizer( std::istream& is )
 
 void docbookStreamTokenizer::newline( const char *line, 
 				      int first, int last ) {
-    std::cerr << "newline()" << std::endl;
 }
     
 
 void docbookStreamTokenizer::token( xmlToken token, const char *line, 
 			    int first, int last, bool fragment ) {
-    char str[last - first + 1];
-    strncpy(str,&line[first],last-first);
-    str[last-first] = '\0';
-    std::cerr << "xmlToken(" << token << ",\"" << str << "\"[" << first << ',' << last << "]," << fragment << ')' << std::endl; 
     /* translate XML start and end tags into docbook tokens */
     const char **key;
     const char **lastKeyword = &docbookKeywords[sizeof(docbookKeywords) / sizeof(char*)];	
@@ -537,9 +527,6 @@ docbookToken docbookStreamTokenizer::read() {
 	std::string s;
 	std::getline(*istr,s);
 	tok.tokenize(s.c_str(),s.size());
-    }
-    if( !tokens.empty() ) {
-	std::cerr << "read token " << *tokens.begin() << std::endl;
     }
     return tokens.empty() ? bookEof : *tokens.begin();
 }

@@ -95,10 +95,8 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	     out varnames and pathnames... */
 	    path incpath((fixed.empty() ? pathname.parent_path() 
 			  : fixed.parent_path()) / m.str(1));
-	    std::cerr << "incpath: " << incpath << std::endl;
 	    document* doc = dispatchDoc::instance->select("document",incpath.string());
 	    if( doc != NULL ) {
-		std::cerr << "fetch include " << incpath << std::endl;
 		doc->fetch(s,incpath);
 	    }
 	    found = true;

@@ -62,6 +62,7 @@ size_t xmlTokenizer::tokenize( const char *line, size_t n )
     size_t last;
     first = 0;
 
+    if( n == 0 ) return 0;
     if( trans != NULL ) goto *trans; else goto token;
     
 advancePointer:
@@ -78,13 +79,16 @@ advancePointer:
 	if( *p == '\0' ) ++p;
 	if( last - first > 0 && listener != NULL ) {
 	    listener->token(tok,line,first,last,true);
+	    first = last;
 	}
+	last = std::distance(line,p);
 	if( newline && listener != NULL ) {
-	    listener->newline(line,last,p - line);
+	    listener->newline(line,first,last);
+	    first = last;
 	}
-	state = trans;
-	return p - line;	
+	state = trans;	
     } 
+    if( last >= n ) return last;
     goto *trans;
 
 attValueDouble:
@@ -208,13 +212,14 @@ startComment2:
     goto error;
     
  token:
-    if( (p - line) > first && listener != NULL ) {
-	listener->token(tok,line,first,p - line,false);
+    last = std::distance(line,p);
+    if( last > first && listener != NULL ) {
+	listener->token(tok,line,first,last,false);
 	trans = NULL;
     }
     tok = xmlErr;
-    first = p - line;
-    if( n == 0 || (*p == '\n' | *p == '\r' | *p == '\0') ) {
+    first = last;
+    if( (*p == '\n' | *p == '\r' | *p == '\0') ) {
 	--p;
 	advance(token);
     }

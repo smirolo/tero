@@ -175,7 +175,6 @@ parse_cgi_options( const boost::program_options::options_description& descr )
 	
 	char *cQueryString = getenv("QUERY_STRING");
 	if( cQueryString != NULL ) {
-	    std::cerr << "QUERY_STRING=" << cQueryString << std::endl;
 	    parse_cgi_line(opts,descr,cQueryString,strlen(cQueryString));
 	}
     }
@@ -185,7 +184,6 @@ parse_cgi_options( const boost::program_options::options_description& descr )
     if( lenstr != NULL && sscanf(lenstr,"%ld",&len) == 1 ) {
 	char input[len];
 	fgets(input, len + 1, stdin);
-	std::cerr << "STDIN=" << input << std::endl;
 	parse_cgi_line(opts,descr,input,len);
     }
     

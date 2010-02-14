@@ -426,7 +426,9 @@ docbook::~docbook() {
 }
 
 void docbook::any( const rapidxml::xml_node<>& node ) {
+#if 0
     std::cerr << "any: " << node.name() << std::endl;
+#endif
 }
 
 void docbook::captionEnd( const rapidxml::xml_node<>& node ) {
@@ -499,7 +501,10 @@ void docbook::linkEnd( const rapidxml::xml_node<>& node ) {
 void docbook::linkStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	rapidxml::xml_attribute<> *href = node.first_attribute("xlink:href");
-	if( href != NULL ) {	
+	if( href == NULL ) {	
+	    href = node.first_attribute("linkend");
+	}
+	if( href != NULL ) {
 	    std::cout << html::a().href(href->value());
 	} else {
 	    std::cout << html::a();
@@ -508,6 +513,9 @@ void docbook::linkStart( const rapidxml::xml_node<>& node ) {
 }
 
 void docbook::memberEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << html::li::end;
+    }
 }
 
 void docbook::memberStart( const rapidxml::xml_node<>& node ) {

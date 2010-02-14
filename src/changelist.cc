@@ -75,8 +75,6 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
 void changediff::embed( session& s, const std::string& varname ) {
     using namespace std;
 
-    std::cerr << "changediff::embed(...," << varname << ")" << std::endl;
-
     if( varname != "document" ) {
 	composer::embed(s,varname);
     } else {
@@ -85,7 +83,6 @@ void changediff::embed( session& s, const std::string& varname ) {
 	std::string rightRevision = s.valueOf("right");
 	boost::filesystem::path docname(s.valueOf("srcTop") 
 					+ s.valueOf(varname));
-	cerr << "docname: " << docname << std::endl;
 	boost::filesystem::path 
 	    gitrelname = relpath(docname,revision->rootpath);
 	revision->diff(text,leftRevision,rightRevision,gitrelname);

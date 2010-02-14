@@ -123,9 +123,11 @@ int basicHighLight<tokenizerT,charT,traitsT>::sync() {
 template<typename tokenizerT, typename charT, typename traitsT>
 void basicHighLight<tokenizerT,charT,traitsT>::scan() {
     int size = std::distance(buf.gptr(), buf.pptr());
-    super::nextBuf->sputn("scan:",5);
+#if 0
+    super::nextBuf->sputn("tokenize:",9);
     super::nextBuf->sputn(buf.gptr(),size);
-    tokenizer.tokenize(buf.gptr(),size);    
+#endif
+     tokenizer.tokenize(buf.gptr(),size);    
     buf.gbump(size);
 }
 
@@ -154,9 +156,10 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 					   const char *line, 
 					   int first, int last, 
 					   bool fragment ) {
+#if 0
     super::nextBuf->sputn(xmlTokenTitles[token],
-			   strlen(xmlTokenTitles[token]));
-
+			  strlen(xmlTokenTitles[token]));
+#endif
     super::nextBuf->sputn(&line[first],last - first);
     switch( token ) {
     case xmlElementStart:

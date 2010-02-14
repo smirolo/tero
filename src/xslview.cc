@@ -38,8 +38,6 @@ void xslview::fetch( session& s, const boost::filesystem::path& pathname ) {
     open(strm,pathname);
     std::cout << htmlContent;
 
-    std::cerr << "xslview::fetch..." << std::endl;     
-
 #if 0
     static const boost::regex linkTag("(<a.+)href=\"(\\S+)\"");
 #else
