@@ -736,26 +736,12 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
 
 void docbook::fetch( session& s, const boost::filesystem::path& pathname )
 {
-#if 0
-    boost::filesystem::ifstream file;
-    open(file,pathname);
-    docbookStreamScanner tok(file);
-#else
-    docbookBufferTokenizer tok(buffer,length);
-#endif
-#if 0
-    docbookParser parser(tok,*this);    
-    parser.document();
-#else
-#if 1
     leftDec->attach(std::cout);
-#endif
+
     rapidxml::xml_node<> *root = doc.first_node();
     if( root != NULL ) {
 	walk(*root);
     }
-#if 1
+
     leftDec->detach();
-#endif
-#endif
 }
