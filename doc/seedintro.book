@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<section xmlns="http://docbook.org/ns/docbook" 
+	 xmlns:xlink="http://www.w3.org/1999/xlink">
+  <para>The purpose of information distribution is to efficiently complete a project that require interaction of many individuals as well as tracking the status of a project and the contributions made so far to it. The most useful <link linkend="infodist.book">features and technologies</link> have been integrated in <emphasis>seed</emphasis>, a consistent web-front end based on document-sensitive <link linkend="views.book">views</link>.</para>
+</section>

@@ -7,5 +7,7 @@
     <author><personname>Sebastien Mirolo</personname></author>
     <date>February 13th, 2010</date>
   </info>
-  <xi:include xlink:href="browser.book" />
+  <xi:include xlink:href="seedintro.book" />
+  <xi:include xlink:href="infodist.book" />
+  <xi:include xlink:href="views.book" />  
 </article>

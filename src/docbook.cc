@@ -202,7 +202,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "inlinemediaobject", &docbook::any, &docbook::any },
     { "interfacename", &docbook::any, &docbook::any },
     { "issuenum", &docbook::any, &docbook::any },
-    { "itemizedlist", &docbook::any, &docbook::any },
+    { "itemizedlist", &docbook::listStart, &docbook::listEnd },
     { "itermset", &docbook::any, &docbook::any },
     { "jobtitle", &docbook::any, &docbook::any },
     { "keycap", &docbook::any, &docbook::any },
@@ -217,7 +217,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "lineage", &docbook::any, &docbook::any },
     { "lineannotation", &docbook::any, &docbook::any },
     { "link", &docbook::linkStart, &docbook::linkEnd },
-    { "listitem", &docbook::any, &docbook::any },
+    { "listitem", &docbook::itemStart, &docbook::itemEnd },
     { "literal", &docbook::any, &docbook::any },
     { "literallayout", &docbook::any, &docbook::any },
     { "locator", &docbook::any, &docbook::any },
@@ -225,7 +225,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "markup", &docbook::any, &docbook::any },
     { "mathphrase", &docbook::any, &docbook::any },
     { "mediaobject", &docbook::any, &docbook::any },
-    { "member", &docbook::memberStart, &docbook::memberEnd },
+    { "member", &docbook::itemStart, &docbook::itemEnd },
     { "menuchoice", &docbook::any, &docbook::any },
     { "methodname", &docbook::any, &docbook::any },
     { "methodparam", &docbook::any, &docbook::any },
@@ -283,7 +283,8 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "productionset", &docbook::any, &docbook::any },
     { "productname", &docbook::any, &docbook::any },
     { "productnumber", &docbook::any, &docbook::any },
-    { "programlisting", &docbook::any, &docbook::any },
+    { "programlisting", &docbook::programlistingStart, 
+      &docbook::programlistingEnd },
     { "programlistingco", &docbook::any, &docbook::any },
     { "prompt", &docbook::any, &docbook::any },
     { "property", &docbook::any, &docbook::any },
@@ -298,9 +299,9 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "refclass", &docbook::any, &docbook::any },
     { "refdescriptor", &docbook::any, &docbook::any },
     { "refentry", &docbook::any, &docbook::any },
-    { "refentrytitle", &docbook::any, &docbook::any },
+    { "refentrytitle", &docbook::titleStart, &docbook::titleEnd },
     { "reference", &docbook::any, &docbook::any },
-    { "refmeta", &docbook::any, &docbook::any },
+    { "refmeta", &docbook::infoStart, &docbook::infoEnd },
     { "refmiscinfo", &docbook::any, &docbook::any },
     { "refname", &docbook::any, &docbook::any },
     { "refnamediv", &docbook::any, &docbook::any },
@@ -308,7 +309,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "refsect1", &docbook::any, &docbook::any },
     { "refsect2", &docbook::any, &docbook::any },
     { "refsect3", &docbook::any, &docbook::any },
-    { "refsection", &docbook::any, &docbook::any },
+    { "refsection", &docbook::sectionStart, &docbook::sectionEnd },
     { "refsynopsisdiv", &docbook::any, &docbook::any },
     { "releaseinfo", &docbook::any, &docbook::any },
     { "remark", &docbook::any, &docbook::any },
@@ -348,7 +349,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "shortcut", &docbook::any, &docbook::any },
     { "sidebar", &docbook::any, &docbook::any },
     { "simpara", &docbook::any, &docbook::any },
-    { "simplelist", &docbook::simplelistStart, &docbook::simplelistEnd },
+    { "simplelist", &docbook::listStart, &docbook::listEnd },
     { "simplemsgentry", &docbook::any, &docbook::any },
     { "simplesect", &docbook::any, &docbook::any },
     { "spanspec", &docbook::any, &docbook::any },
@@ -512,13 +513,13 @@ void docbook::linkStart( const rapidxml::xml_node<>& node ) {
     }
 }
 
-void docbook::memberEnd( const rapidxml::xml_node<>& node ) {
+void docbook::itemEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	std::cout << html::li::end;
     }
 }
 
-void docbook::memberStart( const rapidxml::xml_node<>& node ) {
+void docbook::itemStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	std::cout << html::li();
     }
@@ -563,6 +564,18 @@ void docbook::phraseStart( const rapidxml::xml_node<>& node ) {
     }
 }
 
+void docbook::programlistingEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << code::end;
+    }
+}
+
+void docbook::programlistingStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	std::cout << code();
+    }
+}
+
 void docbook::sectionEnd( const rapidxml::xml_node<>& node ) {
     --sectionLevel;
 }
@@ -571,13 +584,13 @@ void docbook::sectionStart( const rapidxml::xml_node<>& node ) {
     ++sectionLevel;
 }
 
-void docbook::simplelistEnd( const rapidxml::xml_node<>& node ) {
+void docbook::listEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	std::cout << html::ul::end;
     }
 }
 
-void docbook::simplelistStart( const rapidxml::xml_node<>& node ) {
+void docbook::listStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	std::cout << html::ul();
     }
@@ -724,6 +737,9 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
     xml_node<> *root = doc.first_node();
     if( root != NULL ) {
 	xml_node<> *info = root->first_node("info");
+	if( info == NULL ) {
+	    xml_node<> *info = root->first_node("refmeta");
+	}
 	if( info != NULL ) {
 	    parseInfo(s,*info);
 	}
