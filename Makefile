@@ -26,7 +26,7 @@
 # -*- Makefile -*-
 
 include $(shell dws context)
-include $(shell dws context prefix.mk)
+include $(etcDir)/dws/prefix.mk
 
 .PHONY: configure_apache
 
@@ -36,11 +36,11 @@ shares		:=	seed.pdf
 
 libseed.a: auth.o composer.o changelist.o docbook.o \
 	 	cpptok.o document.o download.o gitcmd.o logview.o markup.o \
-		projfiles.o xmlesc.o xmltok.o webserve.o
+		projfiles.o projindex.o xmlesc.o xmltok.o webserve.o
 
 seed: seed.cc session.o libseed.a \
-	-lboost_date_time -lboost_regex -lboost_program_options \
-	-lboost_filesystem -lboost_system
+	libboost_date_time.a libboost_regex.a libboost_program_options.a \
+	libboost_filesystem.a libboost_system.a
 
 session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dws context)\" $(OUTPUT_OPTION) $<
@@ -50,4 +50,4 @@ seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 configure_apache:
 	$(srcDir)/configure_apache
 
-include $(shell dws context suffix.mk)
+include $(etcDir)/dws/suffix.mk
