@@ -23,48 +23,18 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojfiles
-#define guardprojfiles
+#include <boost/filesystem/fstream.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include "projindex.hh"
 
-#include "document.hh"
+void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
+    /* The project view description and dependencies of a project as stated 
+       in the index.xml. A project view also contains the list of unit 
+       failures, checkstyle failures and open issues. There are also links 
+       to download <!-- through e-commerce transaction? --> the project as 
+       a package, browse the source code and sign-on to the rss feed. */
 
-class projfiles : public document {
-public:
-    typedef std::list<boost::regex> filterContainer;
-
-    enum stateCode {
-	start,
-	toplevelFiles,
-	direntryFiles
-    };
-
-    stateCode state;
-
-protected:
-    filterContainer filters;
     
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
 
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void flush();
-
-    /** returns true when the pathname matches one of the pattern in *filters*.
-     */
-    bool selects( const boost::filesystem::path& pathname ) const;
-    
-public:
-    projfiles() {}
-    
-    template<typename iter>
-    projfiles( iter first, iter last ) {
-	std::copy(first,last,std::back_inserter(filters));
-    }
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
-
-#endif
+}

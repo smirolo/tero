@@ -40,8 +40,20 @@ bool projfiles::selects( const boost::filesystem::path& pathname ) const {
 }
 
 
-void projfiles::dirLink( const session& s, 
-			 const boost::filesystem::path& dir ) const {
+void 
+projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
+    switch( state ) {
+    case start:
+	std::cout << htmlContent;
+	std::cout << html::div().classref("MenuWidget");
+	break;
+    case toplevelFiles:
+    case direntryFiles:
+	std::cout << html::p::end;
+	break;	
+    }
+    state = direntryFiles;
+
     std::string href = dir.string();
     std::string srcTop = s.valueOf("srcTop");
     if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
@@ -56,11 +68,18 @@ void projfiles::dirLink( const session& s,
     } else {
 	std::cout << html::h(2) << dir.leaf() << html::h(2).end();
     }
+    std::cout << html::p();
 }
 
 
-void projfiles::fileLink( const session& s, 
-			  const boost::filesystem::path& file ) const {
+void 
+projfiles::addFile( const session& s, const boost::filesystem::path& file ) {
+    if( state == start ) {
+	std::cout << htmlContent;
+	std::cout << html::div().classref("MenuWidget");
+	std::cout << html::p();
+	state = toplevelFiles;
+    }
     std::string href = file.string();
     std::string srcTop = s.valueOf("srcTop");
     if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
@@ -72,17 +91,28 @@ void projfiles::fileLink( const session& s,
 }
 
 
+void projfiles::flush() 
+{
+    switch( state ) {
+    case toplevelFiles:
+    case direntryFiles:
+	std::cout << html::p::end;
+	std::cout << html::div::end;
+	break;	
+    }	
+}
+
+
 void projfiles::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
     using namespace std;
     using namespace boost::system;
     using namespace boost::filesystem;
-    
+
+    state = start;
     path dirname = s.root(pathname,"index.xml");
     
     if( !dirname.empty() ) {
-	std::cout << html::div().classref("MenuWidget");
-
 	/* We insert pathnames into a set<> such that they later can be 
 	   iterated in alphabetically sorted order. */
 	std::set<path> topdirs;
@@ -96,13 +126,10 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 	    }
 	}
 	
-	std::cout << htmlContent;
-	std::cout << html::p();
 	for( std::set<path>::const_iterator entry = topfiles.begin(); 
 		 entry != topfiles.end(); ++entry ) {
-	    fileLink(s,*entry);
+	    addFile(s,*entry);
 	}
-	std::cout << html::p::end;
 	
 	for( std::set<path>::const_iterator entry = topdirs.begin(); 
 		 entry != topdirs.end(); ++entry ) {
@@ -115,15 +142,13 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 		}
 	    }
 	    if( !files.empty() ) {
-		dirLink(s,*entry);
-		std::cout << html::p();
+		addDir(s,*entry);
 		for( std::set<path>::const_iterator file = files.begin(); 
-			 file != files.end(); ++file ) {
-		    fileLink(s,*file);
+		     file != files.end(); ++file ) {
+		    addFile(s,*file);
 		}
-		std::cout << html::p::end;
 	    }
 	}
-	std::cout << html::div::end;
+	flush();
     }
 }

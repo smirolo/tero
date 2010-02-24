@@ -23,48 +23,18 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojfiles
-#define guardprojfiles
+#ifndef guardprojindex
+#define guardprojindex
 
 #include "document.hh"
 
-class projfiles : public document {
+/** show the top-level page index of project.
+*/
+class projindex : public document {
 public:
-    typedef std::list<boost::regex> filterContainer;
-
-    enum stateCode {
-	start,
-	toplevelFiles,
-	direntryFiles
-    };
-
-    stateCode state;
-
-protected:
-    filterContainer filters;
-    
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void flush();
-
-    /** returns true when the pathname matches one of the pattern in *filters*.
-     */
-    bool selects( const boost::filesystem::path& pathname ) const;
-    
-public:
-    projfiles() {}
-    
-    template<typename iter>
-    projfiles( iter first, iter last ) {
-	std::copy(first,last,std::back_inserter(filters));
-    }
+    projindex() {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
-
 
 #endif

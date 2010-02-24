@@ -38,6 +38,8 @@
 #include "download.hh"
 #include "projfiles.hh"
 #include "logview.hh"
+#include "projindex.hh"
+#include "invoices.hh"
 #include "webserve.hh"
 
 
@@ -194,6 +196,9 @@ int main( int argc, char *argv[] )
 	    logview logv;
 	    docs.add("document",boost::regex(".*\\.log"),logv);
 
+	    projindex pind;
+	    docs.add("document",boost::regex("index\\.xml"),pind);	 
+
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
 	    docbook formatedDoc(leftFormatedText,rightFormatedText);
@@ -226,6 +231,9 @@ int main( int argc, char *argv[] )
 	    deauth rest;
 	    docs.add("view",boost::regex("work"),work);
 	    docs.add("view",boost::regex("rest"),rest);
+
+	    statement stmt;
+	    docs.add("view",boost::regex("statement"),stmt);	    
 
 	    docs.add("view",boost::regex(".*\\.corp"),corporate);
 	    docs.add("view",boost::regex(".*"),entry);

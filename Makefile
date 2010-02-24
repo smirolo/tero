@@ -35,8 +35,9 @@ libs		:=	libseed.a
 shares		:=	seed.pdf
 
 libseed.a: auth.o composer.o changelist.o docbook.o \
-	 	cpptok.o document.o download.o gitcmd.o logview.o markup.o \
-		projfiles.o projindex.o xmlesc.o xmltok.o webserve.o
+	 	cpptok.o document.o download.o gitcmd.o invoices.o  \
+		logview.o markup.o projfiles.o projindex.o xmlesc.o \
+		xmltok.o webserve.o
 
 seed: seed.cc session.o libseed.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \

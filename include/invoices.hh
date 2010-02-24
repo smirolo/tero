@@ -23,46 +23,23 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojfiles
-#define guardprojfiles
+#ifndef guardinvoices
+#define guardinvoices
 
+#include <exception>
 #include "document.hh"
 
-class projfiles : public document {
-public:
-    typedef std::list<boost::regex> filterContainer;
-
-    enum stateCode {
-	start,
-	toplevelFiles,
-	direntryFiles
-    };
-
-    stateCode state;
-
+class statement : public document {
 protected:
-    filterContainer filters;
-    
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
 
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
+    void header();
 
-    virtual void flush();
+    void footer();
 
-    /** returns true when the pathname matches one of the pattern in *filters*.
-     */
-    bool selects( const boost::filesystem::path& pathname ) const;
-    
+    void timeRange( const boost::posix_time::ptime start,
+		    const boost::posix_time::ptime stop );
+
 public:
-    projfiles() {}
-    
-    template<typename iter>
-    projfiles( iter first, iter last ) {
-	std::copy(first,last,std::back_inserter(filters));
-    }
-
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 

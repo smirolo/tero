@@ -10,6 +10,8 @@
 	<description>
 	  themeDir is a directory containing templates and css for the site
 	</description>
+	<base>srcTop</base>
+	<default>services/theme</default>
       </pathname>
       <dep name="git-core">
 	<bin>git</bin>
