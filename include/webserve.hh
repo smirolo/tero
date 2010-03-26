@@ -167,6 +167,8 @@ public:
     boost::filesystem::path pathname;
     
 public:
+    url() : protocol(""), host(""), port(0), pathname("") {}
+
     explicit url( const std::string& name );
     
     url( const std::string& pprotocol, const std::string& phost, 
@@ -178,6 +180,8 @@ public:
 	: protocol(pprotocol), host(phost), port(pport), pathname(ppathname) {} 
     
     bool absolute() const;
+
+    std::string string() const;
 };
 
 
@@ -185,5 +189,25 @@ public:
  */
 boost::program_options::basic_parsed_options<char>
 parse_cgi_options( const boost::program_options::options_description& descr );
+
+
+class emptyParaHackType {
+public:
+    template<typename ch, typename tr>
+    friend std::basic_ostream<ch, tr>&
+    operator<<(std::basic_ostream<ch, tr>& ostr, const emptyParaHackType& v ) {
+	ostr << "<p>" << std::endl;
+	for( int i = 0; i < 20; ++i ) {
+	    for( int i = 0; i < 12; ++i ) {
+		ostr << "&nbsp;";
+	    }
+	    ostr << std::endl;
+	}
+	ostr << "</p>" << std::endl;
+	return ostr;
+    };
+};
+
+extern emptyParaHackType emptyParaHack;
 
 #endif

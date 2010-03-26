@@ -13,9 +13,6 @@
 	<base>srcTop</base>
 	<default>services/theme</default>
       </pathname>
-      <dep name="git-core">
-	<bin>git</bin>
-      </dep>
       <dep name="build-essential">
 	<bin>g++</bin>
       </dep>

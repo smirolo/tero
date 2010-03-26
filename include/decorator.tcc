@@ -196,13 +196,19 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 
 
 template<typename charT, typename traitsT>   
-void basicCppLight<charT,traitsT>::newline() {
+void basicCppLight<charT,traitsT>::newline(const char *line, 
+					   int first, int last )
+{
+    std::stringstream s;
+    s << "[newline(" << first << "," << last << ")]";
+    super::nextBuf->sputn(s.str().c_str(),s.str().size());
+
     if( preprocessing ) {
 	std::string endSpan("</span>");
 	super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
     }
     super::nextBuf->sputc('\n');
-    if( virtualLineBreak ) {
+    if( preprocessing & virtualLineBreak ) {
 	std::string staSpan("<span class=\"");
 	super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
 	super::nextBuf->sputn(cppTokenTitles[cppPreprocessing],
@@ -220,6 +226,14 @@ void basicCppLight<charT,traitsT>::token( cppToken token,
 					  const char *line, 
 					  int first, int last, 
 					  bool fragment ) {
+#if 0
+    std::stringstream s;
+    s << "[token(" << token << "," << first 
+	      << "," << last << "," << fragment
+	      << ")]";
+    super::nextBuf->sputn(s.str().c_str(),s.str().size());
+#endif
+
     std::string staSpan("<span class=\"");
     std::string endSpan("</span>");
     if( !preprocessing ) {

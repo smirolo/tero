@@ -47,7 +47,7 @@ public:
 	information needs to be propagated into different parts of the template
 	and not only in the placeholder for the document.
     */
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) {}
+    virtual void meta( session& s, const boost::filesystem::path& pathname );
 };
 
 

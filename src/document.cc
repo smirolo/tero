@@ -48,6 +48,12 @@ void document::open( boost::filesystem::ifstream& strm,
 #endif
 }
 
+void document::meta( session& s, const boost::filesystem::path& pathname ) {
+    if( s.vars.find("title") == s.vars.end() ) {
+	s.vars["title"] = s.valueOf("document");
+    }
+}
+
 
 dispatchDoc *dispatchDoc::instance = NULL;
 
@@ -80,6 +86,7 @@ void dispatchDoc::fetch( session& s, const std::string& varname ) {
 
 document* dispatchDoc::select( const std::string& name, 
 			    const std::string& value ) const {
+    std::cerr << "select " << name << " of value " << value << std::endl;
     presentationSet::const_iterator view = views.find(name);
     if( view != views.end() ) {
 	const aliasSet& aliases = view->second;
@@ -317,10 +324,7 @@ void text::meta( session& s, const boost::filesystem::path& pathname ) {
 	} else break;
     }
     strm.close();
-    
-    if( s.vars.find("title") == s.vars.end() ) {
-	s.vars["title"] = s.vars["document"];
-    }
+    document::meta(s,pathname);
 
 #if 0
     std::time_t last_write_time( const path & ph );

@@ -23,52 +23,55 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojfiles
-#define guardprojfiles
+#include <cassert>
+#include "shtok.hh"
 
-#include "document.hh"
+#define advance(state) { trans = &&state; goto advancePointer; }
 
-class projfiles : public document {
-public:
-    typedef std::list<boost::regex> filterContainer;
-
-    enum stateCode {
-	start,
-	toplevelFiles,
-	direntryFiles
-    };
-
-    stateCode state;
-
-protected:
-    filterContainer filters;
+size_t shTokenizer::tokenize( const char *line, size_t n )
+{
+    size_t first = 0;
+    void *trans = state;
+    const char *p = line;
+    if( std::distance(line,p) >= n ) return n;
+    if( trans != NULL ) goto *trans; else goto token;
     
-    /** directory in the source tree which is the root of the project (srcDir)
-     */
-    boost::filesystem::path projdir;
-    
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void flush();
-
-    /** returns true when the pathname matches one of the pattern in *filters*.
-     */
-    bool selects( const boost::filesystem::path& pathname ) const;
-    
-public:
-    projfiles() {}
-    
-    template<typename iter>
-    projfiles( iter first, iter last ) {
-	std::copy(first,last,std::back_inserter(filters));
+advancePointer:
+    ++p;
+    switch( (std::distance(line,p) >= n) ? '\0' : *p ) {
+    case '\r': 
+	while( *p == '\r' ) ++p; 
+	assert( *p == '\n' | *p == '\0' );
+    case '\n':  
+    case '\0':  
+	trans = &&token;		
+    } 
+    if( std::distance(line,p) >= n ) {
+	state = trans;
+	return n;
     }
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-};
+    goto *trans;
 
 
-#endif
+code:
+    advance(code);
+
+comment:   
+    advance(comment);
+
+token:
+    if( trans != NULL ) {
+	if( listener != NULL ) {
+	    listener->token(tok,line,first,p - line,false);
+	}
+    }
+    tok = shErr;
+    first = p - line;
+    switch( *p ) {
+    case '#':
+	advance(comment);
+	break;
+    default:
+	advance(code);
+    }
+}

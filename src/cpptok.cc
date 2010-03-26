@@ -149,7 +149,7 @@ cppToken identifierToken( const std::string& str ) {
     idenTokenType *last 
 	= &idenTokenClass[sizeof(idenTokenClass)/sizeof(idenTokenType)];
     idenTokenType *found = std::lower_bound(idenTokenClass,last,look);
-    if( found != last & found->identifier == look.identifier ) {
+    if( found != last && found->identifier == look.identifier ) {
 	return found->token;
     }
     /* If the identifier does not match accepted style (here camelCase
@@ -202,17 +202,19 @@ bool isSeparator( int c ) {
 #define advance(state) { trans = &&state; goto advancePointer; }
 
 
-void cppTokenizer::tokenize( const char *line, size_t n )
+size_t cppTokenizer::tokenize( const char *line, size_t n )
 {
-	bool multiline = false;
+    size_t first = 0;
+    size_t last = first;
+    bool multiline = false;
     void *trans = state;
     const char *p = line;
-	if( std::distance(line,p) >= n ) return;
+    if( std::distance(line,p) >= n ) return n;
     if( trans != NULL ) goto *trans; else goto token;
-
+    
 advancePointer:
     ++p;
-    switch( (std::distance(line,p) >= n) ? '\0' : *p ) {			     
+    switch( (std::distance(line,p) >= n) ? '\0' : *p ) {
     case '\\': 
 		while( *p == '\r' ) ++p; 
 		if( *p == '\n' ) goto exit;
@@ -476,12 +478,21 @@ error:
     advance(error);
 
 exit:
-	if( (p - line) - first > 0  && listener != NULL ) {
-		listener->token(tok,line,first,p - line,trans != NULL);
-	}
-	if( *p == '\n' ) listener->newline();
-	state = trans;
-    return;
+    last = std::distance(line,p);
+    if( last - first > 0  && listener != NULL ) {
+	listener->token(tok,line,first,last,trans != NULL);
+	first = last;
+    }
+    if( *p == '\n' ) {
+	++p;
+	last = std::distance(line,p);
+	listener->newline(line,first,last);
+	first = last;
+    }
+    state = trans;
+    if( last >= n ) return last;
+    if( trans != NULL ) goto *trans;
+    goto token;    
 
 expTail:
     switch( *p ) {
@@ -908,12 +919,12 @@ tabSpaceTail:
  
 token:
     if( trans != NULL ) {
-		if( tok == cppIdentifier ) {
-			tok = identifierToken(std::string(&line[first],p - &line[first]));
-		}
-		if( listener != NULL ) {
-			listener->token(tok,line,first,p - line,false);
-		}
+	if( tok == cppIdentifier ) {
+	    tok = identifierToken(std::string(&line[first],p - &line[first]));
+	}
+	if( listener != NULL ) {
+	    listener->token(tok,line,first,p - line,false);
+	}
     }
     tok = cppErr;
     first = p - line;
@@ -1062,8 +1073,8 @@ token:
 	advance(tabSpaceTail);
 	case '\n':
 	case '\0':
-		/* empty lines */
-		goto exit;
+	    /* empty lines */
+	    goto exit;
     }
     goto error;
 

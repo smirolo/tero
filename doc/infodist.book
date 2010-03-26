@@ -33,7 +33,7 @@
       <listitem>Links between source code and documentation files. That is a url in a source comment should be traversable and documentation files could have url to source code files.</listitem>
       <listitem>Collaborative drawing whiteboard</listitem>
       <listitem>Import/export of documents from/to standard formats (.sxc, .pdf, etc.)</listitem>
-      <listitem>Context sensitive integrated &quot;educational notes&quot; on how use the information distribution system.</listitem>
+      <listitem>Context sensitive integrated &quot;educational notes&quot; on how to use the information distribution system.</listitem>
     </itemizedlist>
 
     <para>HTML remains central for presentation of a web interface and PDF remains central for printed documentation. As a result, content is usually stored in a server repository as a presentation independent file which is processed by appropriate transformation tools on request.</para>

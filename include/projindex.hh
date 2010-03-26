@@ -26,7 +26,24 @@
 #ifndef guardprojindex
 #define guardprojindex
 
-#include "document.hh"
+#include "projfiles.hh"
+
+class checkstyle : public projfiles {
+protected:    
+    virtual void 
+    addDir( const session& s, const boost::filesystem::path& pathname );
+
+    virtual void 
+    addFile( const session& s, const boost::filesystem::path& pathname );
+
+    virtual void flush();
+    
+public:
+    checkstyle() {}
+
+    template<typename iter>
+    checkstyle( iter first, iter last ) : projfiles(first,last) {}
+};
 
 /** show the top-level page index of project.
 */
@@ -35,6 +52,8 @@ public:
     projindex() {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
+
+    virtual void meta( session& s, const boost::filesystem::path& pathname );
 };
 
 #endif

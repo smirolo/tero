@@ -23,52 +23,58 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojfiles
-#define guardprojfiles
+#ifndef guardshtok
+#define guardshtok
 
-#include "document.hh"
+#include <iterator>
 
-class projfiles : public document {
-public:
-    typedef std::list<boost::regex> filterContainer;
-
-    enum stateCode {
-	start,
-	toplevelFiles,
-	direntryFiles
-    };
-
-    stateCode state;
-
-protected:
-    filterContainer filters;
-    
-    /** directory in the source tree which is the root of the project (srcDir)
-     */
-    boost::filesystem::path projdir;
-    
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void flush();
-
-    /** returns true when the pathname matches one of the pattern in *filters*.
-     */
-    bool selects( const boost::filesystem::path& pathname ) const;
-    
-public:
-    projfiles() {}
-    
-    template<typename iter>
-    projfiles( iter first, iter last ) {
-	std::copy(first,last,std::back_inserter(filters));
-    }
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+enum shToken {
+    shErr,
+    shComment,
+    shCode
 };
 
+extern const char *shTokenTitles[];
+
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, shToken v ) {
+    return ostr << shTokenTitles[v];
+}
+
+
+/** Interface for callbacks from the shTokenizer
+ */
+class shTokListener {
+public:
+    shTokListener() {}
+    
+    virtual void newline(const char *line, 
+			  int first, int last ) = 0;
+    
+    virtual void token( shToken token, const char *line, 
+			int first, int last, bool fragment ) = 0;
+};
+
+
+/** Tokenizer for shell-based (sh, python, Makefile) source files
+ */
+class shTokenizer {
+protected:
+	void *state;
+	shToken tok;
+	shTokListener *listener;
+
+public:
+    shTokenizer() 
+	: state(NULL), tok(shErr), listener(NULL) {}
+	
+    explicit shTokenizer( shTokListener& l ) 
+	: state(NULL), tok(shErr), listener(&l) {}
+    
+    void attach( shTokListener& l ) { listener = &l; }
+    
+    size_t tokenize( const char *line, size_t n );
+};
 
 #endif

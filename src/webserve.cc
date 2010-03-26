@@ -60,6 +60,7 @@ relpath( const boost::filesystem::path& pathname,
 
 
 htmlContentServe htmlContent;
+emptyParaHackType emptyParaHack;
 
 htmlContentServe::htmlContentServe() 
     : firstTime(true) {}
@@ -82,6 +83,13 @@ url::url( const std::string& name ) {
 
 bool url::absolute() const {
 	return !protocol.empty();
+}
+
+
+std::string url::string() const {
+    std::stringstream s;
+    s << *this;
+    return s.str();
 }
 
 

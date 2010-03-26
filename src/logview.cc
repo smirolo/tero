@@ -27,6 +27,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include "logview.hh"
+#include "markup.hh"
 
 void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 
@@ -51,11 +52,12 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     typedef std::map<std::string,colType> tableType;
     tableType table;
 
-    path dirname(is_directory(pathname) ? pathname : pathname.parent_path());
+    path dirname(s.abspath(is_directory(pathname) ?
+			   pathname : pathname.parent_path()));
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
-	path p(*entry);
-	if( p.extension() == ".log" ) {
+	path filename(entry->filename());	
+	if( filename.extension() == ".log" ) {
 	    /* \todo because we check the extension ".log", we will
 	       also pick-up the empty file that is used to dispatch
 	       into this method. Needs fixing of the design? */
@@ -73,7 +75,7 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    xml_document<> doc;    // character type defaults to char
 	    doc.parse<0>(text);     // 0 means default parse flags
 
-	    colHeaders.insert(*entry);
+	    colHeaders.insert(filename);
 	    xml_node<> *root = doc.first_node();
 	    if( root != NULL ) {
 		for( xml_node<> *project = root->first_node("section");
@@ -82,7 +84,7 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    if( name != NULL ) {
 			xml_node<> *status = project->first_node("status");
 			if( status != NULL ) {
-			    table[name->value()][*entry] = status->value();
+			    table[name->value()][filename] = status->value();
 			}
 		    }
 		}	
@@ -103,7 +105,7 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     for( tableType::const_iterator row = table.begin();
 	 row != table.end(); ++row ) {
 	std::cout << "<tr>" << std::endl;
-	std::cout << "<th>" << row->first << "</th>" << std::endl;
+	std::cout << "<th>" << projhref(row->first) << "</th>" << std::endl;
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
 	    colType::const_iterator value = row->second.find(*col);
@@ -116,5 +118,118 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	std::cout << "</tr>" << std::endl;
     }
     std::cout << "</table>" << std::endl;
+    std::cout << emptyParaHack;
 }
 
+
+void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
+
+    using namespace rapidxml;
+    using namespace boost::filesystem;
+
+    size_t fileSize = file_size(pathname);
+    char text[ fileSize + 1 ];
+    ifstream file;
+    std::cerr << " regressions::fetch(pathname=" << pathname 
+	      << ")" << std::endl;
+    open(file,pathname);
+    file.read(text,fileSize);
+    text[fileSize] = '\0';
+    file.close();
+    std::cerr << "file has been read" << std::endl;
+
+    xml_document<> doc;    // character type defaults to char
+    doc.parse<0>(text);     // 0 means default parse flags
+
+
+    xml_node<> *root = doc.first_node();
+    if( root != NULL ) {
+	size_t col = 1;
+	typedef std::map<std::string,size_t> colMap;
+	colMap colmap;	
+	std::cout << "<table border=\"2\">" << std::endl;
+	std::cout << html::tr();
+	std::cout << html::th() << html::th::end;
+	for( xml_node<> *ref = root->first_node("reference");
+	     ref != NULL; ref = ref->next_sibling() ) {
+	    xml_attribute<> *id = ref->first_attribute("id");
+	    if( id != NULL ) {		
+		std::cout << html::th() << id->value() << html::th::end;
+		xml_attribute<> *name = ref->first_attribute("name");
+		assert( name != NULL );
+		colmap.insert(std::make_pair(name->value(),col++));
+	    }
+	}
+	std::cout << html::tr::end;
+
+	xml_node<>* cols[colmap.size() + 1];
+	for( xml_node<> *test = root->first_node("test");
+	     test != NULL; test = test->next_sibling() ) {
+	    std::cout << html::tr();
+	    memset(cols,0,sizeof(cols));
+	    xml_attribute<> *name = test->first_attribute("name");
+	    if( name != NULL ) {
+		std::cerr << "!!! " << name->value() << std::endl;
+		std::cout << html::td() << name->value() << html::td::end;
+	    }
+	    for( xml_node<> *compare = test->first_node("compare");
+		 compare != NULL; compare = compare->next_sibling("compare") ) {
+		xml_attribute<> *name = compare->first_attribute("name");
+		if( name != NULL ) {
+		    std::cerr << "compare " << name->value() << std::endl;
+		    colMap::const_iterator found = colmap.find(name->value());
+		    if( found != colmap.end() ) {
+			std::cerr << "compare cols[" << found->second << "] = "
+				  << compare->value() << std::endl;
+			cols[found->second] = compare;
+		    } else {
+			cols[0] = compare;
+			std::cerr << "compare cols[0] = "
+				  << compare->value() << std::endl;
+		    }
+		}
+	    }
+	    for( xml_node<> **c = &cols[1]; 
+		 c != &cols[colmap.size() + 1]; ++c ) {
+		std::cout << html::td();
+		if( *c != NULL )
+		    std::cout << (*c)->value();
+		std::cout << html::td::end;
+      	    }
+	    std::cout << html::tr::end;
+#if 0
+	    std::cout << html::tr();
+	    memset(cols,0,sizeof(cols));
+	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {
+		assert( *c == NULL );
+	    }
+	    for( xml_node<> *output = test->first_node("output");
+		 output != NULL; output = output->next_sibling("output") ) {
+		xml_attribute<> *name = output->first_attribute("name");
+		if( name != NULL ) {
+		    colMap::const_iterator found = colmap.find(name->value());
+		    xml_node<> *data = output;
+		    if( output->first_node() != NULL ) {
+			data = output->first_node();
+		    }
+		    if( found != colmap.end() ) {
+			cols[found->second] = data;
+		    } else {
+			cols[0] = data;
+		    }
+		}
+	    }
+	    std::cerr << std::endl;
+	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {
+		std::cout << html::td() << html::pre();
+		if( *c != NULL )
+		    std::cout << (*c)->value();
+		std::cout << html::pre::end << html::td::end;
+	    }
+	    std::cout << html::tr::end;
+#endif
+	}	
+
+	std::cout << "</table>" << std::endl;	
+    }   
+}

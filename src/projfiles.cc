@@ -110,14 +110,14 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
     using namespace boost::filesystem;
 
     state = start;
-    path dirname = s.root(pathname,"index.xml");
+    projdir = s.root(pathname,"index.xml");
     
-    if( !dirname.empty() ) {
+    if( !projdir.empty() ) {
 	/* We insert pathnames into a set<> such that they later can be 
 	   iterated in alphabetically sorted order. */
 	std::set<path> topdirs;
 	std::set<path> topfiles;
-	for( directory_iterator entry = directory_iterator(dirname); 
+	for( directory_iterator entry = directory_iterator(projdir); 
 		 entry != directory_iterator(); ++entry ) {
 	    if( is_directory(*entry) ) {
 		topdirs.insert(*entry);

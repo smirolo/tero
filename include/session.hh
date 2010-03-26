@@ -132,6 +132,10 @@ public:
        rooted at srcTop. */
     boost::filesystem::path src( const boost::filesystem::path& p ) const;
 
+    /** returns the absolute pathname formed by srcTop/p.
+     */
+    boost::filesystem::path srcDir( const boost::filesystem::path& p ) const;
+
    /* session start time */
     void start();
 

@@ -44,7 +44,7 @@ class xmlEscTokListener {
 public:
     xmlEscTokListener() {}
     
-    virtual void newline() = 0;
+    virtual void newline( const char *line, int first, int last ) = 0;
     
     virtual void token( xmlEscToken token, const char *line, 
 			int first, int last, bool fragment ) = 0;
@@ -54,20 +54,19 @@ public:
 class xmlEscTokenizer {
 protected:
 	void *state;
-	int first;
 	xmlEscToken tok;
 	xmlEscTokListener *listener;
 
 public:
     xmlEscTokenizer() 
-	: state(NULL), first(0), tok(escErr), listener(NULL) {}
+	: state(NULL), tok(escErr), listener(NULL) {}
 
     xmlEscTokenizer( xmlEscTokListener& l ) 
-	: state(NULL), first(0), tok(escErr), listener(&l) {}
+	: state(NULL), tok(escErr), listener(&l) {}
     
     void attach( xmlEscTokListener& l ) { listener = &l; }
 
-    void tokenize( const char *line, size_t n );
+    size_t tokenize( const char *line, size_t n );
 };
 
 

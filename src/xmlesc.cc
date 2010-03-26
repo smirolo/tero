@@ -40,30 +40,41 @@ const char *xmlEscTokenTitles[] = {
 #define advance(state) { trans = &&state; goto advancePointer; }
 
 
-void xmlEscTokenizer::tokenize( const char *line, size_t n )
+size_t xmlEscTokenizer::tokenize( const char *line, size_t n )
 {
     void *trans = state;
     const char *p = line;
     bool newline = false;
-    
+    size_t last = 0;
+    size_t first = 0;
+
+    if( n == 0 ) return 0;
     if( trans != NULL ) goto *trans; else goto token;
     
 advancePointer:
     ++p;
-    switch( (std::distance(line,p) >= n) ? '\0' : *p ) {
+    last = std::distance(line,p);
+    switch( (last >= n) ? '\0' : *p ) {
     case '\r': 
 	while( *p == '\r' ) ++p; 
 	assert( *p == '\n' | *p == '\0' );
     case '\n':  
+	++p;
 	newline = true;
-    case '\0':  
-	if( (p - line) - first > 0 && listener != NULL ) {
-	    listener->token(tok,line,first,p - line,false);
+    case '\0':
+	if( *p == '\0' ) ++p;
+	if( last - first > 0 && listener != NULL ) {
+	    listener->token(tok,line,first,last,true);
+	    first = last;
 	}
-	if( newline && listener != NULL ) listener->newline(); 
-	state = NULL;
-	return;	
+	last = std::distance(line,p);
+	if( newline && listener != NULL ) {
+	    listener->newline(line,first,last);
+	    first = last;
+	}
+	state = trans;	
     } 
+    if( last >= n ) return last;
     goto *trans;
        
  data:
@@ -75,12 +86,13 @@ advancePointer:
     advance(data);
     
  token:
-    if( trans != NULL && listener != NULL ) {
-	listener->token(tok,line,first,p - line,false);
+    last = std::distance(line,p);
+    if( last > first && listener != NULL ) {
+	listener->token(tok,line,first,last,false);
 	trans = NULL;
     }
     tok = escErr;
-    first = p - line;
+    first = last;
     if( n == 0 || (*p == '\n' | *p == '\r' | *p == '\0') ) {
 	--p;
 	advance(token);

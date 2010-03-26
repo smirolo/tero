@@ -40,6 +40,7 @@
 #include "logview.hh"
 #include "projindex.hh"
 #include "invoices.hh"
+#include "checkstyle.hh"
 #include "webserve.hh"
 
 
@@ -79,6 +80,8 @@ int main( int argc, char *argv[] )
 	    ("username",value<std::string>(),"username")
 	    ("message,m",value<std::string>(),"message")
 	    ("view",value<std::string>(),"view")
+	    ("client",value<std::string>(),"client")
+	    ("month",value<std::string>(),"month")
 	    ("editedText",value<std::string>(),"text submitted after an online edit");
 	positional_options_description pd; 
 	pd.add("view", 1);
@@ -133,6 +136,11 @@ int main( int argc, char *argv[] )
 	    composer edit(s.vars["themeDir"] + std::string("/edit.ui"),
 			  composer::create);
 
+	    /* Composer for a project view */
+	    composer project(s.vars["themeDir"] 
+			     + std::string("/project.template"),
+			     composer::error);
+
 	    /* Composer for view on source code files */
 	    path sourceTmpl(s.vars["themeDir"] 
 			    + std::string("/source.template"));
@@ -161,6 +169,7 @@ int main( int argc, char *argv[] )
 	    rightChain.push_back(rightCppStrm);
 	    
 	    text cpp(leftChain,rightChain);
+	    cppCheckfile cppCheck;
 	    projfiles::filterContainer filters;
 	    filters.push_back(boost::regex(".*\\.c"));
 	    filters.push_back(boost::regex(".*\\.h"));
@@ -169,22 +178,47 @@ int main( int argc, char *argv[] )
 	    filters.push_back(boost::regex(".*\\.tcc"));
 	    for( projfiles::filterContainer::const_iterator f = filters.begin();
 		 f != filters.end(); ++f ) {
+		docs.add("check",*f,cppCheck);
 		docs.add("document",*f,cpp);
-		docs.add("view",*f,source);
+		docs.add("view",*f,source);		
 	    }
+
+	    shCheckfile shCheck;
+	    docs.add("check",boost::regex(".*Makefile"),shCheck);
 	    
 	    filters.push_back(boost::regex(".*Makefile"));			
 	    projfiles filelist(filters.begin(),filters.end());
 	    docs.add("projfiles",boost::regex(".*"),filelist);
 	    s.vars["projfiles"] = s.vars["document"];
+
+	    /* widgets for project view */
 	    
+	    regressions rgs;
+	    docs.add("regressions",boost::regex(".*regression\\.log"),rgs);
+	    boost::filesystem::path regressname
+		= s.build(boost::filesystem::path(s.valueOf("document")).parent_path() 
+			  / std::string("test/regression.log"));
+	    std::cerr << "!!! init regressions with " 
+		      << regressname << std::endl;
+	    s.vars["regressions"] = regressname.string();
+
+	    checkstyle cks(filters.begin(),filters.end());
+	    docs.add("checkstyle",boost::regex(".*"),cks);
+	    s.vars["checkstyle"] = s.vars["document"];
+
 	    gitcmd revision(s.valueOf("binDir") + "/git");
-	    changehistory history(&revision);
-	    docs.add("history",boost::regex(".*"),history);
+	    changehistory diffHist(&revision);
+	    changecheckin checkinHist(&revision);
+	    docs.add("history",boost::regex(".*index\\.xml"),checkinHist);
+	    docs.add("history",boost::regex(".*"),diffHist);
 	    s.vars["history"] = s.vars["document"];
 	    
 	    changediff diff(sourceTmpl,&revision);
 	    docs.add("view",boost::regex("/diff"),diff);
+	    changedescr descr(s.vars["themeDir"] 
+			      + std::string("/project.template"),
+			      &revision);
+	    docs.add("view",boost::regex("/checkin"),descr);
 
 	    /* The pattern need to be inserted in more specific to more 
 	       generic order since the matcher will apply each the first
@@ -194,11 +228,12 @@ int main( int argc, char *argv[] )
 	    
 
 	    logview logv;
-	    docs.add("document",boost::regex(".*\\.log"),logv);
+	    docs.add("document",boost::regex(".*/log"),logv);
 
 	    projindex pind;
-	    docs.add("document",boost::regex("index\\.xml"),pind);	 
-
+	    docs.add("document",boost::regex(".*index\\.xml"),pind);	 
+	    docs.add("view",boost::regex(".*index\\.xml"),project);
+	    
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
 	    docbook formatedDoc(leftFormatedText,rightFormatedText);
@@ -233,7 +268,7 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("rest"),rest);
 
 	    statement stmt;
-	    docs.add("view",boost::regex("statement"),stmt);	    
+	    docs.add("view",boost::regex("/statement"),stmt);	    
 
 	    docs.add("view",boost::regex(".*\\.corp"),corporate);
 	    docs.add("view",boost::regex(".*"),entry);

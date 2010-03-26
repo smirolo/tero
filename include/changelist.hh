@@ -32,6 +32,69 @@
    of repository specifics. 
  */
 
+class historyref {
+public:
+    historyref() {}
+
+    virtual url asUrl( const boost::filesystem::path& doc, 
+		       const std::string& rev ) const = 0;
+};
+
+class diffref : public historyref {
+public:
+    diffref() {}
+
+    virtual url asUrl( const boost::filesystem::path& doc, 
+		       const std::string& rev ) const;
+};
+
+class checkinref : public historyref {
+public:
+    checkinref() {}
+
+    virtual url asUrl( const boost::filesystem::path& doc, 
+		       const std::string& rev ) const;
+};
+
+class checkin {
+public:
+    typedef std::list<boost::filesystem::path> fileSet;
+
+protected:
+
+public:
+    std::string author;
+    std::string date;
+    std::string descr;
+    std::string title;
+    fileSet files;
+
+    checkin() : author(""), date(""), descr(""), title("") {}
+
+    void addFile( const boost::filesystem::path& pathname ) {
+	files.push_back(pathname);
+    }
+
+};
+
+
+/** History of checkins on a project
+ */
+class history {
+public:
+    typedef std::list<checkin> checkinSet;
+    
+public:
+    checkinSet checkins;
+
+    checkin* add() { 
+	checkin ci;
+	checkins.push_back(ci);
+	return &checkins.back();
+    }
+};
+
+
 /** Base class definition for interacting with a source code control system.    
  */
 class revisionsys {
@@ -46,11 +109,12 @@ public:
     
     virtual void history( std::ostream& ostr,
 			  const session& s, 
-			  const boost::filesystem::path& pathname ) = 0;
+			  const boost::filesystem::path& pathname,
+			  historyref& r ) = 0;
     
-    virtual void rss( std::ostream& ostr,
-		      const session& s, 
-		      const boost::filesystem::path& pathname ) = 0;
+    virtual void checkins( ::history& hist,
+			   const session& s, 
+			   const boost::filesystem::path& pathname ) = 0;
     
     /* Sets the path to the root of the source code control system.
      */
@@ -69,7 +133,11 @@ protected:
 public:
     gitcmd( const boost::filesystem::path& exec ) 
 	: executable(exec) {}
-	
+
+    void checkins( ::history& hist,
+		   const session& s,
+		   const boost::filesystem::path& pathname );
+
     void diff( std::ostream& ostr, 
 	       const std::string& leftCommit, 
 	       const std::string& rightCommit, 
@@ -77,12 +145,8 @@ public:
     
     void history( std::ostream& ostr, 
 		  const session& s, 
-		  const boost::filesystem::path& pathname );
-
-    void rss( std::ostream& ostr, 
-	      const session& s,
-	      const boost::filesystem::path& pathname );
-	
+		  const boost::filesystem::path& pathname,
+		  historyref& r );	
 }; 
 
 
@@ -118,6 +182,19 @@ public:
 
 };
 
+/** Detailed description of a single changelist
+ */
+class changedescr : public composer {
+protected:
+    revisionsys *revision;
+
+    virtual void embed( session& s, const std::string& value );
+
+public:
+    explicit changedescr( const boost::filesystem::path& f, revisionsys *r ) 
+	: composer(f,error), revision(r) {}
+};
+
 
 /** Base class for commands displaying changelists.
  */
@@ -132,12 +209,15 @@ public:
     fetch( session& s, const boost::filesystem::path& pathname ) = 0;
 };
 
+/** Short history of changes to a project under revision control. 
 
-/** Detailed description of a single changelist
+    This will generate the same output as changehistory but with hyperlinks
+    to an expended description of the checkin instead of a difference between
+    the current file and the revision.
  */
-class changedescr : public changelist {
+class changecheckin : public changelist {
 public:
-    explicit changedescr( revisionsys *r ) : changelist(r) {}
+    explicit changecheckin( revisionsys *r ) : changelist(r) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );	
 };

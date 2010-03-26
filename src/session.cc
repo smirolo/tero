@@ -41,7 +41,15 @@ undefVariableError::undefVariableError( const std::string& varname )
 
 url session::asUrl( const boost::filesystem::path& p ) const
 {
-    return url("http","fortylines.com",boost::filesystem::path("/") / p);
+    boost::filesystem::path name = p;
+    boost::filesystem::path buildTop = valueOf("buildTop");
+    boost::filesystem::path srcTop = valueOf("srcTop");
+    if( prefix(srcTop,p) ) {
+	name = boost::filesystem::path("/") / subdirpart(srcTop,p);
+    } else if( prefix(buildTop,p) ) {
+	name = boost::filesystem::path("/") / subdirpart(buildTop,p);
+    }
+    return url("","",name);
 }
 
 
@@ -116,6 +124,14 @@ session::abspath( const boost::filesystem::path& relpath ) const {
     fromSrcTop /= relpath;
     if( boost::filesystem::exists(fromSrcTop) ) {        
 	return fromSrcTop;
+    }	
+
+    /* Fourth we try to access the file as a relative pathname 
+       from cacheTop. */	
+    boost::filesystem::path fromCacheTop(valueOf("cacheTop"));
+    fromCacheTop /= relpath;
+    if( boost::filesystem::exists(fromCacheTop) ) {        
+	return fromCacheTop;
     }	
     
     /* We used to throw an exception at this point. That does
@@ -239,7 +255,7 @@ session::root( const boost::filesystem::path& leaf,
     std::string srcTop = valueOf("srcTop");
     path dirname = leaf;
     if( !is_directory(dirname) ) {
-	dirname.remove_leaf();
+	dirname = dirname.parent_path();
     }
     bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
     while( !foundProject & dirname.string() != srcTop ) {
@@ -278,6 +294,14 @@ session::src( const boost::filesystem::path& p ) const
 	return srcTop / p.string().substr(buildTop.string().size() + 1);
     }
     return p;
+}
+
+
+boost::filesystem::path 
+session::srcDir( const boost::filesystem::path& p ) const
+{
+    boost::filesystem::path srcTop = valueOf("srcTop");    
+    return srcTop / p;
 }
 
 
@@ -353,7 +377,8 @@ boost::posix_time::time_duration session::stop() {
 boost::filesystem::path 
 session::subdirpart( const boost::filesystem::path& root,
 		     const boost::filesystem::path& leaf ) const {
-    return leaf.string().substr(root.string().size() + 1);
+    return leaf.string().substr(root.string().size() 
+	+ (root.string()[root.string().size() - 1] != '/' ? 1 : 0));
 }
 
 

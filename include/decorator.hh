@@ -190,7 +190,7 @@ public:
     explicit basicHtmlEscaper(  std::basic_ostream<charT,traitsT>& o )
 	: super(o,true) { super::tokenizer.attach(*this); }
     
-    void newline() {
+    void newline( const char *line, int first, int last ) {
 	super::nextBuf->sputc('\n');
     }
     
@@ -258,8 +258,8 @@ public:
 	: super(o,true), preprocessing(false), virtualLineBreak(false) { 
 	super::tokenizer.attach(*this); 
     }
-    
-    void newline();
+
+    void newline(const char *line, int first, int last );
     
     void token( cppToken token, const char *line, 
 		int first, int last, bool fragment );

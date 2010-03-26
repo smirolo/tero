@@ -34,9 +34,9 @@ bins 		:=	seed
 libs		:=	libseed.a
 shares		:=	seed.pdf
 
-libseed.a: auth.o composer.o changelist.o docbook.o \
+libseed.a: auth.o composer.o changelist.o checkstyle.o docbook.o \
 	 	cpptok.o document.o download.o gitcmd.o invoices.o  \
-		logview.o markup.o projfiles.o projindex.o xmlesc.o \
+		logview.o markup.o projfiles.o projindex.o shtok.o xmlesc.o \
 		xmltok.o webserve.o
 
 seed: seed.cc session.o libseed.a \

@@ -27,6 +27,7 @@
 #define guardslice
 
 #include <cassert>
+#include <ostream>
 
 template<typename vT>
 class slice {
@@ -64,6 +65,7 @@ public:
 	return *this;
     }
 };
+
 
 template<typename ch, typename tr, typename vT>
 inline std::basic_ostream<ch, tr>&

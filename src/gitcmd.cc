@@ -69,7 +69,8 @@ void gitcmd::diff( std::ostream& ostr,
 
 void gitcmd::history( std::ostream& ostr, 
 		      const session& s,
-		      const boost::filesystem::path& pathname ) {
+		      const boost::filesystem::path& pathname,
+		      historyref& ref ) {
     
     /* The git command needs to be issued from within a directory 
        where .git can be found by walking up the tree structure. */ 
@@ -84,8 +85,6 @@ void gitcmd::history( std::ostream& ostr,
     FILE *summary = popen(sstm.str().c_str(),"r");
     assert( summary != NULL );
     
-    ostr << html::div().classref("MenuWidget");
-    ostr << html::h(3) << "history" << html::h(3).end() << std::endl;
     while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
 	std::string line(lcstr);
 	
@@ -97,28 +96,22 @@ void gitcmd::history( std::ostream& ostr,
 	    std::string rightRevision = line.substr(0,splitPos);
 	    std::string title = line.substr(splitPos);
 
-	    std::stringstream hrefs;
-	    hrefs << "/diff?document=/" << s.docAsUrl() 
-		  << "&right=" << rightRevision; 
-
 	    /* \todo '\n' at end of line? */
-	    ostr << html::a().href(hrefs.str()).title(title)
+	    ostr << html::a().href(ref.asUrl(s.asUrl(pathname).string(),
+					     rightRevision).string()).title(title)
 		 << rightRevision.substr(0,10) << "..." 
 		 << html::a::end << "<br />";
 	}
     }
     pclose(summary);
-    ostr << html::div::end << std::endl;
     
     boost::filesystem::current_path(boost::filesystem::initial_path());
 }
 
 
-void gitcmd::rss( std::ostream& ostr, 
-		  const session& s,
-		  const boost::filesystem::path& pathname ) {
-    /* Reference: http://www.rssboard.org/rss-specification */
-    
+void gitcmd::checkins( ::history& hist,
+		       const session& s,
+		       const boost::filesystem::path& pathname ) {    
     /* The git command needs to be issued from within a directory 
        where .git can be found by walking up the tree structure. */ 
     boost::filesystem::initial_path();
@@ -133,68 +126,49 @@ void gitcmd::rss( std::ostream& ostr,
     char lcstr[256];
     FILE *summary = popen(sstm.str().c_str(),"r");
     assert( summary != NULL );
-
-    htmlEscaper esc;
-    
-    /* http://www.feedicons.com/ */
-    ostr << ::rss().version("2.0")
-	 << channel()
-	 << rsslink() << s.asUrl("") << rsslink::end
-	 << title() << "Fortylines Solutions" << title::end;
-    
+        
     bool itemStarted = false;
     bool descrStarted = false;
+    checkin *ci = NULL;
+    std::stringstream descr;
     while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
 	std::string line(lcstr);
 	if( strncmp(lcstr,"commit",6) == 0 ) {
 	    if( descrStarted ) {
-		ostr << description::end;
+		ci->descr = descr.str();		
 		descrStarted = false;
 	    }
-	    if( itemStarted ) ostr << item::end;
-	    ostr << item();
 	    itemStarted = true;
+	    ci = hist.add();
 	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
-	    ostr << title() << lcstr << title::end;
-	    ostr << rsslink() << "http://fortylines.com" << rsslink::end;
-	    ostr << guid() << strip(line.substr(7)) << guid::end;
+	    ci->title = std::string(lcstr);
 	    
 	} else if ( line.compare(0,7,"Author:") == 0 ) {
-	    ostr << author();
-	    esc.attach(ostr);
-	    ostr << strip(line.substr(7));
-	    esc.detach();
-	    ostr << author::end;
+	    ci->author = strip(line.substr(7));
 
 	} else if ( line.compare(0,5,"Date:") == 0 ) {
-	    ostr << pubDate() << strip(line.substr(5)) << pubDate::end;
+	    ci->date = strip(line.substr(5));
 
 	} else {
 	    /* more description */
-	    if( !descrStarted ) {
-		ostr << description();
+	    if( !descrStarted ) {		
+		descr.str("");		
 		descrStarted = true;
 	    }
 	    if( !isspace(line[0]) ) {
 		/* We are dealing with a file that was part of this commit. */
 		std::stringstream hrefs;
 		hrefs << s.asUrl(project / boost::filesystem::path(strip(line)));
-		ostr << html::a().href(hrefs.str()) << strip(line) << html::a::end;
+		ci->addFile(hrefs.str());
 	    } else {
-		esc.attach(ostr);
-		ostr << lcstr;
-		esc.detach();
+		descr << lcstr;
 	    }
 	}
     }
     pclose(summary);
     if( descrStarted ) {
-	ostr << description::end;
+	ci->descr = descr.str();
 	descrStarted = false;
     }
-    if( itemStarted ) ostr << item::end;
-    ostr << channel::end
-	 << rss::end;
-    
     boost::filesystem::current_path(boost::filesystem::initial_path());
 }

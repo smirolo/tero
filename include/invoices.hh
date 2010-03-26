@@ -32,11 +32,19 @@
 class statement : public document {
 protected:
 
+    typedef std::vector<std::pair<boost::posix_time::ptime,
+				 boost::posix_time::ptime> > hourSet;
+
+    typedef std::map<std::string,hourSet> timesMap;
+
+    timesMap billed;
+
     void header();
 
     void footer();
 
-    void timeRange( const boost::posix_time::ptime start,
+    void timeRange( const std::string& msg,
+		    const boost::posix_time::ptime start,
 		    const boost::posix_time::ptime stop );
 
 public:

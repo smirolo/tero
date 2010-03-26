@@ -50,35 +50,42 @@ enum cppToken {
 
 extern const char *cppTokenTitles[];
 
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, cppToken v ) {
+    return ostr << cppTokenTitles[v];
+}
+
 
 /** Interface for callbacks from the cppTokenizer
  */
 class cppTokListener {
 public:
-	cppTokListener() {}
-
-	virtual void newline() = 0;
-
-	virtual void token( cppToken token, const char *line, 
-						int first, int last, bool fragment ) = 0;
+    cppTokListener() {}
+    
+    virtual void newline(const char *line, 
+			  int first, int last ) = 0;
+    
+    virtual void token( cppToken token, const char *line, 
+			int first, int last, bool fragment ) = 0;
 };
 
 
 class xmlCppTokListener : public cppTokListener {
 protected:
-	std::ostream *ostr;
-	
+    std::ostream *ostr;
+    
 public:
-	explicit xmlCppTokListener( std::ostream& o ) : ostr(&o) {}
-	
-	void token( cppToken token, const char *line, 
-				int first, int last, bool fragment ) {
-		*ostr << '<' << cppTokenTitles[token];
-		if( fragment ) *ostr << " fragment=\"" << fragment << "\"";
-		*ostr << " text=\"[" << first << "," << last << "]\">";
-		std::copy(&line[first],&line[last],std::ostream_iterator<char>(*ostr));
-		*ostr << "</" << cppTokenTitles[token] << ">";
-	}
+    explicit xmlCppTokListener( std::ostream& o ) : ostr(&o) {}
+    
+    void token( cppToken token, const char *line, 
+		int first, int last, bool fragment ) {
+	*ostr << '<' << cppTokenTitles[token];
+	if( fragment ) *ostr << " fragment=\"" << fragment << "\"";
+	*ostr << " text=\"[" << first << "," << last << "]\">";
+	std::copy(&line[first],&line[last],std::ostream_iterator<char>(*ostr));
+	*ostr << "</" << cppTokenTitles[token] << ">";
+    }
 };
 
 
@@ -88,21 +95,21 @@ protected:
 	std::basic_ostream<charT,traitsT> *ostr;
 	
 public:
-	explicit htmlCppTokListener( std::basic_ostream<charT,traitsT>& o ) 
-		: ostr(&o) {}
-	
+    explicit htmlCppTokListener( std::basic_ostream<charT,traitsT>& o ) 
+	: ostr(&o) {}
+    
 public:
-	void token( cppToken token, const char *line, 
-				int first, int last, bool fragment ) {
-		*ostr << "<span class=\"" << cppTokenTitles[token] << "\">";
-		std::copy(&line[first],&line[last],
-				  std::ostream_iterator<charT>(*ostr));
-		*ostr << "</span>";
-	}
-
-	void endl() {
-		*ostr << std::endl;
-	}
+    void token( cppToken token, const char *line, 
+		int first, int last, bool fragment ) {
+	*ostr << "<span class=\"" << cppTokenTitles[token] << "\">";
+	std::copy(&line[first],&line[last],
+		  std::ostream_iterator<charT>(*ostr));
+	*ostr << "</span>";
+    }
+    
+    void endl() {
+	*ostr << std::endl;
+    }
 };
 
 
@@ -111,7 +118,6 @@ public:
 class cppTokenizer {
 protected:
 	void *state;
-	int first;
 	cppToken tok;
 	int hexQuads;
 	char expects;
@@ -119,14 +125,14 @@ protected:
 
 public:
     cppTokenizer() 
-		: state(NULL), first(0), tok(cppErr), listener(NULL) {}
+		: state(NULL), tok(cppErr), listener(NULL) {}
 	
     explicit cppTokenizer( cppTokListener& l ) 
-	: state(NULL), first(0), tok(cppErr), listener(&l) {}
+	: state(NULL), tok(cppErr), listener(&l) {}
     
     void attach( cppTokListener& l ) { listener = &l; }
     
-    void tokenize( const char *line, size_t n );
+    size_t tokenize( const char *line, size_t n );
 };
 
 #endif

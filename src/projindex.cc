@@ -27,14 +27,147 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include "projindex.hh"
+#include "slice.hh"
+#include "markup.hh"
+
+
+void checkstyle::addDir( const session& s, 
+			 const boost::filesystem::path& pathname ) {
+}
+
+
+void checkstyle::addFile( const session& s, 
+			  const boost::filesystem::path& pathname ) {
+    using namespace boost::filesystem; 
+
+    if( state == start ) {
+	std::cout << htmlContent;
+	std::cout << "<table>";
+	std::cout << html::tr()
+		  << html::th() << html::th::end
+		  << html::th() << "license" << html::th::end
+		  << html::th() << "code lines" << html::th::end
+		  << html::th() << "total lines" << html::th::end
+		  << html::tr::end;
+	state = toplevelFiles;
+    }
+    document *doc = dispatchDoc::instance->select("check",pathname.string());
+    doc->fetch((session&)s,pathname);
+}
+
+void checkstyle::flush() {
+    if( state != start ) {
+	std::cout << "</table>";
+    }
+}
+
+
+void projindex::meta( session& s, const boost::filesystem::path& pathname ) {
+    document::meta(s,pathname);
+}
+
+
 
 void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
+    using namespace rapidxml;
+    using namespace boost::filesystem;
+
     /* The project view description and dependencies of a project as stated 
        in the index.xml. A project view also contains the list of unit 
        failures, checkstyle failures and open issues. There are also links 
        to download <!-- through e-commerce transaction? --> the project as 
        a package, browse the source code and sign-on to the rss feed. */
+    size_t fileSize = file_size(pathname);
+    char text[ fileSize + 1 ];
+    ifstream file;
+    open(file,pathname);
+    file.read(text,fileSize);
+    text[fileSize] = '\0';
+    xml_document<> doc;    // character type defaults to char
+    doc.parse<0>(text);     // 0 means default parse flags
 
-    
+    xml_node<> *root = doc.first_node();
+    if( root != NULL ) {
+	xml_attribute<> *projname = NULL;
+	for( xml_node<> *project = root->first_node("project");
+	     project != NULL; project = project->next_sibling() ) {
 
+	    projname = project->first_attribute("name");
+	    /* Information about the maintainer */
+	    xml_node<> *maintainer = project->first_node("maintainer");
+	    if( maintainer ) {
+		xml_attribute<> *name = maintainer->first_attribute("name");
+		xml_attribute<> *email = maintainer->first_attribute("email");
+		if( name ) {
+		    std::cout << html::p() << "maintainer: ";
+		    if( email ) {
+			std::cout << html::a().href(std::string("mailto:") 
+						    + email->value());
+		    }
+		    std::cout << name->value();
+		    if( email ) {
+			std::cout << html::a::end;
+		    }
+		    std::cout << html::p::end;
+		}
+	    }
+
+	    /* Description of the project */
+	    xml_node<> *description = project->first_node("description");
+	    if( description ) {
+		std::cout << html::p() << description->value() << html::p::end;
+	    }
+	   
+	    /* Dependencies to install the project from a source compilation. */
+	    xml_node<> *repository = project->first_node("repository");
+	    if( repository ) {
+		const char *sep = "";
+		std::cout << html::p() << "The following prerequisites are necessary to build the project from source: ";
+		for( xml_node<> *dep = repository->first_node("dep");
+		     dep != NULL; dep = dep->next_sibling() ) {
+		    xml_attribute<> *name = dep->first_attribute("name");
+		    if( name != NULL ) {
+			if( boost::filesystem::exists(s.srcDir(name->value())) ) {			
+			    std::cout << sep 
+				      << html::a().href(std::string("/") 
+							+ name->value()) 
+				      << name->value()
+				      << html::a::end;
+			} else {
+			    std::cout << sep << name->value();
+			}
+			sep = ", ";
+		    }
+		}	    
+		std::cout << html::p::end;
+	    }
+	    const char *dists[] = {
+		"Darwin",
+		"Fedora",
+		"Ubuntu",
+		"srcs" 
+	    };
+	    typedef std::vector<path> candidateSet;
+	    candidateSet candidates;
+	    for( const char **d = dists; 
+		 d != &dists[sizeof(dists)/sizeof(char*)]; ++d ) {
+		path downname(path(*d) / std::string(projname->value()));
+		path prefix(path(s.valueOf("cacheTop")) / downname);
+		for( directory_iterator entry = directory_iterator(path(s.valueOf("cacheTop")) / std::string(*d)); 
+		     entry != directory_iterator(); ++entry ) {
+		    if( entry->string().compare(0,prefix.string().size(),
+						prefix.string()) == 0 ) {
+			candidates.push_back(path("/") / path(*d) / entry->filename());
+		    }
+		}
+	    }
+	    std::cout << html::p() << "download" << html::p::end;
+	    for( candidateSet::const_iterator c = candidates.begin();
+		 c != candidates.end(); ++c ) {
+		std::cout << html::a().href(c->string()) 
+			  << c->filename() << html::a::end 
+			  << "<br />" << std::endl;
+	    }
+	}
+    }
 }
