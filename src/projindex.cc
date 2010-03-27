@@ -42,7 +42,8 @@ void checkstyle::addFile( const session& s,
 
     if( state == start ) {
 	std::cout << htmlContent;
-	std::cout << "<table>";
+	std::cout << html::p() 
+		  << "<table>";
 	std::cout << html::tr()
 		  << html::th() << html::th::end
 		  << html::th() << "license" << html::th::end
@@ -57,7 +58,8 @@ void checkstyle::addFile( const session& s,
 
 void checkstyle::flush() {
     if( state != start ) {
-	std::cout << "</table>";
+	std::cout << "</table>"
+		  << html::p::end;
     }
 }
 
@@ -117,6 +119,40 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    if( description ) {
 		std::cout << html::p() << description->value() << html::p::end;
 	    }
+
+	    /* Shows the archives that can be downloaded. */
+	    const char *dists[] = {
+		"Darwin",
+		"Fedora",
+		"Ubuntu",
+		"srcs" 
+	    };
+	    typedef std::vector<path> candidateSet;
+	    candidateSet candidates;
+	    for( const char **d = dists; 
+		 d != &dists[sizeof(dists)/sizeof(char*)]; ++d ) {
+		path downname(path(*d) / std::string(projname->value()));
+		path prefix(path(s.valueOf("cacheTop")) / downname);
+		for( directory_iterator entry = directory_iterator(path(s.valueOf("cacheTop")) / std::string(*d)); 
+		     entry != directory_iterator(); ++entry ) {
+		    if( entry->string().compare(0,prefix.string().size(),
+						prefix.string()) == 0 ) {
+			candidates.push_back(path("/") / path(*d) / entry->filename());
+		    }
+		}
+	    }
+	    std::cout << html::p();
+	    if( candidates.empty() ) {
+		std::cout << "There are no prepackaged archive available for download.";
+	    } else {
+		for( candidateSet::const_iterator c = candidates.begin();
+		     c != candidates.end(); ++c ) {
+		    std::cout << html::a().href(c->string()) 
+			      << c->filename() << html::a::end 
+			      << "<br />" << std::endl;
+		}
+	    }
+	    std::cout << html::p::end;
 	   
 	    /* Dependencies to install the project from a source compilation. */
 	    xml_node<> *repository = project->first_node("repository");
@@ -140,33 +176,6 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    }
 		}	    
 		std::cout << html::p::end;
-	    }
-	    const char *dists[] = {
-		"Darwin",
-		"Fedora",
-		"Ubuntu",
-		"srcs" 
-	    };
-	    typedef std::vector<path> candidateSet;
-	    candidateSet candidates;
-	    for( const char **d = dists; 
-		 d != &dists[sizeof(dists)/sizeof(char*)]; ++d ) {
-		path downname(path(*d) / std::string(projname->value()));
-		path prefix(path(s.valueOf("cacheTop")) / downname);
-		for( directory_iterator entry = directory_iterator(path(s.valueOf("cacheTop")) / std::string(*d)); 
-		     entry != directory_iterator(); ++entry ) {
-		    if( entry->string().compare(0,prefix.string().size(),
-						prefix.string()) == 0 ) {
-			candidates.push_back(path("/") / path(*d) / entry->filename());
-		    }
-		}
-	    }
-	    std::cout << html::p() << "download" << html::p::end;
-	    for( candidateSet::const_iterator c = candidates.begin();
-		 c != candidates.end(); ++c ) {
-		std::cout << html::a().href(c->string()) 
-			  << c->filename() << html::a::end 
-			  << "<br />" << std::endl;
 	    }
 	}
     }

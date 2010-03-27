@@ -198,8 +198,6 @@ int main( int argc, char *argv[] )
 	    boost::filesystem::path regressname
 		= s.build(boost::filesystem::path(s.valueOf("document")).parent_path() 
 			  / std::string("test/regression.log"));
-	    std::cerr << "!!! init regressions with " 
-		      << regressname << std::endl;
 	    s.vars["regressions"] = regressname.string();
 
 	    checkstyle cks(filters.begin(),filters.end());

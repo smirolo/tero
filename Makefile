@@ -11,7 +11,7 @@
 #     * Neither the name of fortylines nor the
 #       names of its contributors may be used to endorse or promote products
 #       derived from this software without specific prior written permission.
-
+#
 #   THIS SOFTWARE IS PROVIDED BY Sebastien Mirolo ''AS IS'' AND ANY
 #   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,7 +34,7 @@ bins 		:=	seed
 libs		:=	libseed.a
 shares		:=	seed.pdf
 
-libseed.a: auth.o composer.o changelist.o checkstyle.o docbook.o \
+libseed.a: auth.o booktok.o composer.o changelist.o checkstyle.o docbook.o \
 	 	cpptok.o document.o download.o gitcmd.o invoices.o  \
 		logview.o markup.o projfiles.o projindex.o shtok.o xmlesc.o \
 		xmltok.o webserve.o

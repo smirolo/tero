@@ -127,17 +127,20 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace rapidxml;
     using namespace boost::filesystem;
 
+    if( !boost::filesystem::exists(pathname) ) {
+	std::cout << html::p()
+		  << "There are regression logs available for the unit tests."
+		  << html::p::end;
+	return;
+    }
+
     size_t fileSize = file_size(pathname);
     char text[ fileSize + 1 ];
     ifstream file;
-    std::cerr << " regressions::fetch(pathname=" << pathname 
-	      << ")" << std::endl;
     open(file,pathname);
     file.read(text,fileSize);
     text[fileSize] = '\0';
     file.close();
-    std::cerr << "file has been read" << std::endl;
-
     xml_document<> doc;    // character type defaults to char
     doc.parse<0>(text);     // 0 means default parse flags
 
@@ -147,6 +150,7 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 	size_t col = 1;
 	typedef std::map<std::string,size_t> colMap;
 	colMap colmap;	
+	std::cout << html::p();
 	std::cout << "<table border=\"2\">" << std::endl;
 	std::cout << html::tr();
 	std::cout << html::th() << html::th::end;
@@ -169,23 +173,17 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    memset(cols,0,sizeof(cols));
 	    xml_attribute<> *name = test->first_attribute("name");
 	    if( name != NULL ) {
-		std::cerr << "!!! " << name->value() << std::endl;
 		std::cout << html::td() << name->value() << html::td::end;
 	    }
 	    for( xml_node<> *compare = test->first_node("compare");
 		 compare != NULL; compare = compare->next_sibling("compare") ) {
 		xml_attribute<> *name = compare->first_attribute("name");
 		if( name != NULL ) {
-		    std::cerr << "compare " << name->value() << std::endl;
 		    colMap::const_iterator found = colmap.find(name->value());
 		    if( found != colmap.end() ) {
-			std::cerr << "compare cols[" << found->second << "] = "
-				  << compare->value() << std::endl;
 			cols[found->second] = compare;
 		    } else {
 			cols[0] = compare;
-			std::cerr << "compare cols[0] = "
-				  << compare->value() << std::endl;
 		    }
 		}
 	    }
@@ -219,7 +217,6 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    }
 		}
 	    }
-	    std::cerr << std::endl;
 	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {
 		std::cout << html::td() << html::pre();
 		if( *c != NULL )
@@ -230,6 +227,6 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 #endif
 	}	
 
-	std::cout << "</table>" << std::endl;	
+	std::cout << "</table>" << html::p::end;
     }   
 }

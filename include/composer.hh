@@ -28,6 +28,8 @@
 
 #include "document.hh"
 
+/** Display of a page based on a template HTML file.
+ */
 class composer : public document {
 public:
     enum fileNotFoundBehavior {

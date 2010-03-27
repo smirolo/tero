@@ -1,4 +1,3 @@
-// -*- C++ -*-
 /* Copyright (c) 2009, Sebastien Mirolo
    All rights reserved.
 
@@ -123,11 +122,7 @@ int basicHighLight<tokenizerT,charT,traitsT>::sync() {
 template<typename tokenizerT, typename charT, typename traitsT>
 void basicHighLight<tokenizerT,charT,traitsT>::scan() {
     int size = std::distance(buf.gptr(), buf.pptr());
-#if 0
-    super::nextBuf->sputn("tokenize:",9);
-    super::nextBuf->sputn(buf.gptr(),size);
-#endif
-     tokenizer.tokenize(buf.gptr(),size);    
+    tokenizer.tokenize(buf.gptr(),size);    
     buf.gbump(size);
 }
 
@@ -156,10 +151,6 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 					   const char *line, 
 					   int first, int last, 
 					   bool fragment ) {
-#if 0
-    super::nextBuf->sputn(xmlTokenTitles[token],
-			  strlen(xmlTokenTitles[token]));
-#endif
     super::nextBuf->sputn(&line[first],last - first);
     switch( token ) {
     case xmlElementStart:
@@ -199,10 +190,6 @@ template<typename charT, typename traitsT>
 void basicCppLight<charT,traitsT>::newline(const char *line, 
 					   int first, int last )
 {
-    std::stringstream s;
-    s << "[newline(" << first << "," << last << ")]";
-    super::nextBuf->sputn(s.str().c_str(),s.str().size());
-
     if( preprocessing ) {
 	std::string endSpan("</span>");
 	super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
@@ -226,13 +213,6 @@ void basicCppLight<charT,traitsT>::token( cppToken token,
 					  const char *line, 
 					  int first, int last, 
 					  bool fragment ) {
-#if 0
-    std::stringstream s;
-    s << "[token(" << token << "," << first 
-	      << "," << last << "," << fragment
-	      << ")]";
-    super::nextBuf->sputn(s.str().c_str(),s.str().size());
-#endif
 
     std::string staSpan("<span class=\"");
     std::string endSpan("</span>");

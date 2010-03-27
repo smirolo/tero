@@ -55,7 +55,6 @@ void gitcmd::diff( std::ostream& ostr,
     
     FILE *diffFile = popen(cmd.str().c_str(),"r");
     if( diffFile == NULL ) {
-	std::cerr << "error opening command: " << cmd.str() << std::endl;
 	return;
     }
     char line[256];

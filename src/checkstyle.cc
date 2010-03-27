@@ -37,61 +37,32 @@ checkfile::checkfile() : cached(false),
 			 nbLines(0), nbCodeLines(0) {}
 
 void checkfile::cache() {
-#if 0
     static const boost::regex 
-	bsdex("\\S?\\S?\\s*Copyright \\(c\\) (?P<date>(\\d+)(-\\d+)*), (?P<grantor>.*)"
-"\\S?\\s*All rights reserved."
-"\\S?\\s*"
-"\\S?\\s*Redistribution and use in source and binary forms, with or without"
-"\\S?\\s*modification, are permitted provided that the following conditions are met:"
-"\\S?\\s*\\* Redistributions of source code must retain the above copyright"
-"\\S?\\s*notice, this list of conditions and the following disclaimer."
-"\\S?\\s*\\* Redistributions in binary form must reproduce the above copyright"
-"\\S?\\s*notice, this list of conditions and the following disclaimer in the"
-"\\S?\\s*documentation and/or other materials provided with the distribution."
-"\\S?\\s*\\* Neither the name of (?P<brand>.*) nor the"
-"\\S?\\s*names of its contributors may be used to endorse or promote products"
-"\\S?\\s*derived from this software without specific prior written permission."
-""
-"\\S?\\s*THIS SOFTWARE IS PROVIDED BY (.*) ''AS IS'' AND ANY"
-"\\S?\\s*EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED"
-"\\S?\\s*WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE"
-"\\S?\\s*DISCLAIMED. IN NO EVENT SHALL (.*) BE LIABLE FOR ANY"
-"\\S?\\s*DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES"
-"\\S?\\s*\\(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;"
-"\\S?\\s*LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION\\) HOWEVER CAUSED AND"
-"\\S?\\s*ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT"
-"\\S?\\s*\\(INCLUDING NEGLIGENCE OR OTHERWISE\\) ARISING IN ANY WAY OUT OF THE USE OF THIS"
-"\\S?\\s*SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE\\..");
+	bsdex("\\S?\\S?\\s*Copyright \\(c\\) ((\\d+)(-\\d+)*), (.*)\\s+"
+    "\\S?\\s*All rights reserved.\\s+"
+"\\S?\\s+"
+"\\S?\\s*Redistribution and use in source and binary forms, with or without\\s+"
+	      "\\S?\\s*modification, are permitted provided that the following conditions are met:\\s+"
+"\\S?\\s*\\* Redistributions of source code must retain the above copyright\\s+"
+	      "\\S?\\s*notice, this list of conditions and the following disclaimer.\\s+"
+	      "\\S?\\s*\\* Redistributions in binary form must reproduce the above copyright\\s+"
+	      "\\S?\\s*notice, this list of conditions and the following disclaimer in the\\s+"
+	      "\\S?\\s*documentation and/or other materials provided with the distribution.\\s+"
 
-#else
-
-    static const boost::regex 
-	bsdex("\\S?\\S?\\s*Copyright \\(c\\) ((\\d+)(-\\d+)*), (.*)\n"
-"\\S?\\s*All rights reserved."
-"\\S?\\s*"
-"\\S?\\s*Redistribution and use in source and binary forms, with or without"
-"\\S?\\s*modification, are permitted provided that the following conditions are met:"
-"\\S?\\s*\\* Redistributions of source code must retain the above copyright"
-"\\S?\\s*notice, this list of conditions and the following disclaimer."
-"\\S?\\s*\\* Redistributions in binary form must reproduce the above copyright"
-"\\S?\\s*notice, this list of conditions and the following disclaimer in the"
-"\\S?\\s*documentation and/or other materials provided with the distribution."
-"\\S?\\s*\\* Neither the name of (.*) nor the"
-"\\S?\\s*names of its contributors may be used to endorse or promote products"
-"\\S?\\s*derived from this software without specific prior written permission."
-""
-"\\S?\\s*THIS SOFTWARE IS PROVIDED BY (.*) ''AS IS'' AND ANY"
-"\\S?\\s*EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED"
-"\\S?\\s*WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE"
-"\\S?\\s*DISCLAIMED. IN NO EVENT SHALL (.*) BE LIABLE FOR ANY"
-"\\S?\\s*DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES"
-"\\S?\\s*\\(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;"
-"\\S?\\s*LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION\\) HOWEVER CAUSED AND"
-"\\S?\\s*ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT"
-"\\S?\\s*\\(INCLUDING NEGLIGENCE OR OTHERWISE\\) ARISING IN ANY WAY OUT OF THE USE OF THIS"
+"\\S?\\s*\\* Neither the name of (.*) nor the\\s+"
+"\\S?\\s*names of its contributors may be used to endorse or promote products\\s+"
+	      "\\S?\\s*derived from this software without specific prior written permission.\\s+"
+	      "\\S?\\s+"
+"\\S?\\s*THIS SOFTWARE IS PROVIDED BY (.*) ''AS IS'' AND ANY\\s+"
+"\\S?\\s*EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\\s+"
+"\\S?\\s*WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\\s+"
+"\\S?\\s*DISCLAIMED. IN NO EVENT SHALL (.*) BE LIABLE FOR ANY\\s+"
+"\\S?\\s*DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\\s+"
+"\\S?\\s*\\(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\\s+"
+"\\S?\\s*LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION\\) HOWEVER CAUSED AND\\s+"
+"\\S?\\s*ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\\s+"
+"\\S?\\s*\\(INCLUDING NEGLIGENCE OR OTHERWISE\\) ARISING IN ANY WAY OUT OF THE USE OF THIS\\s+"
 "\\S?\\s*SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE\\..*");
-#endif
 
     boost::smatch m;
     std::string s(licenseText.begin(),licenseText.size());
@@ -135,7 +106,8 @@ void checkfile::fetch( session& s, const boost::filesystem::path& pathname ) {
 }
 
 cppCheckfile::cppCheckfile() : state(start), comment(emptyLine)
-			        {}
+{
+}
 
     
 void cppCheckfile::newline(const char *line, 
@@ -184,6 +156,14 @@ void cppCheckfile::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem; 
 
+    state = start;
+    comment = emptyLine;
+    cached = false; 
+    licenseType = unknownLicense;
+    nbLines = 0;
+    nbCodeLines = 0;
+    licenseText = slice<const char>();
+    
     cppTokenizer tokenizer(*this);
 
     ifstream file;
@@ -196,24 +176,57 @@ void cppCheckfile::fetch( session& s, const boost::filesystem::path& pathname )
     file.close();
 
     tokenizer.tokenize(buffer,fileSize);
+
     checkfile::fetch(s,pathname);
 }
 
 
 void shCheckfile::newline(const char *line, int first, int last ) 
 {
+    switch( state ) {
+    case readLicense:
+	licenseText += slice<const char>(&line[first],&line[last]);
+	break;
+    }
+    ++nbLines;
+#if 0
+    if( comment == codeLine ) ++nbCodeLines;
+    comment = emptyLine;
+#endif
 }
 
 
 void shCheckfile::token( shToken token, const char *line, 
 			 int first, int last, bool fragment )
 {
+    switch( token ) {
+    case shComment:
+	switch( state ) {
+	case start:
+	    state = readLicense;
+	case readLicense:
+	    licenseText += slice<const char>(&line[first],&line[last]);
+	    if( !fragment ) state = doneLicense;
+	    break;
+	}
+	break;
+    case shCode:
+	state = doneLicense;
+	break;
+    }
 }
 
 
 void shCheckfile::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem; 
+
+    cached = false; 
+    licenseType = unknownLicense;
+    nbLines = 0;
+    nbCodeLines = 0;
+    licenseText = slice<const char>();
+    state = start;
 
     shTokenizer tokenizer(*this);
 

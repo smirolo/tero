@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<section xmlns="http://docbook.org/ns/docbook" 
+	 xmlns:xlink="http://www.w3.org/1999/xlink">
+  <para>
+document.hh
+	composer.hh
+	auth.hh
+</para>
+</section>

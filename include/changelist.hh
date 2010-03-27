@@ -28,8 +28,7 @@
 
 #include "composer.hh"
 
-/* change implementation of command with revisionsys implementation 
-   of repository specifics. 
+/* Different displays of changes to an underlying source control repository.
  */
 
 class historyref {

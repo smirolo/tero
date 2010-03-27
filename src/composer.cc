@@ -88,7 +88,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    found = true;
 		}
 	    }
-#if 1
 	} else if( regex_search(line,m,tmplinc) ) {
 	    /* \todo fetch another template. This code should
 	     really call to the dispatcher once we can sort
@@ -100,7 +99,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 		doc->fetch(s,incpath);
 	    }
 	    found = true;
-#endif
 	}
 	if( !found ) {
 	    std::cout << line << std::endl;

@@ -31,23 +31,6 @@
 #include <boost/regex.hpp>
 #include "cpptok.hh"
 
-#if 0
-bool isSourceChar( int c ) {
-    switch( c ) {
-    case [a-z]: [A-Z]  [0-9] _ { } [ ] # ( ) < > % : ; . ? * + - / ^ & | ~ ! = , \ '"' '\''
-    }
-}
-
-	found = keywords.find(token);
-	if( found ) {
-	    found = opOrPuncs.find(token);
-	    if( found ) found = booleanLiterals.find(token);
-	}  	
- 	break;
-
-#endif
-
-
 const char *cppTokenTitles[] = {
     "err",
     "booleanLiteral",

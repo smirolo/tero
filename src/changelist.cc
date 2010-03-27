@@ -123,31 +123,6 @@ void changediff::embed( session& s, const std::string& varname ) {
 }
 
 
-#if 0
-void changelist::fetch( session& s, const boost::filesystem::path& pathname ) {
-    using namespace boost::system;
-    using namespace boost::filesystem;
-    /* retrieve the active changelist */
-    path changesPath(s.userPath().string() + std::string("/changes"));
-    ifstream changes(changesPath);
-	bool empty = true;
-    if( !changes.fail() ) {
-		std::string line;
-		std::getline(changes,line);
-		while( !changes.eof() ) {
-			path p(line);
-			std::cout << p.leaf() << "<br />" << std::endl;
-			std::getline(changes,line);
-			empty = false;
-		}
-		changes.close();
-	}
-    if( empty ) {
-	std::cout << "<i>empty</i><br />" << std::endl;
-    }
-}
-#endif
-
 void 
 changecheckin::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
@@ -177,17 +152,12 @@ changedescr::embed( session& s, const std::string& varname )
 	composer::embed(s,varname);
     } else {
     boost::filesystem::path pathname(s.abspath(s.valueOf(varname)));
-
-    std::cerr << "changedescr for " << varname
-	      << " of value " << pathname << std::endl;
-
     boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
     if( !sccsRoot.empty() ) {
 	revision->rootPath(sccsRoot);
 
 	history hist;
 	revision->checkins(hist,s,pathname);
-	std::cerr << "checkins loaded" << std::endl;
 
 	/* Reference: http://www.rssboard.org/rss-specification */
 	/* http://www.feedicons.com/ */
@@ -252,14 +222,10 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	    std::cout << author::end;
 	    std::cout << pubDate() << ci->date << pubDate::end;
 	    std::cout << description();
-#if 1
 	    esc.attach(std::cout);
-#endif
 	    std::cout << ci->descr;
 	    std::cout.flush();
-#if 1
 	    esc.detach();
-#endif
 	    std::cout << description::end;
 	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
 		 file != ci->files.end(); ++file ) {

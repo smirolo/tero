@@ -765,6 +765,14 @@ enum docbookToken {
 
 extern const char* docbookKeywords[];
 
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, docbookToken v ) {
+    if( v == 0 ) ostr << "eof";
+    else ostr << docbookKeywords[(v-1)/2] << ( ((v-1) % 2) ? "Start" : "End");
+    return ostr;
+}
+
 
 /** *docbookScanner* implements the lexical scanner used
     by the LL(1) parser used to drive the transformation

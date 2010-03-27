@@ -693,9 +693,6 @@ void docbook::walk( const rapidxml::xml_node<>& node ) {
     case node_data:
     case node_cdata:
 	if( !info ) {
-#if 0
-	std::cerr << "node_data:\"" << node.value() << '"' << std::endl;
-#endif
 	    std::cout << node.value();
 	}
 	break;

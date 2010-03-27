@@ -76,8 +76,6 @@ public:
 
 class cppCheckfile : public checkfile,
 		     public cppTokListener {
-    slice<const char> licenseText;
-
 protected:
     enum stateCode {
 	start,
@@ -107,6 +105,14 @@ public:
 
 class shCheckfile : public checkfile,
 		    public shTokListener {
+protected:
+    enum stateCode {
+	start,
+	readLicense,
+	doneLicense
+    };
+    stateCode state;
+
 public:
     shCheckfile() {}
 

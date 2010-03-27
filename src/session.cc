@@ -64,21 +64,17 @@ static std::string nullString("");
 boost::filesystem::path session::storage;
 
 std::string session::docAsUrl() const {
-#if 0
-	variables::const_iterator topUrl = vars.find("topUrl");
-	assert( topUrl != vars.end() );
-#endif
-	variables::const_iterator doc = vars.find("document");
-	assert( doc != vars.end() );
-	return doc->second.substr(1);
+    variables::const_iterator doc = vars.find("document");
+    assert( doc != vars.end() );
+    return doc->second.substr(1);
 }
 
 const std::string& session::valueOf( const std::string& name ) const {
-	variables::const_iterator iter = vars.find(name);
-	if( iter == vars.end() ) {
-		return nullString;
-	}
-	return iter->second;
+    variables::const_iterator iter = vars.find(name);
+    if( iter == vars.end() ) {
+	return nullString;
+    }
+    return iter->second;
 }
 
 

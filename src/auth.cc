@@ -156,12 +156,10 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
     logstr << logged.hours() << " hours logged." << std::endl;
     
     std::cout << htmlContent << std::endl;
-#if 1
     s.vars["hours"] = logstr.str();
     path uiPath(s.vars["uiDir"] + std::string("/logout.ui"));
     composer pres(uiPath,composer::error);
     pres.fetch(s,"document");
-#endif
 }
 
 

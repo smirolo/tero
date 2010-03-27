@@ -42,8 +42,9 @@ void document::open( boost::filesystem::ifstream& strm,
     boost::throw_exception(
         basic_filesystem_error<path>(std::string("file not found"),
 				     pathname, 
+#if 1
 				     error_code()));
-#if 0
+#else
     error_code(posix_error::no_such_file_or_directory)));
 #endif
 }
@@ -78,7 +79,6 @@ void dispatchDoc::add( const std::string& varname,
 void dispatchDoc::fetch( session& s, const std::string& varname ) {
     document* doc = select(varname,s.valueOf(varname));
     if( doc != NULL ) {
-	std::cerr << "fetch " << s.valueAsPath(varname) << std::endl;
 	doc->fetch(s,s.valueAsPath(varname));
     }
 }
@@ -86,7 +86,6 @@ void dispatchDoc::fetch( session& s, const std::string& varname ) {
 
 document* dispatchDoc::select( const std::string& name, 
 			    const std::string& value ) const {
-    std::cerr << "select " << name << " of value " << value << std::endl;
     presentationSet::const_iterator view = views.find(name);
     if( view != views.end() ) {
 	const aliasSet& aliases = view->second;
@@ -113,10 +112,8 @@ void text::showSideBySide( std::istream& input,
     char leftMarker = inputIsLeftSide ? '-' : '+';
     char rightMarker = inputIsLeftSide ? '+' : '-';
     
-#if 1
     leftDec->attach(left);
     rightDec->attach(right);
-#endif
     while( !diff.eof() ) {
 	std::string line;
 	getline(diff,line);
@@ -302,10 +299,8 @@ void text::showSideBySide( std::istream& input,
 	cout << html::tr::end;
     }
 
-#if 1
     leftDec->detach();
     rightDec->detach();
-#endif
 }
 
 
@@ -326,11 +321,10 @@ void text::meta( session& s, const boost::filesystem::path& pathname ) {
     strm.close();
     document::meta(s,pathname);
 
-#if 0
+    /* 
     std::time_t last_write_time( const path & ph );
-    /* To convert the returned value to UTC or local time, 
-       use std::gmtime() or std::localtime() respectively. */
-#endif
+    To convert the returned value to UTC or local time, 
+    use std::gmtime() or std::localtime() respectively. */
 }
 
 
@@ -345,10 +339,10 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     std::cout << htmlContent;
 
-#if 1
+
     if( leftDec->formated() ) std::cout << code();
     leftDec->attach(std::cout);
-#endif
+
 
     /* Skip over tags */
     while( !strm.eof() ) {
@@ -366,10 +360,8 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 	std::getline(strm,line);
 	std::cout << line << std::endl;
     }
-#if 1
     leftDec->detach();
     if( leftDec->formated() ) std::cout << html::pre::end;
-#endif
     strm.close();
 }
 

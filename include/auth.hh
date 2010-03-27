@@ -29,6 +29,8 @@
 #include <exception>
 #include "document.hh"
 
+/* Authentication with the backend server. */
+
 class invalidAuthentication : public std::exception {
 public:
 
