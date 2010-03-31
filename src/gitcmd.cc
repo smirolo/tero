@@ -140,7 +140,7 @@ void gitcmd::checkins( ::history& hist,
 	    itemStarted = true;
 	    ci = hist.add();
 	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
-	    ci->title = std::string(lcstr);
+	    ci->title = std::string(lcstr).substr(7);
 	    
 	} else if ( line.compare(0,7,"Author:") == 0 ) {
 	    ci->author = strip(line.substr(7));

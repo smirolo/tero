@@ -145,13 +145,10 @@ changehistory::fetch( session& s, const boost::filesystem::path& pathname )
     }
 }
 
+
 void 
-changedescr::embed( session& s, const std::string& varname ) 
+changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 {
-    if( varname != "document" ) {
-	composer::embed(s,varname);
-    } else {
-    boost::filesystem::path pathname(s.abspath(s.valueOf(varname)));
     boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
     if( !sccsRoot.empty() ) {
 	revision->rootPath(sccsRoot);
@@ -169,9 +166,8 @@ changedescr::embed( session& s, const std::string& varname )
 	     ci != hist.checkins.end(); ++ci ) {
 	    std::cout << html::h(1) << ci->title << html::h(1).end();
 	    std::cout << html::p();
-	    std::cout << "Author: " << ci->author;
+	    std::cout <<  ci->date << " - " << ci->author;
 	    std::cout << html::p::end;
-	    std::cout << html::p() << "Date: " << ci->date << html::p::end;
 	    std::cout << html::p();
 	    esc.attach(std::cout);
 	    std::cout << ci->descr;
@@ -183,8 +179,7 @@ changedescr::embed( session& s, const std::string& varname )
 		std::cout << html::a().href(file->string()) << *file << html::a::end << "<br />" << std::endl;
 	    }
 	    std::cout << html::p::end;
-	}	
-    }
+	}	  
     }
 }
 

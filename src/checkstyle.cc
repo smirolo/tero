@@ -202,8 +202,12 @@ void shCheckfile::token( shToken token, const char *line,
     switch( token ) {
     case shComment:
 	switch( state ) {
-	case start:
-	    state = readLicense;
+	case start: {
+	    boost::smatch m;
+	    std::string s(&line[first],&line[last]);
+	    if( !boost::regex_search(s,m,boost::regex("Copyright")) ) break;
+	    state = readLicense;	    	    
+	}
 	case readLicense:
 	    licenseText += slice<const char>(&line[first],&line[last]);
 	    if( !fragment ) state = doneLicense;

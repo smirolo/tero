@@ -184,8 +184,12 @@ int main( int argc, char *argv[] )
 	    }
 
 	    shCheckfile shCheck;
+	    docs.add("check",boost::regex(".*\\.mk"),shCheck);
+	    docs.add("check",boost::regex(".*\\.py"),shCheck);
 	    docs.add("check",boost::regex(".*Makefile"),shCheck);
 	    
+	    filters.push_back(boost::regex(".*\\.mk"));			
+	    filters.push_back(boost::regex(".*\\.py"));			
 	    filters.push_back(boost::regex(".*Makefile"));			
 	    projfiles filelist(filters.begin(),filters.end());
 	    docs.add("projfiles",boost::regex(".*"),filelist);
@@ -206,17 +210,13 @@ int main( int argc, char *argv[] )
 
 	    gitcmd revision(s.valueOf("binDir") + "/git");
 	    changehistory diffHist(&revision);
-	    changecheckin checkinHist(&revision);
+	    changedescr checkinHist(&revision);
 	    docs.add("history",boost::regex(".*index\\.xml"),checkinHist);
 	    docs.add("history",boost::regex(".*"),diffHist);
 	    s.vars["history"] = s.vars["document"];
 	    
 	    changediff diff(sourceTmpl,&revision);
 	    docs.add("view",boost::regex("/diff"),diff);
-	    changedescr descr(s.vars["themeDir"] 
-			      + std::string("/project.template"),
-			      &revision);
-	    docs.add("view",boost::regex("/checkin"),descr);
 
 	    /* The pattern need to be inserted in more specific to more 
 	       generic order since the matcher will apply each the first

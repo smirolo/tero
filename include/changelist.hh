@@ -181,19 +181,6 @@ public:
 
 };
 
-/** Detailed description of a single changelist
- */
-class changedescr : public composer {
-protected:
-    revisionsys *revision;
-
-    virtual void embed( session& s, const std::string& value );
-
-public:
-    explicit changedescr( const boost::filesystem::path& f, revisionsys *r ) 
-	: composer(f,error), revision(r) {}
-};
-
 
 /** Base class for commands displaying changelists.
  */
@@ -207,6 +194,20 @@ public:
     virtual void 
     fetch( session& s, const boost::filesystem::path& pathname ) = 0;
 };
+
+/** Detailed description of a single changelist
+ */
+class changedescr : public changelist {
+protected:
+
+public:
+    explicit changedescr( revisionsys *r ) 
+	: changelist(r) {}
+
+    virtual void 
+    fetch( session& s, const boost::filesystem::path& pathname );
+};
+
 
 /** Short history of changes to a project under revision control. 
 
