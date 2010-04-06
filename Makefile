@@ -48,7 +48,4 @@ session.o: session.cc
 
 seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 
-configure_apache:
-	$(srcDir)/configure_apache
-
 include $(etcDir)/dws/suffix.mk
