@@ -122,18 +122,18 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 
 	    /* Shows the archives that can be downloaded. */
 	    const char *dists[] = {
-		"Darwin",
-		"Fedora",
-		"Ubuntu",
-		"srcs" 
+		"resources/Darwin",
+		"resources/Fedora",
+		"resources/Ubuntu",
+		"resources/srcs" 
 	    };
 	    typedef std::vector<path> candidateSet;
 	    candidateSet candidates;
 	    for( const char **d = dists; 
 		 d != &dists[sizeof(dists)/sizeof(char*)]; ++d ) {
 		path downname(path(*d) / std::string(projname->value()));
-		path prefix(path(s.valueOf("cacheTop")) / downname);
-		for( directory_iterator entry = directory_iterator(path(s.valueOf("cacheTop")) / std::string(*d)); 
+		path prefix(path(s.valueOf("siteTop")) / downname);
+		for( directory_iterator entry = directory_iterator(path(s.valueOf("siteTop")) / std::string(*d)); 
 		     entry != directory_iterator(); ++entry ) {
 		    if( entry->string().compare(0,prefix.string().size(),
 						prefix.string()) == 0 ) {

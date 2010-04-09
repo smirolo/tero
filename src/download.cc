@@ -52,7 +52,7 @@ void download::packages( session& s, const boost::filesystem::path& dirname ) {
 		std::cout << "<h2>" << dirname.leaf() << " packages</h2>\n";
 		first = false;
 	    }
-	    path relativeName = relpath(*entry,s.valueOf("cacheTop"));
+	    path relativeName = relpath(*entry,s.valueOf("siteTop"));
 	    std::cout << "<tr><td class=\"download\">"
 		      << "<a href=\"" << relativeName << "\">" 
 		      << entry->leaf() << "</a></td>" << std::endl;
@@ -70,7 +70,7 @@ void download::fetch( session& s, const boost::filesystem::path& pathname )
 
     std::cout << htmlContent;
 
-    path dirname(s.valueOf("cacheTop"));
+    path dirname(s.valueOf("siteTop"));
     std::cout << "<h1>Downloads</h1>\n";
     std::cout << "<p>\n";
     std::cout << "These are project's binary and source distribution packages for different platform.\n";

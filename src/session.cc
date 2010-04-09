@@ -123,8 +123,8 @@ session::abspath( const boost::filesystem::path& relpath ) const {
     }	
 
     /* Fourth we try to access the file as a relative pathname 
-       from cacheTop. */	
-    boost::filesystem::path fromCacheTop(valueOf("cacheTop"));
+       from siteTop. */	
+    boost::filesystem::path fromCacheTop(valueOf("siteTop"));
     fromCacheTop /= relpath;
     if( boost::filesystem::exists(fromCacheTop) ) {        
 	return fromCacheTop;
@@ -170,7 +170,7 @@ void session::restore( const boost::program_options::variables_map& params )
     opts.add_options()
 		("binDir",value<std::string>(),"path to outside executables")
 		("buildTop",value<std::string>(),"path to build root")
-		("cacheTop",value<std::string>(),"path to packages repository")
+		("siteTop",value<std::string>(),"path to packages repository")
 		("srcTop",value<std::string>(),"path to document top")
 		("themeDir",value<std::string>(),"path to user interface elements");
     boost::program_options::store(parse_config_file(istr,opts,true),configVars);

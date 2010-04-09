@@ -54,6 +54,9 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
+
+    std::cerr << "!!! fetch logs from " << dirname << std::endl;
+
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	path filename(entry->filename());	
