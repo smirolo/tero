@@ -152,6 +152,10 @@ int main( int argc, char *argv[] )
 			  + std::string("/corporate.template"));
 	    composer corporate(corpTmpl,composer::error);
 
+	    composer invoice(s.vars["themeDir"] 
+			     + std::string("/invoice.template"),
+			     composer::create);
+
 	    /* Composer for view on all other documents */
 	    composer entry(uiPath,composer::error);
 	    cancel cel;
@@ -241,6 +245,9 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex(".*\\.corp"),formatedText);
 	    /* \todo !!! Hack for current tmpl_include implementation */
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
+
+	    statement stmt;
+	    docs.add("document",boost::regex("/statement"),stmt);	 
 	    
 	    htmlEscaper leftLinkText;
 	    htmlEscaper rightLinkText;
@@ -265,8 +272,7 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("work"),work);
 	    docs.add("view",boost::regex("rest"),rest);
 
-	    statement stmt;
-	    docs.add("view",boost::regex("/statement"),stmt);	    
+	    docs.add("view",boost::regex("/statement"),invoice);	    
 
 	    docs.add("view",boost::regex(".*\\.corp"),corporate);
 	    docs.add("view",boost::regex(".*"),entry);

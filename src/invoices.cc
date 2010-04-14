@@ -31,54 +31,71 @@ void statement::header() {
 }
 
 
+void statement::contracts( const boost::filesystem::path& db ) {
+    static const boost::regex head("(\\S+):(\\d+):(.+)");
+ 
+    boost::filesystem::ifstream file;
+    open(file,db);    
+
+    timesMap::iterator curContract;
+    while( !file.eof() ) {
+	boost::smatch m;
+	std::string line;
+	getline(file,line);
+	if( line.empty() ) {
+	    curContract = billed.end();
+	} else {
+	    if( boost::regex_search(line,m,head) ) {
+		curContract = billed.find(m.str(1));
+		if( curContract != billed.end() ) {
+		    curContract->second.tarif = atoi(m.str(2).c_str());
+		    curContract->second.descr = m.str(3);
+		}
+	    } else {
+		if( curContract != billed.end() ) {
+		    curContract->second.address += line;
+		    curContract->second.address += "\n";
+		}
+	    }
+	}
+    }
+
+    file.close();
+}
+
+
 void statement::footer()
 {
     using namespace boost::posix_time;
 
     for( timesMap::const_iterator tm = billed.begin();
 	 tm != billed.end(); ++tm ) {
-#if 0
-	boost::filesystem::ofstream file;
-	open(file,pathname);
-#endif
-	std::cout << "<?xml version=\"1.0\"?>" << std::endl
-		  << "<section xmlns=\"http://docbook.org/ns/docbook\""
-		  << " xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
-		  << std::endl
-	      << "<info>" << std::endl
-	      << "<title>Invoice</title>" << std::endl
-		  << "<author><personname><firstname>Sebastien</firstname><surname>Mirolo</surname></personname></author>" << std::endl;
-	std::cout << "<date>"
-		  << to_simple_string(tm->second.begin()->second.date().end_of_month())
-		  << "</date>";
 
-	std::cout << "</info>" << std::endl
-	      
-		  << "<informaltable>" << std::endl
-		  << html::tr() << html::td()
-	      << "<mediaobject>" << std::endl
-	      << "<imageobject>" << std::endl
-	      << "<imagedata fileref=\"logo.png\" width=\"128\" format=\"PNG\"/>" << std::endl
-	      << "</imageobject>"
-		  << "</mediaobject>"
-		  << html::td::end << html::td()
-	      << "<address>Fortylines Solutions"
-	      << "<street>22 Vandewater St. #201</street>"
-	      << "<city>San Francisco</city>"
-	      << "<state>CA</state> <postcode>94133</postcode></address>"
-	      << "<email>info@fortylines.com</email>"
-	      << "<para>(415) 613 0793</para>"
-		  << html::td::end << html::tr::end << "</informaltable>";
-       
-	std::cout << "<para>"
-		  << "for services provided to "
-		  << tm->first << std::endl
-		  << "..."
-		  << "</para>";
+	std::cout << "<section>";
+	std::cout << "<informaltable frame=\"none\">" << std::endl
+		  << html::tr()
+		  << "<td>"
+		  << "<para>for services provided to:" << std::endl
+		  <<  "<literallayout>";
+	if( tm->second.address.empty() ) {
+	    std::cout << tm->first;
+	} else {
+	    std::cout << tm->second.address;
+	}
+	std::cout << "</literallayout>" 
+		  << "</para>" << std::endl
+		  << "</td>"
+		  << "<td align=\"right\">"
+		  << "<date>"
+		  << to_simple_string(tm->second.hours.begin()->second.date().end_of_month())
+		  << "</date>"
+		  << html::td::end << html::tr::end << "</informaltable>"
+		  << std::endl;
 
-	std::cout << "<table>"
-		  << "<title>hours</title>"
-		  << "<tgroup cols=\"3\" colsep=\"1\">"
+	std::cout << "<section>"	    
+		  << "<title>" << tm->second.descr << "</title>";
+	std::cout << "<informaltable>"		  
+		  << "<tgroup cols=\"3\" rowsep=\"0\" colsep=\"1\">"
 		  << "<colspec colnum=\"1\" colname=\"Date\" align=\"left\" />"
 		  << "<colspec colnum=\"2\" colname=\"Hours\" align=\"right\" />"
 		  << "<colspec colnum=\"3\" colname=\"Fee\" align=\"right\" />"
@@ -92,53 +109,51 @@ void statement::footer()
 		  << "<tbody>" << std::endl;
 
 	size_t total = 0;
-	for( hourSet::const_iterator hr = tm->second.begin(); 
-	     hr != tm->second.end(); ++hr ) {
+	for( hourSet::const_iterator hr = tm->second.hours.begin(); 
+	     hr != tm->second.hours.end(); ++hr ) {
 	    ptime start = hr->first;
 	    ptime stop = hr->second;
 	    time_duration d = hours((stop - start).hours())
 		+ (( (stop - start).minutes() > 0 ) ? hours(1) : hours(0));
 
-	    size_t fee = d.hours() * 150;
+	    size_t fee = d.hours() * tm->second.tarif;
 	    total += fee;
 #if 0
 	    std::cout << html::tr()
 		      << html::td() << start.date() << html::td::end
-		      << html::td() << d.hours() << html::td::end
-		      << html::td() << fee << html::td::end
+		      << "<td align=\"right\">" << d.hours() << html::td::end
+		      << "<td align=\"right\">" << '$' << fee << html::td::end
 		      << html::tr::end;
 #else
 	    std::cout << "<row>"
 		      << "<entry>" << start.date() << "</entry>"
 		      << "<entry>" << d.hours() << "</entry>"
-		      << "<entry>" << fee << "</entry>"
+		      << "<entry>$" << fee << "</entry>"
 		      << "</row>";
 
 #endif
 	}
-	std::cout << "</tbody>" 
-		  << "</tgroup>"
-		  << "</table>"
-		  << std::endl;
+
+	for( size_t i = 20; i > tm->second.hours.size(); --i ) {
+	    std::cout << "<row>"
+		      << "<entry></entry>"
+		      << "<entry></entry>"
+		      << "<entry></entry>"
+		      << "</row>";
+	}
+	std::cout << "</tbody>";
+        std::cout << "<tfoot>";
+	std::cout << "<row>" << "<entry>" << "Total" << "</entry>"
+		  << "<entry>" << "</entry>"
+		  << "<entry>$" << total << "</entry>"
+		  << "</row>";
 	
-	std::cout << "<informaltable>"
-		  << "<tr>"
-		  << "<th>" << "Total" << "</th>"
-		  << "<th>" << total << html::th::end
-		  << html::tr::end
-		  << html::tr()
-		  << html::th() << "Past dues" << html::th::end
-		  << html::th() << 0 << html::th::end
-		  << html::tr::end
-		  << "</informaltable>";
-
-	std::cout << "<para>"
-		  << "Invoices are sent on the last day of the month."
-		  << "Please disregard past dues if you have already mailed a check for them, thank you."
-		  << "</para>" << std::endl;
-
-	std::cout << "</section>"
+	std::cout << "</tfoot>"
+		  << "</tgroup>"		 
+		  << "</informaltable>"
 		  << std::endl;
+
+	std::cout << "</section></section>";
     }
 }
 
@@ -147,7 +162,7 @@ void statement::timeRange( const std::string& msg,
 			   const boost::posix_time::ptime start,
 			   const boost::posix_time::ptime stop ) {
 
-    billed[msg].push_back(std::make_pair(start,stop));
+    billed[msg].hours.push_back(std::make_pair(start,stop));
 }
 
 
@@ -188,7 +203,7 @@ void statement::fetch( session& s, const boost::filesystem::path& pathname ) {
 
 	    if( firstDay < start && start < lastDay
 		&& msg.compare(0,client.size(),client) == 0 ) {
-		timeRange(msg,start,stop);
+		timeRange(client,start,stop);
 	    }
 	} catch(...) {
 	    /* It is ok if we cannot interpret some lines in the log;
@@ -197,5 +212,7 @@ void statement::fetch( session& s, const boost::filesystem::path& pathname ) {
 	}
     }
     file.close();
+    /* Load information associated to the contracts */
+    contracts(s.valueOf("contractDb"));
     footer();
 }

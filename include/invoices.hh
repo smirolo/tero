@@ -34,10 +34,23 @@ protected:
 
     typedef std::vector<std::pair<boost::posix_time::ptime,
 				 boost::posix_time::ptime> > hourSet;
+    struct contract {
+	int tarif;
+	std::string descr;
+	std::string address;
+	hourSet hours;
 
-    typedef std::map<std::string,hourSet> timesMap;
+	contract() : tarif(1) {}
+    };
+
+    typedef std::map<std::string,contract> timesMap;
 
     timesMap billed;
+
+    /** Load information associated to the contracts 
+	for which an invoice exists.
+    */
+    void contracts( const boost::filesystem::path& db );
 
     void header();
 

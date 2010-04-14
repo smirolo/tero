@@ -172,7 +172,8 @@ void session::restore( const boost::program_options::variables_map& params )
 		("buildTop",value<std::string>(),"path to build root")
 		("siteTop",value<std::string>(),"path to packages repository")
 		("srcTop",value<std::string>(),"path to document top")
-		("themeDir",value<std::string>(),"path to user interface elements");
+		("themeDir",value<std::string>(),"path to user interface elements")
+	        ("contractDb",value<std::string>(),"path to contracts database");
     boost::program_options::store(parse_config_file(istr,opts,true),configVars);
 	
     for( variables_map::const_iterator param = configVars.begin(); 

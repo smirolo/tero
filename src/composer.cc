@@ -65,7 +65,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 						     s.valueOf("document"));
 		doc->meta(s,s.valueAsPath("document"));
 	    }
-
 	    document* doc 
 		= dispatchDoc::instance->select(varname,s.valueOf(varname));
 	    if( doc != NULL ) {
