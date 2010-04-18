@@ -23,6 +23,8 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include <pwd.h>
+#include <grp.h>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
@@ -34,6 +36,23 @@
 
 
 void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
+#if 0
+    /* This code is used to debug initial permission problems. */
+    struct passwd *pw;
+    struct group *grp;
+    
+    pw = getpwuid(getuid());
+    grp = getgrgid(getgid());
+    cerr << "real      : " << getuid() 
+	 << '(' << pw->pw_name << ")\t" << getgid() 
+	 << '(' << grp->gr_name << ')' << endl;
+    pw = getpwuid(geteuid());
+    grp = getgrgid(getegid());
+    cerr << "effective : " << geteuid() 
+	 << '(' << pw->pw_name << ")\t" << getegid() 
+	 << '(' << grp->gr_name << ')' << endl;
+#endif
+
     s.start();
 }
 

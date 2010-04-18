@@ -167,17 +167,17 @@ public:
     boost::filesystem::path pathname;
     
 public:
-    url() : protocol(""), host(""), port(0), pathname("") {}
+    url() : port(0), host(""), protocol(""), pathname("") {}
 
     explicit url( const std::string& name );
     
     url( const std::string& pprotocol, const std::string& phost, 
 	 const boost::filesystem::path& ppathname ) 
-	: protocol(pprotocol), host(phost), port(0), pathname(ppathname) {} 
+	: port(0), host(phost), protocol(pprotocol), pathname(ppathname) {} 
 
     url( const std::string& pprotocol, const std::string& phost, int pport, 
 	 const boost::filesystem::path& ppathname ) 
-	: protocol(pprotocol), host(phost), port(pport), pathname(ppathname) {} 
+	: port(pport), host(phost), protocol(pprotocol), pathname(ppathname) {} 
     
     bool absolute() const;
 

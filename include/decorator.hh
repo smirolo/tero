@@ -66,7 +66,7 @@ protected:
 public:
     explicit basicDecorator( std::basic_streambuf<charT,traitsT> *sb, 
 			     bool formated = false )
-	: super(sb), next(NULL), nextBuf(sb), pre(formated) {
+	: super(sb), nextBuf(sb), next(NULL), pre(formated) {
     }
     
     virtual ~basicDecorator() {}

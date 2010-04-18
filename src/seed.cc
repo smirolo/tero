@@ -23,8 +23,6 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include <pwd.h>
-#include <grp.h>
 #include <unistd.h>
 #include <cstdlib>
 #include <sstream>
@@ -35,7 +33,6 @@
 #include "changelist.hh"
 #include "composer.hh"
 #include "docbook.hh"
-#include "download.hh"
 #include "projfiles.hh"
 #include "logview.hh"
 #include "projindex.hh"
@@ -49,23 +46,6 @@ int main( int argc, char *argv[] )
     using namespace std;
     using namespace boost::program_options;
     using namespace boost::filesystem;
-
-#if 0
-    /* This code is used to debug initial permission problems. */
-    struct passwd *pw;
-    struct group *grp;
-    
-    pw = getpwuid(getuid());
-    grp = getgrgid(getgid());
-    cerr << "real      : " << getuid() 
-	 << '(' << pw->pw_name << ")\t" << getgid() 
-	 << '(' << grp->gr_name << ')' << endl;
-    pw = getpwuid(geteuid());
-    grp = getgrgid(getegid());
-    cerr << "effective : " << geteuid() 
-	 << '(' << pw->pw_name << ")\t" << getegid() 
-	 << '(' << grp->gr_name << ')' << endl;
-#endif
 
     try {
 	/* parse command line arguments */
@@ -107,60 +87,84 @@ int main( int argc, char *argv[] )
 	session s;
 	s.restore(params);
 
-#if 0		
-	/* topUrl is used as the root for all redirects. */
-	char *base = getenv("REQUEST_URI");
-	if( base != NULL ) {
-	    std::cerr << "REQUEST_URI=" << base;
-	    char *endPtr;
-	    for( endPtr = base; *endPtr != '\0' & *endPtr != '?' & *endPtr != '#'; ++endPtr );
-	    endPtr -= s.vars["view"].size();
-	    assert( endPtr - base > 0 );
-	    s.vars["topUrl"] = std::string(base,endPtr - base);
-	} else {
-	    s.vars["topUrl"] = std::string();
-	}
-#endif
-
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
 	    || s.vars["view"] == "/" ) {
-	    cout << redirect("services/index.corp") << htmlContent << endl;
+	    cout << redirect("index.corp") << htmlContent << endl;
 	    
-	} else {	    
-	    path uiPath(s.vars["themeDir"] + std::string(s.exists() ? 
-						      "/maintainer.ui" : "/document.template"));
-	    dispatchDoc docs(s.vars["srcTop"]);
-	    login li;
-	    logout lo;
-	    composer edit(s.vars["themeDir"] + std::string("/edit.ui"),
-			  composer::create);
+	} else {	    	    
+	    gitcmd revision(s.valueOf("binDir") + "/git");
+	    dispatchDoc docs(s.valueOf("srcTop"));
 
-	    /* Composer for a project view */
-	    composer project(s.vars["themeDir"] 
-			     + std::string("/project.template"),
-			     composer::error);
+	    /* The pattern need to be inserted in more specific to more 
+	       generic order since the matcher will apply each the first
+	       one that yields a positive match. */	    
 
-	    /* Composer for view on source code files */
-	    path sourceTmpl(s.vars["themeDir"] 
-			    + std::string("/source.template"));
-	    composer source(sourceTmpl,
-			    composer::error);
-
-	    /* Composer for corporate presentations */
-	    path corpTmpl(s.vars["themeDir"] 
-			  + std::string("/corporate.template"));
-	    composer corporate(corpTmpl,composer::error);
-
-	    composer invoice(s.vars["themeDir"] 
+#if 0
+	    composer invoice(s.valueOf("themeDir") 
 			     + std::string("/invoice.template"),
 			     composer::create);
+	    statement stmt;
+	    docs.add("document",boost::regex("/statement"),stmt);	 
+	    docs.add("view",boost::regex("/statement"),invoice);	    
 
-	    /* Composer for view on all other documents */
-	    composer entry(uiPath,composer::error);
-	    cancel cel;
-	    change chg;
-	    
+	    docs.add("view",boost::regex("/cancel"),cel);
+	    composer edit(s.vars["themeDir"] + std::string("/edit.ui"),
+			  composer::create);
+	    docs.add("view",boost::regex("/edit"),edit);
+	    login li;
+	    docs.add("view",boost::regex("/login"),li);
+	    logout lo;
+	    docs.add("view",boost::regex("/logout"),lo);
+	    docs.add("view",boost::regex("/save"),chg);
+
+	    /* Login and Logout pages generates HTML to be displayed
+	       in a web browser. It is very often convinient to quickly
+	       start and stop recording worked hours from the command line.
+	       In that case, "work" and "rest" can be used as substitute. */
+	    auth work;
+	    deauth rest;
+	    docs.add("view",boost::regex("work"),work);
+	    docs.add("view",boost::regex("rest"),rest);
+#endif
+
+	    /* The build "document" gives an overview of the set 
+	       of all projects at a glance and can be used to assess 
+	       the stability of the whole as a release candidate. */
+	    logview logv;
+	    docs.add("document",boost::regex(".*/log"),logv);
+
+	    /* A project index.xml "document" file show a description,
+	       commits and unit test status of a single project through 
+	       a project "view". */
+	    regressions rgs;
+	    docs.add("regressions",boost::regex(".*regression\\.log"),rgs);
+	    boost::filesystem::path regressname
+		= s.build(boost::filesystem::path(s.valueOf("document")).parent_path() 
+			  / std::string("test/regression.log"));
+	    s.vars["regressions"] = regressname.string();
+
+	    changedescr checkinHist(&revision);
+	    docs.add("history",boost::regex(".*index\\.xml"),checkinHist);
+	    projindex pind;
+	    docs.add("document",boost::regex(".*index\\.xml"),pind);	 
+
+	    /* Composer for a project view */
+	    composer project(s.valueOf("themeDir")
+			     + std::string("/project.template"),
+			     composer::error);
+	    docs.add("view",boost::regex(".*index\\.xml"),project);	    
+
+
+	    /* Source code "document" files are syntax-highlighted 
+	       and presented inside a source.template "view" */
+	    path sourceTmpl(s.valueOf("themeDir") 
+			    + std::string("/source.template"));
+
+	    changediff diff(sourceTmpl,&revision);
+	    docs.add("view",boost::regex("/diff"),diff);
+
+	    composer source(sourceTmpl,composer::error);
 	    linkLight leftLinkStrm(s);
 	    linkLight rightLinkStrm(s);
 	    cppLight leftCppStrm;
@@ -188,94 +192,74 @@ int main( int argc, char *argv[] )
 	    }
 
 	    shCheckfile shCheck;
-	    docs.add("check",boost::regex(".*\\.mk"),shCheck);
-	    docs.add("check",boost::regex(".*\\.py"),shCheck);
-	    docs.add("check",boost::regex(".*Makefile"),shCheck);
-	    
-	    filters.push_back(boost::regex(".*\\.mk"));			
-	    filters.push_back(boost::regex(".*\\.py"));			
-	    filters.push_back(boost::regex(".*Makefile"));			
-	    projfiles filelist(filters.begin(),filters.end());
-	    docs.add("projfiles",boost::regex(".*"),filelist);
-	    s.vars["projfiles"] = s.vars["document"];
+	    htmlEscaper leftLinkText;
+	    htmlEscaper rightLinkText;
+	    text rawtext(leftLinkText,rightLinkText);
+	    boost::regex shFilterPats[] = {
+		boost::regex(".*\\.mk"),
+		boost::regex(".*\\.py"),
+		boost::regex(".*Makefile")
+	    };
+	    for( boost::regex *pat = shFilterPats; 
+		pat != &shFilterPats[sizeof(shFilterPats)/sizeof(boost::regex)];
+		 ++pat ) {
+		docs.add("check",*pat,shCheck);
+		docs.add("document",*pat,rawtext);
+		docs.add("view",*pat,source);		
+		filters.push_back(*pat);
+	    }	    
 
-	    /* widgets for project view */
-	    
-	    regressions rgs;
-	    docs.add("regressions",boost::regex(".*regression\\.log"),rgs);
-	    boost::filesystem::path regressname
-		= s.build(boost::filesystem::path(s.valueOf("document")).parent_path() 
-			  / std::string("test/regression.log"));
-	    s.vars["regressions"] = regressname.string();
 
-	    checkstyle cks(filters.begin(),filters.end());
-	    docs.add("checkstyle",boost::regex(".*"),cks);
-	    s.vars["checkstyle"] = s.vars["document"];
-
-	    gitcmd revision(s.valueOf("binDir") + "/git");
-	    changehistory diffHist(&revision);
-	    changedescr checkinHist(&revision);
-	    docs.add("history",boost::regex(".*index\\.xml"),checkinHist);
-	    docs.add("history",boost::regex(".*"),diffHist);
-	    s.vars["history"] = s.vars["document"];
-	    
-	    changediff diff(sourceTmpl,&revision);
-	    docs.add("view",boost::regex("/diff"),diff);
-
-	    /* The pattern need to be inserted in more specific to more 
-	       generic order since the matcher will apply each the first
-	       one that yields a positive match. */
-	    download dlcmd;
-	    docs.add("document",boost::regex("/download"),dlcmd);
-	    
-
-	    logview logv;
-	    docs.add("document",boost::regex(".*/log"),logv);
-
-	    projindex pind;
-	    docs.add("document",boost::regex(".*index\\.xml"),pind);	 
-	    docs.add("view",boost::regex(".*index\\.xml"),project);
-	    
+	    /* We transform docbook formatted text into HTML for .book 
+	       and .corp "document" files and interpret all other unknown 
+	       extension files as raw text. In all cases we use a default
+	       document.template interface "view" to present those files. */ 
+	    composer entry(s.valueOf("themeDir") 
+			   + std::string("/document.template"),
+			   composer::error);
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
 	    docbook formatedDoc(leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.book"),formatedDoc);
+	    docs.add("document",boost::regex(".*\\.corp"),formatedDoc);
 
-	    text formatedText(leftFormatedText,rightFormatedText);
-	    docs.add("document",boost::regex(".*\\.corp"),formatedText);
 	    /* \todo !!! Hack for current tmpl_include implementation */
+	    text formatedText(leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
-
-	    statement stmt;
-	    docs.add("document",boost::regex("/statement"),stmt);	 
-	    
-	    htmlEscaper leftLinkText;
-	    htmlEscaper rightLinkText;
-	    text rawtext(leftLinkText,rightLinkText);
 	    docs.add("document",boost::regex(".*"),rawtext);
 
+#if 0
+	    /* We insert advertisement in non corporate pages so we need
+	       to use a different template composer for corporate pages. */
+	    composer corporate(s.valueOf("themeDir")
+			       + std::string("/corporate.template"),
+			       composer::error);
+	    docs.add("view",boost::regex(".*\\.corp"),corporate);
+#endif
+	    docs.add("view",boost::regex(".*"),entry);
+
+	    /* Widget to display status of static analysis of a project 
+	       source files in the absence of a more restrictive pattern. */
+	    checkstyle cks(filters.begin(),filters.end());
+	    docs.add("checkstyle",boost::regex(".*"),cks);
+	    s.vars["checkstyle"] = s.valueOf("document");
+
+	    /* Widget to display the history of a file under revision control
+	       in the absence of a more restrictive pattern. */	   
+	    changehistory diffHist(&revision);
+	    docs.add("history",boost::regex(".*"),diffHist);
+	    s.vars["history"] = s.valueOf("document");
+	    
+	    /* Widget to display a list of files which are part of a project.
+	       This widget is used through different "view"s to browse 
+	       the source repository. */
+	    projfiles filelist(filters.begin(),filters.end());
+	    docs.add("projfiles",boost::regex(".*"),filelist);
+	    s.vars["projfiles"] = s.valueOf("document");
+      
+	    /* Widget to generate a rss feed. */
 	    changerss rss(&revision);
 	    docs.add("view",boost::regex(".*rss\\.xml"),rss);
-
-	    docs.add("view",boost::regex("/cancel"),cel);
-	    docs.add("view",boost::regex("/edit"),edit);
-	    docs.add("view",boost::regex("/login"),li);
-	    docs.add("view",boost::regex("/logout"),lo);
-	    docs.add("view",boost::regex("/save"),chg);
-
-	    /* Login and Logout pages generates HTML to be displayed
-	       in a web browser. It is very often convinient to quickly
-	       start and stop recording worked hours from the command line.
-	       In that case, "work" and "rest" can be used as substitute. */
-	    auth work;
-	    deauth rest;
-	    docs.add("view",boost::regex("work"),work);
-	    docs.add("view",boost::regex("rest"),rest);
-
-	    docs.add("view",boost::regex("/statement"),invoice);	    
-
-	    docs.add("view",boost::regex(".*\\.corp"),corporate);
-	    docs.add("view",boost::regex(".*"),entry);
 	    
 	    docs.fetch(s,"view");
 	}
@@ -288,7 +272,7 @@ int main( int argc, char *argv[] )
 	cout << "</head>" << endl;
 	cout << "<body>" << endl;
 	cout << "<p>" << endl;
-	cout << e.what() << endl;
+	cout << "caught exception: " << e.what() << endl;
 	cout << "</p>" << endl;
 	cout << "</body>" << endl;
 	cout << "</html>" << endl;

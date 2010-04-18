@@ -60,7 +60,7 @@ public:
     static boost::filesystem::path storage;
 
     /* unique identifier for the session */
-    uint64_t id;
+    int64_t id;
 
     std::string username;
     

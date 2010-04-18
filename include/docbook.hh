@@ -61,8 +61,9 @@ protected:
     rapidxml::xml_document<> doc;
 
     bool info;
+    bool linebreak;
     int sectionLevel;
-
+   
     void any( const rapidxml::xml_node<>& node );
 
     void captionEnd( const rapidxml::xml_node<>& node );
@@ -77,6 +78,8 @@ protected:
     void informaltableStart( const rapidxml::xml_node<>& node );
     void linkEnd( const rapidxml::xml_node<>& node );
     void linkStart( const rapidxml::xml_node<>& node );
+    void literallayoutStart( const rapidxml::xml_node<>& node );
+    void literallayoutEnd( const rapidxml::xml_node<>& node );
     void itemEnd( const rapidxml::xml_node<>& node );
     void itemStart( const rapidxml::xml_node<>& node );
     void paraEnd( const rapidxml::xml_node<>& node );

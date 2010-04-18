@@ -40,6 +40,9 @@ namespace {
 	    case node_element:
 		/* author, title, date. */
 		s.vars[n->name()] = n->value();
+	    default:
+		/* Nothing to do except prevent gcc from complaining. */
+		break;
 	    }
 	}
     }
@@ -219,7 +222,8 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "link", &docbook::linkStart, &docbook::linkEnd },
     { "listitem", &docbook::itemStart, &docbook::itemEnd },
     { "literal", &docbook::any, &docbook::any },
-    { "literallayout", &docbook::any, &docbook::any },
+    { "literallayout", &docbook::literallayoutStart, 
+                       &docbook::literallayoutEnd },
     { "locator", &docbook::any, &docbook::any },
     { "manvolnum", &docbook::any, &docbook::any },
     { "markup", &docbook::any, &docbook::any },
@@ -420,7 +424,7 @@ bool docbook::walkNodeEntry::operator<( const walkNodeEntry& right ) const {
 
 
 docbook::docbook( decorator& l,  decorator& r ) 
-    : text(l,r), buffer(NULL), info(false), sectionLevel(0) {}
+    : text(l,r), buffer(NULL), info(false), linebreak(false), sectionLevel(0) {}
 
 docbook::~docbook() {
     if( buffer != NULL ) delete [] buffer;
@@ -465,8 +469,13 @@ void docbook::imagedataEnd( const rapidxml::xml_node<>& node ) {
 void docbook::imagedataStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	rapidxml::xml_attribute<> *fileref = node.first_attribute("fileref");
+	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( fileref != NULL ) {	
-	    std::cout << html::img().src(fileref->value());
+	    if( role != NULL ) {
+		std::cout << html::img().src(fileref->value()).classref(role->value());
+	    } else {
+		std::cout << html::img().src(fileref->value());
+	    }
 	} else {
 	    std::cout << html::img();
 	}
@@ -513,6 +522,27 @@ void docbook::linkStart( const rapidxml::xml_node<>& node ) {
     }
 }
 
+
+void docbook::literallayoutEnd( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+	linebreak = false;
+#if 0
+	std::cout << html::p::end;
+#endif
+    }
+}
+
+
+void docbook::literallayoutStart( const rapidxml::xml_node<>& node ) {
+    if( !info ) {
+#if 0
+	std::cout << html::p();   
+#endif
+	linebreak = true;
+    }
+}
+
+
 void docbook::itemEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	std::cout << html::li::end;
@@ -527,12 +557,7 @@ void docbook::itemStart( const rapidxml::xml_node<>& node ) {
 
 void docbook::paraEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	rapidxml::xml_attribute<> *role = node.first_attribute("role");
-	if( role != NULL ) { 
-	    std::cout << html::pre::end;
-	} else {
-	    std::cout << html::p::end;
-	}
+	std::cout << html::p::end;
     }
 }
 
@@ -540,7 +565,7 @@ void docbook::paraStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( role != NULL ) { 
-	    std::cout << html::pre().classref(role->value());
+	    std::cout << html::p().classref(role->value());
 	} else {
 	    std::cout << html::p();
 	}
@@ -694,7 +719,12 @@ void docbook::walk( const rapidxml::xml_node<>& node ) {
     case node_cdata:
 	if( !info ) {
 	    std::cout << node.value();
+	    if( linebreak ) std::cout << "<br />" << std::endl;
 	}
+	break;
+    default:
+	/* \todo currently we only prevent gcc from complaining but
+	   there are more cases that might have to be handled here. */
 	break;
     }
 
@@ -707,8 +737,11 @@ void docbook::walk( const rapidxml::xml_node<>& node ) {
     case node_element:
 	if( d != walkersEnd ) (this->*(d->end))(node);
 	break;
+    default:
+	/* \todo currently we only prevent gcc from complaining but
+	   there are more cases that might have to be handled here. */
+	break;
     }
-
 }
 
 

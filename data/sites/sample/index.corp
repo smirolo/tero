@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<section xmlns="http://docbook.org/ns/docbook" 
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xi="http://www.w3.org/2001/XInclude">
+  <info>	 
+    <title>Welcome</title>
+  </info>
+  <para>
+  This site is under construction. Please come back later.
+  </para>
+</section>

@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title><!-- tmpl_var name='title' --></title>
+<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
+</head>
+
+<body>
+  <div>
+    <div id="title"><!-- tmpl_var name='title' --></div>
+  </div>
+    
+  <div id="document">
+    <table class="document">
+      <tr>
+	<td id="sidebar">
+	  <!-- tmpl_include name='topMenu.template' -->
+	  <div class="MenuWidget">
+	    <h3>History</h3>
+	    <a href="index.rss">
+	      <p align="right"><img src="/resources/25.png" 
+				    alt="RSS feed" /> rss</p>
+	    </a>
+	    <p>
+	      <!-- tmpl_var name='history' -->
+	    </p>
+	  </div>
+	  <!-- tmpl_var name='projfiles' -->
+	</td>
+
+	<td id="entry">
+	  <!-- tmpl_var name='document' -->
+	</td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

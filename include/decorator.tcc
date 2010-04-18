@@ -133,6 +133,7 @@ void basicHtmlEscaper<charT,traitsT>::token( xmlEscToken token,
 					     int first, int last, 
 					     bool fragment ) {
     switch( token ) {
+    case escErr:
     case escData:
 	super::nextBuf->sputn(&line[first],last-first);
 	break;
@@ -181,6 +182,9 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 	    }
 	}
 	state = linkStartState;
+	break;
+    default:
+	/* Nothing to do except prevent gcc from complaining. */
 	break;
     }	
 }

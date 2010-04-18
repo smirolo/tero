@@ -28,10 +28,14 @@
 
 #include "document.hh"
 
-/** Display of a page based on a template HTML file.
+/** Display of a page based on a template file.
  */
 class composer : public document {
 public:
+
+    /* When the composer resolves a filename that is not present
+       on disk, it will either "create" the file or throw an "error"
+       exception. */
     enum fileNotFoundBehavior {
 	create,
 	error
@@ -50,8 +54,7 @@ public:
 
     explicit composer( fileNotFoundBehavior b ) : behavior(b) {}
 
-    composer( const boost::filesystem::path& f,
-	      fileNotFoundBehavior b ) 
+    composer( const boost::filesystem::path& f, fileNotFoundBehavior b ) 
 	: behavior(b), fixed(f) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );

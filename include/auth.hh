@@ -29,7 +29,7 @@
 #include <exception>
 #include "document.hh"
 
-/* Authentication with the backend server. */
+/* Implements authentication of contributors. */
 
 class invalidAuthentication : public std::exception {
 public:
@@ -45,6 +45,11 @@ public:
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
+/** Web-based authentication checks the credentials passed to the CGI
+    against permissions granted on the server and returns a session 
+    identifier saved as a cookie in the browser on the client-side 
+    for further requests. 
+*/
 class login : public auth {
 public:
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
@@ -61,6 +66,9 @@ public:
 };
 
 
+/** Force de-authentication will invalidate the current session identifier
+    passed as part of the request.
+*/
 class logout : public deauth {
 public:
     virtual void fetch( session& s, const boost::filesystem::path& pathname );

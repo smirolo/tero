@@ -105,7 +105,7 @@ std::string reverseCGIFormatting( const std::string& str ) {
 
 	stringstream result;
 	const char *p = str.c_str();
-	for( int i = 0; i < str.size(); ++i ) {
+	for( size_t i = 0; i < str.size(); ++i ) {
 		if( p[i] == '%' ) {
 			char escaped = static_cast<char>(fromHexDigit(p[i + 1]) * 16 
 											 + fromHexDigit(p[i + 2]));

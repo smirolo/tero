@@ -1,0 +1,9 @@
+  <div class="MenuWidget">
+    <h3>Links</h3>
+    <p>
+      <a href="/">home</a><br />
+      <a href="/undercons.corp">about</a><br />
+      <a href="/undercons.corp">contact</a><br />
+      <a href="/undercons.corp">services</a><br />
+    </p>
+  </div>

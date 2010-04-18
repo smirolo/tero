@@ -36,7 +36,7 @@ namespace detail {
 	const char* name;
 
 	explicit nodeEnd( const char* n, bool nl = false ) 
-	    : name(n), newline(nl) {}
+	    : newline(nl), name(n) {}
 
 	template<typename ch, typename tr>
 	friend std::basic_ostream<ch, tr>&
@@ -84,8 +84,9 @@ namespace detail {
 		std::string *attrVs,
 		const size_t attrNbs,
 		bool nl = false ) : newline(nl), name(n), 
-				    attrNames(attrNs), attrValues(attrVs), 
-				    attrArrayLength(attrNbs) {}
+				    attrArrayLength(attrNbs),
+				    attrNames(attrNs), attrValues(attrVs)
+	{}
 	
 	template<typename ch, typename tr>
 	friend std::basic_ostream<ch, tr>&
@@ -240,11 +241,26 @@ namespace html {
     /** HTML p markup
      */
     class p : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr,
+	};
+	
+	static const size_t attrLength = 1;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+
     public:  
 	static const char* name;
 	static const detail::nodeEnd end;
-    
-	p() : markup(name,NULL,NULL,0,true) {}
+
+	p() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	p& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}
     };
 
     /** pre markup

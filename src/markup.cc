@@ -63,6 +63,9 @@ namespace html {
 
     const char* p::name = "p";
     const detail::nodeEnd p::end(p::name,true);
+    const char *p::attrNames[] = {
+	"class"
+    };
 
     const char* pre::name = "pre";
     const detail::nodeEnd pre::end(pre::name,true);

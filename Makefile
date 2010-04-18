@@ -28,14 +28,15 @@
 include $(shell dws context)
 include $(etcDir)/dws/prefix.mk
 
-.PHONY: configure_apache
-
 bins 		:=	seed
 libs		:=	libseed.a
 shares		:=	seed.pdf
+resources	:=	style.css
+
+vpath style.css $(srcDir)/data/themes/default
 
 libseed.a: auth.o booktok.o composer.o changelist.o checkstyle.o docbook.o \
-	 	cpptok.o document.o download.o gitcmd.o invoices.o  \
+	 	cpptok.o document.o gitcmd.o invoices.o  \
 		logview.o markup.o projfiles.o projindex.o shtok.o xmlesc.o \
 		xmltok.o webserve.o
 
@@ -49,3 +50,10 @@ session.o: session.cc
 seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 
 include $(etcDir)/dws/suffix.mk
+
+install:: $(wildcard $(srcDir)/data/sites/sample/*.corp)
+	$(installFiles) $^ $(siteTop)
+
+install:: $(wildcard $(srcDir)/data/themes/default/*.template)
+	$(installDirs) $(shareDir)/seed
+	$(installFiles) $^ $(shareDir)/seed

@@ -116,6 +116,9 @@ void cppCheckfile::newline(const char *line,
     case readLicense:
 	licenseText += slice<const char>(&line[first],&line[last]);
 	break;
+    default:
+	/* Nothing to do except prevent gcc from complaining. */   
+	break;
     }
     ++nbLines;
     if( comment == codeLine ) ++nbCodeLines;
@@ -134,6 +137,9 @@ void cppCheckfile::token( cppToken token, const char *line,
 	    licenseText += slice<const char>(&line[first],&line[last]);
 	    if( !fragment ) state = doneLicense;
 	    break;
+	default:
+	    /* Nothing to do except prevent gcc from complaining. */
+	    break;
 	}
 	/* \todo we donot mark comment lines correctly but it does not
 	   matter because if there is any code on the line, it will
@@ -145,6 +151,9 @@ void cppCheckfile::token( cppToken token, const char *line,
 	switch( state ) {
 	case readLicense:
 	    state = doneLicense;
+	    break;
+	default:
+	    /* Nothing to do except prevent gcc from complaining. */
 	    break;
 	}
 	break;
@@ -187,6 +196,9 @@ void shCheckfile::newline(const char *line, int first, int last )
     case readLicense:
 	licenseText += slice<const char>(&line[first],&line[last]);
 	break;
+    default:
+	/* Nothing to do except prevent gcc from complaining. */   
+	break;
     }
     ++nbLines;
 #if 0
@@ -211,6 +223,9 @@ void shCheckfile::token( shToken token, const char *line,
 	case readLicense:
 	    licenseText += slice<const char>(&line[first],&line[last]);
 	    if( !fragment ) state = doneLicense;
+	    break;
+	default:
+	    /* Nothing to do except prevent gcc from complaining. */   
 	    break;
 	}
 	break;
