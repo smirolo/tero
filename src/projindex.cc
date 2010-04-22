@@ -131,13 +131,15 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    candidateSet candidates;
 	    for( const char **d = dists; 
 		 d != &dists[sizeof(dists)/sizeof(char*)]; ++d ) {
-		path downname(path(*d) / std::string(projname->value()));
-		path prefix(path(s.valueOf("siteTop")) / downname);
-		for( directory_iterator entry = directory_iterator(path(s.valueOf("siteTop")) / std::string(*d)); 
-		     entry != directory_iterator(); ++entry ) {
-		    if( entry->string().compare(0,prefix.string().size(),
-						prefix.string()) == 0 ) {
-			candidates.push_back(path("/") / path(*d) / entry->filename());
+		path dirname(s.valueOf("siteTop")) / std::string(*d);
+		path prefix(dirname / std::string(projname->value()));
+		if( boost::filesystem::exists(dirname) ) {
+		    for( directory_iterator entry = directory_iterator(dirname); 
+			 entry != directory_iterator(); ++entry ) {
+			if( entry->string().compare(0,prefix.string().size(),
+						    prefix.string()) == 0 ) {
+			    candidates.push_back(path("/") / path(*d) / entry->filename());
+			}
 		    }
 		}
 	    }

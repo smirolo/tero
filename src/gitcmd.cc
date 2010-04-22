@@ -157,7 +157,11 @@ void gitcmd::checkins( ::history& hist,
 	    if( !isspace(line[0]) ) {
 		/* We are dealing with a file that was part of this commit. */
 		std::stringstream hrefs;
+#if 0
 		hrefs << s.asUrl(project / boost::filesystem::path(strip(line)));
+#else
+		hrefs << s.asUrl(boost::filesystem::path(strip(line)));
+#endif
 		ci->addFile(hrefs.str());
 	    } else {
 		descr << lcstr;

@@ -132,7 +132,7 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     if( !boost::filesystem::exists(pathname) ) {
 	std::cout << html::p()
-		  << "There are regression logs available for the unit tests."
+		  << "There are no regression logs available for the unit tests."
 		  << html::p::end;
 	return;
     }

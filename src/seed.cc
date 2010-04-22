@@ -117,6 +117,7 @@ int main( int argc, char *argv[] )
 	    logout lo;
 	    docs.add("view",boost::regex("/logout"),lo);
 	    docs.add("view",boost::regex("/save"),chg);
+#endif
 
 	    /* Login and Logout pages generates HTML to be displayed
 	       in a web browser. It is very often convinient to quickly
@@ -126,7 +127,6 @@ int main( int argc, char *argv[] )
 	    deauth rest;
 	    docs.add("view",boost::regex("work"),work);
 	    docs.add("view",boost::regex("rest"),rest);
-#endif
 
 	    /* The build "document" gives an overview of the set 
 	       of all projects at a glance and can be used to assess 

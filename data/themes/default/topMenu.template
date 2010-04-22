@@ -4,6 +4,10 @@
       <a href="/">home</a><br />
       <a href="/undercons.corp">about</a><br />
       <a href="/undercons.corp">contact</a><br />
-      <a href="/undercons.corp">services</a><br />
+    </p>
+  </div>
+  <div class="MenuWidget">
+    <h3>Projects</h3>
+    <p>
     </p>
   </div>
