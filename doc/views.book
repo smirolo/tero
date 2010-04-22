@@ -28,7 +28,7 @@ The implementation is using std::ostream hooks to perform text enhancements such
 
 <!-- composition of document views: caching of generated pages. -->
 <para>
-Each HTML page sent to the browser is generated out of a template and either an underlying document in pwd, buildTop or srcTop. This permits to keep read-only generated files out of the version control repository while providing a consistent framework to generate pages.
+Each HTML page sent to the browser is generated out of a template and either an underlying document in pwd, siteTop or srcTop. This permits to keep read-only generated files out of the version control repository while providing a consistent framework to generate pages.
 </para>
 <para>
 Right now pages are regenerated each time a document is accessed but there are no reason while HTML pages could not be cached. 

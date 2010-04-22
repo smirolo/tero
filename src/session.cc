@@ -42,12 +42,12 @@ undefVariableError::undefVariableError( const std::string& varname )
 url session::asUrl( const boost::filesystem::path& p ) const
 {
     boost::filesystem::path name = p;
-    boost::filesystem::path buildTop = valueOf("buildTop");
+    boost::filesystem::path siteTop = valueOf("siteTop");
     boost::filesystem::path srcTop = valueOf("srcTop");
     if( prefix(srcTop,p) ) {
 	name = boost::filesystem::path("/") / subdirpart(srcTop,p);
-    } else if( prefix(buildTop,p) ) {
-	name = boost::filesystem::path("/") / subdirpart(buildTop,p);
+    } else if( prefix(siteTop,p) ) {
+	name = boost::filesystem::path("/") / subdirpart(siteTop,p);
     }
     return url("","",name);
 }
@@ -107,8 +107,8 @@ session::abspath( const boost::filesystem::path& relpath ) const {
     }	
 
     /* Second we try to access the file as a relative pathname 
-       from buildTop. */
-    boost::filesystem::path fromBuildTop(valueOf("buildTop"));
+       from siteTop. */
+    boost::filesystem::path fromBuildTop(valueOf("siteTop"));
     fromBuildTop /= relpath;
     if( boost::filesystem::exists(fromBuildTop) ) {        
 	return fromBuildTop;
@@ -170,7 +170,7 @@ void session::restore( const boost::program_options::variables_map& params )
     opts.add_options()
 		("binDir",value<std::string>(),"path to outside executables")
 		("buildTop",value<std::string>(),"path to build root")
-		("siteTop",value<std::string>(),"path to packages repository")
+		("siteTop",value<std::string>(),"path to the files published on the web site")
 		("srcTop",value<std::string>(),"path to document top")
 		("themeDir",value<std::string>(),"path to user interface elements")
 	        ("contractDb",value<std::string>(),"path to contracts database");

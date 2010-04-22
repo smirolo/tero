@@ -88,18 +88,18 @@ public:
 	If the variable exists in the session and its value can
 	be interpreted as an absolute path, that value is returned 
 	as such else if the variable exists in the session and its value 
-	can be interpreted as a relative path, the pwd, buildTop and srcTop
+	can be interpreted as a relative path, the pwd, siteTop and srcTop
 	directories are searched in order until a match is found.
 
 	If no match can be found, there is no actual files associated
 	with that variable, we assume the file will be generated and
-	thus return buildTop + value.
+	thus return siteTop + value.
     */
     boost::filesystem::path 
     abspath( const boost::filesystem::path& name ) const;
 
     /* returns the equivalent to path *p* within the build tree 
-       rooted at buildTop. */
+       rooted at siteTop. */
     boost::filesystem::path build( const boost::filesystem::path& p ) const;
 
     /** returns true if *left* is a prefix of *right*.
