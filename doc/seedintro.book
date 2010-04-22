@@ -3,4 +3,9 @@
 	 xmlns:xlink="http://www.w3.org/1999/xlink">
   <para>The purpose of information distribution is to efficiently complete a project that require interaction of many individuals as well as tracking the status of a project and the contributions made so far to it. The most useful <link linkend="infodist.book">features and technologies</link> have been integrated in <emphasis>seed</emphasis>, a consistent web-frontend based on document-sensitive <link linkend="views.book">views</link>.</para>
 <para>\todo: seed groups source code repository browser (mixed source/doc), build view. bugtracking.</para>
+<mediaobject>
+  <imageobject>
+    <imagedata fileref="seedconcepts.svg" format="SVG"/>
+  </imageobject>
+</mediaobject>
 </section>
