@@ -42,13 +42,13 @@ size_t shTokenizer::tokenize( const char *line, size_t n )
     void *trans = state;
     bool newline = false;
     const char *p = line;
-    if( std::distance(line,p) >= n ) return n;
+    if( n == 0 ) return n;
     if( trans != NULL ) goto *trans; else goto token;
     
 advancePointer:
     ++p;
     last = std::distance(line,p);
-    switch( (std::distance(line,p) >= n) ? '\0' : *p ) {
+    switch( ((size_t)std::distance(line,p) >= n) ? '\0' : *p ) {
     case '\r': 
 	while( *p == '\r' ) ++p; 
 	assert( *p == '\n' | *p == '\0' );

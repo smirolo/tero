@@ -99,6 +99,9 @@ void projfiles::flush()
 	std::cout << html::p::end;
 	std::cout << html::div::end;
 	break;	
+    default:
+	/* Nothing to do excepts shutup gcc warnings. */
+	break;
     }	
 }
 

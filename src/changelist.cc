@@ -198,17 +198,18 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	/* http://www.feedicons.com/ */
 	htmlEscaper esc;
 
+	/* \todo get the title and domainname from the session. */
 	std::cout << ::rss().version("2.0")
 		  << channel()
 		  << rsslink()
 		  << s.asUrl("") << rsslink::end
-		  << title() << "Fortylines Solutions" << title::end;
+		  << title() << "Title" << title::end;
 
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
 	    std::cout << item();
 	    std::cout << title() << ci->title << title::end;
-	    std::cout << rsslink() << "http://fortylines.com" << rsslink::end;
+	    std::cout << rsslink() << "domainname" << rsslink::end;
 	    std::cout << guid() << ci->title << guid::end;
 	    std::cout << author();
 	    esc.attach(std::cout);

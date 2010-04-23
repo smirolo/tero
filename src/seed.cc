@@ -40,6 +40,10 @@
 #include "checkstyle.hh"
 #include "webserve.hh"
 
+#if 0
+/* We use this flag to trigger features that are currently in development. */
+#define devsite
+#endif
 
 int main( int argc, char *argv[] )
 {
@@ -100,7 +104,7 @@ int main( int argc, char *argv[] )
 	       generic order since the matcher will apply each the first
 	       one that yields a positive match. */	    
 
-#if 0
+#ifdef devsite 
 	    composer invoice(s.valueOf("themeDir") 
 			     + std::string("/invoice.template"),
 			     composer::create);
@@ -228,7 +232,7 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
 	    docs.add("document",boost::regex(".*"),rawtext);
 
-#if 0
+#if devsite
 	    /* We insert advertisement in non corporate pages so we need
 	       to use a different template composer for corporate pages. */
 	    composer corporate(s.valueOf("themeDir")

@@ -68,11 +68,6 @@ void checkfile::cache() {
     std::string s(licenseText.begin(),licenseText.size());
     if( boost::regex_search(s,m,bsdex) ) {
 	licenseType = BSDLicense;
-#if 0
-	std::cerr << "!!! 1: " << m.str(1) << std::endl;
-	std::cerr << "!!! 4: " << m.str(4) << std::endl;
-	std::cerr << "!!! 5: " << m.str(5) << std::endl;
-#endif
     }
     cached = true;
 }
@@ -84,7 +79,6 @@ void checkfile::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     url href;
     std::string name;
-#if 1
     path projdir = s.root(pathname,"index.xml");
     if( s.prefix(projdir,pathname) ) {
 	name = s.subdirpart(projdir,pathname).string();
@@ -92,9 +86,6 @@ void checkfile::fetch( session& s, const boost::filesystem::path& pathname ) {
     } else {
 	name = pathname.string();
     }
-#else
-    name = pathname.string();
-#endif
 
     std::cout << html::tr()
 	      << html::td() << html::a().href(href.string()) 
@@ -201,10 +192,7 @@ void shCheckfile::newline(const char *line, int first, int last )
 	break;
     }
     ++nbLines;
-#if 0
-    if( comment == codeLine ) ++nbCodeLines;
-    comment = emptyLine;
-#endif
+    /* \todo count codeLines... */
 }
 
 
@@ -231,6 +219,9 @@ void shCheckfile::token( shToken token, const char *line,
 	break;
     case shCode:
 	state = doneLicense;
+	break;
+    default:
+	/* Nothing to do excepts shutup gcc warnings. */
 	break;
     }
 }

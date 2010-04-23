@@ -59,7 +59,7 @@ size_t xmlTokenizer::tokenize( const char *line, size_t n )
     void *trans = state;
     const char *p = line;
     bool newline = false;
-    size_t last;
+    int last;
     first = 0;
 
     if( n == 0 ) return 0;
@@ -68,7 +68,7 @@ size_t xmlTokenizer::tokenize( const char *line, size_t n )
 advancePointer:
     ++p;
     last = std::distance(line,p);
-    switch( (last >= n) ? '\0' : *p ) {
+    switch( ((size_t)last >= n) ? '\0' : *p ) {
     case '\r': 
 	while( *p == '\r' ) ++p; 
 	assert( *p == '\n' | *p == '\0' );
@@ -88,7 +88,7 @@ advancePointer:
 	}
 	state = trans;	
     } 
-    if( last >= n ) return last;
+    if( (size_t)last >= n ) return last;
     goto *trans;
 
 attValueDouble:
@@ -225,7 +225,7 @@ startComment2:
     }
     switch( *p ) {
 #if 0
-	/* It was introduced for spaces after tag at end of line
+	/* \todo It was introduced for spaces after tag at end of line
 	   but this does not suit very well with formatted text. */
     case '\t':
     case ' ':

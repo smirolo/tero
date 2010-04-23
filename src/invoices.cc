@@ -118,20 +118,11 @@ void statement::footer()
 
 	    size_t fee = d.hours() * tm->second.tarif;
 	    total += fee;
-#if 0
-	    std::cout << html::tr()
-		      << html::td() << start.date() << html::td::end
-		      << "<td align=\"right\">" << d.hours() << html::td::end
-		      << "<td align=\"right\">" << '$' << fee << html::td::end
-		      << html::tr::end;
-#else
 	    std::cout << "<row>"
 		      << "<entry>" << start.date() << "</entry>"
 		      << "<entry>" << d.hours() << "</entry>"
 		      << "<entry>$" << fee << "</entry>"
 		      << "</row>";
-
-#endif
 	}
 
 	for( size_t i = 20; i > tm->second.hours.size(); --i ) {

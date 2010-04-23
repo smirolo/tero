@@ -27,6 +27,11 @@ The implementation is using std::ostream hooks to perform text enhancements such
 </para>
 
 <!-- composition of document views: caching of generated pages. -->
+<mediaobject>
+  <imageobject>
+    <imagedata fileref="seedconcepts.svg" width="6.5in" />
+  </imageobject>
+</mediaobject>
 <para>
 Each HTML page sent to the browser is generated out of a template and either an underlying document in pwd, siteTop or srcTop. This permits to keep read-only generated files out of the version control repository while providing a consistent framework to generate pages.
 </para>
@@ -81,38 +86,8 @@ Right now pages are regenerated each time a document is accessed but there are n
       The browser view presents a source file (.cc, .py, etc.) in the repository as a syntax highlighted document. A changeset and a directory listing widgets are associated to the current source file in the view. Each link in the changeset brings a diff view between the head and the link's revision.  
   </para>
   <para>
-While source code and documentation are usually maintained and published separately, Fortylines solutions' <link linkend="/seed">seed</link> product enables source code and other documents to cross-reference each other easily through nice web looking presentation of source files and urls embedded in comments.
+While source code and documentation are usually maintained and published separately, Fortylines' <link linkend="/seed">seed</link> product enables source code and other documents to cross-reference each other easily through nice web looking presentation of source files and urls embedded in comments.
 </para>
-<!-- rapidxml will parse '&lt;' as '<' which defies the purpose of the example
-     so we put the following element to contain CDATA.
-     rapidxml will also not give you any node for a sequence of spaces so we
-     integrate the spaces in the previous phrase tag. -->
-<programlisting>
-<![CDATA[
-/* 
-   This is a reference to &lt;a href="dws.book"&gt;web-based documentation&lt;/a&gt;. 
-*/
-
-int main( int argc, char *argv[] ) {
-    return 0;
-}
-]]>
-</programlisting>
-<para>is published as</para>
-<programlisting>
-<phrase role="comment">/* </phrase>
-<phrase role="comment">   This is a reference to <link xlink:href="dws.book">web-based documentation</link>.
-</phrase>
-<phrase role="comment">*/
-
-</phrase>
-<phrase role="identifier">int </phrase><phrase role="identifier">main</phrase><phrase role="punctuator">( </phrase><phrase role="identifier">int </phrase><phrase role="identifier">argc</phrase><phrase role="punctuator">, </phrase><phrase role="keyword">char </phrase><phrase role="operator">*</phrase><phrase role="identifier">argv</phrase><phrase role="punctuator">[</phrase><phrase role="punctuator">] </phrase><phrase role="punctuator">) </phrase><phrase role="punctuator">{
-    </phrase>
-<phrase role="keyword">return </phrase><phrase role="decimalLiteral">0</phrase><phrase role="punctuator">;
-</phrase>
-<phrase role="punctuator">}
-</phrase>
-</programlisting>
-
 </section>
+
 </section>

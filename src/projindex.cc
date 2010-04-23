@@ -131,7 +131,7 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    candidateSet candidates;
 	    for( const char **d = dists; 
 		 d != &dists[sizeof(dists)/sizeof(char*)]; ++d ) {
-		path dirname(s.valueOf("siteTop")) / std::string(*d);
+		path dirname(s.valueOf("siteTop") + "/" + std::string(*d));
 		path prefix(dirname / std::string(projname->value()));
 		if( boost::filesystem::exists(dirname) ) {
 		    for( directory_iterator entry = directory_iterator(dirname); 

@@ -45,7 +45,8 @@ seed: seed.cc session.o libseed.a \
 	libboost_filesystem.a libboost_system.a
 
 session.o: session.cc
-	$(COMPILE.cc) -DCONFIG_FILE=\"$(shell dws context)\" $(OUTPUT_OPTION) $<
+	$(COMPILE.cc) -DCONFIG_FILE=\"$(realpath $(shell dws context))\" \
+	  $(OUTPUT_OPTION) $<
 
 seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 
@@ -55,5 +56,5 @@ install:: $(wildcard $(srcDir)/data/sites/sample/*.corp)
 	$(installFiles) $^ $(siteTop)
 
 install:: $(wildcard $(srcDir)/data/themes/default/*.template)
-	$(installDirs) $(shareDir)/seed
-	$(installFiles) $^ $(shareDir)/seed
+	$(installDirs) $(installShareDir)/seed
+	$(installFiles) $^ $(installShareDir)/seed

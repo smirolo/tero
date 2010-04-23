@@ -55,8 +55,6 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
 
-    std::cerr << "!!! fetch logs from " << dirname << std::endl;
-
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	path filename(entry->filename());	
@@ -199,6 +197,7 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
       	    }
 	    std::cout << html::tr::end;
 #if 0
+	    /* display the actual ouput as an expandable row. */
 	    std::cout << html::tr();
 	    memset(cols,0,sizeof(cols));
 	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {

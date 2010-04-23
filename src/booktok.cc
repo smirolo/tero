@@ -429,11 +429,7 @@ void docbookBufferTokenizer::token( xmlToken token, const char *line,
 	    tokens.push_back((docbookToken)(tokens.back() - 1));
 	    break;
 	case xmlName:
-#if 0
-	    keyworSet::const_iterator index 
-		= std::lower_bound(docbookKeywords.begin(),docbookKeywords.end(),
-				   );
-#else
+	    /* \todo replace with dychotomic search */
 	    for( key = docbookKeywords; 
 		 key != lastKeyword;
 		 ++key ) {
@@ -442,12 +438,14 @@ void docbookBufferTokenizer::token( xmlToken token, const char *line,
 		    break;
 		}
 	    }
-#endif
 	    if( key != lastKeyword ) {
 		tokens.push_back((docbookToken)(2 * std::distance(docbookKeywords,
 								  key) 
 						+ (elementStart ? 1 : 0) + 1));
 	    }
+	    break;
+	default:
+	    /* Nothing to do excepts shutup gcc warnings. */
 	    break;
 	}
     }
@@ -494,11 +492,7 @@ void docbookStreamTokenizer::token( xmlToken token, const char *line,
 	tokens.push_back((docbookToken)(tokens.back() - 1));
 	break;
     case xmlName:
-#if 0
-	keyworSet::const_iterator index 
-	    = std::lower_bound(docbookKeywords.begin(),docbookKeywords.end(),
-			       );
-#else
+	/* \todo replace with dychotomic search. */
 	for( key = docbookKeywords; 
 	     key != lastKeyword;
 	     ++key ) {
@@ -507,7 +501,6 @@ void docbookStreamTokenizer::token( xmlToken token, const char *line,
 		break;
 	    }
 	}
-#endif
 	if( key != lastKeyword ) {
 	    tokens.push_back((docbookToken)(2 * std::distance(docbookKeywords,
 							      key) 
@@ -516,6 +509,9 @@ void docbookStreamTokenizer::token( xmlToken token, const char *line,
 	break;
     case xmlContent:
 	text += value;
+	break;
+    default:
+	/* Nothing to do excepts shutup gcc warnings. */
 	break;
     }
 }

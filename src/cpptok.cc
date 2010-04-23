@@ -192,12 +192,12 @@ size_t cppTokenizer::tokenize( const char *line, size_t n )
     bool multiline = false;
     void *trans = state;
     const char *p = line;
-    if( std::distance(line,p) >= n ) return n;
+    if( n == 0 ) return n;
     if( trans != NULL ) goto *trans; else goto token;
     
 advancePointer:
     ++p;
-    switch( (std::distance(line,p) >= n) ? '\0' : *p ) {
+    switch( ((size_t)std::distance(line,p) >= n) ? '\0' : *p ) {
     case '\\': 
 		while( *p == '\r' ) ++p; 
 		if( *p == '\n' ) goto exit;
@@ -968,6 +968,8 @@ token:
 	case 'Z':
     case '_':
 #if 0
+	/* \todo this is defined in the standard but I am not sure 
+	   how they relate to actual characters code. */
     case univsersal_character_name:
     case other_imp_def_chars:
 #endif

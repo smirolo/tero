@@ -431,9 +431,6 @@ docbook::~docbook() {
 }
 
 void docbook::any( const rapidxml::xml_node<>& node ) {
-#if 0
-    std::cerr << "any: " << node.name() << std::endl;
-#endif
 }
 
 void docbook::captionEnd( const rapidxml::xml_node<>& node ) {
@@ -526,18 +523,12 @@ void docbook::linkStart( const rapidxml::xml_node<>& node ) {
 void docbook::literallayoutEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	linebreak = false;
-#if 0
-	std::cout << html::p::end;
-#endif
     }
 }
 
 
 void docbook::literallayoutStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-#if 0
-	std::cout << html::p();   
-#endif
 	linebreak = true;
     }
 }
@@ -768,7 +759,7 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
     if( root != NULL ) {
 	xml_node<> *info = root->first_node("info");
 	if( info == NULL ) {
-	    xml_node<> *info = root->first_node("refmeta");
+	    info = root->first_node("refmeta");
 	}
 	if( info != NULL ) {
 	    parseInfo(s,*info);

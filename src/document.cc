@@ -39,14 +39,11 @@ void document::open( boost::filesystem::ifstream& strm,
 	strm.open(pathname);
 	if( !strm.fail() ) return;
     }
+    /* \todo figure out how to pass iostream error code in exception. */
     boost::throw_exception(
         basic_filesystem_error<path>(std::string("file not found"),
 				     pathname, 
-#if 1
 				     error_code()));
-#else
-    error_code(posix_error::no_such_file_or_directory)));
-#endif
 }
 
 void document::meta( session& s, const boost::filesystem::path& pathname ) {
