@@ -40,7 +40,7 @@
 #include "checkstyle.hh"
 #include "webserve.hh"
 
-#if 0
+#if 1
 /* We use this flag to trigger features that are currently in development. */
 #define devsite
 #endif
@@ -94,7 +94,7 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
 	    || s.vars["view"] == "/" ) {
-	    cout << redirect("index.corp") << htmlContent << endl;
+	    cout << redirect("index.html") << htmlContent << endl;
 	    
 	} else {	    	    
 	    gitcmd revision(s.valueOf("binDir") + "/git");
@@ -104,7 +104,7 @@ int main( int argc, char *argv[] )
 	       generic order since the matcher will apply each the first
 	       one that yields a positive match. */	    
 
-#ifdef devsite 
+#if 0
 	    composer invoice(s.valueOf("themeDir") 
 			     + std::string("/invoice.template"),
 			     composer::create);
@@ -232,7 +232,7 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
 	    docs.add("document",boost::regex(".*"),rawtext);
 
-#if devsite
+#ifdef devsite
 	    /* We insert advertisement in non corporate pages so we need
 	       to use a different template composer for corporate pages. */
 	    composer corporate(s.valueOf("themeDir")
