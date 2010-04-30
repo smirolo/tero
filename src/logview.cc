@@ -29,6 +29,12 @@
 #include "logview.hh"
 #include "markup.hh"
 
+
+void logview::meta( session& s, const boost::filesystem::path& pathname ) {
+    s.vars["title"] = std::string("Build View");   
+}
+
+
 void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     using namespace rapidxml;
@@ -41,8 +47,8 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
        If we were to present build results per row, we would still need
        to preprocess the log files once but only to determine the column
        headers. */
-
-
+    static const boost::regex logPat("([^-]+)-.*\\.log");
+    
     /* build as column headers */
     typedef std::set<path> colHeadersType;
     colHeadersType colHeaders;
@@ -55,13 +61,13 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
 
+    std::string logBase;
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
+	boost::smatch m;
 	path filename(entry->filename());	
-	if( filename.extension() == ".log" ) {
-	    /* \todo because we check the extension ".log", we will
-	       also pick-up the empty file that is used to dispatch
-	       into this method. Needs fixing of the design? */
+	if( boost::regex_search(entry->filename(),m,logPat) ) {
+	    logBase = m.str(1);
 	    size_t fileSize = file_size(*entry);
 	    char text[ fileSize + 1 ];
 	    ifstream file(*entry);
@@ -93,6 +99,18 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	}
     }
 
+    std::cout << html::p() << "This build view page shows the stability "
+	"of all projects at a glance. Each column represents a build log "
+	"obtained by running the following command on a local machine:" 
+	      << html::p::end;
+    std::cout << html::pre() << "dws build " << s.valueOf("remoteIndex")
+	      << html::pre::end;
+    std::cout << html::p() << "dws, the inter-project dependency tool "
+	"generates a build log file with XML markups as part of building "
+	"projects. That build log is then stamped with the local machine "
+	"hostname and time before being uploaded onto the remote machine. "
+	"This page presents all build logs currently available on the remote "
+	"machine." << html::p::end;
 
     /* Let's write the table, one row at a time. */
     std::cout << "<table>" << std::endl;

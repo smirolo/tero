@@ -168,12 +168,13 @@ void session::restore( const boost::program_options::variables_map& params )
     /* parse command line arguments */
     options_description	opts;
     opts.add_options()
-		("binDir",value<std::string>(),"path to outside executables")
-		("buildTop",value<std::string>(),"path to build root")
-		("siteTop",value<std::string>(),"path to the files published on the web site")
-		("srcTop",value<std::string>(),"path to document top")
-		("themeDir",value<std::string>(),"path to user interface elements")
-	        ("contractDb",value<std::string>(),"path to contracts database");
+	("binDir",value<std::string>(),"path to outside executables")
+	("buildTop",value<std::string>(),"path to build root")
+	("siteTop",value<std::string>(),"path to the files published on the web site")
+	("srcTop",value<std::string>(),"path to document top")
+	("remoteIndex",value<std::string>(),"path to project interdependencies")
+	("themeDir",value<std::string>(),"path to user interface elements")
+	("contractDb",value<std::string>(),"path to contracts database");
     boost::program_options::store(parse_config_file(istr,opts,true),configVars);
 	
     for( variables_map::const_iterator param = configVars.begin(); 

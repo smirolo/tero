@@ -32,6 +32,9 @@
 /** show projects and their status taken out of log files
 */
 class logview : public document {
+protected:
+    virtual void meta( session& s, const boost::filesystem::path& pathname );
+
 public:
     logview() {}
 
