@@ -53,8 +53,8 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     typedef std::set<path> colHeadersType;
     colHeadersType colHeaders;
 
-    /* (project,(build,status))  */
-    typedef std::map<path,std::string> colType;
+    /* (project,(build,[status,exitCode]))  */
+    typedef std::map<path,std::pair<std::string,int> > colType;
     typedef std::map<std::string,colType> tableType;
     tableType table;
 
@@ -91,7 +91,14 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    if( name != NULL ) {
 			xml_node<> *status = project->first_node("status");
 			if( status != NULL ) {
-			    table[name->value()][filename] = status->value();
+			    int exitCode = 0;
+			    xml_attribute<> *exitAttr 
+				= status->first_attribute("error");
+			    if( exitAttr ) {
+				exitCode = atoi(exitAttr->value());
+			    }
+			    table[name->value()][filename] 
+				= std::make_pair(status->value(),exitCode);
 			}
 		    }
 		}	
@@ -112,31 +119,52 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	"This page presents all build logs currently available on the remote "
 	"machine." << html::p::end;
 
-    /* Let's write the table, one row at a time. */
-    std::cout << "<table>" << std::endl;
-    std::cout << "<tr>" << std::endl;
-    std::cout << "<th></th>";
+    /* Display the table column headers. */
+    std::cout << html::table();
+    std::cout << html::tr();
+    std::cout << html::th() << html::th::end;
     for( colHeadersType::const_iterator col = colHeaders.begin();
 	 col != colHeaders.end(); ++col ) {
-	std::cout << "<th>" << *col << "</th>";
+	std::cout << html::th() 
+		  << html::a().href(s.subdirpart(s.valueOf("siteTop"),
+						 dirname / col->string()).string())
+		  << *col << html::a::end << html::th::end;
     }
-    std::cout << "</tr>" << std::endl;
+    std::cout << html::tr::end;
+
+    /* Display one project per row, one build result per column. */
     for( tableType::const_iterator row = table.begin();
 	 row != table.end(); ++row ) {
-	std::cout << "<tr>" << std::endl;
-	std::cout << "<th>" << projhref(row->first) << "</th>" << std::endl;
+	std::cout << html::tr();
+	std::cout << html::th() << projhref(row->first) << html::th::end;
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
 	    colType::const_iterator value = row->second.find(*col);
 	    if( value != row->second.end() ) {
-		std::cout << "<td>" << value->second << "</td>" << std::endl;	
+		if( value->second.second ) {
+		    std::cout << html::td().classref("positiveErrorCode");
+		} else {
+		    std::cout << html::td();
+		}
+		std::cout << value->second.first;	
 	    } else {
-		std::cout << "<td>" << "</td>" << std::endl;
+		std::cout << html::td();
 	    }
+	    std::cout << html::td::end;
 	}
-	std::cout << "</tr>" << std::endl;
+	std::cout << html::tr::end;
     }
-    std::cout << "</table>" << std::endl;
+    std::cout << html::table::end;
+
+    /* footer */
+    std::cout << html::p() << "Each cell contains the make target on which "
+	"the build stopped as in" << html::p::end;
+    std::cout << html::pre() << "dws make target target ..." << html::pre::end;
+    std::cout << html::p() << "If the build exited with an error code before "
+	"the completion of the last target, it is marked " 
+	      << html::span().classref("positiveErrorCode") 
+	      << "&nbsp;as such&nbsp;" << html::span::end << "." 
+	      << html::p::end;
     std::cout << emptyParaHack;
 }
 

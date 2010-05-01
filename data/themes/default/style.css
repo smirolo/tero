@@ -245,6 +245,11 @@ table.document {
 
 .emphasis { font-style: italic; }
 
+/* Build View - make exited with an error code. */
+.positiveErrorCode {
+    background-color: #ff6c6c;
+}
+
 /* token highlighting for C/C++ */
 .booleanLiteral { color: #101010; font-weight: bold; }
 .characterLiteral { color: #101010; font-style: italic; }

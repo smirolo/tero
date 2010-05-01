@@ -112,6 +112,8 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex("/statement"),stmt);	 
 	    docs.add("view",boost::regex("/statement"),invoice);	    
 
+	    cancel cel;
+	    change chg;
 	    docs.add("view",boost::regex("/cancel"),cel);
 	    composer edit(s.vars["themeDir"] + std::string("/edit.ui"),
 			  composer::create);
