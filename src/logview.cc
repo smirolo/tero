@@ -32,6 +32,7 @@
 
 void logview::meta( session& s, const boost::filesystem::path& pathname ) {
     s.vars["title"] = std::string("Build View");   
+    document::meta(s,pathname);
 }
 
 

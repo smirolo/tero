@@ -22,8 +22,8 @@
 	<td id="entry">	  
 	  <p align="right">
 	    <a href="index.rss">
-	      <img src="/resources/25.png" 
-		   alt="RSS feed" /> rss
+	      <img class="imgRss" src="/resources/feed-icon-14x14.png" 
+		   alt="RSS feed" />
 	    </a>
 	  </p>
 	  <!-- tmpl_var name='document' -->

@@ -29,7 +29,9 @@
 #include <exception>
 #include "document.hh"
 
-/* Implements authentication of contributors. */
+/* Contributors are <a href="/soil/doc/access.book">authenticated</a> before
+   any write operation is performed. */
+
 
 class invalidAuthentication : public std::exception {
 public:

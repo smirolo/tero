@@ -23,48 +23,30 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojindex
-#define guardprojindex
+#ifndef guardmails
+#define guardmails
 
-#include "projfiles.hh"
+#include <boost/date_time.hpp>
+#include "document.hh"
 
-class checkstyle : public projfiles {
-protected:    
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void flush();
-    
+class post {
 public:
-    checkstyle() {}
+    std::string author;
+    std::string title;
+    boost::posix_time::ptime time;    
+    std::string descr;
 
-    template<typename iter>
-    checkstyle( iter first, iter last ) : projfiles(first,last) {}
+    void expanded( std::ostream& ostr ) const;
+
 };
 
-/** Show a top-level page index of project.
-
-    The project view description and dependencies of a project as stated 
-    in the index.xml. A project view also contains the list of unit 
-    failures, checkstyle failures and open issues. There are also links 
-    to download <!-- through e-commerce transaction? --> the project as 
-    a package, browse the source code and sign-on to the rss feed.
-*/
-class projindex : public document {
+class mailthread : public document {
 protected:
-    /** name of the project 
-     */
-    std::string name;
+    bool filters( const post& p ) const;
 
 public:
-    projindex() {}
-
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
 };
+
 
 #endif

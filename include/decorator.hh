@@ -31,6 +31,7 @@
 #include "cpptok.hh"
 #include "xmltok.hh"
 #include "xmlesc.hh"
+#include "hreftok.hh"
 
 /* Decorators are used to highjack the underlying buffer of an ostream
    in order to format the text sent to the ostream.
@@ -236,6 +237,37 @@ public:
 };
 
 typedef basicLinkLight<char> linkLight;
+
+
+/** \brief Decorate a text with href links to pathnames. 
+ */
+template<typename charT, typename traitsT = std::char_traits<charT> >
+class basicHrefLight : public basicHighLight<hrefTokenizer, charT, traitsT>,
+		       public hrefTokListener {
+protected:
+    typedef basicHighLight<hrefTokenizer, charT, traitsT> super;
+    
+    session* context;
+    
+public:
+    explicit basicHrefLight( session& s ) 
+	: super(false), context(&s) { 
+	super::tokenizer.attach(*this); 
+    }
+    
+    explicit basicHrefLight(  session& s, std::basic_ostream<charT,traitsT>& o )
+	: super(o,false), context(&s) { super::tokenizer.attach(*this); }
+    
+    void newline( const char *line, int first, int last ) {
+	super::nextBuf->sputc('\n');
+    }
+    
+    void token( hrefToken token, const char *line, 
+		int first, int last, bool fragment );
+    
+};
+
+typedef basicHrefLight<char> hrefLight;
 
 
 /** \brief Decorate C++ code with token tags.

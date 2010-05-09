@@ -1,8 +1,9 @@
 <?xml version="1.0" ?>
 <projects>
   <project name="seed">
+    <title>web presentation engine</title>
     <description>
-      CGI for presenting documents, source code and build results
+      Seed is a web presentation engine to manage software projects that supports the Common Gateway Interface (CGI). A major feature not found in other related tools is that you can crosslink easily between documents, source code and build results (ex. look comment in include/auth.hh).
     </description>
     <maintainer name="Sebastien Mirolo" email="smirolo@fortylines.com" />
     <repository>
@@ -11,7 +12,7 @@
 	  themeDir is a directory containing templates and css for the site
 	</description>
 	<base>srcTop</base>
-	<default>services/theme</default>
+	<default>seed/data/themes/default</default>
       </pathname>
       <dep name="build-essential">
 	<bin>g++</bin>
@@ -21,9 +22,7 @@
       </dep>      
       <dep name="drop">
 	<bin>dws</bin>
-	<etc>.*/prefix.mk</etc>
-	<etc>.*/suffix.mk</etc>
-	<etc>.*/configure.sh</etc>
+	<etc>.*/(dws)/prefix.mk</etc>
       </dep>
       <dep name="contrib/boost">
 	<include>.*/(boost)/version.hpp</include>

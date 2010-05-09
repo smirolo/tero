@@ -36,9 +36,9 @@ resources	:=	style.css
 vpath style.css $(srcDir)/data/themes/default
 
 libseed.a: auth.o booktok.o composer.o changelist.o checkstyle.o docbook.o \
-	 	cpptok.o document.o gitcmd.o invoices.o  \
-		logview.o markup.o projfiles.o projindex.o shtok.o xmlesc.o \
-		xmltok.o webserve.o
+	 	cpptok.o document.o gitcmd.o hreftok.o invoices.o  \
+		logview.o mails.o markup.o projfiles.o projindex.o \
+		post.o shtok.o xmlesc.o xmltok.o webserve.o
 
 seed: seed.cc session.o libseed.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \

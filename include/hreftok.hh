@@ -23,48 +23,64 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojindex
-#define guardprojindex
+#ifndef guardhreftok
+#define guardhreftok
 
-#include "projfiles.hh"
+#include <iterator>
 
-class checkstyle : public projfiles {
-protected:    
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
+/** The href tokenizer recognizes filenames in a text. The decorators
+    can then thus generate hypertext links out of them.
 
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void flush();
-    
-public:
-    checkstyle() {}
-
-    template<typename iter>
-    checkstyle( iter first, iter last ) : projfiles(first,last) {}
-};
-
-/** Show a top-level page index of project.
-
-    The project view description and dependencies of a project as stated 
-    in the index.xml. A project view also contains the list of unit 
-    failures, checkstyle failures and open issues. There are also links 
-    to download <!-- through e-commerce transaction? --> the project as 
-    a package, browse the source code and sign-on to the rss feed.
+    \todo extend to recognize urls.
 */
-class projindex : public document {
+enum hrefToken {
+    hrefErr,
+    hrefFilename,
+    hrefSpace,
+    hrefText
+};
+
+extern const char *hrefTokenTitles[];
+
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, hrefToken v ) {
+    return ostr << hrefTokenTitles[v];
+}
+
+
+/** Interface for callbacks from the hrefTokenizer
+ */
+class hrefTokListener {
+public:
+    hrefTokListener() {}
+    
+    virtual void newline( const char *line, 
+			  int first, int last ) = 0;
+    
+    virtual void token( hrefToken token, const char *line, 
+			int first, int last, bool fragment ) = 0;
+};
+
+
+class hrefTokenizer {
 protected:
-    /** name of the project 
-     */
-    std::string name;
+	void *state;
+	int first;
+	hrefToken tok;
+	hrefTokListener *listener;
 
 public:
-    projindex() {}
+    hrefTokenizer() 
+	: state(NULL), first(0), tok(hrefErr), listener(NULL) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    hrefTokenizer( hrefTokListener& l ) 
+	: state(NULL), first(0), tok(hrefErr), listener(&l) {}
+    
+    void attach( hrefTokListener& l ) { listener = &l; }
 
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
+    size_t tokenize( const char *line, size_t n );
 };
+
 
 #endif

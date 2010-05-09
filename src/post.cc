@@ -23,48 +23,13 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardprojindex
-#define guardprojindex
+#include "mails.hh"
+#include "markup.hh"
 
-#include "projfiles.hh"
-
-class checkstyle : public projfiles {
-protected:    
-    virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
-
-    virtual void flush();
-    
-public:
-    checkstyle() {}
-
-    template<typename iter>
-    checkstyle( iter first, iter last ) : projfiles(first,last) {}
-};
-
-/** Show a top-level page index of project.
-
-    The project view description and dependencies of a project as stated 
-    in the index.xml. A project view also contains the list of unit 
-    failures, checkstyle failures and open issues. There are also links 
-    to download <!-- through e-commerce transaction? --> the project as 
-    a package, browse the source code and sign-on to the rss feed.
-*/
-class projindex : public document {
-protected:
-    /** name of the project 
-     */
-    std::string name;
-
-public:
-    projindex() {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
-};
-
-#endif
+void post::expanded( std::ostream& ostr ) const {
+    ostr << html::h(1) << title << html::h(1).end();
+    ostr << html::h(2) << author << html::h(2).end();
+    ostr << html::h(2) << time << html::h(2).end();
+    ostr << html::p() << descr << html::p::end;	 
+    ostr << std::endl;
+}

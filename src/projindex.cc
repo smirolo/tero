@@ -29,6 +29,7 @@
 #include "projindex.hh"
 #include "slice.hh"
 #include "markup.hh"
+#include "decorator.hh"
 
 
 void checkstyle::addDir( const session& s, 
@@ -65,6 +66,8 @@ void checkstyle::flush() {
 
 
 void projindex::meta( session& s, const boost::filesystem::path& pathname ) {
+    name = pathname.parent_path().filename();
+    s.vars["title"] = name;
     document::meta(s,pathname);
 }
 
@@ -74,11 +77,6 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace rapidxml;
     using namespace boost::filesystem;
 
-    /* The project view description and dependencies of a project as stated 
-       in the index.xml. A project view also contains the list of unit 
-       failures, checkstyle failures and open issues. There are also links 
-       to download <!-- through e-commerce transaction? --> the project as 
-       a package, browse the source code and sign-on to the rss feed. */
     size_t fileSize = file_size(pathname);
     char text[ fileSize + 1 ];
     ifstream file;
@@ -95,6 +93,27 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 	     project != NULL; project = project->next_sibling() ) {
 
 	    projname = project->first_attribute("name");
+
+	    /* Description of the project */
+	    hrefLight dec(s);
+	    dec.attach(std::cout);
+	    for( xml_node<> *descr
+		     = project->first_node("description"); descr != NULL; 
+		 descr = descr->next_sibling() ) {
+		std::cout << html::p()
+#if 0
+			  << descr->value();
+#endif
+		;
+		for( xml_node<> *child
+		     = descr->first_node(); child != NULL; 
+		     child = child->next_sibling() ) {
+		    std::cout << child->value();
+		}
+		std::cout << html::p::end;
+	    }
+	    dec.detach();
+
 	    /* Information about the maintainer */
 	    xml_node<> *maintainer = project->first_node("maintainer");
 	    if( maintainer ) {
@@ -112,12 +131,6 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    }
 		    std::cout << html::p::end;
 		}
-	    }
-
-	    /* Description of the project */
-	    xml_node<> *description = project->first_node("description");
-	    if( description ) {
-		std::cout << html::p() << description->value() << html::p::end;
 	    }
 
 	    /* Shows the archives that can be downloaded. */
@@ -158,9 +171,11 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 	   
 	    /* Dependencies to install the project from a source compilation. */
 	    xml_node<> *repository = project->first_node("repository");
+	    if( repository == NULL ) repository = project->first_node("patch");
 	    if( repository ) {
 		const char *sep = "";
-		std::cout << html::p() << "The following prerequisites are necessary to build the project from source: ";
+		std::cout << html::p() << "The following prerequisites are "
+		    "necessary to build the project from source: ";
 		for( xml_node<> *dep = repository->first_node("dep");
 		     dep != NULL; dep = dep->next_sibling() ) {
 		    xml_attribute<> *name = dep->first_attribute("name");
@@ -168,7 +183,8 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 			if( boost::filesystem::exists(s.srcDir(name->value())) ) {			
 			    std::cout << sep 
 				      << html::a().href(std::string("/") 
-							+ name->value()) 
+							+ name->value()
+							+ "/index.xml") 
 				      << name->value()
 				      << html::a::end;
 			} else {
@@ -177,7 +193,18 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 			sep = ", ";
 		    }
 		}	    
+		std::cout << '.';
+		std::cout << " You can install prerequisites, update the local"
+		    " source tree, make and install the binaries"
+		    " with the following commands:";
 		std::cout << html::p::end;
+		std::cout << html::pre();
+		std::cout << "dws update " << name << std::endl;
+		std::cout << "mkdir -p build/" << name << std::endl;
+		std::cout << "cd build/" << name << std::endl;
+		std::cout << "dws make recurse" << std::endl;
+		std::cout << "dws make install" << std::endl;
+		std::cout << html::pre::end;
 	    }
 	}
     }

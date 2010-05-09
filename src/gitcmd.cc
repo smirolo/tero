@@ -27,18 +27,6 @@
 #include "changelist.hh"
 #include "markup.hh"
 
-namespace {
-
-    /* \todo review memory usage for this function. */
-    std::string strip( const std::string& s ) {
-	const char *seps = " \t\n\r";
-	std::string::size_type first = s.find_first_not_of(seps);
-	return ( first == std::string::npos ) ? std::string()
-	    : s.substr(first,s.find_last_not_of(seps) - first + 1);
-    }
-
-} // anonymous namespace
-
 
 void gitcmd::diff( std::ostream& ostr, 
 		   const std::string& leftCommit, 

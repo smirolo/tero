@@ -107,6 +107,10 @@ namespace detail {
 
 } // detail
 
+
+std::string strip( const std::string& s );
+
+
 namespace html {
 
     /** HTML a (href) markup

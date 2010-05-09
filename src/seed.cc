@@ -38,6 +38,7 @@
 #include "projindex.hh"
 #include "invoices.hh"
 #include "checkstyle.hh"
+#include "mails.hh"
 #include "webserve.hh"
 
 #if 1
@@ -69,7 +70,41 @@ int main( int argc, char *argv[] )
 	    ("editedText",value<std::string>(),"text submitted after an online edit");
 	positional_options_description pd; 
 	pd.add("view", 1);
-	
+
+#if 0
+	{
+	    /* \todo testing of e-mail scripting */
+	    boost::filesystem::initial_path(); 
+	    boost::filesystem::current_path("/home/smirolo/build/soil/build/seed");
+
+	    boost::filesystem::ofstream email;
+	    email.open("dev.eml",ios_base::out|ios_base::app);
+	    if( email.fail() ) {
+		std::cerr << "error opening dev.eml" << std::endl;
+		return 1;
+	    }
+
+	    char *pathInfo = getenv("PATH_INFO");
+	    if( pathInfo != NULL ) {
+		email << "PATH_INFO=" << pathInfo << std::endl;
+	    }
+	    long len;
+	    char *lenstr = getenv("CONTENT_LENGTH");
+	    if( lenstr != NULL && sscanf(lenstr,"%ld",&len) == 1 ) {
+	    } else {
+		len = 255;
+	    }	
+	    char input[len];
+	    while( fgets(input, len + 1, stdin) != NULL ) {
+		email << input;
+	    }
+	    
+	    boost::filesystem::current_path(boost::filesystem::initial_path());
+
+	    return 0;
+	}
+#endif	
+
 	char *pathInfo = getenv("PATH_INFO");
 	if( pathInfo != NULL ) {
 	    store(parse_cgi_options(authOptions),params);
@@ -170,6 +205,9 @@ int main( int argc, char *argv[] )
 	    changediff diff(sourceTmpl,&revision);
 	    docs.add("view",boost::regex("/diff"),diff);
 
+	    mailthread mt;
+	    docs.add("document",boost::regex(".*\\.eml"),mt);
+
 	    composer source(sourceTmpl,composer::error);
 	    linkLight leftLinkStrm(s);
 	    linkLight rightLinkStrm(s);
@@ -242,6 +280,10 @@ int main( int argc, char *argv[] )
 			       composer::error);
 	    docs.add("view",boost::regex(".*\\.corp"),corporate);
 #endif
+	    /* Widget to generate a rss feed. */
+	    changerss rss(&revision);
+	    docs.add("view",boost::regex(".*index\\.rss"),rss);
+
 	    docs.add("view",boost::regex(".*"),entry);
 
 	    /* Widget to display status of static analysis of a project 
@@ -262,11 +304,7 @@ int main( int argc, char *argv[] )
 	    projfiles filelist(filters.begin(),filters.end());
 	    docs.add("projfiles",boost::regex(".*"),filelist);
 	    s.vars["projfiles"] = s.valueOf("document");
-      
-	    /* Widget to generate a rss feed. */
-	    changerss rss(&revision);
-	    docs.add("view",boost::regex(".*rss\\.xml"),rss);
-	    
+      	    
 	    docs.fetch(s,"view");
 	}
 	

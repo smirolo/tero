@@ -190,6 +190,30 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 }
 
 
+template<typename charT, typename traitsT>
+void basicHrefLight<charT,traitsT>::token( hrefToken token, const char *line, 
+					   int first, int last, bool fragment ) 
+{
+    switch( token ) {
+    case hrefFilename: {
+	std::string href("<a href=\"");
+	std::string hrefEnd("</a>");
+	super::nextBuf->sputn(href.c_str(),href.size());
+	super::nextBuf->sputn(&line[first],last - first);
+	super::nextBuf->sputc('"');
+	super::nextBuf->sputc('>');	
+	super::nextBuf->sputn(&line[first],last - first);
+	super::nextBuf->sputn(hrefEnd.c_str(),hrefEnd.size());
+    } break;
+    default:
+	super::nextBuf->sputn(&line[first],last - first);	
+	break;
+    }
+}
+    
+
+
+
 template<typename charT, typename traitsT>   
 void basicCppLight<charT,traitsT>::newline(const char *line, 
 					   int first, int last )

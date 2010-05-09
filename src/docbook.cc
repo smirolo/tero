@@ -548,7 +548,16 @@ void docbook::itemStart( const rapidxml::xml_node<>& node ) {
 
 void docbook::paraEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::p::end;
+	rapidxml::xml_attribute<> *role = node.first_attribute("role");
+	if( role != NULL ) { 
+	    if( strncmp(role->value(),"code",4) == 0 ) {
+		std::cout << html::pre::end;
+	    } else {
+		std::cout << html::p::end;
+	    }
+	} else {
+	    std::cout << html::p::end;
+	}
     }
 }
 
@@ -556,7 +565,11 @@ void docbook::paraStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( role != NULL ) { 
-	    std::cout << html::p().classref(role->value());
+	    if( strncmp(role->value(),"code",4) == 0 ) {
+		std::cout << html::pre().classref(role->value());
+	    } else {
+		std::cout << html::p().classref(role->value());
+	    }
 	} else {
 	    std::cout << html::p();
 	}
