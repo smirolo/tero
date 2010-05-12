@@ -92,7 +92,7 @@ namespace detail {
 	friend std::basic_ostream<ch, tr>&
 	operator<<(std::basic_ostream<ch, tr>& ostr, const markup& v ) {
 	    ostr << "<" << v.name;
-	    if( v.attrNames != NULL & v.attrValues != NULL ) {
+	    if( (v.attrNames != NULL) & (v.attrValues != NULL) ) {
 		for( size_t i = 0; i < v.attrArrayLength; ++i ) {
 		    if( !v.attrValues[i].empty() ) {
 			ostr << ' ' << v.attrNames[i] << "=\"" << v.attrValues[i] << '\"';

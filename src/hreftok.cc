@@ -57,7 +57,7 @@ advancePointer:
     switch( ((size_t)last >= n) ? '\0' : *p ) {
     case '\r': 
 	while( *p == '\r' ) ++p; 
-	assert( *p == '\n' | *p == '\0' );
+	assert( (*p == '\n') | (*p == '\0') );
     case '\n':  
 	++p;
 	newline = true;

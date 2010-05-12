@@ -256,7 +256,7 @@ session::root( const boost::filesystem::path& leaf,
 	dirname = dirname.parent_path();
     }
     bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
-    while( !foundProject & dirname.string() != srcTop ) {
+    while( !foundProject && (dirname.string() != srcTop) ) {
 	dirname.remove_leaf();
 	if( dirname.string().empty() ) {
 	    boost::throw_exception(basic_filesystem_error<path>(
