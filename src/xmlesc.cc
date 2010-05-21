@@ -57,7 +57,7 @@ advancePointer:
     switch( (last >= n) ? '\0' : *p ) {
     case '\r': 
 	while( *p == '\r' ) ++p; 
-	assert( *p == '\n' | *p == '\0' );
+	assert( (*p == '\n') | (*p == '\0') );
     case '\n':  
 	++p;
 	newline = true;
@@ -93,7 +93,7 @@ advancePointer:
     }
     tok = escErr;
     first = last;
-    if( n == 0 || (*p == '\n' | *p == '\r' | *p == '\0') ) {
+    if( n == 0 || ((*p == '\n') | (*p == '\r') | (*p == '\0')) ) {
 	--p;
 	advance(token);
     }

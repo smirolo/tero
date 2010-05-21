@@ -166,7 +166,7 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 	     ci != hist.checkins.end(); ++ci ) {
 	    std::cout << html::h(1) << ci->title << html::h(1).end();
 	    std::cout << html::p();
-	    std::cout <<  ci->date << " - " << ci->author;
+	    std::cout <<  ci->time << " - " << ci->author;
 	    std::cout << html::p::end;
 	    std::cout << html::p();
 	    esc.attach(std::cout);
@@ -216,7 +216,7 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	    std::cout << ci->author;
 	    esc.detach();
 	    std::cout << author::end;
-	    std::cout << pubDate() << ci->date << pubDate::end;
+	    std::cout << pubDate() << ci->time << pubDate::end;
 	    std::cout << description();
 	    esc.attach(std::cout);
 	    std::cout << ci->descr;

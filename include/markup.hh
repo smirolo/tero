@@ -27,6 +27,7 @@
 #define guardmarkup
 
 #include <ostream>
+#include <boost/date_time.hpp>
 
 namespace detail {
 
@@ -110,6 +111,9 @@ namespace detail {
 
 std::string strip( const std::string& s );
 
+std::string normalize( const std::string& s );
+
+boost::posix_time::ptime from_mbox_string( const std::string& s );
 
 namespace html {
 

@@ -38,6 +38,21 @@ undefVariableError::undefVariableError( const std::string& varname )
     : std::runtime_error(std::string("undefined variable in session ") 
 			 + varname) {}
 
+boost::program_options::options_description session::pathOptions("paths");
+
+session::session() : id(0) {
+    using namespace boost::program_options;
+
+    pathOptions.add_options()
+	("binDir",value<std::string>(),"path to outside executables")
+	("buildTop",value<std::string>(),"path to build root")
+	("siteTop",value<std::string>(),"path to the files published on the web site")
+	("srcTop",value<std::string>(),"path to document top")
+	("remoteIndex",value<std::string>(),"path to project interdependencies")
+	("themeDir",value<std::string>(),"path to user interface elements")
+	("contractDb",value<std::string>(),"path to contracts database");
+}
+
 
 url session::asUrl( const boost::filesystem::path& p ) const
 {
@@ -156,7 +171,13 @@ void session::restore( const boost::program_options::variables_map& params )
     using namespace boost::filesystem;
     using namespace boost::program_options;
 
-    /* 1. load global information from the configuration file on the server */
+    /* 1. initialize more configuration from the script input */
+    for( variables_map::const_iterator param = params.begin(); 
+	 param != params.end(); ++param ) {
+	vars[param->first] = param->second.as<std::string>();
+    }
+
+    /* 2. load global information from the configuration file on the server */
     variables_map configVars;
     ifstream istr(CONFIG_FILE);
     if( istr.fail() ) {
@@ -165,28 +186,16 @@ void session::restore( const boost::program_options::variables_map& params )
 							    boost::system::error_code()));
     }
     
-    /* parse command line arguments */
-    options_description	opts;
-    opts.add_options()
-	("binDir",value<std::string>(),"path to outside executables")
-	("buildTop",value<std::string>(),"path to build root")
-	("siteTop",value<std::string>(),"path to the files published on the web site")
-	("srcTop",value<std::string>(),"path to document top")
-	("remoteIndex",value<std::string>(),"path to project interdependencies")
-	("themeDir",value<std::string>(),"path to user interface elements")
-	("contractDb",value<std::string>(),"path to contracts database");
-    boost::program_options::store(parse_config_file(istr,opts,true),configVars);
+    boost::program_options::store(parse_config_file(istr,pathOptions,true),
+				  configVars);
 	
     for( variables_map::const_iterator param = configVars.begin(); 
 	 param != configVars.end(); ++param ) {
-		vars[param->first] = param->second.as<std::string>();
+	if( vars.find(param->first) == vars.end() ) {
+	    vars[param->first] = param->second.as<std::string>();
+	}
     }
 	
-    /* 2. initialize more configuration from the script input */
-    for( variables_map::const_iterator param = params.begin(); 
-	 param != params.end(); ++param ) {
-	vars[param->first] = param->second.as<std::string>();
-    }
     /* If no document is present, set document 
        as view in order to catch default dispatch 
        clause. */

@@ -23,45 +23,28 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmails
-#define guardmails
+#ifndef guardtodo
+#define guardtodo
 
 #include "document.hh"
-#include "post.hh"
+#include "mails.hh"
 
-class mailthread : public postFilter {
-protected:
-    typedef std::map<std::string,uint32_t> indexMap;
-
-    indexMap indexes;
-
+class todoCreate : public document {
 public:
-    mailthread() {}
-
-    explicit mailthread( postFilter *n ) : postFilter(n) {}
-
-    virtual void filters( const post& );
-    virtual void flush();
+    void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 
-class mailParser : public document {
+/** Index the set of todos and display an HTML row per todo item
+    that contains the date, author and title of the todo item.
+ */
+class todoIdx : public mailParser {
 protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
-
-    postFilter *filter;
-
-    void mbox( session& s, const boost::filesystem::path& pathname );
+    oneliner shortline;
 
 public:
-    explicit mailParser( postFilter& f ) : filter(&f) {}
+    todoIdx() : mailParser(shortline) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 

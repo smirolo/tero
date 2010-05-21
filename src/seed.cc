@@ -39,6 +39,7 @@
 #include "invoices.hh"
 #include "checkstyle.hh"
 #include "mails.hh"
+#include "todo.hh"
 #include "webserve.hh"
 
 #if 1
@@ -53,6 +54,8 @@ int main( int argc, char *argv[] )
     using namespace boost::filesystem;
 
     try {
+	session s;
+
 	/* parse command line arguments */
 	variables_map params;
 	options_description	authOptions("authentication");
@@ -68,6 +71,7 @@ int main( int argc, char *argv[] )
 	    ("client",value<std::string>(),"client")
 	    ("month",value<std::string>(),"month")
 	    ("editedText",value<std::string>(),"text submitted after an online edit");
+
 	positional_options_description pd; 
 	pd.add("view", 1);
 
@@ -113,8 +117,10 @@ int main( int argc, char *argv[] )
 	    /* There is no PATH_INFO environment variable
 	       so we might be running the application
 	       as a non-cgi from the command line. */
+	    options_description opts;
 	    command_line_parser parser(argc, argv);
-	    parser.options(authOptions).positional(pd);
+	    opts.add(authOptions).add(session::pathOptions);
+	    parser.options(opts).positional(pd);
 	    store(parser.run(),params);
 	}
 	
@@ -123,7 +129,6 @@ int main( int argc, char *argv[] )
 	    return 0;
 	}
 	
-	session s;
 	s.restore(params);
 
 	/* by default bring the index page */
@@ -197,6 +202,17 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex(".*index\\.xml"),project);	    
 
 
+	    /* Composer and document for the todos index view */
+	    composer todos(s.valueOf("themeDir")
+			     + std::string("/todos.template"),
+			     composer::error);
+	    docs.add("view",boost::regex(".*todos"),todos);
+	    todoIdx todoIdxDoc;
+	    docs.add("document",boost::regex(".*todos"),todoIdxDoc);
+
+	    todoCreate todocreate;
+	    docs.add("view",boost::regex("/todoCreate"),todocreate);	    
+
 	    /* Source code "document" files are syntax-highlighted 
 	       and presented inside a source.template "view" */
 	    path sourceTmpl(s.valueOf("themeDir") 
@@ -206,7 +222,8 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("/diff"),diff);
 
 	    mailthread mt;
-	    docs.add("document",boost::regex(".*\\.eml"),mt);
+	    mailParser mp(mt);
+	    docs.add("document",boost::regex(".*\\.eml"),mp);
 
 	    composer source(sourceTmpl,composer::error);
 	    linkLight leftLinkStrm(s);

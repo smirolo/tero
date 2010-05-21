@@ -56,7 +56,9 @@ public:
     variables vars;
 
 public:
-    
+
+    static boost::program_options::options_description pathOptions;
+
     static boost::filesystem::path storage;
 
     /* unique identifier for the session */
@@ -65,7 +67,7 @@ public:
     std::string username;
     
     
-    session() : id(0) {}
+    session();
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */

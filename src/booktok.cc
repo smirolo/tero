@@ -469,6 +469,8 @@ docbookStreamTokenizer::docbookStreamTokenizer( std::istream& is )
 
 void docbookStreamTokenizer::newline( const char *line, 
 				      int first, int last ) {
+    textSlice value(&line[first],&line[last]);
+    text += value;
 }
     
 

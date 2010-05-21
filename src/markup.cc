@@ -33,6 +33,97 @@ std::string strip( const std::string& s ) {
 	: s.substr(first,s.find_last_not_of(seps) - first + 1);
 }
 
+std::string normalize( const std::string& s ) {
+    std::string result;
+    size_t p = 0;
+    while( p < s.size() && isspace(s[p]) ) ++p;
+    while( p < s.size() ) {
+	if( isspace(s[p]) ) {
+	    while( p < s.size() && isspace(s[p]) ) ++p;
+	    if( p < s.size() ) result += ' ';
+	} else {
+	    result += s[p++];
+	}
+    }
+    return result;
+}
+
+
+boost::posix_time::ptime from_mbox_string( const std::string& s ) {
+    boost::posix_time::ptime t;
+#if 0
+    std::stringstream dts;
+    ::boost::posix_time::time_input_facet* input_facet 
+	  = new ::boost::posix_time::time_input_facet;
+    dts.imbue(std::locale(dts.getloc(), input_facet));
+    input_facet->format("%a, %e %b %Y %T");
+    dts.str(s);
+    dts >> t;
+#else
+
+    size_t p = s.find(',') + 1;
+    /* day of the month */
+    while( s[p] == ' ' ) ++p;
+    int day = s[p++] - '0';
+    if( s[p] >= '0' && s[p] <= '9' ) day = day * 10 + s[p++] - '0';
+    /* month */
+    int month = 0;
+    while( s[p] == ' ' ) ++p;
+
+    const char *monthNames[] = {
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December"
+    };
+    for( const char **monthName = monthNames;
+	 monthName != &monthNames[12];
+	 ++monthName ) {	    
+	if( s.compare(p,3,*monthName,3) == 0 ) {
+	    month = std::distance(monthNames,monthName) + 1;
+	    break;
+	}
+    }
+
+    /* 4-digits year */
+    while( s[p] != ' ' ) ++p;
+    while( s[p] == ' ' ) ++p;
+    int year = (s[p++] - '0') * 1000;
+    year += (s[p++] - '0') * 100;
+    year += (s[p++] - '0') * 10;
+    year += (s[p++] - '0');
+
+    /* time formatted as 24-hour:minutes:seconds */
+    while( s[p] == ' ' ) ++p;
+    int hours = (s[p++] - '0') * 10;
+    hours += (s[p++] - '0');
+    if( s[p++] != ':' )
+	boost::throw_exception(std::ios_base::failure("Parse date failure"));
+
+    while( s[p] == ' ' ) ++p;
+    int minutes = (s[p++] - '0') * 10;
+    minutes += (s[p++] - '0');
+    if( s[p++] != ':' )
+	boost::throw_exception(std::ios_base::failure("Parse date failure"));
+	
+    while( s[p] == ' ' ) ++p;
+    int seconds = (s[p++] - '0') * 10;
+    seconds += (s[p++] - '0');
+
+    t = boost::posix_time::ptime(boost::gregorian::date(year,month,day),
+				 boost::posix_time::time_duration(hours,minutes,seconds)); 
+#endif
+    return t;
+}
+
 
 namespace html {
 

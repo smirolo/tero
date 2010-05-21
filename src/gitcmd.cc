@@ -134,7 +134,11 @@ void gitcmd::checkins( ::history& hist,
 	    ci->author = strip(line.substr(7));
 
 	} else if ( line.compare(0,5,"Date:") == 0 ) {
-	    ci->date = strip(line.substr(5));
+	    try {
+		ci->time = from_mbox_string(line.substr(5));
+	    } catch( std::exception& e ) {
+		std::cerr << "!!! exception " << e.what() << std::endl; 
+	    }
 
 	} else {
 	    /* more description */

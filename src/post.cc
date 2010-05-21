@@ -26,10 +26,24 @@
 #include "mails.hh"
 #include "markup.hh"
 
+
+void post::normalize() {
+    title = ::normalize(title);
+    author = ::normalize(author);
+}
+
 void post::expanded( std::ostream& ostr ) const {
     ostr << html::h(1) << title << html::h(1).end();
     ostr << html::h(2) << author << html::h(2).end();
     ostr << html::h(2) << time << html::h(2).end();
     ostr << html::p() << descr << html::p::end;	 
     ostr << std::endl;
+}
+
+void oneliner::filters( const post& p ) {
+    std::cout << html::tr() 
+	      << html::td() << p.time << html::td::end
+	      << html::td() << p.author << html::td::end
+	      << html::td() << p.title << html::td::end
+	      << html::tr::end;
 }

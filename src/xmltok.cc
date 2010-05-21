@@ -136,7 +136,7 @@ endComment2:
     
  error:
     /* skip until tag delimiter character */
-    if( *p != '<' & *p != '>' ) advance(error);
+    if( (*p != '<') & (*p != '>') ) advance(error);
     goto tag;
     
  name:
@@ -219,7 +219,7 @@ startComment2:
     }
     tok = xmlErr;
     first = last;
-    if( (*p == '\n' | *p == '\r' | *p == '\0') ) {
+    if( (*p == '\n') | (*p == '\r') | (*p == '\0') ) {
 	--p;
 	advance(token);
     }

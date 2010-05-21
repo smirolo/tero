@@ -204,7 +204,7 @@ advancePointer:
 		break; 
     case '\r': 
 		while( *p == '\r' ) ++p; 
-		assert( *p == '\n' | *p == '\0' );
+		assert( (*p == '\n') | (*p == '\0') );
     case '\n':  
     case '\0':  
 		/* In a multi line comment, end-of-line characters 
@@ -338,7 +338,7 @@ charHexQuad:
 	++hexQuads;
 	advance(charHexQuad);
     }
-    if( hexQuads != 4 | hexQuads != 8 ) goto error;
+    if( (hexQuads != 4) | (hexQuads != 8) ) goto error;
     goto charEnd;
 
 charTail:
@@ -444,7 +444,7 @@ duplicate:
     goto token;
 
 duplicateOrEqual:
-    if( *p == expects | *p == '=' ) {
+    if( (*p == expects) | (*p == '=') ) {
 	advance(token);
     }
     goto token;
@@ -819,7 +819,7 @@ stringHexQuad:
 	++hexQuads;
 	advance(stringHexQuad);
     }
-    if( hexQuads != 4 | hexQuads != 8 ) goto error;
+    if( (hexQuads != 4) | (hexQuads != 8) ) goto error;
     goto stringTail;
 
 stringOctEscSeqEnd:

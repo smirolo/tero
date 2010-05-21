@@ -94,9 +94,9 @@ std::string url::string() const {
 
 
 int fromHexDigit( char c ) {
-	if( c >= 'A' & c <= 'F' ) return ((int)c - 'A') + 10;
-	if( c >= 'a' & c <= 'f' ) return ((int)c - 'a') + 10;
-	return c - '0';
+    if( (c >= 'A') & (c <= 'F') ) return ((int)c - 'A') + 10;
+    if( (c >= 'a') & (c <= 'f') ) return ((int)c - 'a') + 10;
+    return c - '0';
 }
 
 

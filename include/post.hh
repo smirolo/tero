@@ -23,46 +23,44 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmails
-#define guardmails
+#ifndef guardpost
+#define guardpost
 
-#include "document.hh"
-#include "post.hh"
+#include <boost/date_time.hpp>
 
-class mailthread : public postFilter {
+class post {
+public:
+    std::string author;
+    std::string title;
+    boost::posix_time::ptime time;    
+    std::string descr;
+
+    /** remove non meaningful whitespaces from the *author* and *title* fields. 
+     */
+    void normalize();
+
+    void expanded( std::ostream& ostr ) const;
+
+};
+
+class postFilter {
 protected:
-    typedef std::map<std::string,uint32_t> indexMap;
-
-    indexMap indexes;
+    postFilter *next;
 
 public:
-    mailthread() {}
+    postFilter() : next(NULL) {}
 
-    explicit mailthread( postFilter *n ) : postFilter(n) {}
+    explicit postFilter( postFilter *n ) : next(n) {}
+
+    virtual void filters( const post& ) = 0;
+    virtual void flush() {}
+};
+
+
+class oneliner : public postFilter {
+public:
 
     virtual void filters( const post& );
-    virtual void flush();
 };
-
-
-class mailParser : public document {
-protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
-
-    postFilter *filter;
-
-    void mbox( session& s, const boost::filesystem::path& pathname );
-
-public:
-    explicit mailParser( postFilter& f ) : filter(&f) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
 
 #endif

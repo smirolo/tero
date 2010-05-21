@@ -27,6 +27,7 @@
 #define guardchangelist
 
 #include "composer.hh"
+#include "post.hh"
 
 /* Different displays of changes to an underlying source control repository.
  */
@@ -55,20 +56,14 @@ public:
 		       const std::string& rev ) const;
 };
 
-class checkin {
+class checkin : public post {
 public:
     typedef std::list<boost::filesystem::path> fileSet;
 
-protected:
-
 public:
-    std::string author;
-    std::string date;
-    std::string descr;
-    std::string title;
     fileSet files;
 
-    checkin() : author(""), date(""), descr(""), title("") {}
+    checkin() {}
 
     void addFile( const boost::filesystem::path& pathname ) {
 	files.push_back(pathname);

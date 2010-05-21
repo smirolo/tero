@@ -132,7 +132,7 @@ advancePointer:
     advance(filename);
 
  spaces:
-    if( *p == ' ' | *p == '\t' ) advance(spaces);
+    if( (*p == ' ') | (*p == '\t') ) advance(spaces);
     goto token;
 
  text:
@@ -155,7 +155,7 @@ advancePointer:
     }
     tok = hrefErr;
     first = last;
-    if( (*p == '\n' | *p == '\r' | *p == '\0') ) {
+    if( (*p == '\n') | (*p == '\r') | (*p == '\0') ) {
 	--p;
 	advance(token);
     }
