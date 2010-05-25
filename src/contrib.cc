@@ -23,42 +23,47 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "mails.hh"
+#include "contrib.hh"
 #include "markup.hh"
 
-
-void post::normalize() {
-    title = ::normalize(title);
-    author = ::normalize(author);
+void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
+{
 }
 
-void post::expanded( std::ostream& ostr ) const {
-    ostr << html::h(1) << title << html::h(1).end();
-    ostr << html::h(2) << author << html::h(2).end();
-    ostr << html::h(2) << time << html::h(2).end();
-    ostr << html::p() << descr << html::p::end;	 
-    ostr << std::endl;
+
+void contribIdx::first() 
+{
+    std::cout << html::table();
 }
 
-void oneliner::filters( const post& p ) {
-    std::cout << html::tr() 
-	      << html::td() << p.time << html::td::end
-	      << html::td() << p.author << html::td::end
-	      << html::td() << p.title << html::td::end;
-    if( false ) {
-	std::cout << html::td() 
-		  << html::a().href("/vote")
-		  << "<img src=\"/resources/amazon.png\">"
-		  << html::a::end
-		  <<  html::td::end;
+
+void contribIdx::walk( session& s, const boost::filesystem::path& pathname )
+{
+    using namespace std;
+    using namespace boost::filesystem;
+
+    if( is_directory(pathname) ) {
+	cout << html::tr() 
+	     << html::td() 
+	     << "<img src=\"/resources/contributors/" 
+	     << pathname.filename() << ".jpg\">"
+	     << html::td::end
+	     << html::td();
+
+	boost::filesystem::path 
+	    profilePathname = pathname / "profile.blog";
+	if( boost::filesystem::is_regular_file(profilePathname) ) {
+	    text t;
+	    t.fetch(s,profilePathname);
+	}
+
+	cout << html::td::end
+	     << html::tr::end;
     }
-    std::cout << html::tr::end;
 }
 
-void blogwriter::filters( const post& p ) {
-    *ostr << "Title: " << p.title << std::endl;
-    *ostr << "Date: " << p.time << std::endl;
-    *ostr << "Author: " << p.author << std::endl;
-    *ostr << std::endl << std::endl;
-    *ostr << p.descr << std::endl;
+void contribIdx::last() 
+{
+    std::cout << html::table::end;
 }
+

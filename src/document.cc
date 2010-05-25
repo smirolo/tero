@@ -46,6 +46,22 @@ void document::open( boost::filesystem::ifstream& strm,
 				     error_code()));
 }
 
+
+void document::create( boost::filesystem::ofstream& strm, 
+		       const boost::filesystem::path& pathname ) const {
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+    strm.open(pathname,std::ios_base::out | std::ios_base::trunc);
+    if( strm.fail() ) {
+	boost::throw_exception(basic_filesystem_error<path>(
+	   std::string("unable to create file"),
+	   pathname, 
+	   error_code()));
+    }
+}
+
+
 void document::meta( session& s, const boost::filesystem::path& pathname ) {
     if( s.vars.find("title") == s.vars.end() ) {
 	s.vars["title"] = s.valueOf("document");
@@ -94,6 +110,23 @@ document* dispatchDoc::select( const std::string& name,
 	}
     }
     return NULL;
+}
+
+
+void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
+{
+    using namespace boost::filesystem;
+
+    first();
+    if( is_directory(pathname) ) {
+	for( directory_iterator entry = directory_iterator(pathname); 
+	     entry != directory_iterator(); ++entry ) {
+	    walk(s,*entry);
+	}
+    } else {
+	walk(s,pathname);
+    }
+    last();
 }
 
 
@@ -336,10 +369,10 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     std::cout << htmlContent;
 
-
-    if( leftDec->formated() ) std::cout << code();
-    leftDec->attach(std::cout);
-
+    if( leftDec ) {
+	if( leftDec->formated() ) std::cout << code();
+	leftDec->attach(std::cout);
+    }
 
     /* Skip over tags */
     while( !strm.eof() ) {
@@ -352,13 +385,18 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 	}
     }
 
+    /* remaining lines */
     while( !strm.eof() ) {
 	std::string line;
 	std::getline(strm,line);
 	std::cout << line << std::endl;
     }
-    leftDec->detach();
-    if( leftDec->formated() ) std::cout << html::pre::end;
+
+    if( leftDec ) {
+	leftDec->detach();
+	if( leftDec->formated() ) std::cout << html::pre::end;
+    }
+
     strm.close();
 }
 

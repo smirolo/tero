@@ -33,6 +33,9 @@
  */
 class document {
 protected:
+    void create( boost::filesystem::ofstream& strm, 
+		 const boost::filesystem::path& pathname ) const;
+
     void open( boost::filesystem::ifstream& strm, 
 	       const boost::filesystem::path& pathname ) const;
     
@@ -85,12 +88,29 @@ public:
 };
 
 
+/** If the pathname is a directory, iterate through all files and call back
+    walk.
+*/
+class dirwalker : public document {
+protected:
+
+    virtual void first() {}
+    virtual void walk( session& s, const boost::filesystem::path& pathname ) {}
+    virtual void last() {}
+
+public:
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
 class text : public document {
 protected:
     decorator *leftDec;
     decorator *rightDec;
 
 public:
+    text() : leftDec(NULL), rightDec(NULL) {}
 
     text( decorator& l,  decorator& r ) 
 	: leftDec(&l), rightDec(&r) {}

@@ -55,21 +55,12 @@ void mailthread::flush() {
 
 void mailParser::fetch( session& s, const boost::filesystem::path& pathname )
 {
-    using namespace boost::filesystem;
-
-    if( is_directory(pathname) ) {
-	for( directory_iterator entry = directory_iterator(pathname); 
-	     entry != directory_iterator(); ++entry ) {
-	    mbox(s,*entry);
-	}
-    } else {
-	mbox(s,pathname);
-    }
+    dirwalker::fetch(s,pathname);
     filter->flush();
 }
 
 
-void mailParser::mbox( session& s, const boost::filesystem::path& pathname )
+void mailParser::walk( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::gregorian;
     using namespace boost::posix_time;

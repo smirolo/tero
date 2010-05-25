@@ -57,6 +57,17 @@ public:
 };
 
 
+class blogwriter : public postFilter {
+protected:
+    std::ostream *ostr;
+
+public:
+    explicit blogwriter( std::ostream& o ) : ostr(&o) {}
+
+    virtual void filters( const post& );
+};
+
+
 class oneliner : public postFilter {
 public:
 

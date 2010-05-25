@@ -45,7 +45,7 @@ public:
 };
 
 
-class mailParser : public document {
+class mailParser : public dirwalker {
 protected:
     enum parseState {
 	startParse,
@@ -56,7 +56,7 @@ protected:
 
     postFilter *filter;
 
-    void mbox( session& s, const boost::filesystem::path& pathname );
+    void walk( session& s, const boost::filesystem::path& pathname );
 
 public:
     explicit mailParser( postFilter& f ) : filter(&f) {}

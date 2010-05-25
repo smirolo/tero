@@ -23,42 +23,27 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "mails.hh"
-#include "markup.hh"
+#ifndef guardcontrib
+#define guardcontrib
+
+#include "document.hh"
+
+class contribCreate : public document {
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
 
 
-void post::normalize() {
-    title = ::normalize(title);
-    author = ::normalize(author);
-}
+/** Index the set of contribs and display an HTML row per contrib item
+    that contains the date, author and title of the contrib item.
+ */
+class contribIdx : public dirwalker {
+protected:
 
-void post::expanded( std::ostream& ostr ) const {
-    ostr << html::h(1) << title << html::h(1).end();
-    ostr << html::h(2) << author << html::h(2).end();
-    ostr << html::h(2) << time << html::h(2).end();
-    ostr << html::p() << descr << html::p::end;	 
-    ostr << std::endl;
-}
+    virtual void first();
+    virtual void walk( session& s, const boost::filesystem::path& pathname );
+    virtual void last();
+};
 
-void oneliner::filters( const post& p ) {
-    std::cout << html::tr() 
-	      << html::td() << p.time << html::td::end
-	      << html::td() << p.author << html::td::end
-	      << html::td() << p.title << html::td::end;
-    if( false ) {
-	std::cout << html::td() 
-		  << html::a().href("/vote")
-		  << "<img src=\"/resources/amazon.png\">"
-		  << html::a::end
-		  <<  html::td::end;
-    }
-    std::cout << html::tr::end;
-}
 
-void blogwriter::filters( const post& p ) {
-    *ostr << "Title: " << p.title << std::endl;
-    *ostr << "Date: " << p.time << std::endl;
-    *ostr << "Author: " << p.author << std::endl;
-    *ostr << std::endl << std::endl;
-    *ostr << p.descr << std::endl;
-}
+#endif

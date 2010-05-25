@@ -23,8 +23,28 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "todo.hh"
+
 
 void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
 {
+    boost::uuids::uuid tag = boost::uuids::random_generator()();   
+    
+    post p;
+    p.title = s.valueOf("title");
+    p.author = s.valueOf("author");
+    p.time = boost::posix_time::second_clock::local_time();
+    p.descr = s.valueOf("descr");
+
+    std::stringstream ns;
+    ns << "services/todos/" << tag << ".todo";
+    std::cerr << "write file " << s.srcDir(ns.str()) << std::endl;
+    boost::filesystem::ofstream file;
+    create(file,s.srcDir(ns.str()));
+    blogwriter writer(file);
+    writer.filters(p);
+    file.close();
 }

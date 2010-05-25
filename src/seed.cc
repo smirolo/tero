@@ -38,7 +38,8 @@
 #include "projindex.hh"
 #include "invoices.hh"
 #include "checkstyle.hh"
-#include "mails.hh"
+#include "calendar.hh"
+#include "contrib.hh"
 #include "todo.hh"
 #include "webserve.hh"
 
@@ -68,12 +69,21 @@ int main( int argc, char *argv[] )
 	    ("username",value<std::string>(),"username")
 	    ("message,m",value<std::string>(),"message")
 	    ("view",value<std::string>(),"view")
-	    ("client",value<std::string>(),"client")
-	    ("month",value<std::string>(),"month")
+	    ("client",value<std::string>(),"client")	    
 	    ("editedText",value<std::string>(),"text submitted after an online edit");
 
 	positional_options_description pd; 
 	pd.add("view", 1);
+
+	options_description calOptions("calendar");
+	calOptions.add_options()
+	    ("month",value<std::string>(),"month");
+
+	options_description postOptions("posts");
+	postOptions.add_options()
+	    ("title",value<std::string>(),"title")
+	    ("author",value<std::string>(),"author")
+	    ("descr",value<std::string>(),"descr");
 
 #if 0
 	{
@@ -108,10 +118,11 @@ int main( int argc, char *argv[] )
 	    return 0;
 	}
 #endif	
-
+	options_description opts;
+	opts.add(authOptions).add(postOptions).add(calOptions);
 	char *pathInfo = getenv("PATH_INFO");
-	if( pathInfo != NULL ) {
-	    store(parse_cgi_options(authOptions),params);
+	if( pathInfo != NULL ) {	    
+	    store(parse_cgi_options(opts),params);
 	    
 	} else {
 	    /* There is no PATH_INFO environment variable
@@ -119,7 +130,7 @@ int main( int argc, char *argv[] )
 	       as a non-cgi from the command line. */
 	    options_description opts;
 	    command_line_parser parser(argc, argv);
-	    opts.add(authOptions).add(session::pathOptions);
+	    opts.add(session::pathOptions);
 	    parser.options(opts).positional(pd);
 	    store(parser.run(),params);
 	}
@@ -213,6 +224,14 @@ int main( int argc, char *argv[] )
 	    todoCreate todocreate;
 	    docs.add("view",boost::regex("/todoCreate"),todocreate);	    
 
+	    contribIdx contribIdxDoc;
+	    contribCreate contribcreate;
+	    docs.add("document",boost::regex(".*contrib"),contribIdxDoc);
+	    docs.add("view",boost::regex("/contribCreate"),contribcreate);
+
+	    calendar ical;
+	    docs.add("document",boost::regex(".*\\.ics"),ical);
+	    
 	    /* Source code "document" files are syntax-highlighted 
 	       and presented inside a source.template "view" */
 	    path sourceTmpl(s.valueOf("themeDir") 
