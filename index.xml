@@ -7,6 +7,13 @@
     </description>
     <maintainer name="Sebastien Mirolo" email="smirolo@fortylines.com" />
     <repository>
+      <pathname name="seedConfFile">
+	<description>
+	  The configuration file *seedConfFile* contain paths used by seed to find the source repositories, templates, etc.
+	</description>
+	<base>buildTop</base>
+	<default>ws.mk</default>
+      </pathname>      
       <pathname name="themeDir">
 	<description>
 	  themeDir is a directory containing templates and css for the site

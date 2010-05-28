@@ -48,7 +48,7 @@ relpath( const boost::filesystem::path& pathname,
     boost::filesystem::path::iterator second = base.begin();
     boost::filesystem::path result;
     
-    for( ; first != pathname.end() & second != base.end(); 
+    for( ; (first != pathname.end()) & (second != base.end()); 
 		 ++first, ++second ) {
 		if( *first != *second ) break;
     }

@@ -34,6 +34,8 @@ libs		:=	libseed.a
 shares		:=	seed.pdf
 resources	:=	style.css
 
+seedConfFile	?=	/usr/local/etc/seed.conf
+
 vpath style.css $(srcDir)/data/themes/default
 
 libseed.a: $(subst .cc,.o,\
@@ -44,9 +46,8 @@ seed: seed.cc session.o libseed.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 
-session.o: session.cc seed.conf
-	$(COMPILE.cc) -DCONFIG_FILE=\"$(installEtcDir)/$(word 2,$^)\" \
-	  $(OUTPUT_OPTION) $<
+session.o: session.cc
+	$(COMPILE.cc) -DCONFIG_FILE=\"$(seedConfFile)\" $(OUTPUT_OPTION) $<
 
 seed.conf: $(shell dws context)
 	echo "binDir=$(installBinDir)" > $@
