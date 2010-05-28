@@ -97,7 +97,7 @@ boost::filesystem::path session::userPath() const {
     variables::const_iterator srcTop = vars.find("srcTop");
     assert( srcTop != vars.end() );
     return boost::filesystem::path(srcTop->second) 
-	/ boost::filesystem::path("contributors") 
+	/ boost::filesystem::path("contrib") 
 	/ username;
 }
 

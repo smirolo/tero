@@ -128,7 +128,6 @@ int main( int argc, char *argv[] )
 	    /* There is no PATH_INFO environment variable
 	       so we might be running the application
 	       as a non-cgi from the command line. */
-	    options_description opts;
 	    command_line_parser parser(argc, argv);
 	    opts.add(session::pathOptions);
 	    parser.options(opts).positional(pd);
@@ -136,7 +135,7 @@ int main( int argc, char *argv[] )
 	}
 	
 	if( params.count("help") ) {
-	    cout << authOptions << endl;
+	    cout << opts << endl;
 	    return 0;
 	}
 	

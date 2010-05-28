@@ -29,6 +29,7 @@ include $(shell dws context)
 include $(etcDir)/dws/prefix.mk
 
 bins 		:=	seed
+etcs		:=	seed.conf
 libs		:=	libseed.a
 shares		:=	seed.pdf
 resources	:=	style.css
@@ -43,9 +44,16 @@ seed: seed.cc session.o libseed.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 
-session.o: session.cc
-	$(COMPILE.cc) -DCONFIG_FILE=\"$(realpath $(shell dws context))\" \
+session.o: session.cc seed.conf
+	$(COMPILE.cc) -DCONFIG_FILE=\"$(installEtcDir)/$(word 2,$^)\" \
 	  $(OUTPUT_OPTION) $<
+
+seed.conf: $(shell dws context)
+	echo "binDir=$(installBinDir)" > $@
+	echo "siteTop=$(siteTop)" >> $@
+	echo "srcTop=$(srcTop)" >> $@
+	echo "remoteIndex=$(remoteIndex)" >> $@
+	echo "themeDir=$(themeDir)" >> $@
 
 seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 
