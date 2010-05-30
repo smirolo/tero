@@ -32,11 +32,8 @@ bins 		:=	seed
 etcs		:=	seed.conf
 libs		:=	libseed.a
 shares		:=	seed.pdf
-resources	:=	style.css
 
-seedConfFile	?=	/usr/local/etc/seed.conf
-
-vpath style.css $(srcDir)/data/themes/default
+seedConfFile	?=	/etc/seed.conf
 
 libseed.a: $(subst .cc,.o,\
 	      $(filter-out seed.cc session.cc,\
@@ -50,19 +47,16 @@ session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(seedConfFile)\" $(OUTPUT_OPTION) $<
 
 seed.conf: $(shell dws context)
-	echo "binDir=$(installBinDir)" > $@
-	echo "siteTop=$(siteTop)" >> $@
-	echo "srcTop=$(srcTop)" >> $@
+	echo "binDir=/var/www/bin" > $@
+	echo "siteTop=/var/www" >> $@
+	echo "srcTop=/var/www/reps" >> $@
 	echo "remoteIndex=$(remoteIndex)" >> $@
-	echo "themeDir=$(themeDir)" >> $@
+	echo "themeDir=$(installShareDir)/seed/default" >> $@
 
 seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 
 include $(etcDir)/dws/suffix.mk
 
-install:: $(wildcard $(srcDir)/data/sites/sample/*.corp)
-	$(installFiles) $^ $(siteTop)
-
-install:: $(wildcard $(srcDir)/data/themes/default/*.template)
+install:: $(wildcard $(srcDir)/data/themes/default/*)
 	$(installDirs) $(installShareDir)/seed
-	$(installFiles) $^ $(installShareDir)/seed
+	cp -Rf $(srcDir)/data/themes $(installShareDir)/seed
