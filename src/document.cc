@@ -64,7 +64,11 @@ void document::create( boost::filesystem::ofstream& strm,
 
 void document::meta( session& s, const boost::filesystem::path& pathname ) {
     if( s.vars.find("title") == s.vars.end() ) {
-	s.vars["title"] = s.valueOf("document");
+	if( s.vars.find("Subject") != s.vars.end() ) {
+	    s.vars["title"] = s.valueOf("Subject");
+	} else {
+	    s.vars["title"] = s.valueOf("document");
+	}
     }
 }
 
@@ -121,7 +125,9 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
     if( is_directory(pathname) ) {
 	for( directory_iterator entry = directory_iterator(pathname); 
 	     entry != directory_iterator(); ++entry ) {
-	    walk(s,*entry);
+	    if( !is_directory(*entry) ) {
+		walk(s,*entry);
+	    }
 	}
     } else {
 	walk(s,pathname);

@@ -50,9 +50,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     ifstream strm;
     open(strm,fixed.empty() ? pathname : fixed);
 
-    std::cerr << "composer fetch " << pathname << std::endl;
-    std::cerr << " with " << (fixed.empty() ? pathname : fixed) << std::endl;
-
     std::cout << htmlContent;
     while( !strm.eof() ) {
 	smatch m;
@@ -97,7 +94,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	     out varnames and pathnames... */
 	    path incpath((fixed.empty() ? pathname.parent_path() 
 			  : fixed.parent_path()) / m.str(1));
-	    std::cerr << "!!! include " << incpath.string() << std::endl;
 	    document* doc = dispatchDoc::instance->select("document",incpath.string());
 	    if( doc != NULL ) {
 		doc->fetch(s,incpath);

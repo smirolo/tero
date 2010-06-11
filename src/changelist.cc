@@ -24,6 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cstdio>
+#include <boost/uuid/uuid_io.hpp>
 #include "changelist.hh"
 #include "markup.hh"
 
@@ -105,10 +106,10 @@ void changediff::embed( session& s, const std::string& varname ) {
 	revision->diff(text,leftRevision,rightRevision,gitrelname);
 		
 	cout << "<table style=\"text-align: left;\">" << endl;
-	cout << "<tr>" << endl;
-	cout << "<th>" << leftRevision << "</th>" << endl;
-	cout << "<th>" << rightRevision << "</th>" << endl;
-	cout << "</tr>" << endl;
+	cout << html::tr();
+	cout << html::th() << leftRevision << html::th::end;
+	cout << html::th() << rightRevision << html::th::end;
+	cout << html::tr::end;
 
 	boost::filesystem::ifstream input;
 	open(input,docname);
@@ -117,9 +118,23 @@ void changediff::embed( session& s, const std::string& varname ) {
 	document *doc = dispatchDoc::instance->select("document",docname.string());
 	((::text*)doc)->showSideBySide(input,text,false);
 		
-	cout << "</table>" << endl;
+	cout << html::table::end;
 	input.close();
     }
+}
+
+
+void checkinliner::filters( const post& p ) {
+    std::stringstream s;
+    s << "todos/" << p.tag << ".todo";
+    std::cout << html::tr() 
+	      << html::td() << p.time << html::td::end
+	      << html::td() << p.author << html::td::end
+	      << html::td() << html::a().href(s.str()) 
+	      << p.title 
+	      << html::a::end << html::td::end;
+    std::cout << html::tr::end;
+
 }
 
 
@@ -149,6 +164,8 @@ changehistory::fetch( session& s, const boost::filesystem::path& pathname )
 void 
 changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 {
+    using namespace std;
+
     boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
     if( !sccsRoot.empty() ) {
 	revision->rootPath(sccsRoot);
@@ -162,9 +179,10 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 
 	std::cout << htmlContent << std::endl;
 
+#if 1
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
-	    std::cout << html::h(1) << ci->title << html::h(1).end();
+	    std::cout << html::h(2) << ci->title << html::h(2).end();
 	    std::cout << html::p();
 	    std::cout <<  ci->time << " - " << ci->author;
 	    std::cout << html::p::end;
@@ -179,7 +197,14 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 		std::cout << html::a().href(file->string()) << *file << html::a::end << "<br />" << std::endl;
 	    }
 	    std::cout << html::p::end;
-	}	  
+	}
+#else
+	htmlwriter liner(std::cout);
+	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
+	     ci != hist.checkins.end(); ++ci ) {
+	    liner.filters(*ci);
+	}	
+#endif	  
     }
 }
 
@@ -199,6 +224,9 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	htmlEscaper esc;
 
 	/* \todo get the title and domainname from the session. */
+	std::cout << "Content-Type:application/rss+xml;charset=iso-8859-1\r\n"
+		  << std::endl;
+	std::cout << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
 	std::cout << ::rss().version("2.0")
 		  << channel()
 		  << rsslink()

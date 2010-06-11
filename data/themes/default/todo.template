@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title><!-- tmpl_var name='title' --></title>
+<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
+</head>
+
+<body>
+  <div>
+    <div id="title"><!-- tmpl_var name='title' --></div>
+  </div>
+    
+  <div id="document">
+    <table class="document">
+      <tr>
+
+	<td id="sidebar">
+	  <!-- tmpl_include name='topMenu.template' -->
+	</td>
+
+	<td id="entry">
+	  <div id="title">
+	    <h1><!-- tmpl_var name='title' -->
+	      <a href="index.rss">
+		<img class="imgrss"
+		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
+	      </a>
+	    </h1>
+	  </div>
+	  <!-- tmpl_var name='document' -->
+	  <div>
+	    <form method="post" class="todo" action="/todoComment">
+	      <fieldset>       
+		<input type="hidden" name="href" value="<!-- tmpl_var name='title' -->"/>
+		<table width="100%">
+		  <tr>
+		    <td><label>From:</label></td>
+		    <td><input id="author" name="author"/></td>
+		  </tr>
+		  <tr>
+		    <td><label>Cc:</label></td>
+		    <td><input id="ccs" name="ccs"/></td>
+		  </tr>	  
+		</table>
+		<label>Comment</label><br />		
+		<textarea rows="20" id="description" name="descr"></textarea>
+              </fieldset>
+	      <fieldset class="submit"> 
+		<input class="button" type="submit" name="submit" value="post" />
+              </fieldset> 	      
+	    </form>
+	  </div>
+	</td>
+      </tr>
+    </table>
+  </div>
+
+</body>
+</html>

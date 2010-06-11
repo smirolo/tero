@@ -25,6 +25,7 @@
 
 #include <string>
 #include <locale>
+#include <boost/uuid/uuid_io.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include "mails.hh"
 #include "markup.hh"
@@ -77,6 +78,11 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
     size_t lineCount = 0;
     std::stringstream descr;
     parseState state;
+
+    p.score = 0;
+    p.tag = asuuid(boost::filesystem::path(pathname.filename()).stem());
+    std::cerr << "walk " << pathname << std::endl;
+
     while( !infile.eof() ) {
 	boost::smatch m;
 	std::string line;
@@ -96,6 +102,7 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
 		filter->filters(p);
 	    }
 	    p = post();
+	    p.score = 0;
 	    first = false;
 	    state = startParse;
 
@@ -103,7 +110,9 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
 	    try {
 		p.time = from_mbox_string(line.substr(5));
 	    } catch( std::exception& e ) {
+#if 0
 		std::cerr << "!!! exception " << e.what() << std::endl; 
+#endif
 	    }
 	    state = dateParse;
 	} else if( line.compare(0,5,"From:") == 0 ) {
@@ -112,6 +121,9 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
 	} else if( line.compare(0,9,"Subject: ") == 0 ) {
 	    p.title = line.substr(9);
 	    state = titleParse;
+	} else if( line.compare(0,7,"Score: ") == 0 ) {
+	    p.score = atoi(line.substr(7).c_str());
+
 	} else if( regex_match(line,m,metainfo) ) {
 	    /* This is more meta information we donot interpret */
 
@@ -135,14 +147,11 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
 	    state = startParse;
 	}
     }
-
-    if( !first ) {
-	p.descr = descr.str();
-	descr.str("");
-	p.normalize();
-	filter->filters(p);
-    }
-
+    p.descr = descr.str();
+    descr.str("");
+    p.normalize();
+    filter->filters(p);
+    
     infile.close();
 }
 

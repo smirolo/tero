@@ -123,10 +123,10 @@ session::abspath( const boost::filesystem::path& relpath ) const {
 
     /* Second we try to access the file as a relative pathname 
        from siteTop. */
-    boost::filesystem::path fromBuildTop(valueOf("siteTop"));
-    fromBuildTop /= relpath;
-    if( boost::filesystem::exists(fromBuildTop) ) {        
-	return fromBuildTop;
+    boost::filesystem::path fromSiteTop(valueOf("siteTop"));
+    fromSiteTop /= relpath;
+    if( boost::filesystem::exists(fromSiteTop) ) {        
+	return fromSiteTop;
     }
 
     /* Third we try to access the file as a relative pathname 
@@ -136,19 +136,11 @@ session::abspath( const boost::filesystem::path& relpath ) const {
     if( boost::filesystem::exists(fromSrcTop) ) {        
 	return fromSrcTop;
     }	
-
-    /* Fourth we try to access the file as a relative pathname 
-       from siteTop. */	
-    boost::filesystem::path fromCacheTop(valueOf("siteTop"));
-    fromCacheTop /= relpath;
-    if( boost::filesystem::exists(fromCacheTop) ) {        
-	return fromCacheTop;
-    }	
     
     /* We used to throw an exception at this point. That does
        not sit very well with dispatch::fetch() because the value
        of a "document" might not be an actual file. */
-    return fromBuildTop;
+    return fromSrcTop;
 }
 
 

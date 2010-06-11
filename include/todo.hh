@@ -29,7 +29,26 @@
 #include "document.hh"
 #include "mails.hh"
 
+class todoliner : public postFilter {
+public:
+
+    virtual void filters( const post& );
+};
+
+
 class todoCreate : public document {
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+class todoComment : public document {
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+class todoVote : public document {
 public:
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
@@ -40,10 +59,24 @@ public:
  */
 class todoIdx : public mailParser {
 protected:
-    oneliner shortline;
+    class byScore : public postFilter {
+    protected:
+	typedef std::vector<post> indexSet;
+	
+	indexSet indexes;
+	
+    public:
+	explicit byScore( postFilter &n ) : postFilter(&n) {}
+	
+	virtual void filters( const post& );
+	virtual void flush();
+    };
+
+    todoliner shortline;
+    byScore order;
 
 public:
-    todoIdx() : mailParser(shortline) {}
+    todoIdx() : mailParser(order), order(shortline) {}
 
 };
 

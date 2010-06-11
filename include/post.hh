@@ -27,9 +27,14 @@
 #define guardpost
 
 #include <boost/date_time.hpp>
+#include <boost/uuid/uuid.hpp>
+
+boost::uuids::uuid asuuid( const std::string& s );
 
 class post {
 public:
+    uint32_t score;
+    boost::uuids::uuid tag;
     std::string author;
     std::string title;
     boost::posix_time::ptime time;    
@@ -38,10 +43,15 @@ public:
     /** remove non meaningful whitespaces from the *author* and *title* fields. 
      */
     void normalize();
-
-    void expanded( std::ostream& ostr ) const;
-
 };
+
+
+struct orderByScore : public std::binary_function<post, post, bool> {
+    bool operator()( const post& left, const post& right ) const {
+	return left.score > right.score;
+    }
+};
+
 
 class postFilter {
 protected:
@@ -56,6 +66,16 @@ public:
     virtual void flush() {}
 };
 
+class htmlwriter : public postFilter {
+protected:
+    std::ostream *ostr;
+
+public:
+    explicit htmlwriter( std::ostream& o ) : ostr(&o) {}
+
+    virtual void filters( const post& );
+};
+
 
 class blogwriter : public postFilter {
 protected:
@@ -67,11 +87,5 @@ public:
     virtual void filters( const post& );
 };
 
-
-class oneliner : public postFilter {
-public:
-
-    virtual void filters( const post& );
-};
 
 #endif

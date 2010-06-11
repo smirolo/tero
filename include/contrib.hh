@@ -37,12 +37,10 @@ public:
 /** Index the set of contribs and display an HTML row per contrib item
     that contains the date, author and title of the contrib item.
  */
-class contribIdx : public dirwalker {
+class contribIdx : public document {
 protected:
 
-    virtual void first();
-    virtual void walk( session& s, const boost::filesystem::path& pathname );
-    virtual void last();
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 

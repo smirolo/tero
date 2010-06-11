@@ -72,6 +72,13 @@ public:
 };
 
 
+class checkinliner : public postFilter {
+public:
+
+    virtual void filters( const post& );
+};
+
+
 /** History of checkins on a project
  */
 class history {

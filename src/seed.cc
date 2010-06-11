@@ -69,6 +69,7 @@ int main( int argc, char *argv[] )
 	    ("username",value<std::string>(),"username")
 	    ("message,m",value<std::string>(),"message")
 	    ("view",value<std::string>(),"view")
+	    ("href",value<std::string>(),"href")
 	    ("client",value<std::string>(),"client")	    
 	    ("editedText",value<std::string>(),"text submitted after an online edit");
 
@@ -154,7 +155,7 @@ int main( int argc, char *argv[] )
 	       generic order since the matcher will apply each the first
 	       one that yields a positive match. */	    
 
-#if 0
+#if 1
 	    composer invoice(s.valueOf("themeDir") 
 			     + std::string("/invoice.template"),
 			     composer::create);
@@ -184,6 +185,22 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("work"),work);
 	    docs.add("view",boost::regex("rest"),rest);
 
+	    /* If a template file matching the document's extension
+	       is present in the theme directory, let's use it
+	       as a composer. */
+	    std::string ext = extension(s.valueOf("view"));
+	    /* substr(1) will throw an exception if we cannot find 
+	     a file extension. on the other hand if we don't put
+	    entry in the global scope, pointers are screwed. */
+	    if( ext.empty() ) ext = ".";	    
+	    path extTemplate(path(s.valueOf("themeDir")) /
+			     (ext.substr(1) + ".template"));
+	    composer entry(extTemplate,composer::error);
+	    if( boost::filesystem::exists(extTemplate) ) {
+		docs.add("view",boost::regex(std::string(".*\\") + ext),
+			 entry);		
+	    }
+
 	    /* The build "document" gives an overview of the set 
 	       of all projects at a glance and can be used to assess 
 	       the stability of the whole as a release candidate. */
@@ -196,8 +213,10 @@ int main( int argc, char *argv[] )
 	    regressions rgs;
 	    docs.add("regressions",boost::regex(".*regression\\.log"),rgs);
 	    boost::filesystem::path regressname
-		= s.build(boost::filesystem::path(s.valueOf("document")).parent_path() 
-			  / std::string("test/regression.log"));
+		= s.valueOf("siteTop") 
+		/ boost::filesystem::path("log/tests")
+		/ (boost::filesystem::path(s.valueOf("document")).parent_path().filename() 
+		   + std::string("-test/regression.log"));
 	    s.vars["regressions"] = regressname.string();
 
 	    changedescr checkinHist(&revision);
@@ -221,7 +240,11 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex(".*todos"),todoIdxDoc);
 
 	    todoCreate todocreate;
-	    docs.add("view",boost::regex("/todoCreate"),todocreate);	    
+	    docs.add("document",boost::regex("/todoCreate"),todocreate);
+	    todoComment todocomment;
+	    docs.add("view",boost::regex("/todoComment"),todocomment);
+	    todoVote todovote;
+	    docs.add("document",boost::regex("/todoVote"),todovote);	    
 
 	    contribIdx contribIdxDoc;
 	    contribCreate contribcreate;
@@ -288,12 +311,11 @@ int main( int argc, char *argv[] )
 		filters.push_back(*pat);
 	    }	    
 
-
 	    /* We transform docbook formatted text into HTML for .book 
 	       and .corp "document" files and interpret all other unknown 
 	       extension files as raw text. In all cases we use a default
 	       document.template interface "view" to present those files. */ 
-	    composer entry(s.valueOf("themeDir") 
+	    composer doc(s.valueOf("themeDir") 
 			   + std::string("/document.template"),
 			   composer::error);
 	    linkLight leftFormatedText(s);
@@ -319,7 +341,7 @@ int main( int argc, char *argv[] )
 	    changerss rss(&revision);
 	    docs.add("view",boost::regex(".*index\\.rss"),rss);
 
-	    docs.add("view",boost::regex(".*"),entry);
+	    docs.add("view",boost::regex(".*"),doc);
 
 	    /* Widget to display status of static analysis of a project 
 	       source files in the absence of a more restrictive pattern. */

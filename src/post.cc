@@ -25,6 +25,19 @@
 
 #include "mails.hh"
 #include "markup.hh"
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/date_time/date_facet.hpp>
+#if 0
+#include <boost/date_time/time_facet.hpp>
+#endif
+
+boost::uuids::uuid asuuid( const std::string& s )
+{
+    boost::uuids::uuid r;
+    std::stringstream in(s);
+    in >> r;
+    return r;
+}
 
 
 void post::normalize() {
@@ -32,33 +45,40 @@ void post::normalize() {
     author = ::normalize(author);
 }
 
-void post::expanded( std::ostream& ostr ) const {
-    ostr << html::h(1) << title << html::h(1).end();
-    ostr << html::h(2) << author << html::h(2).end();
-    ostr << html::h(2) << time << html::h(2).end();
-    ostr << html::p() << descr << html::p::end;	 
-    ostr << std::endl;
+
+void htmlwriter::filters( const post& p ) {
+    *ostr << html::h(1) << p.title << html::h(1).end();
+    *ostr << html::h(2) << p.time << " - " << p.author << html::h(2).end();
+    *ostr << html::p() << p.descr << html::p::end;
+    *ostr << std::endl;
 }
 
-void oneliner::filters( const post& p ) {
-    std::cout << html::tr() 
-	      << html::td() << p.time << html::td::end
-	      << html::td() << p.author << html::td::end
-	      << html::td() << p.title << html::td::end;
-    if( false ) {
-	std::cout << html::td() 
-		  << html::a().href("/vote")
-		  << "<img src=\"/resources/amazon.png\">"
-		  << html::a::end
-		  <<  html::td::end;
-    }
-    std::cout << html::tr::end;
-}
 
 void blogwriter::filters( const post& p ) {
+    using namespace boost::gregorian;
+    using namespace boost::posix_time;
+
+#if 0
+    date_facet* facet(new date_facet("%a, %e %b %d %Y"));
+    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
+#else
+    time_facet* facet(new time_facet("%a, %e %b %Y %H:%M:%S %F%Q"));
+    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
+#endif
+
+#if 0
     *ostr << "Title: " << p.title << std::endl;
     *ostr << "Date: " << p.time << std::endl;
     *ostr << "Author: " << p.author << std::endl;
+#else
+    if( !p.title.empty() ) {
+	*ostr << "Subject: " << p.title << std::endl;
+    }
+    *ostr << "Date: " << p.time << std::endl;
+    *ostr << "From: " << p.author << std::endl;    
+#endif
+    *ostr << "Score: " << p.score << std::endl;
     *ostr << std::endl << std::endl;
+    /* \todo avoid description starting with "From " */
     *ostr << p.descr << std::endl;
 }

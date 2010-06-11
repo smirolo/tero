@@ -31,39 +31,39 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void contribIdx::first() 
-{
-    std::cout << html::table();
-}
-
-
-void contribIdx::walk( session& s, const boost::filesystem::path& pathname )
+void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace std;
     using namespace boost::filesystem;
 
+    cout << htmlContent;
+    
+    std::cout << html::table();    
     if( is_directory(pathname) ) {
-	cout << html::tr() 
-	     << html::td() 
-	     << "<img src=\"/resources/contributors/" 
-	     << pathname.filename() << ".jpg\">"
-	     << html::td::end
-	     << html::td();
-
-	boost::filesystem::path 
-	    profilePathname = pathname / "profile.blog";
-	if( boost::filesystem::is_regular_file(profilePathname) ) {
-	    text t;
-	    t.fetch(s,profilePathname);
+	for( directory_iterator entry = directory_iterator(pathname); 
+	     entry != directory_iterator(); ++entry ) {
+	    if( is_directory(*entry) ) {
+		boost::filesystem::path 
+		    profilePathname = path(*entry) / "profile.blog";
+		std::cerr << "!!! profile for " << profilePathname << std::endl;
+		if( boost::filesystem::is_regular_file(profilePathname) ) {
+		    cout << html::tr() 
+			 << html::td() 
+			 << "<img src=\"/resources/contrib/" 
+			 << entry->filename() << "/profile.jpg\">"
+			 << html::td::end
+			 << html::td();
+		    
+		    text t;
+		    t.fetch(s,profilePathname);
+		    
+		    cout << html::td::end
+			 << html::tr::end;
+		}
+	    }
 	}
-
-	cout << html::td::end
-	     << html::tr::end;
     }
-}
-
-void contribIdx::last() 
-{
     std::cout << html::table::end;
 }
+
 

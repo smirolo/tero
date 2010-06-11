@@ -65,7 +65,7 @@ void gitcmd::history( std::ostream& ostr,
     boost::filesystem::current_path(rootpath);
     
     std::stringstream sstm;
-    sstm << executable << " log --pretty=oneline " 
+    sstm << executable << " log --date=rfc --pretty=oneline " 
 	 << relpath(pathname,rootpath);    
     
     char lcstr[256];
@@ -108,7 +108,7 @@ void gitcmd::checkins( ::history& hist,
 
     /* shows only the last 2 commits */
     std::stringstream sstm;
-    sstm << executable << " log --name-only -2 "; 
+    sstm << executable << " log --date=rfc --name-only -2 "; 
     
     char lcstr[256];
     FILE *summary = popen(sstm.str().c_str(),"r");

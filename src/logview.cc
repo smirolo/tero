@@ -199,18 +199,33 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 	typedef std::map<std::string,size_t> colMap;
 	colMap colmap;	
 	std::cout << html::p();
-	std::cout << "<table border=\"2\">" << std::endl;
+	std::cout << html::table() << std::endl;
 	std::cout << html::tr();
-	std::cout << html::th() << html::th::end;
-	for( xml_node<> *ref = root->first_node("reference");
-	     ref != NULL; ref = ref->next_sibling() ) {
-	    xml_attribute<> *id = ref->first_attribute("id");
-	    if( id != NULL ) {		
-		std::cout << html::th() << id->value() << html::th::end;
-		xml_attribute<> *name = ref->first_attribute("name");
-		assert( name != NULL );
-		colmap.insert(std::make_pair(name->value(),col++));
+
+	std::cout << html::th();
+	xml_node<> *config = root->first_node("config");
+	if( config ) {
+	    xml_attribute<> *configName = config->first_attribute("name");
+	    if( configName ) {
+		std::cout << configName->value();
 	    }
+	}       
+	std::cout << " vs." << html::th::end;
+	
+	xml_node<> *ref = root->first_node("reference");
+	if( ref ) {
+	    for( ; ref != NULL; ref = ref->next_sibling() ) {
+		xml_attribute<> *id = ref->first_attribute("id");
+		if( id != NULL ) {		
+		    std::cout << html::th() << id->value() << html::th::end;
+		    xml_attribute<> *name = ref->first_attribute("name");
+		    assert( name != NULL );
+		    colmap.insert(std::make_pair(name->value(),col++));
+		}
+	    }
+	} else {
+	    std::cout << html::th() << "No results to compare against."
+		      << html::th::end;
 	}
 	std::cout << html::tr::end;
 
