@@ -31,6 +31,13 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
+void contribIdx::meta( session& s, const boost::filesystem::path& pathname ) 
+{
+    s.vars["title"] = "A last word";
+    document::meta(s,pathname);
+}
+
+
 void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace std;
@@ -38,32 +45,37 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 
     cout << htmlContent;
     
+#if 0
     std::cout << html::table();    
+#endif
     if( is_directory(pathname) ) {
 	for( directory_iterator entry = directory_iterator(pathname); 
 	     entry != directory_iterator(); ++entry ) {
 	    if( is_directory(*entry) ) {
 		boost::filesystem::path 
-		    profilePathname = path(*entry) / "profile.blog";
-		std::cerr << "!!! profile for " << profilePathname << std::endl;
+		    profilePathname = path(*entry) / "profile.blog";	
 		if( boost::filesystem::is_regular_file(profilePathname) ) {
+#if 0
 		    cout << html::tr() 
 			 << html::td() 
 			 << "<img src=\"/resources/contrib/" 
 			 << entry->filename() << "/profile.jpg\">"
 			 << html::td::end
 			 << html::td();
-		    
+#endif		    
 		    text t;
 		    t.fetch(s,profilePathname);
-		    
+#if 0		    
 		    cout << html::td::end
 			 << html::tr::end;
+#endif
 		}
 	    }
 	}
     }
+#if 0
     std::cout << html::table::end;
+#endif
 }
 
 

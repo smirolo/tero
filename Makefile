@@ -35,6 +35,8 @@ shares		:=	seed.pdf
 
 seedConfFile	?=	/etc/seed.conf
 
+CPPFLAGS	+=	-DREADONLY
+
 libseed.a: $(subst .cc,.o,\
 	      $(filter-out seed.cc session.cc,\
 		$(notdir $(wildcard $(srcDir)/src/*.cc))))

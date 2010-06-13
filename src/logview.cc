@@ -111,7 +111,9 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	"of all projects at a glance. Each column represents a build log "
 	"obtained by running the following command on a local machine:" 
 	      << html::p::end;
-    std::cout << html::pre() << "dws build " << s.valueOf("remoteIndex")
+    std::cout << html::pre() << html::a().href("/resources/dws") 
+	      << "dws" << html::a::end << " build " 
+	      << s.valueOf("remoteIndex")
 	      << html::pre::end;
     std::cout << html::p() << "dws, the inter-project dependency tool "
 	"generates a build log file with XML markups as part of building "

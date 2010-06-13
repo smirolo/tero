@@ -51,6 +51,7 @@ void todoliner::filters( const post& p ) {
 	      << p.title 
 	      << html::a::end << html::td::end;
     
+#if 0
     std::stringstream s;
     s << "/todoVote?href=" << todoAbsPath(p.tag);
     std::cout << html::td() 
@@ -58,7 +59,7 @@ void todoliner::filters( const post& p ) {
 	      << "<img src=\"/resources/donate.png\">"
 	      << html::a::end
 	      <<  html::td::end;
-
+#endif
     std::cout << html::tr::end;
 }
 
@@ -102,7 +103,7 @@ void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
 
     std::cout << htmlContent;
 
-#ifdef READONLY
+#ifndef READONLY
     boost::filesystem::ofstream file;
     create(file,s.srcDir(postname));
 
@@ -138,7 +139,7 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
 				     : s.abspath(s.valueOf("href")));
 
 
-#ifdef READONLY
+#ifndef READONLY
     boost::interprocess::file_lock f_lock(postname.string().c_str());
     boost::filesystem::ofstream file;
 
@@ -163,7 +164,8 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
 	      << htmlContent << std::endl;
 
 #else
-    std::cout << html::p() << "item " << tag << " could not be created"
+    std::cout << htmlContent << std::endl;
+    std::cout << html::p() << "comment could not be created"
 	" because you do not have permissions to do so on this server."
 	" Sorry for the inconvienience."
 	      << html::p::end;
