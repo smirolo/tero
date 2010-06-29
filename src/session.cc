@@ -194,6 +194,15 @@ void session::restore( const boost::program_options::variables_map& params )
     if( params["document"].empty() ) {
 	vars["document"] = vars["view"];
     }
+    /* Append a trailing '/' if the document is a directory
+       to match Apache's rewrite rules. */    
+    std::string document = vars["document"];
+    if( boost::filesystem::is_directory(document) 
+	&& (document.size() == 0 
+	    || document[document.size() - 1] != '/') ) {
+	vars["document"] = document + '/';
+    }
+    std::cerr << "!!! document=" << vars["document"] << std::endl;
 
     session::variables::const_iterator v = vars.find("username");
     if( v != vars.end() ) {
