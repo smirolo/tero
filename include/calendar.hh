@@ -28,8 +28,28 @@
 
 #include "document.hh"
 
+/** iCalendar - RFC5545 (http://tools.ietf.org/html/rfc5545)
+*/
 class calendar : public document {
+protected:
+    typedef void 
+    (calendar::* walkNodePtr)( const std::string& s );
+
+    struct walkNodeEntry {
+	const char* name;
+	walkNodePtr start;
+	walkNodePtr end;
+
+	bool operator<( const walkNodeEntry& right ) const;
+    };
+
+    static walkNodeEntry walkers[];
+
+    void any( const std::string& s );
+    walkNodeEntry* walker( const std::string& s );
+
 public:
+    void parse( session& s, std::istream& ins );
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
 

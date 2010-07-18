@@ -43,6 +43,8 @@ public:
     /** remove non meaningful whitespaces from the *author* and *title* fields. 
      */
     void normalize();
+
+    bool valid() const;
 };
 
 
@@ -58,20 +60,50 @@ protected:
     postFilter *next;
 
 public:
+    /* Visible name of the filter
+
+       A mail parser will initialize that name to the pathname 
+       of the file being parsed such that todo identifiers can
+       be set correctly. */
+    std::string name;
+
     postFilter() : next(NULL) {}
 
     explicit postFilter( postFilter *n ) : next(n) {}
 
-    virtual void filters( const post& ) = 0;
-    virtual void flush() {}
+    virtual void filters( const post& );
+    virtual void flush();
+};
+
+/* buffers a set posts. */
+class postBuffer : public postFilter {
+protected:
+    typedef std::vector<post> postSet;
+
+public:
+    postSet posts;
+
+    postBuffer() : postFilter(NULL) {}
+
+    virtual void filters( const post& );
+    virtual void flush();
+
 };
 
 class htmlwriter : public postFilter {
 protected:
+    /** stream used to write the post to
+     */
     std::ostream *ostr;
 
+    /** The counter of posts that have been written so far is used
+	to alternate HTML divs between the *postEven* and *postOdd* 
+	CSS classes in order to make them more readable.
+    */
+    size_t postNum;
+
 public:
-    explicit htmlwriter( std::ostream& o ) : ostr(&o) {}
+    explicit htmlwriter( std::ostream& o ) : ostr(&o), postNum(0) {}
 
     virtual void filters( const post& );
 };

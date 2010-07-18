@@ -29,55 +29,100 @@
 #include "document.hh"
 #include "mails.hh"
 
-class todoliner : public postFilter {
-public:
-
-    virtual void filters( const post& );
-};
+boost::uuids::uuid todouuid( const boost::filesystem::path& p );
 
 
-class todoCreate : public document {
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
-
-class todoComment : public document {
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
-
-class todoVote : public document {
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
-
-/** Index the set of todos and display an HTML row per todo item
-    that contains the date, author and title of the todo item.
- */
-class todoIdx : public mailParser {
+/** Creating an item or commenting on an already existing item 
+    use very similar mechanism. This abstract class implements
+    such mechanism to append a post to an item.
+*/
+class todoAppendPost : public document {
 protected:
-    class byScore : public postFilter {
-    protected:
-	typedef std::vector<post> indexSet;
-	
-	indexSet indexes;
-	
-    public:
-	explicit byScore( postFilter &n ) : postFilter(&n) {}
-	
-	virtual void filters( const post& );
-	virtual void flush();
-    };
 
-    todoliner shortline;
-    byScore order;
+    /** Input stream containing the modification post 
+	formatted as an e-mail. */
+    std::istream *istr;
 
 public:
-    todoIdx() : mailParser(order), order(shortline) {}
+    explicit todoAppendPost( std::istream& is ) : istr(&is) {}
 
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+/** Create a new item
+
+    Creating a new item involves computing a unique identifier,
+    write the post in a file whose name is based on that identifier
+    and finally commit the file into the repository.
+*/
+class todoCreate : public todoAppendPost {
+public:
+    explicit todoCreate( std::istream& is ) : todoAppendPost(is) {}
+
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+/** Comment an item
+
+    Commmenting on a item involves finding the file matching the unique 
+    identifier of that item, append the post at the end of that file 
+    and finally commit the file back into the repository.
+*/
+class todoComment : public todoAppendPost {
+public:
+    explicit todoComment( std::istream& is ) : todoAppendPost(is) {}
+
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+/** Display an index of all items in a directory with one item per row
+    with the rows sorted in descending score order.
+ */
+class todoIndexWriteHtml : public document {
+protected:
+
+    /* relative url for registering a vote. */
+    const char *voteCommand;
+
+public:
+    explicit todoIndexWriteHtml( const char *v ) 
+	: voteCommand(v) {}
+
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+/** Callback when the process of voting on an item has been abandonned
+ */
+class todoVoteAbandon : public document {
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+/** Callback when a vote on an item has successed.
+    
+    First the item's unique identifier is used to find the file 
+    that need to be updated. The file is then searched for the matching
+    'Score:' pattern and that line is modified to reflect the vote.
+    Finally the file is committed back into the repository.
+ */
+class todoVoteSuccess : public document {
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+/** Generate an HTML printout of an item
+ */
+class todoWriteHtml : public document {
+public:
+    void meta( session& s, const boost::filesystem::path& pathname );
+
+    void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 

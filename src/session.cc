@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include "session.hh"
+#include <uriparser/Uri.h>
 
 /* For security, we want to store the absolute path to the config
    file into the executable binary. */
@@ -51,6 +52,12 @@ session::session() : id(0) {
 	("remoteIndex",value<std::string>(),"path to project interdependencies")
 	("themeDir",value<std::string>(),"path to user interface elements")
 	("contractDb",value<std::string>(),"path to contracts database");
+
+    /* For authentication with Amazon payment services. */
+    pathOptions.add_options()
+	("awsAccessKey",value<std::string>(),"Amazon Access Key")
+	("awsSecretKey",value<std::string>(),"Amazon Secret Key")
+	("awsCertificate",value<std::string>(),"Amazon Public Certificate");
 }
 
 
@@ -163,6 +170,26 @@ void session::restore( const boost::program_options::variables_map& params )
     using namespace boost::filesystem;
     using namespace boost::program_options;
 
+    /* If there are any QUERY_STRING, parse the parameters in it. */
+    char *cQueryString = getenv("QUERY_STRING");
+    if( cQueryString != NULL ) {
+	int err = 0;
+	int itemCount = 0;
+	UriQueryListA *queryList = NULL;
+	if( (err = uriDissectQueryMallocA(&queryList,
+					  &itemCount,
+					  cQueryString,
+					  &cQueryString[strlen(cQueryString)])) 
+	    == URI_SUCCESS ) {	
+	    for( UriQueryListStructA *item = queryList;
+		 item != NULL; item = item->next ) {
+		query[item->key] = item->value;
+		vars[item->key] = item->value;
+	    }
+	    uriFreeQueryListA(queryList);
+	}
+    }
+
     /* 1. initialize more configuration from the script input */
     for( variables_map::const_iterator param = params.begin(); 
 	 param != params.end(); ++param ) {
@@ -196,13 +223,12 @@ void session::restore( const boost::program_options::variables_map& params )
     }
     /* Append a trailing '/' if the document is a directory
        to match Apache's rewrite rules. */    
-    std::string document = vars["document"];
+    std::string document = abspath(vars["document"]).string();
     if( boost::filesystem::is_directory(document) 
 	&& (document.size() == 0 
 	    || document[document.size() - 1] != '/') ) {
 	vars["document"] = document + '/';
     }
-    std::cerr << "!!! document=" << vars["document"] << std::endl;
 
     session::variables::const_iterator v = vars.find("username");
     if( v != vars.end() ) {

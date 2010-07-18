@@ -61,7 +61,7 @@ void mailParser::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void mailParser::walk( session& s, const boost::filesystem::path& pathname )
+void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
@@ -70,9 +70,6 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
 
     static const boost::regex metainfo("^(\\S+):(.+)");
 
-    boost::filesystem::ifstream infile;
-    open(infile,pathname);
-
     post p;
     bool first = true;
     size_t lineCount = 0;
@@ -80,13 +77,12 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
     parseState state;
 
     p.score = 0;
-    p.tag = asuuid(boost::filesystem::path(pathname.filename()).stem());
-    std::cerr << "walk " << pathname << std::endl;
+    p.tag = asuuid(boost::filesystem::path(boost::filesystem::path(name).filename()).stem());
 
-    while( !infile.eof() ) {
+    while( !ins.eof() ) {
 	boost::smatch m;
 	std::string line;
-	std::getline(infile,line);
+	std::getline(ins,line);
 	++lineCount;
 
 	if( line.compare(0,5,"From ") == 0 ) {
@@ -151,7 +147,5 @@ void mailParser::walk( session& s, const boost::filesystem::path& pathname )
     descr.str("");
     p.normalize();
     filter->filters(p);
-    
-    infile.close();
 }
 

@@ -185,23 +185,44 @@ namespace html {
 	}
     };
 
-    /** HTML h{1,2,3,...} markup
+    /** form markup
      */
-    class h : public detail::markup {    
-    protected:
-	static const char* names[];
+    class form : public detail::markup {    
+    protected:  
+	enum attributes {
+	    actionAttr,
+	    classAttr,
+	    methodAttr
+	};
+	
+	static const size_t attrLength = 3;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	form() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	form& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
 
-	int num;
+	form& action( const char *v ) {
+	    attrValues[actionAttr] = v;
+	    return *this;
+	}	
 
-    public:
-	/* \todo assert than n < 5. */
-	explicit h( int n ) : markup(names[n],NULL,NULL,0), num(n) {}
-
-	detail::nodeEnd end() const {
-	    return detail::nodeEnd(names[num],true);
+	form& method( const char *v ) {
+	    attrValues[methodAttr] = v;
+	    return *this;
 	}
-
     };
+
 
     /** img markup
      */
@@ -233,6 +254,94 @@ namespace html {
 	    attrValues[srcAttr] = v;
 	    return *this;
 	}	
+
+    };
+
+
+    /** input markup
+     */
+    class input : public detail::markup {    
+    protected:  
+	enum attributes {
+	    classAttr,
+	    nameAttr,
+	    srcAttr,
+	    typeAttr,
+	    valueAttr
+	};
+	
+	static const size_t attrLength = 5;
+	
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+
+	static const char* one;
+	static const char* zero;
+	
+    public:  
+	
+	static const char* name;
+	static const detail::nodeEnd end;
+	
+	static const char* hidden;
+	static const char* image;
+
+	input() : markup(name,attrNames,attrValues,attrLength,true) {}
+	
+	input& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+
+	input& nameref( const char *v ) {
+	    attrValues[nameAttr] = v;
+	    return *this;
+	}	
+
+	input& src( const char *v ) {
+	    attrValues[srcAttr] = v;
+	    return *this;
+	}	
+
+	input& type( const char *v ) {
+	    attrValues[typeAttr] = v;
+	    return *this;
+	}	
+
+	input& value( bool b ) {
+	    attrValues[valueAttr] = b ? one : zero;
+	    return *this;
+	}	
+
+	input& value( const std::string& s ) {
+	    attrValues[valueAttr] = s;
+	    return *this;
+	}	
+
+	input& value( uint32_t v ) {
+	    std::stringstream s;
+	    s << v;
+	    attrValues[valueAttr] = s.str();
+	    return *this;
+	}	
+    };
+
+
+    /** HTML h{1,2,3,...} markup
+     */
+    class h : public detail::markup {    
+    protected:
+	static const char* names[];
+
+	int num;
+
+    public:
+	/* \todo assert than n < 5. */
+	explicit h( int n ) : markup(names[n],NULL,NULL,0), num(n) {}
+
+	detail::nodeEnd end() const {
+	    return detail::nodeEnd(names[num],true);
+	}
 
     };
 

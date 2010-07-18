@@ -27,10 +27,108 @@
 #include "calendar.hh"
 #include "markup.hh"
 
+
+bool calendar::walkNodeEntry::operator<( const walkNodeEntry& right ) const {
+    return strcmp(name,right.name) < 0;
+}
+
+
+calendar::walkNodeEntry calendar::walkers[] = {
+    { "ACTION", &calendar::any, &calendar::any }, /* Property Name */
+    { "ATTACH", &calendar::any, &calendar::any }, /* Property Name */
+    { "ATTENDEE", &calendar::any, &calendar::any }, /* Property Name */
+    { "CALSCALE", &calendar::any, &calendar::any }, /* Property Name */
+    { "CATEGORIES", &calendar::any, &calendar::any }, /* Property Name */
+    { "CLASS", &calendar::any, &calendar::any }, /* Property Name */
+    { "COMMENT", &calendar::any, &calendar::any }, /* Property Name */
+    { "COMPLETED", &calendar::any, &calendar::any }, /* Property Name */
+    { "CONTACT", &calendar::any, &calendar::any }, /* Property Name */
+    { "DESCRIPTION", &calendar::any, &calendar::any }, /* Property Name */
+    { "DTEND", &calendar::any, &calendar::any }, /* Property Name */
+    { "DTSTART", &calendar::any, &calendar::any }, /* Property Name */
+    { "DUE", &calendar::any, &calendar::any }, /* Property Name */
+    { "DURATION", &calendar::any, &calendar::any }, /* Property Name */
+    { "EXDATE", &calendar::any, &calendar::any }, /* Property Name */
+    { "GEO", &calendar::any, &calendar::any }, /* Property Name */
+    { "FREEBUSY", &calendar::any, &calendar::any }, /* Property Name */
+    { "LOCATION", &calendar::any, &calendar::any }, /* Property Name */
+    { "METHOD", &calendar::any, &calendar::any }, /* Property Name */
+    { "ORGANIZER", &calendar::any, &calendar::any }, /* Property Name */
+    { "PERCENT-COMPLETE", &calendar::any, &calendar::any }, /* Property Name */
+    { "PRIORITY", &calendar::any, &calendar::any }, /* Property Name */
+    { "PRODID", &calendar::any, &calendar::any }, /* Property Name */
+    { "RDATE", &calendar::any, &calendar::any }, /* Property Name */
+    { "RECURRENCE-ID", &calendar::any, &calendar::any }, /* Property Name */
+    { "RELATED-TO", &calendar::any, &calendar::any }, /* Property Name */
+    { "RESOURCES", &calendar::any, &calendar::any }, /* Property Name */
+    { "RRULE", &calendar::any, &calendar::any }, /* Property Name */
+    { "STATUS", &calendar::any, &calendar::any }, /* Property Name */
+    { "SUMMARY", &calendar::any, &calendar::any }, /* Property Name */
+    { "TRANSP", &calendar::any, &calendar::any }, /* Property Name */
+    { "TZID", &calendar::any, &calendar::any }, /* Property Name */
+    { "TZNAME", &calendar::any, &calendar::any }, /* Property Name */
+    { "TZOFFSETFROM", &calendar::any, &calendar::any }, /* Property Name */
+    { "TZOFFSETTO", &calendar::any, &calendar::any }, /* Property Name */
+    { "TZURL", &calendar::any, &calendar::any }, /* Property Name */
+    { "UID", &calendar::any, &calendar::any }, /* Property Name */
+    { "URL", &calendar::any, &calendar::any }, /* Property Name */
+    { "VALARM", &calendar::any, &calendar::any }, /* Component Name */
+    { "VCALENDAR", &calendar::any, &calendar::any },
+    { "VERSION", &calendar::any, &calendar::any }, /* Property Name */
+    { "VEVENT", &calendar::any, &calendar::any },
+    { "VFREEBUSY", &calendar::any, &calendar::any },
+    { "VTIMEZONE", &calendar::any, &calendar::any },
+    { "VTODO", &calendar::any, &calendar::any },
+    { "VJOURNAL", &calendar::any, &calendar::any }
+};
+
+
+void calendar::any( const std::string& s ) {
+}
+
+
+calendar::walkNodeEntry* calendar::walker( const std::string& s ) {
+    walkNodeEntry *walkersEnd 
+	= &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
+    walkNodeEntry *d;
+    walkNodeEntry key;
+    
+    key.name = s.c_str();
+    d = std::lower_bound(walkers,walkersEnd,key);
+    if( d != walkersEnd ) return d;
+    return NULL;
+}
+
+
+void calendar::parse( session& s, std::istream& ins ) {
+
+    static const boost::regex syntax("^(\\S+):(.+)");
+
+    size_t lineCount = 0;
+    while( !ins.eof() ) {
+	boost::smatch m;
+	std::string line;
+	std::getline(ins,line);
+	++lineCount;
+	if( regex_match(line,m,syntax) ) {
+	    walkNodeEntry *w = walker(m.str(1));
+	    if( w ) (this->*(w->start))(m.str(2));
+	}
+    }
+}
+
+
 void calendar::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace std;
     using namespace boost::gregorian;
     using namespace boost::posix_time;
+
+    if( boost::filesystem::exists(pathname) ) {
+	boost::filesystem::ifstream input;
+	open(input,pathname);
+	parse(s,input);
+	input.close();
+    }
 
     date today;
     std::string ms = s.valueOf("month");

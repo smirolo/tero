@@ -29,6 +29,7 @@
 #include <sstream>
 #include <boost/regex.hpp>
 #include "webserve.hh"
+#include <uriparser/Uri.h>
 
 boost::posix_time::ptime
 getmtime( const boost::filesystem::path& pathname )
@@ -56,6 +57,15 @@ relpath( const boost::filesystem::path& pathname,
 		result /= *first;
     }
     return result;
+}
+
+
+std::string uriEncode( const std::string& s ) {
+    char escRequest[s.size() * 9];
+    char *last = uriEscapeExA(s.c_str(),&s.c_str()[s.size()],escRequest,
+			      true/*spaceToPlus*/,false/*normalizeBreaks*/);
+    *(last + 1) = '\0';
+    return std::string(escRequest);
 }
 
 

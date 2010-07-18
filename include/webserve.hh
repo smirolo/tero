@@ -37,6 +37,10 @@
     - Common functions used by web servers to access files
     - Wrappers around common CGI functionalities.
     (See http://hoohoo.ncsa.uiuc.edu/cgi/env.html for documentation.)
+
+    url encode/decode:
+    http://www.ietf.org/rfc/rfc2396.txt
+
 */
 
 /** returns the latest modification time of a file given its *pathname*.
@@ -49,6 +53,10 @@ getmtime( const boost::filesystem::path& pathname );
 boost::filesystem::path 
 relpath( const boost::filesystem::path& pathname,
 	 const boost::filesystem::path& base );
+
+
+/* \todo rfc? percent escape a string. */
+std::string uriEncode( const std::string& );
 
 
 /** \brief Generate a cookie on the client side
@@ -180,6 +188,10 @@ public:
 	: port(pport), host(phost), protocol(pprotocol), pathname(ppathname) {} 
     
     bool absolute() const;
+
+    bool empty() const {
+	return string().empty();
+    }
 
     std::string string() const;
 };

@@ -29,13 +29,14 @@
 #include "session.hh"
 #include "decorator.hh"
 
+void createfile( boost::filesystem::ofstream& strm,
+		 const boost::filesystem::path& pathname );
+
+
 /* Base class to generate HTML presentation of documents.
  */
 class document {
 protected:
-    void create( boost::filesystem::ofstream& strm, 
-		 const boost::filesystem::path& pathname ) const;
-
     void open( boost::filesystem::ifstream& strm, 
 	       const boost::filesystem::path& pathname ) const;
     
@@ -95,12 +96,17 @@ class dirwalker : public document {
 protected:
 
     virtual void first() {}
-    virtual void walk( session& s, const boost::filesystem::path& pathname ) {}
     virtual void last() {}
 
 public:
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
+
+    /** *name* initialized with pathname for the todo filters to set the uuid
+	correctly on filters(). 
+    */
+    virtual void walk( session& s, std::istream& ins, 
+		       const std::string& name = "" ) {}
 };
 
 

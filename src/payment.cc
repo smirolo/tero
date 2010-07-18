@@ -23,46 +23,17 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmails
-#define guardmails
+#include "payment.hh"
+#include "todo.hh"
+#include "aws.hh"
 
-#include "document.hh"
-#include "post.hh"
+void awsPayment::fetch( session& s, const boost::filesystem::path& pathname ) {
+    awsStandardButton button(s.valueOf("awsAccessKey"),
+			     s.valueOf("awsSecretKey"),
+			     s.valueOf("awsCertificate"));
+    button.description = "Vote for a todo item with your dollars";
+    button.returnUrl = url("https://fortylines.com/todoVoteSuccess");
 
-class mailthread : public postFilter {
-protected:
-    typedef std::map<std::string,uint32_t> indexMap;
-
-    indexMap indexes;
-
-public:
-    mailthread() {}
-
-    explicit mailthread( postFilter *n ) : postFilter(n) {}
-
-    virtual void filters( const post& );
-    virtual void flush();
-};
-
-
-class mailParser : public dirwalker {
-protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
-
-    postFilter *filter;
-
-public:
-    explicit mailParser( postFilter& f ) : filter(&f) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
-    void walk( session& s, std::istream& ins, const std::string& name = "" );
-};
-
-
-#endif
+    button.build(todouuid(pathname),5);
+    button.writehtml(std::cout);
+}

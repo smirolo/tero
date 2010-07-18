@@ -174,7 +174,7 @@ public:
 };
 
 
-/** \brief Decorate links with load, create and external. 
+/** \brief Escape symbols that would otherwise be interpretated as HTML tags.
  */
 template<typename charT, typename traitsT = std::char_traits<charT> >
 class basicHtmlEscaper : public basicHighLight<xmlEscTokenizer, charT, traitsT>,

@@ -786,7 +786,10 @@ protected:
     bool elementStart;
     std::list<docbookToken> tokens;
     xmlTokenizer tok;
-    textSlice text;
+
+    virtual void appendText( const char* first, const char *last ) {}
+
+    virtual void clearText() {}
 
  public:
 
@@ -796,11 +799,10 @@ protected:
 
     virtual ~docbookScanner() {}
 
-    void newline( const char *line, 
-		  int first, int last ) = 0;
+    void newline( const char *line, int first, int last ) {}
     
     void token( xmlToken token, const char *line, 
-		int first, int last, bool fragment ) = 0;
+		int first, int last, bool fragment );
 
     bool eof() const { return tokens.empty(); }
 
@@ -819,16 +821,16 @@ protected:
     char *buffer;
     size_t length;
     size_t curr;    
+    textSlice text;
+
+    void appendText( const char* first, const char *last );
+    void clearText();
 
 public:
     docbookBufferTokenizer( char *buffer, size_t length );
     virtual ~docbookBufferTokenizer() {}
 
-    void newline( const char *line, 
-		  int first, int last );
-    
-    void token( xmlToken token, const char *line, 
-		int first, int last, bool fragment );
+    void newline( const char *line, int first, int last );
     
     docbookToken read();
 };
@@ -844,12 +846,6 @@ public:
     explicit docbookStreamTokenizer( std::istream& is );
     virtual ~docbookStreamTokenizer() {}
 
-    void newline( const char *line, 
-		  int first, int last );
-    
-    void token( xmlToken token, const char *line, 
-		int first, int last, bool fragment );
-    
     docbookToken read();
 };
 

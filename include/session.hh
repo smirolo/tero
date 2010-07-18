@@ -55,6 +55,9 @@ public:
     /* map of variable names to values */
     variables vars;
 
+    /* map of (name,value) pairs present in the QUERY_STRING. */
+    variables query;
+    
 public:
 
     static boost::program_options::options_description pathOptions;
@@ -162,7 +165,7 @@ public:
     /** returns the value of a variable
      */
     const std::string& valueOf( const std::string& name ) const;
-
 };
+
 
 #endif

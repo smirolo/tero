@@ -47,8 +47,8 @@ void document::open( boost::filesystem::ifstream& strm,
 }
 
 
-void document::create( boost::filesystem::ofstream& strm, 
-		       const boost::filesystem::path& pathname ) const {
+void createfile( boost::filesystem::ofstream& strm, 
+		 const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
 
@@ -126,11 +126,17 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
 	for( directory_iterator entry = directory_iterator(pathname); 
 	     entry != directory_iterator(); ++entry ) {
 	    if( !is_directory(*entry) ) {
-		walk(s,*entry);
+		boost::filesystem::ifstream infile;
+		open(infile,*entry);
+		walk(s,infile,entry->string());
+		infile.close();
 	    }
 	}
     } else {
-	walk(s,pathname);
+	boost::filesystem::ifstream infile;
+	open(infile,pathname);
+	walk(s,infile);
+	infile.close();
     }
     last();
 }

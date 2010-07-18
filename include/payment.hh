@@ -23,45 +23,15 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmails
-#define guardmails
+#ifndef guardpayment
+#define guardpayment
 
 #include "document.hh"
-#include "post.hh"
 
-class mailthread : public postFilter {
-protected:
-    typedef std::map<std::string,uint32_t> indexMap;
 
-    indexMap indexes;
-
+class awsPayment : public document {
 public:
-    mailthread() {}
-
-    explicit mailthread( postFilter *n ) : postFilter(n) {}
-
-    virtual void filters( const post& );
-    virtual void flush();
-};
-
-
-class mailParser : public dirwalker {
-protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
-
-    postFilter *filter;
-
-public:
-    explicit mailParser( postFilter& f ) : filter(&f) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
-    void walk( session& s, std::istream& ins, const std::string& name = "" );
+    void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 

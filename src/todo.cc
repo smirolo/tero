@@ -29,17 +29,111 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "todo.hh"
-#include "markup.hh"
+#include "aws.hh"
 
 namespace {
+
+    std::string todoAbsPath( const std::string& tag ) {
+	std::stringstream s;
+        s << "/contrib/todos/" << tag << ".todo";
+	return s.str();
+    }
 
     std::string todoAbsPath( boost::uuids::uuid tag ) {
 	std::stringstream s;
         s << "/contrib/todos/" << tag << ".todo";
 	return s.str();
     }
-
+    
 }  // anonymous namespace
+
+boost::uuids::uuid todouuid( const boost::filesystem::path& p ) {
+    return asuuid(boost::filesystem::basename(p.filename()));
+}
+
+class todoliner : public postFilter {
+public:
+
+    virtual void filters( const post& );
+};
+
+class byScore : public postFilter {
+protected:
+    typedef std::vector<post> indexSet;
+    
+    indexSet indexes;
+    
+public:
+    explicit byScore( postFilter &n ) : postFilter(&n) {}
+    
+    virtual void filters( const post& );
+    virtual void flush();
+};
+
+
+class todoCreateFeedback : public postFilter {
+public:
+    virtual void filters( const post& );
+};
+
+
+class todocreator : public postFilter {
+protected:
+    const session *s;
+
+public:
+    todocreator( const session& v, postFilter* n  ) 
+	: postFilter(n), s(&v) {}
+
+    virtual void filters( const post& );
+};
+
+
+class todocommentor : public postFilter {
+protected:
+    const session *s;
+
+public:
+    todocommentor( const session& v, postFilter* n  ) 
+	: postFilter(n), s(&v) {}
+
+    virtual void filters( const post& );
+};
+
+
+void todoCreateFeedback::filters( const post& p ) {
+    std::cout << htmlContent;
+    std::cout << html::p() << "item " << p.tag << " has been created." 
+	      << html::p::end;    
+}
+
+
+void todocreator::filters( const post& v ) {
+    post p = v;
+    p.tag = boost::uuids::random_generator()();   
+    p.time = boost::posix_time::second_clock::local_time();
+
+#ifndef READONLY
+    boost::filesystem::ofstream file;
+    createfile(file,s->srcDir(todoAbsPath(p.tag)));
+
+    blogwriter writer(file);
+    writer.filters(p);	
+    file.flush();    
+    file.close();
+    next->filters(p);
+#else
+    throw std::runtime_error("Todo item could not be created"
+	" because you do not have permissions to do so on this server."
+	" Sorry for the inconvienience.");
+#endif
+
+}
+
+
+void todocommentor::filters( const post& v ) {
+
+}
 
 
 void todoliner::filters( const post& p ) {
@@ -50,27 +144,19 @@ void todoliner::filters( const post& p ) {
 	      << html::td() << html::a().href(todoAbsPath(p.tag)) 
 	      << p.title 
 	      << html::a::end << html::td::end;
-    
-#if 0
-    std::stringstream s;
-    s << "/todoVote?href=" << todoAbsPath(p.tag);
-    std::cout << html::td() 
-	      << html::a().href(s.str())
-	      << "<img src=\"/resources/donate.png\">"
-	      << html::a::end
-	      <<  html::td::end;
-#endif
+    std::cout << html::td()
+	      << p.score
+	      << html::td::end;
     std::cout << html::tr::end;
 }
 
-
-void todoIdx::byScore::filters( const post& p )
+void byScore::filters( const post& p )
 {
     indexes.push_back(p);
 }
 
 
-void todoIdx::byScore::flush()
+void byScore::flush()
 {
     if( indexes.empty() ) {
 	std::cout << html::tr()
@@ -89,38 +175,28 @@ void todoIdx::byScore::flush()
 }
 
 
-void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
+void todoAppendPost::fetch( session& s, 
+			    const boost::filesystem::path& pathname )
 {
-    boost::uuids::uuid tag = boost::uuids::random_generator()();   
-    
+}
+
+
+void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
+{    
     post p;
     p.title = s.valueOf("title");
     p.author = s.valueOf("author");
-    p.time = boost::posix_time::second_clock::local_time();
     p.descr = s.valueOf("descr");
 
-    std::string postname = todoAbsPath(tag);
+    todoCreateFeedback fb;
+    todocreator create(s,&fb);
+    if( p.valid() ) {
+	create.filters(p);
 
-    std::cout << htmlContent;
-
-#ifndef READONLY
-    boost::filesystem::ofstream file;
-    create(file,s.srcDir(postname));
-
-    blogwriter writer(file);
-    writer.filters(p);	
-    file.flush();    
-    file.close();
-   
-    std::cout << html::p() << "item " << tag << " has been created." 
-	      << html::p::end;
-#else
-    std::cout << html::p() << "item " << tag << " could not be created"
-	" because you do not have permissions to do so on this server."
-	" Sorry for the inconvienience."
-	      << html::p::end;
-#endif
-
+    } else {
+	mailParser parser(create);
+	parser.walk(s,*istr);
+    }
 }
 
 
@@ -129,15 +205,24 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
     using namespace boost::system;
     using namespace boost::filesystem;
 
-    post p;
-    p.author = s.valueOf("author");
-    p.time = boost::posix_time::second_clock::local_time();
-    p.descr = s.valueOf("descr");
-
     boost::filesystem::path postname(boost::filesystem::exists(pathname) ? 
 				     pathname 
 				     : s.abspath(s.valueOf("href")));
 
+    post p;
+    p.author = s.valueOf("author");
+    p.descr = s.valueOf("descr");
+    p.time = boost::posix_time::second_clock::local_time();
+    p.tag = todouuid(postname);
+
+#if 0
+    if( p.valid() ) {
+	comment.filters(p);
+    } else {
+	mailParser parser(comment);
+	parser.walk(s,*istr);
+    }
+#endif
 
 #ifndef READONLY
     boost::interprocess::file_lock f_lock(postname.string().c_str());
@@ -173,15 +258,42 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
 
 }
 
-
-void todoVote::fetch( session& s, const boost::filesystem::path& pathname )
+void todoIndexWriteHtml::fetch( session& s, 
+				const boost::filesystem::path& pathname ) 
 {
+    todoliner shortline;
+    byScore order(shortline);
+    mailParser parser(order);
+    parser.fetch(s,pathname);
+}
+
+
+void todoVoteAbandon::fetch( session& s, 
+			     const boost::filesystem::path& pathname ) {
+	std::cout << htmlContent;
+	std::cout << html::p() << "You have abandon the transaction and thus"
+		  << " your vote has not been registered."
+		  << " Thank you for your interest." 
+		  << html::p::end;
+}
+
+
+void todoVoteSuccess::fetch( session& s, 
+			     const boost::filesystem::path& pathname )
+{
+    awsStandardButton button(s.valueOf("awsAccessKey"),
+			     s.valueOf("awsSecretKey"),
+			     s.valueOf("awsCertificate"));
+    if( !button.checkReturn(s,"fortylines.com","/todoVoteSuccess") ) {
+	std::cout << "error wrong request signature" << std::endl;
+	return;
+    }
+
     /* The pathname is set to the *todoVote* action name when we get here
        so we derive the document name from *href*. */
-    
     boost::filesystem::path postname(boost::filesystem::exists(pathname) ? 
 				     pathname 
-				     : s.abspath(s.valueOf("href")));
+				     : todoAbsPath(s.valueOf("referenceId")));
 
     if( !boost::filesystem::is_regular_file(postname) ) {
 	/* If *postname* does not point to a regular file,
@@ -245,3 +357,35 @@ void todoVote::fetch( session& s, const boost::filesystem::path& pathname )
     f_lock.unlock();
 }
 
+
+void todoWriteHtml::meta( session& s, 
+			  const boost::filesystem::path& pathname ) {
+    using namespace boost::filesystem; 
+    static const boost::regex valueEx("^(Subject):\\s+(.*)");
+
+    std::stringstream title;
+    title << '[' << todouuid(pathname) << ']';
+    ifstream strm;
+    open(strm,pathname);
+    while( !strm.eof() ) {
+	boost::smatch m;
+	std::string line;
+	std::getline(strm,line);
+	if( boost::regex_search(line,m,valueEx) ) {
+	    title << ' ' << m.str(2);
+	    break;
+	}
+    }
+    strm.close();
+    s.vars["Subject"] = title.str();
+    document::meta(s,pathname);
+}
+
+void 
+todoWriteHtml::fetch( session& s, const boost::filesystem::path& pathname ) 
+{
+    std::cerr << "write todo html " << pathname << " ..." << std::endl;
+    htmlwriter writer(std::cout); 
+    mailParser parser(writer);
+    parser.fetch(s,pathname);
+}

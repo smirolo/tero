@@ -151,11 +151,34 @@ namespace html {
 	"h5"
     };
 
+    const char* form::name = "form";
+    const detail::nodeEnd form::end(form::name);
+    const char *form::attrNames[] = {
+	"action",
+	"class",
+	"method"
+    };
+
     const char* img::name = "img";
     const detail::nodeEnd img::end(img::name);
     const char *img::attrNames[] = {
 	"class",
 	"src"
+    };
+
+    const char* input::name = "input";
+    const detail::nodeEnd input::end(input::name);
+    const char *input::hidden = "hidden";
+    const char *input::image = "image";
+    const char *input::one = "1";
+    const char *input::zero = "0";
+
+    const char *input::attrNames[] = {
+	"class",
+	"name",
+	"src",
+	"type",
+	"value"
     };
 
     const char* li::name = "li";

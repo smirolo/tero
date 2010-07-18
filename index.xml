@@ -29,6 +29,7 @@
       </dep>      
       <dep name="drop">
 	<bin>dws</bin>
+	<bin>buildpkg</bin>
 	<etc>.*/(dws)/prefix.mk</etc>
       </dep>
       <dep name="contrib/boost">
@@ -39,6 +40,26 @@
 	<lib>boost_regex</lib>
 	<lib>boost_system</lib>
       </dep>
+      <dep name="libcryptopp">
+	<include>(cryptopp)/hmac.h</include>
+	<lib>cryptopp</lib>
+      </dep>
+      <alternates>
+	<alternate>
+	  <tag>Ubuntu</tag>
+	  <dep name="liburiparser-dev">
+	    <include>(uriparser)/Uri.h</include>
+	    <lib>uriparser</lib>
+	  </dep>
+	</alternate>
+	<alternate>
+	  <tag>Darwin</tag>
+	  <dep name="uriparser">
+	    <include>(uriparser)/Uri.h</include>
+	    <lib>uriparser</lib>
+	  </dep>
+	</alternate>
+      </alternates>
     </repository>
   </project>
 </projects>

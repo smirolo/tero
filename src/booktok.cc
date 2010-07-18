@@ -391,22 +391,9 @@ const char* docbookKeywords[] = {
 	"xref",
 	"year"
 };
-
-
-docbookBufferTokenizer::docbookBufferTokenizer( char *b, size_t l )
-    : buffer(b), length(l), curr(0)
-{
-}
-
- 
-void docbookBufferTokenizer::newline( const char *line, 
-				      int first, int last ) {
-    textSlice value(&line[first],&line[last]);
-    text += value;
-}
     
 
-void docbookBufferTokenizer::token( xmlToken token, const char *line, 
+void docbookScanner::token( xmlToken token, const char *line, 
 			    int first, int last, bool fragment ) {
     /* translate XML start and end tags into docbook tokens */
     const char **key;
@@ -414,9 +401,9 @@ void docbookBufferTokenizer::token( xmlToken token, const char *line,
     textSlice value(&line[first],&line[last]);
 
     if( token == xmlContent ) {
-	text += value;
+	appendText(&line[first],&line[last]);
     } else {
-	text = textSlice();
+	clearText();
 	switch( token ) {
 	case xmlElementStart:
 	    elementStart = true;
@@ -451,6 +438,31 @@ void docbookBufferTokenizer::token( xmlToken token, const char *line,
     }
 }
  
+
+docbookBufferTokenizer::docbookBufferTokenizer( char *b, size_t l )
+    : buffer(b), length(l), curr(0)
+{
+}
+
+
+void 
+docbookBufferTokenizer::appendText( const char* first, const char *last ) {
+    textSlice value(first,last);
+    text += value;
+}
+
+
+void docbookBufferTokenizer::clearText() {
+    text = textSlice();
+}
+
+
+void docbookBufferTokenizer::newline( const char *line, 
+				      int first, int last ) {
+    textSlice value(&line[first],&line[last]);
+    text += value;
+}
+
   
 docbookToken docbookBufferTokenizer::read() {
     tokens.pop_front();
@@ -464,58 +476,6 @@ docbookToken docbookBufferTokenizer::read() {
 docbookStreamTokenizer::docbookStreamTokenizer( std::istream& is ) 
   : istr(&is) 
 {    
-}
-
-
-void docbookStreamTokenizer::newline( const char *line, 
-				      int first, int last ) {
-    textSlice value(&line[first],&line[last]);
-    text += value;
-}
-    
-
-void docbookStreamTokenizer::token( xmlToken token, const char *line, 
-			    int first, int last, bool fragment ) {
-    /* translate XML start and end tags into docbook tokens */
-    const char **key;
-    const char **lastKeyword = &docbookKeywords[sizeof(docbookKeywords) / sizeof(char*)];	
-    textSlice value(&line[first],&line[last]);
-    switch( token ) {
-    case xmlElementStart:
-	text = textSlice();
-	elementStart = true;
-	break;
-    case xmlElementEnd:
-	text = textSlice();
-	elementStart = false;
-	break;
-    case xmlEmptyElementEnd:
-	elementStart = false;
-	tokens.push_back((docbookToken)(tokens.back() - 1));
-	break;
-    case xmlName:
-	/* \todo replace with dychotomic search. */
-	for( key = docbookKeywords; 
-	     key != lastKeyword;
-	     ++key ) {
-	    if( strlen(*key) == value.size() 
-		&& strncmp(*key,value.begin(),value.size()) == 0 ) {
-		break;
-	    }
-	}
-	if( key != lastKeyword ) {
-	    tokens.push_back((docbookToken)(2 * std::distance(docbookKeywords,
-							      key) 
-					    + (elementStart ? 1 : 0) + 1));
-	}
-	break;
-    case xmlContent:
-	text += value;
-	break;
-    default:
-	/* Nothing to do excepts shutup gcc warnings. */
-	break;
-    }
 }
 
 

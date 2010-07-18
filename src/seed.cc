@@ -42,6 +42,7 @@
 #include "contrib.hh"
 #include "todo.hh"
 #include "webserve.hh"
+#include "payment.hh"
 
 #if 1
 /* We use this flag to trigger features that are currently in development. */
@@ -54,9 +55,9 @@ int main( int argc, char *argv[] )
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
-    try {
-	session s;
+    session s;
 
+    try {
 	/* parse command line arguments */
 	variables_map params;
 	options_description	authOptions("authentication");
@@ -86,39 +87,6 @@ int main( int argc, char *argv[] )
 	    ("author",value<std::string>(),"author")
 	    ("descr",value<std::string>(),"descr");
 
-#if 0
-	{
-	    /* \todo testing of e-mail scripting */
-	    boost::filesystem::initial_path(); 
-	    boost::filesystem::current_path("/home/smirolo/build/soil/build/seed");
-
-	    boost::filesystem::ofstream email;
-	    email.open("dev.eml",ios_base::out|ios_base::app);
-	    if( email.fail() ) {
-		std::cerr << "error opening dev.eml" << std::endl;
-		return 1;
-	    }
-
-	    char *pathInfo = getenv("PATH_INFO");
-	    if( pathInfo != NULL ) {
-		email << "PATH_INFO=" << pathInfo << std::endl;
-	    }
-	    long len;
-	    char *lenstr = getenv("CONTENT_LENGTH");
-	    if( lenstr != NULL && sscanf(lenstr,"%ld",&len) == 1 ) {
-	    } else {
-		len = 255;
-	    }	
-	    char input[len];
-	    while( fgets(input, len + 1, stdin) != NULL ) {
-		email << input;
-	    }
-	    
-	    boost::filesystem::current_path(boost::filesystem::initial_path());
-
-	    return 0;
-	}
-#endif	
 	options_description opts;
 	opts.add(authOptions).add(postOptions).add(calOptions);
 	char *pathInfo = getenv("PATH_INFO");
@@ -147,7 +115,7 @@ int main( int argc, char *argv[] )
 	    || s.vars["view"] == "/" ) {
 	    cout << redirect("index.html") << htmlContent << endl;
 	    
-	} else {	    	    
+	} else {	    		       
 	    gitcmd revision(s.valueOf("binDir") + "/git");
 	    dispatchDoc docs(s.valueOf("srcTop"));
 
@@ -205,7 +173,7 @@ int main( int argc, char *argv[] )
 	       of all projects at a glance and can be used to assess 
 	       the stability of the whole as a release candidate. */
 	    logview logv;
-	    docs.add("document",boost::regex(".*/log"),logv);
+	    docs.add("document",boost::regex(".*/log/"),logv);
 
 	    /* A project index.xml "document" file show a description,
 	       commits and unit test status of a single project through 
@@ -236,19 +204,21 @@ int main( int argc, char *argv[] )
 			     + std::string("/todos.template"),
 			     composer::error);
 	    docs.add("view",boost::regex(".*todos"),todos);
-	    todoIdx todoIdxDoc;
-	    docs.add("document",boost::regex(".*todos"),todoIdxDoc);
+	    todoIndexWriteHtml todoIdxDoc("todoVoteSuccess");
+	    docs.add("document",boost::regex(".*todos/"),todoIdxDoc);
 
-	    todoCreate todocreate;
+	    todoCreate todocreate(std::cin);
 	    docs.add("document",boost::regex("/todoCreate"),todocreate);
-	    todoComment todocomment;
+	    todoComment todocomment(std::cin);
 	    docs.add("view",boost::regex("/todoComment"),todocomment);
-	    todoVote todovote;
-	    docs.add("document",boost::regex("/todoVote"),todovote);	    
+	    todoVoteAbandon tva;
+	    docs.add("document",boost::regex("/todoVoteAbandon"),tva);
+	    todoVoteSuccess tvs;
+	    docs.add("document",boost::regex("/todoVoteSuccess"),tvs);
 
 	    contribIdx contribIdxDoc;
 	    contribCreate contribcreate;
-	    docs.add("document",boost::regex(".*contrib"),contribIdxDoc);
+	    docs.add("document",boost::regex(".*contrib/"),contribIdxDoc);
 	    docs.add("view",boost::regex("/contribCreate"),contribcreate);
 
 	    calendar ical;
@@ -265,6 +235,9 @@ int main( int argc, char *argv[] )
 	    mailthread mt;
 	    mailParser mp(mt);
 	    docs.add("document",boost::regex(".*\\.eml"),mp);
+
+	    todoWriteHtml todoItemWriteHtml;
+	    docs.add("document",boost::regex(".*\\.todo"),todoItemWriteHtml);
 
 	    composer source(sourceTmpl,composer::error);
 	    linkLight leftLinkStrm(s);
@@ -361,22 +334,43 @@ int main( int argc, char *argv[] )
 	    projfiles filelist(filters.begin(),filters.end());
 	    docs.add("projfiles",boost::regex(".*"),filelist);
 	    s.vars["projfiles"] = s.valueOf("document");
+
+	    /* button to Amazon payment */
+	    awsPayment awspay;
+	    docs.add("aws",boost::regex(".*"),awspay);	    
+	    s.vars["aws"] = s.valueOf("document");
+
       	    
 	    docs.fetch(s,"view");
 	}
-	
+#if 0
+	/* find a way to get .template in main() top scope. */
     } catch( exception& e ) {
-	cout << htmlContent << endl;
-	cout << "<html>" << endl;
-	cout << "<head>" << endl;
-	cout << "<TITLE>Response</TITLE>" << endl;
-	cout << "</head>" << endl;
-	cout << "<body>" << endl;
-	cout << "<p>" << endl;
-	cout << "caught exception: " << e.what() << endl;
-	cout << "</p>" << endl;
-	cout << "</body>" << endl;
-	cout << "</html>" << endl;
+
+	try {
+	    std::cerr << "caught exception: " << e.what() << std::endl;
+	    s.vars["exception"] = e.what();
+	    composer except(s.valueOf("themeDir") 
+			    + std::string("/exception.template"),
+			    composer::error);
+	    except.fetch(s,s.valueOf("document"));
+#endif
+	} catch( exception& e ) {
+	    /* Something went really wrong if we either get here. */
+	    cout << htmlContent << endl;
+	    cout << "<html>" << endl;
+	    cout << "<head>" << endl;
+	    cout << "<TITLE>It is really bad news...</TITLE>" << endl;
+	    cout << "</head>" << endl;
+	    cout << "<body>" << endl;
+	    cout << "<p>" << endl;
+	    cout << "caught exception: " << e.what() << endl;
+	    cout << "</p>" << endl;
+	    cout << "</body>" << endl;
+	    cout << "</html>" << endl;
+#if 0
+	}
+#endif
 	return 1;
     }
 

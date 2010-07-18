@@ -46,11 +46,54 @@ void post::normalize() {
 }
 
 
+bool post::valid() const {
+    return (!title.empty() & !author.empty() & !descr.empty());
+}
+
+
+void postFilter::filters( const post& p ) {
+    if( next ) next->filters(p);
+}
+
+void postFilter::flush() {
+    if( next ) next->flush();
+}
+
+
 void htmlwriter::filters( const post& p ) {
-    *ostr << html::h(1) << p.title << html::h(1).end();
-    *ostr << html::h(2) << p.time << " - " << p.author << html::h(2).end();
-    *ostr << html::p() << p.descr << html::p::end;
-    *ostr << std::endl;
+    htmlEscaper esc;
+
+    if( postNum > 0 ) {
+	*ostr << html::div().classref( (postNum % 2 == 0) ? 
+				       "postEven" : "postOdd");
+    }
+
+#if 0
+    if( !p.title.empty() ) {
+	*ostr << html::h(1);
+	esc.attach(*ostr);
+	*ostr << p.title;
+	esc.detach();
+	*ostr << html::h(1).end();
+    }
+#endif
+
+    *ostr << html::h(2);
+    esc.attach(*ostr);
+    *ostr << p.time << " - " << p.author;
+    esc.detach();
+    *ostr << html::h(2).end();    
+
+    *ostr << html::p();
+    esc.attach(*ostr);
+    *ostr << p.descr;
+    esc.detach();
+    *ostr << html::p::end;
+
+    if( postNum > 0 ) {
+	*ostr << html::div::end;
+    }
+    ++postNum;
 }
 
 

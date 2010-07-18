@@ -26,7 +26,7 @@
 # -*- Makefile -*-
 
 include $(shell dws context)
-include $(etcDir)/dws/prefix.mk
+include $(etcBuildDir)/dws/prefix.mk
 
 bins 		:=	seed
 etcs		:=	seed.conf
@@ -35,13 +35,13 @@ shares		:=	seed.pdf
 
 seedConfFile	?=	/etc/seed.conf
 
-CPPFLAGS	+=	-DREADONLY
+#CPPFLAGS	+=	-DREADONLY
 
 libseed.a: $(subst .cc,.o,\
 	      $(filter-out seed.cc session.cc,\
 		$(notdir $(wildcard $(srcDir)/src/*.cc))))
 
-seed: seed.cc session.o libseed.a \
+seed: seed.cc session.o libseed.a libcryptopp.a -luriparser \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 
@@ -53,12 +53,12 @@ seed.conf: $(shell dws context)
 	echo "siteTop=/var/www" >> $@
 	echo "srcTop=/var/www/reps" >> $@
 	echo "remoteIndex=$(remoteIndex)" >> $@
-	echo "themeDir=$(installShareDir)/seed/default" >> $@
+	echo "themeDir=$(shareDir)/seed/default" >> $@
 
 seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
 
-include $(etcDir)/dws/suffix.mk
+include $(etcBuildDir)/dws/suffix.mk
 
 install:: $(wildcard $(srcDir)/data/themes/default/*)
-	$(installDirs) $(installShareDir)/seed
-	cp -Rf $(srcDir)/data/themes $(installShareDir)/seed
+	$(installDirs) $(shareDir)/seed
+	cp -Rf $(srcDir)/data/themes $(shareDir)/seed
