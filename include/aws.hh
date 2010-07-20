@@ -79,7 +79,6 @@ public:
     /** returns true when the signature of the return request 
 	matches the one computed with the server's secretKey. */
     bool checkReturn( const session& s,
-		      const char *hostHeader,
 		      const char *requestURI );
     
     template<typename ch, typename tr>

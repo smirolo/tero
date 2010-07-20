@@ -40,13 +40,13 @@
 	<lib>boost_regex</lib>
 	<lib>boost_system</lib>
       </dep>
-      <dep name="libcryptopp">
-	<include>(cryptopp)/hmac.h</include>
-	<lib>cryptopp</lib>
-      </dep>
       <alternates>
 	<alternate>
 	  <tag>Ubuntu</tag>
+	  <dep name="libcrypto++-dev">
+	    <include>(cryptopp)/hmac.h</include>
+	    <lib>cryptopp</lib>
+	  </dep>
 	  <dep name="liburiparser-dev">
 	    <include>(uriparser)/Uri.h</include>
 	    <lib>uriparser</lib>
@@ -54,6 +54,10 @@
 	</alternate>
 	<alternate>
 	  <tag>Darwin</tag>
+	  <dep name="libcryptopp">
+	    <include>(cryptopp)/hmac.h</include>
+	    <lib>cryptopp</lib>
+	  </dep>
 	  <dep name="uriparser">
 	    <include>(uriparser)/Uri.h</include>
 	    <lib>uriparser</lib>

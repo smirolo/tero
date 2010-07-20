@@ -49,6 +49,7 @@ session::session() : id(0) {
 	("buildTop",value<std::string>(),"path to build root")
 	("siteTop",value<std::string>(),"path to the files published on the web site")
 	("srcTop",value<std::string>(),"path to document top")
+	("domainName",value<std::string>(),"domain name of the web server")
 	("remoteIndex",value<std::string>(),"path to project interdependencies")
 	("themeDir",value<std::string>(),"path to user interface elements")
 	("contractDb",value<std::string>(),"path to contracts database");

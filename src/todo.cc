@@ -284,7 +284,7 @@ void todoVoteSuccess::fetch( session& s,
     awsStandardButton button(s.valueOf("awsAccessKey"),
 			     s.valueOf("awsSecretKey"),
 			     s.valueOf("awsCertificate"));
-    if( !button.checkReturn(s,"fortylines.com","/todoVoteSuccess") ) {
+    if( !button.checkReturn(s,"/todoVoteSuccess") ) {
 	std::cout << "error wrong request signature" << std::endl;
 	return;
     }

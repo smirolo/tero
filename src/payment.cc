@@ -32,8 +32,8 @@ void awsPayment::fetch( session& s, const boost::filesystem::path& pathname ) {
 			     s.valueOf("awsSecretKey"),
 			     s.valueOf("awsCertificate"));
     button.description = "Vote for a todo item with your dollars";
-    button.returnUrl = url("https://fortylines.com/todoVoteSuccess");
+    button.returnUrl = url(s.valueOf("domainName") + "/todoVoteSuccess");
 
-    button.build(todouuid(pathname),5);
+    button.build(todouuid(pathname),1);
     button.writehtml(std::cout);
 }

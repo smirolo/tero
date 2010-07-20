@@ -229,7 +229,6 @@ void awsStandardButton::build( boost::uuids::uuid r, uint32_t a ) {
 
     
 bool awsStandardButton::checkReturn( const session& s,
-				     const char *hostHeader,
 				     const char *requestURI ) 
 {    
     using namespace CryptoPP;
@@ -248,7 +247,8 @@ bool awsStandardButton::checkReturn( const session& s,
     /* Recreate the message that was signed. */
     std::string signatureS;
     paramMap params;
-    const char *httpMethod = "GET";
+    const char *httpMethod = "GET";				     
+    const char *hostHeader = s.valueOf("domainName").c_str();
 
     for( session::variables::const_iterator p = s.query.begin();
 	 p != s.query.end(); ++p ) {
@@ -260,6 +260,10 @@ bool awsStandardButton::checkReturn( const session& s,
     }
     std::string request 
 	= formatRequest(httpMethod,hostHeader,requestURI,params,"&");
+    std::cerr << "- request to sign:" << std::endl;
+    std::cerr << request << std::endl;
+    std::cerr << "- expected signature: " << std::endl;
+    std::cerr << signatureS << std::endl;
 
     /* Verify the signature attached to the request. */
     CryptoPP::StringSource signatureFile((const byte*)signatureS.c_str(),
