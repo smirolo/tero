@@ -110,6 +110,94 @@ div.MenuWidget {
     display: inline;
 }
 
+/* definition of todo specific styles */
+.todo {
+    margin: 25px 0px 25px 0px;
+    border:1px solid #ccc;
+    background:#fff; 
+    text-align: left;
+}
+
+
+/* to contrast posts and make them more readable */
+.postEven {
+    border: solid;
+    background:#fff; 
+}
+
+
+.postOdd {
+    border: solid;
+    background:#0aa; 
+}
+
+
+.todo fieldset table {
+    border: none;
+}
+
+
+.todo fieldset table td {
+    width: auto;
+    border: none;
+    text-align: right;
+}
+
+.todo fieldset {
+    padding: 10px 5px 10px 5px;
+    border: none;
+    background:#eee;
+    width:auto
+}
+
+.todo fieldset div {
+    display: block;
+    margin: 10px 0px 10px 0px;
+    border: none;
+}
+
+
+.todo input {
+    text-align: left;
+    width: 100%;
+}
+
+
+.todo textarea {
+    width: 100%;
+}
+
+.todo label {
+    font-weight: bold;
+}
+
+.todo fieldset > div > label {
+    float: left;
+    width: 100px;
+    text-align: right;
+    margin: 2px 0 0 0;
+    font-weight: bold; 
+}
+
+.todo .button {
+    width: auto;
+}
+
+.todo #title {
+    margin: 0px;
+    text-align: left;
+    width: 100%;
+}
+
+.submit {
+    float: none;
+    margin: auto;
+    padding: auto;
+    width: auto;
+    text-align: right;
+}
+/* end of todo specific styles */
+
 pre.code {
     background:	  transparent;
     border:	  none;

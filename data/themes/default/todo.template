@@ -8,10 +8,6 @@
 </head>
 
 <body>
-  <div>
-    <div id="title"><!-- tmpl_var name='title' --></div>
-  </div>
-    
   <div id="document">
     <table class="document">
       <tr>
@@ -20,15 +16,16 @@
 	  <!-- tmpl_include name='topMenu.template' -->
 	</td>
 
-	<td id="entry">
+	<td id="entry">	  
 	  <div id="title">
-	    <h1><!-- tmpl_var name='title' -->
+	    <h1><!-- tmpl_var name='title' -->	      
 	      <a href="index.rss">
 		<img class="imgrss"
 		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
 	      </a>
 	    </h1>
 	  </div>
+	  <p><i>If you deeply care about a todo item, you have the opportunity to make a $1 contribution to it. The complete list of todo items is ordered by contributions and, of course, work always start with the begining of the list.</i></p><div id="paybutton"><!-- tmpl_var name='aws' --></div>
 	  <!-- tmpl_var name='document' -->
 	  <div>
 	    <form method="post" class="todo" action="/todoComment">
@@ -53,9 +50,12 @@
 	    </form>
 	  </div>
 	</td>
+
       </tr>
     </table>
   </div>
+
+  <!-- tmpl_include name='footer.template' -->
 
 </body>
 </html>
