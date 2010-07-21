@@ -27,7 +27,7 @@
 #include <locale>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
-#include "mails.hh"
+#include "mail.hh"
 #include "markup.hh"
 
 
@@ -112,7 +112,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 	    }
 	    state = dateParse;
 	} else if( line.compare(0,5,"From:") == 0 ) {
-	    p.author = line.substr(5);
+	    p.authorEmail = line.substr(5);
 	    state = authorParse;
 	} else if( line.compare(0,9,"Subject: ") == 0 ) {
 	    p.title = line.substr(9);
@@ -132,7 +132,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 	    case dateParse:
 		break;
 	    case authorParse:
-		p.author += line;
+		p.authorEmail += line;
 		break;
 	    case titleParse:
 		p.title += line;

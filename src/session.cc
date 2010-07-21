@@ -146,8 +146,14 @@ session::abspath( const boost::filesystem::path& relpath ) const {
     }	
     
     /* We used to throw an exception at this point. That does
-       not sit very well with dispatch::fetch() because the value
-       of a "document" might not be an actual file. */
+       not sit very well with dispatch::fetch() because
+       the value of a "document" might not be an actual file.
+       Since the relative path of "document" will initialy 
+       be derived from the web server request uri, it is 
+       the most appropriate to return the path from siteTop
+       in case the document could not be found.
+       !!! We have to return from srcTop because that is how
+       the website is configured for rss feeds. */
     return fromSrcTop;
 }
 

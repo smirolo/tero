@@ -1,5 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.w3.org/1999/xhtml
+                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
@@ -8,58 +10,70 @@
 </head>
 
 <body>
-  <div>
-    <div id="title"><!-- tmpl_var name='title' --></div>
-  </div>
-    
+  <div id="wrap">
+    <!-- tmpl_include name='header.template' -->
+
   <div id="document">
     <table class="document">
       <tr>
-
 	<td id="sidebar">
 	  <!-- tmpl_include name='topMenu.template' -->
 	</td>
-
-	<td id="entry">
+	<td id="entry">	  
 	  <div id="title">
-	    <h1><!-- tmpl_var name='title' -->
-	      <a href="index.rss">
+	    <h1>Todo items
+	      <a href="/contrib/todos/index.rss">
 		<img class="imgrss"
 		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
 	      </a>
 	    </h1>
 	  </div>
+	  <p>Following fortylines <a href="/contrib/fortylines/doc/organization.book"> organizational principles</a>, features, bugs and issues are tracked as todo items with each item being its own text file living along side the other files in the source repository. The <a href="/seed/index.xml">web presentation engine</a> provides an easy and convenient way to create, browse and comment on todo items but nothing prevents any contributors to manipulate todo items from the command line or with a text editor as it would be done with any other file in the source repository.</p>
+	  <p>Users also have the unique chance to vote for the todo item they care the most about by making a small donation to it. The popularity based on the total donation amount is used to rank todo items and schedule fortylines contributors work appropriately. If a feature truly matters to you and you are ready to make a significant donation, please <a href="info@fortylines.com">contact us</a>.</p>
 	  <a href="#todoCreate">Create todo</a>
 	  <table width="100%">
-	    <tr><th>date</th><th>author</th><th>title</th></tr>
+	    <tr><th>date</th>
+	      <th>author</th>
+	      <th width="80%">title</th>
+	      <th>vote</th>
+	    </tr>
 	  <!-- tmpl_var name='document' -->
 	  </table>
 	  <div>
 	    <a name="todoCreate"></a>
-	    <form method="post" class="todo" action="/todoCreate">
+	    <form method="post" class="post" action="/todoCreate">
 	      <fieldset>                 
-		<div>
-		  <label>Title:</label>
-		  <input id="title" name="title" />
-		</div>
-		<div>
-		  <label>From:</label>
-		  <input id="author" name="author"/>
-		  <label>Cc:</label>
-		  <input id="ccs" name="ccs"/>
-		</div>		
+		<table width="100%">
+		  <tr>
+		    <td><label>Title:</label></td>
+		    <td><input id="title" name="title" /></td>
+		  </tr>
+		  <tr>
+		    <td><label>From:</label></td>
+		    <td><input id="author" name="author"/></td>
+		  </tr>
+		  <tr>
+		    <td><label>Cc:</label></td>
+		    <td><input id="ccs" name="ccs"/></td>
+		  </tr>	  
+		</table>		
+		<br />
 		<label>Description</label><br />		
 		<textarea rows="20" id="description" name="descr"></textarea>
               </fieldset>
 	      <fieldset class="submit"> 
-		<input type="submit" name="submit" value="create" />
+		<input class="button" type="submit" name="submit" value="create" />
               </fieldset> 	      
 	    </form>
 	  </div>
 	</td>
-      </tr>
+
+     </tr>
     </table>
   </div>
+  </div>
+
+  <!-- tmpl_include name='footer.template' -->
 
 </body>
 </html>

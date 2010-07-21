@@ -23,12 +23,14 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmails
-#define guardmails
+#ifndef guardmail
+#define guardmail
 
 #include "document.hh"
 #include "post.hh"
 
+/* A *mailthread* filter attempts to gather all mails that appear 
+   to belong to the same thread together. */
 class mailthread : public postFilter {
 protected:
     typedef std::map<std::string,uint32_t> indexMap;

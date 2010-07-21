@@ -1,6 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.w3.org/1999/xhtml
+                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <title><!-- tmpl_var name='title' --></title>
@@ -8,24 +9,27 @@
 </head>
 
 <body>
-  <div>
-    <div id="title"><!-- tmpl_var name='title' --></div>
-  </div>
-    
-  <div id="document">
-    <table class="document">
-      <tr>
+  <div id="wrap">
+    <!-- tmpl_include name='header.template' -->
 
+    <!-- middle -->
+    <div id="document">
+    <table>
+      <tr>	
 	<td id="sidebar">
 	  <!-- tmpl_include name='topMenu.template' -->
 	</td>
 
 	<td id="entry">
+	  <div id="title"><h1><!-- tmpl_var name='title' --></h1></div>
 	  <!-- tmpl_var name='document' -->
 	</td>
       </tr>
     </table>
   </div>
+  </div>
+
+  <!-- tmpl_include name='footer.template' -->
 
 </body>
 </html>

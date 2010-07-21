@@ -1,14 +1,57 @@
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.w3.org/1999/xhtml
+                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 <head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <title>Fortylines test website</title>
+<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
 </head>
+
 <body>
-<p>
-While other applications provides one of issue tracking, wiki source repository, buildbot, etc. and let you figure out how to integrate all those pieces together, <a href="http://fortylines.com">fortylines</a> provides a consistent end-to-end solution to manage software projects. Browse:
-</p>
-<ul>
-<li><a href="/log">build log</a>
-<li><a href="/contrib/todos">todo items</a>
-</ul>
+  <div id="wrap">
+    <div id="header">
+      <table id="headerMenu">
+	<tr>
+	  <th class="headerMenuItem"><a href="/">home</a></th>
+	</tr>
+      </table>
+      <div id="headerTitle">
+	<h1>Fortylines test website</h1>
+      </div>
+    </div>
+    
+    <!-- middle -->
+    <div id="document">
+    <table>
+      <tr>	
+	<td id="sidebar">
+	  <div class="MenuWidget">
+	    <h1>Links</h1>
+	    <p>
+	      <a href="/log">builds</a><br />
+	      <a href="/services/todos">todos</a><br />           
+	      <a href="/schedule.ics">schedule</a><br />
+	      <a href="/contrib">contributors</a><br />     
+	      <a href="/lists">mailing archives</a><br />
+	    </p>
+	  </div>
+	</td>
+
+	<td id="entry">
+	  <div id="title"><h1>Fortylines test website</h1></div>
+	  <p>
+	    While other applications provides one of issue tracking, wiki source repository, buildbot, etc. and let you figure out how to integrate all those pieces together, <a href="http://fortylines.com">fortylines</a> provides a consistent end-to-end solution to manage software projects.
+	  </p>
+	</td>
+      </tr>
+    </table>
+  </div>
+  </div>
+
+  <div id="footer">
+    Provided by <a href="http://fortylines.com">fortylines</a>
+  </div>
+
 </body>
 </html>

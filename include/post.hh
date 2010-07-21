@@ -35,7 +35,8 @@ class post {
 public:
     uint32_t score;
     boost::uuids::uuid tag;
-    std::string author;
+    std::string authorName;
+    std::string authorEmail;    
     std::string title;
     boost::posix_time::ptime time;    
     std::string descr;

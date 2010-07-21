@@ -23,7 +23,7 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "mails.hh"
+#include "mail.hh"
 #include "markup.hh"
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/date_time/date_facet.hpp>
@@ -42,12 +42,12 @@ boost::uuids::uuid asuuid( const std::string& s )
 
 void post::normalize() {
     title = ::normalize(title);
-    author = ::normalize(author);
+    authorEmail = ::normalize(authorEmail);
 }
 
 
 bool post::valid() const {
-    return (!title.empty() & !author.empty() & !descr.empty());
+    return (!title.empty() & !authorEmail.empty() & !descr.empty());
 }
 
 
@@ -80,7 +80,7 @@ void htmlwriter::filters( const post& p ) {
 
     *ostr << html::h(2);
     esc.attach(*ostr);
-    *ostr << p.time << " - " << p.author;
+    *ostr << p.time << " - " << p.authorEmail;
     esc.detach();
     *ostr << html::h(2).end();    
 
@@ -118,7 +118,7 @@ void blogwriter::filters( const post& p ) {
 	*ostr << "Subject: " << p.title << std::endl;
     }
     *ostr << "Date: " << p.time << std::endl;
-    *ostr << "From: " << p.author << std::endl;    
+    *ostr << "From: " << p.authorEmail << std::endl;    
 #endif
     *ostr << "Score: " << p.score << std::endl;
     *ostr << std::endl << std::endl;

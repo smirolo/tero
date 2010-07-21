@@ -100,9 +100,17 @@ public:
  */
 class revisionsys {
 public:
-	boost::filesystem::path rootpath;
-	
+    boost::filesystem::path rootpath;
+
+    /** Directory name in which revision control meta information 
+	is stored (example: .git). 
+    */
+    const char* metadir;
+
 public:
+    explicit revisionsys( const char* m ) 
+	: metadir(m) {}
+
     virtual void diff( std::ostream& ostr, 
 		       const std::string& leftCommit, 
 		       const std::string& rightCommit, 
@@ -133,7 +141,7 @@ protected:
 
 public:
     gitcmd( const boost::filesystem::path& exec ) 
-	: executable(exec) {}
+	: revisionsys(".git"), executable(exec) {}
 
     void checkins( ::history& hist,
 		   const session& s,
@@ -188,10 +196,19 @@ public:
  */
 class changelist : public document {
 protected:
-    revisionsys *revision;
+    typedef std::vector<revisionsys*> revsSet;
+    revsSet revs;
     
+    /* returns the revision system associated with a pathname */
+    revisionsys *findRev( session& s,
+			  const boost::filesystem::path& pathname );
+
 public:
-    explicit changelist( revisionsys *r ) : revision(r) {}
+    explicit changelist( revisionsys *r ) { addRev(r); }
+
+    void addRev( revisionsys *r ) {
+	revs.push_back(r);
+    }
 
     virtual void 
     fetch( session& s, const boost::filesystem::path& pathname ) = 0;

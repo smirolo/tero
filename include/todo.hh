@@ -27,7 +27,7 @@
 #define guardtodo
 
 #include "document.hh"
-#include "mails.hh"
+#include "mail.hh"
 
 boost::uuids::uuid todouuid( const boost::filesystem::path& p );
 

@@ -1,6 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.w3.org/1999/xhtml
+                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <title><!-- tmpl_var name='title' --></title>
@@ -8,34 +9,46 @@
 </head>
 
 <body>
-  <div>
-    <div id="title"><!-- tmpl_var name='title' --></div>
-  </div>
-    
+  <div id="wrap">
+    <!-- tmpl_include name='header.template' -->
+
   <div id="document">
-    <table class="document">
+    <table>
       <tr>
 	<td id="sidebar">
 	  <!-- tmpl_include name='topMenu.template' -->
 	  <!-- tmpl_var name='projfiles' -->
 	</td>
 	<td id="entry">	  
-	  <p align="right">
-	    <a href="index.rss">
-	      <img class="imgRss" src="/resources/feed-icon-14x14.png" 
-		   alt="RSS feed" />
-	    </a>
-	  </p>
+	  <div id="title">
+	    <h1><!-- tmpl_var name='title' -->
+	      <a href="index.rss">
+		<img class="imgrss"
+		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
+	      </a>
+	    </h1>
+	  </div>
 	  <!-- tmpl_var name='document' -->
 	  <h1>History</h1>
-	  <!-- tmpl_var name='history' -->	      
-	  <h1>Unit tests</h1>
+	  <table width="100%">
+	    <!-- <tr><th>date</th><th>author</th><th>title</th></tr> -->
+	    <!-- tmpl_var name='history' -->	      
+	  </table>
+	  <h1>Quality Results</h1>
+	  <p>The following sections present the up-to-date results for <a href="/drop/doc/quality.book">runtime tests and static code analyses</a>.</p>
+	  <h2>Regressions for runtime tests</h2>
+	  <p>Regression views tie a change in behavior to a specific source revision and or system. Regression views will thus be most useful to contributors investigating why a previously passing test started to fail.</p>
 	  <!-- tmpl_var name='regressions' -->
-	  <h1>Checkstyle reports</h1>
+	  <h2>Checkstyle reports</h2>
+	  <p>Checkstyle reports contain the result of static code analyses such as code conventions, compilation warnings, etc.</p>
 	  <!-- tmpl_var name='checkstyle' -->
 	</td>
       </tr>
     </table>
   </div>
+  </div>
+
+  <!-- tmpl_include name='footer.template' -->
+
 </body>
 </html>

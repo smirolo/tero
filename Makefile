@@ -41,7 +41,7 @@ libseed.a: $(subst .cc,.o,\
 	      $(filter-out seed.cc session.cc,\
 		$(notdir $(wildcard $(srcDir)/src/*.cc))))
 
-seed: seed.cc session.o libseed.a libcryptopp.a -luriparser \
+seed: seed.cc session.o libseed.a libcryptopp.a liburiparser.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 

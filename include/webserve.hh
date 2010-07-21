@@ -117,7 +117,7 @@ public:
     friend std::basic_ostream<ch, tr>&
     operator<<(std::basic_ostream<ch, tr>& ostr, htmlContentServe& v ) {
 	if( v.firstTime ) {
-	    ostr << "Content-Type:text/html;charset=iso-8859-1\r\n";
+	    ostr << "Content-Type:text/html;charset=iso-8859-1\r\n\r\n";
 	    v.firstTime = false;
 	}
 	return ostr;

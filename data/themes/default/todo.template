@@ -1,5 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.w3.org/1999/xhtml
+                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
@@ -8,14 +10,15 @@
 </head>
 
 <body>
-  <div id="document">
-    <table class="document">
-      <tr>
+  <div id="wrap">
+    <!-- tmpl_include name='header.template' -->
 
+  <div id="document">
+    <table>
+      <tr>
 	<td id="sidebar">
 	  <!-- tmpl_include name='topMenu.template' -->
 	</td>
-
 	<td id="entry">	  
 	  <div id="title">
 	    <h1><!-- tmpl_var name='title' -->	      
@@ -28,7 +31,7 @@
 	  <p><i>If you deeply care about a todo item, you have the opportunity to make a $1 contribution to it. The complete list of todo items is ordered by contributions and, of course, work always start with the begining of the list.</i></p><div id="paybutton"><!-- tmpl_var name='aws' --></div>
 	  <!-- tmpl_var name='document' -->
 	  <div>
-	    <form method="post" class="todo" action="/todoComment">
+	    <form method="post" class="post" action="/todoComment">
 	      <fieldset>       
 		<input type="hidden" name="href" value="<!-- tmpl_var name='title' -->"/>
 		<table width="100%">
@@ -53,6 +56,7 @@
 
       </tr>
     </table>
+  </div>
   </div>
 
   <!-- tmpl_include name='footer.template' -->

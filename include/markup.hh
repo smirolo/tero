@@ -28,6 +28,7 @@
 
 #include <ostream>
 #include <boost/date_time.hpp>
+#include <boost/date_time/date_facet.hpp>
 
 namespace detail {
 
@@ -548,6 +549,8 @@ namespace html {
 } // namespace html
 
 /** RSS author markup
+
+    This must be an e-mail address
  */
 class author : public detail::markup {    
 public:  
@@ -629,13 +632,31 @@ public:
 
 
 /** RSS pubDate markup
+
+    Following RFC 822 formatting.
  */
 class pubDate : public detail::markup {    
 public:  
     static const char* name;
     static const detail::nodeEnd end;
-    
-    pubDate() : markup(name,NULL,NULL,0) {}
+    boost::posix_time::ptime time;
+
+    explicit pubDate( boost::posix_time::ptime t ) 
+    : markup(name,NULL,NULL,0), time(t) {}
+
+    template<typename ch, typename tr>
+    friend std::basic_ostream<ch, tr>&
+    operator<<( std::basic_ostream<ch, tr>& ostr, const pubDate& v ) {
+	boost::posix_time::time_facet* 
+	  facet(new boost::posix_time::time_facet("%a, %e %b %Y %H:%M:%S UT"));
+	ostr.imbue(std::locale(ostr.getloc(), facet));
+	ostr << static_cast<const detail::markup&>(v)
+	     << v.time
+	     << end;
+	return ostr;
+    }
+
+
 };
 
 

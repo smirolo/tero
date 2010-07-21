@@ -1,0 +1,10 @@
+<div id="header">
+<table id="headerMenu">
+<tr>
+<th class="headerMenuItem"><a href="/">home</a></th>
+</tr>
+</table>
+  <div id="headerTitle">
+  <h1>Default Template Layout</h1>
+  </div>
+</div>

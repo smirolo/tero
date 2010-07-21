@@ -2,11 +2,7 @@
     <h1>Links</h1>
     <p>
       <a href="/log">builds</a><br />
-      <!--
-      <a href="/services/todos">todos</a><br />           
+      <a href="/contrib/todos">todos</a><br />           
       <a href="/schedule.ics">schedule</a><br />
-      <a href="/contrib">contributors</a><br />     
-      <a href="/lists">mailing archives</a><br />
-      -->
     </p>
   </div>

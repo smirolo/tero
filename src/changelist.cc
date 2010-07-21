@@ -129,7 +129,7 @@ void checkinliner::filters( const post& p ) {
     s << "todos/" << p.tag << ".todo";
     std::cout << html::tr() 
 	      << html::td() << p.time << html::td::end
-	      << html::td() << p.author << html::td::end
+	      << html::td() << p.authorEmail << html::td::end
 	      << html::td() << html::a().href(s.str()) 
 	      << p.title 
 	      << html::a::end << html::td::end;
@@ -138,25 +138,37 @@ void checkinliner::filters( const post& p ) {
 }
 
 
+revisionsys *changelist::findRev( session& s,
+				  const boost::filesystem::path& pathname ) {
+    for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
+	boost::filesystem::path sccsRoot 
+	    = s.root(s.src(pathname),(*r)->metadir);
+	if( !sccsRoot.empty() ) {
+	    (*r)->rootPath(sccsRoot);
+	    return *r;
+	}
+    }
+    return NULL;
+}
+
+
 void 
 changecheckin::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
-    if( !sccsRoot.empty() ) {
+    revisionsys *rev = findRev(s,pathname);
+    if( rev ) {
 	checkinref ref;
-	revision->rootPath(sccsRoot);
-	revision->history(std::cout,s,pathname,ref);
+	rev->history(std::cout,s,pathname,ref);
     }
 }
 
 void 
 changehistory::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
-    if( !sccsRoot.empty() ) {
+    revisionsys *rev = findRev(s,pathname);
+    if( rev ) {
 	diffref ref;
-	revision->rootPath(sccsRoot);
-	revision->history(std::cout,s,pathname,ref);
+	rev->history(std::cout,s,pathname,ref);
     }
 }
 
@@ -166,15 +178,13 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace std;
 
-    boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
-    if( !sccsRoot.empty() ) {
-	revision->rootPath(sccsRoot);
-
+    revisionsys *rev = findRev(s,pathname);
+    if( rev ) {
 	history hist;
-	revision->checkins(hist,s,pathname);
+	rev->checkins(hist,s,pathname);
 
 	/* Reference: http://www.rssboard.org/rss-specification */
-	/* http://www.feedicons.com/ */
+	/* RSS Icons: http://www.feedicons.com/ */
 	htmlEscaper esc;
 
 	std::cout << htmlContent << std::endl;
@@ -184,7 +194,7 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 	     ci != hist.checkins.end(); ++ci ) {
 	    std::cout << html::h(2) << ci->title << html::h(2).end();
 	    std::cout << html::p();
-	    std::cout <<  ci->time << " - " << ci->author;
+	    std::cout <<  ci->time << " - " << ci->authorEmail;
 	    std::cout << html::p::end;
 	    std::cout << html::p();
 	    esc.attach(std::cout);
@@ -212,12 +222,10 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 void 
 changerss::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    boost::filesystem::path sccsRoot = s.root(s.src(pathname),".git");
-    if( !sccsRoot.empty() ) {
-	revision->rootPath(sccsRoot);
-
+    revisionsys *rev = findRev(s,pathname);
+    if( rev ) {
 	history hist;
-	revision->checkins(hist,s,pathname);
+	rev->checkins(hist,s,pathname);
 
 	/* Reference: http://www.rssboard.org/rss-specification */
 	/* http://www.feedicons.com/ */
@@ -231,30 +239,35 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 		  << channel()
 		  << rsslink()
 		  << s.asUrl("") << rsslink::end
-		  << title() << "Title" << title::end;
+		  << title() 
+		  << boost::filesystem::basename(rev->rootpath)
+		  << title::end;
 
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
 	    std::cout << item();
 	    std::cout << title() << ci->title << title::end;
-	    std::cout << rsslink() << "domainname" << rsslink::end;
-	    std::cout << guid() << ci->title << guid::end;
-	    std::cout << author();
-	    esc.attach(std::cout);
-	    std::cout << ci->author;
-	    esc.detach();
-	    std::cout << author::end;
-	    std::cout << pubDate() << ci->time << pubDate::end;
 	    std::cout << description();
 	    esc.attach(std::cout);
 	    std::cout << ci->descr;
 	    std::cout.flush();
 	    esc.detach();
-	    std::cout << description::end;
 	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
 		 file != ci->files.end(); ++file ) {
 		std::cout << html::a().href(file->string()) << *file << html::a::end;
 	    }
+	    std::cout << description::end;
+	    std::cout << author();
+	    esc.attach(std::cout);
+	    std::cout << ci->authorEmail;
+	    esc.detach();
+	    std::cout << author::end;
+#if 1
+	    std::cout << guid() << ci->title << guid::end;
+#else
+	    std::cout << guid() << ci->tag << guid::end;
+#endif
+	    std::cout << pubDate(ci->time);
 	    std::cout << item::end;
 	}	
 	std::cout << channel::end

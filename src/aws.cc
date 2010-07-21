@@ -260,11 +260,12 @@ bool awsStandardButton::checkReturn( const session& s,
     }
     std::string request 
 	= formatRequest(httpMethod,hostHeader,requestURI,params,"&");
+#if 0
     std::cerr << "- request to sign:" << std::endl;
     std::cerr << request << std::endl;
     std::cerr << "- expected signature: " << std::endl;
     std::cerr << signatureS << std::endl;
-
+#endif
     /* Verify the signature attached to the request. */
     CryptoPP::StringSource signatureFile((const byte*)signatureS.c_str(),
 					 signatureS.size(), true, 

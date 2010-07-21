@@ -117,21 +117,38 @@ void gitcmd::checkins( ::history& hist,
     bool itemStarted = false;
     bool descrStarted = false;
     checkin *ci = NULL;
-    std::stringstream descr;
+    std::stringstream descr, title;
     while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
 	std::string line(lcstr);
 	if( strncmp(lcstr,"commit",6) == 0 ) {
 	    if( descrStarted ) {
+		ci->title = title.str();
 		ci->descr = descr.str();		
 		descrStarted = false;
 	    }
 	    itemStarted = true;
 	    ci = hist.add();
 	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
-	    ci->title = std::string(lcstr).substr(7);
+	    title.str("");
+	    title << strip(line.substr(7)) << " ";
 	    
 	} else if ( line.compare(0,7,"Author:") == 0 ) {
-	    ci->author = strip(line.substr(7));
+	    /* The author field is formatted as "First Last <emailAddress>". */
+	    size_t first = 7;
+	    size_t last = first;
+	    while( last < line.size() ) {
+		switch( line[last] ) {
+		case '<':
+		    ci->authorName = line.substr(first,last - first);
+		    first = last + 1;
+		    break;
+		case '>':
+		    ci->authorEmail = line.substr(first,last - first);
+		    first = last + 1;
+		    break;
+		}
+		++last;
+	    }	    
 
 	} else if ( line.compare(0,5,"Date:") == 0 ) {
 	    try {
@@ -156,12 +173,22 @@ void gitcmd::checkins( ::history& hist,
 #endif
 		ci->addFile(hrefs.str());
 	    } else {
+		size_t maxTitleLength = 80;
+		if( title.str().size() < maxTitleLength ) {
+		    size_t remain = (maxTitleLength - title.str().size()); 
+		    if( line.size() > remain ) {
+			title << strip(line.substr(0,remain)) << "...";
+		    } else {
+			title << strip(line);
+		    }
+		}
 		descr << lcstr;
 	    }
 	}
     }
     pclose(summary);
     if( descrStarted ) {
+	ci->title = title.str();
 	ci->descr = descr.str();
 	descrStarted = false;
     }

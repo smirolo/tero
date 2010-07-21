@@ -1,177 +1,73 @@
-/* style for general tags */
-body {
-    margin:0px;
-    padding:0px;
-    font-family:verdana, arial, helvetica, sans-serif;
-    color:#333;
-    background-color:white;
+/* Definition of styles associated with the default theme
+
+ */
+
+/* Styles that applies accross all templates. */
+/* 1. Major structural definitions */
+html, body {
+    border: none;
+    margin: 0px;
+    padding: 0px;    
+    text-align: center;
+    height:100%;
 }
 
-h1 {
-    margin:0px 0px 15px 0px;
-    padding:0px;
-    font-size:20px;
-    line-height:20px;
-    font-weight:900;
-    color:#ccc;
+#document {
+    float: none;
+    margin: 0px;
+    padding: 0px;
+    padding-bottom: 40px;
+    border-style: none;
+    width: 100%; 
 }
 
-h2 {
-    margin:0px 0px 15px 0px;
-    padding:0px;
-    font-size:16px;
-    line-height:16px;
-    font-weight:800;
-    color:#ccc;
+#entry {
+    padding: 0px 0px 0px 25px;
+    vertical-align: top;
+    text-align: left;
+    border-style: none;
 }
 
-h3 {
-    margin:0px 0px 15px 0px;
-    padding:0px;
-    font-size:12px;
-    line-height:12px;
-    font-weight:800;
-    color:#ccc;
+#sidebar {    
+    width: 150px;
+    background: #eaf0f5;
+    margin: 0px;
+    padding: 0px;
+    border-style: none;
+    border-right-style: solid;
+    border-right-color: #0;
+    border-right-width: 1px;
+    
+    vertical-align: top;
+    text-align: left;    
 }
 
-ul {
-    font:11px/20px verdana, arial, helvetica, sans-serif;
-}
-
-a {
-    color:#09c;
- /*   font-size:12px;*/
-    text-decoration:none;
-    font-weight:600;
-    font-family:verdana, arial, helvetica, sans-serif;
-}
-a:link {color:#09c;}
-a:visited {color:#07a;}
-a:hover {background-color:#eee;}
-
-a.new {
-    color:#A43834;
-    text-decoration:none;
-  /*  font-weight:600;*/
-    font-family:verdana, arial, helvetica, sans-serif;	
-}
-
-a.outside {
-    color:#4A8343;
-    text-decoration:none;
-/*    font-weight:600;*/
-    font-family:verdana, arial, helvetica, sans-serif;	
-}
-
-p {
-    font-size:12px;
-}
-
-pre {
-    text-align:   left;
-    overflow:	  auto;
-    background:	  rgb(230,230,230);
-    border:	  solid;
-    border-width: thin;
-    padding:      5px 10px;
-}
-
-table {
-    border-width: 1px;
-    border-spacing: 0px;
-    border-style: solid;
-    border-collapse: collapse;
-    font-size:12px;
+#title {
+    margin: 10px 0px 10px 0px;
     text-align: center;
 }
 
-td {
-    border-width: 1px;
-    border-style: solid;
-    padding: 3px;
+#wrap {
+    min-height: 100%;
 }
 
-th {
-    border-width: 1px;
-    border-style: solid;
-    padding: 3px;
-}
 
-/* style for tags with a specific class */
-div.MenuWidget {
-    float: left;
-    background-color:#eee;
-    border:1px dashed #999;
-    clear: left;
-    width:150px; 
-    line-height:17px; 
-    padding:10px; 
-    margin:10px 0px 0px 0px;
-    display: inline;
-}
-
-/* definition of todo specific styles */
-.todo {
+/* 2. Styles for forms used to enter comments, todos and other posts. */
+.post {
     margin: 25px 0px 25px 0px;
     border:1px solid #ccc;
     background:#fff; 
     text-align: left;
 }
 
-
-/* to contrast posts and make them more readable */
-.postEven {
-    border: solid;
-    background:#fff; 
-}
-
-
-.postOdd {
-    border: solid;
-    background:#0aa; 
-}
-
-
-.todo fieldset table {
-    border: none;
-}
-
-
-.todo fieldset table td {
-    width: auto;
-    border: none;
-    text-align: right;
-}
-
-.todo fieldset {
+.post fieldset {
     padding: 10px 5px 10px 5px;
     border: none;
     background:#eee;
     width:auto
 }
 
-.todo fieldset div {
-    display: block;
-    margin: 10px 0px 10px 0px;
-    border: none;
-}
-
-
-.todo input {
-    text-align: left;
-    width: 100%;
-}
-
-
-.todo textarea {
-    width: 100%;
-}
-
-.todo label {
-    font-weight: bold;
-}
-
-.todo fieldset > div > label {
+.post fieldset > div > label {
     float: left;
     width: 100px;
     text-align: right;
@@ -179,166 +75,151 @@ div.MenuWidget {
     font-weight: bold; 
 }
 
-.todo .button {
+.post fieldset table {
+    border: none;
+}
+
+.post fieldset table td {
+    width: auto;
+    border: none;
+    text-align: right;
+}
+
+.post fieldset div {
+    display: block;
+    margin: 10px 0px 10px 0px;
+    border: none;
+}
+
+.post input {
+    text-align: left;
+    width: 100%;
+}
+
+.post textarea {
+    width: 100%;
+}
+
+.post label {
+    font-weight: bold;
+}
+
+.post .button {
     width: auto;
 }
 
-.todo #title {
+.post #title {
     margin: 0px;
     text-align: left;
     width: 100%;
 }
 
-.submit {
+.post .submit {
     float: none;
     margin: auto;
     padding: auto;
     width: auto;
     text-align: right;
 }
-/* end of todo specific styles */
 
-pre.code {
-    background:	  transparent;
-    border:	  none;
-    padding:      0px 0px;
+/* 3. Styles used for generic elements in the document body. */
+table {
+    border-width: thin;
+    border-spacing: 0px;
+    border-style: solid;
+    border-collapse: collapse;
+    text-align: center;
 }
 
-tr.diffConflict { 
-    background-color:#ff6c6c; 
+td {
+    border-width: thin;
+    border-style: solid;
+    padding: 3px;
 }
 
-tr.diffNoConflict { 
-    background-color:#a0ff6d; 
+th {
+    border-width: thin;
+    border-style: solid;
+    padding: 3px;
 }
 
-th.title {
-    background-color: #eee;
-    border-style: none;
-/*    border-bottom: 1px solid rgb(128, 128, 128);*/
-    font-weight: bold;
-    font-size: 150%;
-    padding: 0.26ex 10px;
-}
-
-th.title a {
-    color: black !important;
-    text-decoration: none !important;
-}
-th.title a:hover {
-    color: black !important;
-    text-decoration: none !important;
-}
-
-th.date {
-    border-style: none;
-    text-align: right;
-}
-
-th.tags {
-    border-style: none;
-    border-top: 1px solid rgb(128, 128, 128);
-    font-style: italic;
-    font-family: Verdana, Georgia, Arial, sans-serif;
-    font-size: 90%;
-    text-align: right;
-    padding: 0px 0px 25px;
-}
-
-
-td.entry {
-    padding: 5px;
-    vertical-align: top;
-    text-align: left;
-    border-style: none;
-}
-
-
-table.document {
-    border-style: none;
-    width: 100%; 
-    /*table-layout: fixed;*/
-
-}
-
-/* style for tags with a specific id */
-
-#document {
-    float: left;
-    margin: 45px 0px 45px 0px;
-/*    display: inline;*/
-}
-
-#footer {
-    font-family: Verdana, Georgia, Arial, sans-serif;
-    float: left;
-    font-size: 60%;
-     font-style: italic;
-/*     padding: 100px 0px 0px 0px; */
-     margin:20px 0px 0px 0px;
-    display: inline;   
-}
-
-#header {
-    position: absolute;
-    left: 32px;
-    top: 5px;
+.imgrss {                    /* All RSS icons. */
+    float:right;
+    border: none;
     display: inline;
 }
 
-#sidebar {
-/*    float: left;
-      display: inline;
-*/
-    width: 150px;
-    margin: 36px 10px 10px 10px;
-    
 
-    padding: 0px 45px 0px 5px;
-    vertical-align: top;
-    text-align: left;
-    border-style: none;
+/* Styles specific to the header (header.template) */
+#header {
+    float: top;
+    background: #E00000;           /* light background */
+    border-bottom-color: #580000;  /* dark background */
+    border-left-style: solid;
+    border-left-color: #ffffff;
+    border-left-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-width: 20px;    
+    height: 160px;
 }
 
-#entry {
-    padding: 25px 0px 0px 0px;
-    vertical-align: top;
-    text-align: left;
-    border-style: none;
-}
-
-#ad {
-    width: 120px;
-    padding: 0px 5px 0px 45px;
-    vertical-align: top;
-    text-align: left;
-    border-style: none;
-}
-
-#title {
+#headerMenu {
     text-align: center;
-    border-style:solid;
-    border-color:black;
-    background-color:#eee;
-    voice-family:inherit;
-    font-style: italic;
-   /* display: block; */
-    /*display: inline-block;*/
-    /*padding: 17px 0px 0px 20px;*/
-    margin: 60px 0px 10px 0px;
-    border-width:1px 0px; 
-/*    line-height:0px; */
-    /*height:14px;*/
+    width: 700px; 
+    margin-left: auto;
+    margin-right: auto;    
+    border: none;
 }
 
-.emphasis { font-style: italic; }
-
-/* Build View - make exited with an error code. */
-.positiveErrorCode {
-    background-color: #ff6c6c;
+th.headerMenuItem {
+    border: none;
+    border-left-style: solid;
+    border-left-color: #ffffff;
+    border-left-width: 1px;
+    border-right-style: solid;
+    border-right-color: #ffffff;
+    border-right-width: 1px;
 }
 
-/* token highlighting for C/C++ */
+#headerTitle {
+    text-align: center;
+    width: 700px; 
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Styles specific to the footer (footer.template) */
+#footer {
+    text-align: center;
+    position: relative;
+    margin-top: -40px; /* negative value of footer height */
+    height: 40px;
+    clear:both;
+    font-family:"Lucida Grande", Tahoma, Arial, sans-serif;
+    display:block;
+    background: #E00000;           /* light background */
+    border-top-color: #580000;     /* dark background */
+    font-size:x-small;
+    border-left-style: solid;
+    border-left-color: #ffffff;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-top-width: 10px;    
+} 
+
+/* Styles specific to the topMenu (topMenu.template) */
+div.MenuWidget {
+    padding: 10px 5px 10px 5px; 
+    margin: 10px 10px 0px 10px;
+}
+
+div.MenuWidget > h1 {
+    font-size: 150%;
+    font-weight: bold;
+    color: black;
+}
+
+/* Styles specific for highlighting C/C++ source code */
 .booleanLiteral { color: #101010; font-weight: bold; }
 .characterLiteral { color: #101010; font-style: italic; }
 .comment { color:#990000; }
@@ -356,4 +237,3 @@ table.document {
 .stringLiteral { color: #101010; font-style: italic; }
 /*.tab { } */
 .unstyledIdentifier { color: #FF0000; font-weight: bold; }
-

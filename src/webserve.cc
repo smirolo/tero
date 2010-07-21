@@ -63,7 +63,7 @@ relpath( const boost::filesystem::path& pathname,
 std::string uriEncode( const std::string& s ) {
     char escRequest[s.size() * 9];
     char *last = uriEscapeExA(s.c_str(),&s.c_str()[s.size()],escRequest,
-			      true/*spaceToPlus*/,false/*normalizeBreaks*/);
+			      false/*spaceToPlus*/,false/*normalizeBreaks*/);
     *(last + 1) = '\0';
     return std::string(escRequest);
 }

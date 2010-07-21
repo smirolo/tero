@@ -140,7 +140,7 @@ void todoliner::filters( const post& p ) {
     std::cout << html::tr() 
 	      << "<!-- " << p.score << " -->" << std::endl
 	      << html::td() << p.time.date() << html::td::end
-	      << html::td() << p.author << html::td::end
+	      << html::td() << p.authorEmail << html::td::end
 	      << html::td() << html::a().href(todoAbsPath(p.tag)) 
 	      << p.title 
 	      << html::a::end << html::td::end;
@@ -185,7 +185,7 @@ void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
 {    
     post p;
     p.title = s.valueOf("title");
-    p.author = s.valueOf("author");
+    p.authorEmail = s.valueOf("author");
     p.descr = s.valueOf("descr");
 
     todoCreateFeedback fb;
@@ -210,7 +210,7 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
 				     : s.abspath(s.valueOf("href")));
 
     post p;
-    p.author = s.valueOf("author");
+    p.authorEmail = s.valueOf("author");
     p.descr = s.valueOf("descr");
     p.time = boost::posix_time::second_clock::local_time();
     p.tag = todouuid(postname);
