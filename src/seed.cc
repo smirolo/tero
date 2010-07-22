@@ -203,9 +203,9 @@ int main( int argc, char *argv[] )
 	    composer todos(s.valueOf("themeDir")
 			     + std::string("/todos.template"),
 			     composer::error);
-	    docs.add("view",boost::regex(".*todos"),todos);
+	    docs.add("view",boost::regex(".*todos/active"),todos);
 	    todoIndexWriteHtml todoIdxDoc("todoVoteSuccess");
-	    docs.add("document",boost::regex(".*todos/"),todoIdxDoc);
+	    docs.add("document",boost::regex(".*todos/active"),todoIdxDoc);
 
 	    todoCreate todocreate(std::cin);
 	    docs.add("document",boost::regex("/todoCreate"),todocreate);

@@ -24,6 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cassert>
+#include <iostream>
 #include "xmltok.hh"
 
 
@@ -61,6 +62,11 @@ size_t xmlTokenizer::tokenize( const char *line, size_t n )
     bool newline = false;
     int last;
     first = 0;
+
+#if 0    
+    std::cerr << "xmlTokenizer::tokenize(" << std::string(line,n) << ")"
+	      << std::endl;
+#endif
 
     if( n == 0 ) return 0;
     if( trans != NULL ) goto *trans; else goto token;

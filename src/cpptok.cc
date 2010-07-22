@@ -191,27 +191,29 @@ size_t cppTokenizer::tokenize( const char *line, size_t n )
     size_t last = first;
     bool multiline = false;
     void *trans = state;
-    const char *p = line;
+    const char *tmp, *p = line;
     if( n == 0 ) return n;
     if( trans != NULL ) goto *trans; else goto token;
     
 advancePointer:
-    ++p;
     switch( ((size_t)std::distance(line,p) >= n) ? '\0' : *p ) {
     case '\\': 
-		while( *p == '\r' ) ++p; 
-		if( *p == '\n' ) goto exit;
-		break; 
-    case '\r': 
-		while( *p == '\r' ) ++p; 
-		assert( (*p == '\n') | (*p == '\0') );
+	tmp = p;
+	while( *tmp == '\r' ) ++tmp; 
+	if( *tmp == '\n' ) goto exit;
+	break; 
+    case '\r':
+	tmp = p;
+	while( *tmp == '\r' ) ++tmp; 
+	assert( (*tmp == '\n') | (*tmp == '\0') );
     case '\n':  
     case '\0':  
-		/* In a multi line comment, end-of-line characters 
-		   are not classified as separators. */
-		if( !multiline ) trans = NULL; 
-		goto exit;		
+	/* In a multi line comment, end-of-line characters 
+	   are not classified as separators. */
+	if( !multiline ) trans = NULL; 
+	goto exit;		
     } 
+    ++p;
     goto *trans;
 
 charEnd:
@@ -466,6 +468,7 @@ exit:
 	listener->token(tok,line,first,last,trans != NULL);
 	first = last;
     }
+    while( *p == '\r' ) ++p; 
     if( *p == '\n' ) {
 	++p;
 	last = std::distance(line,p);

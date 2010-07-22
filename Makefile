@@ -49,7 +49,7 @@ session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(seedConfFile)\" $(OUTPUT_OPTION) $<
 
 seed.conf: $(shell dws context)
-	echo "binDir=/var/www/bin" > $@
+	echo "binDir=/var/www/cgi-bin" > $@
 	echo "siteTop=/var/www" >> $@
 	echo "srcTop=/var/www/reps" >> $@
 	echo "remoteIndex=$(remoteIndex)" >> $@
