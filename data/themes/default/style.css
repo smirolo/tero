@@ -21,6 +21,10 @@ html, body {
     width: 100%; 
 }
 
+#document > table {
+    border: none;
+}
+
 #entry {
     padding: 0px 0px 0px 25px;
     vertical-align: top;

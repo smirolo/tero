@@ -189,6 +189,7 @@ void todoAppendPost::fetch( session& s,
 void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
 {    
     post p;
+    p.score = 0;
     p.title = s.valueOf("title");
     p.authorEmail = s.valueOf("author");
     p.descr = s.valueOf("descr");
