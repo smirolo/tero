@@ -31,27 +31,32 @@
 #include "todo.hh"
 #include "aws.hh"
 
-namespace {
-
-    std::string todoAbsPath( const std::string& tag ) {
-	std::stringstream s;
-        s << "/contrib/todos/" << tag << ".todo";
-	return s.str();
-    }
-
-    std::string todoAbsPath( boost::uuids::uuid tag ) {
-	std::stringstream s;
-        s << "/contrib/todos/" << tag << ".todo";
-	return s.str();
-    }
-    
-}  // anonymous namespace
 
 boost::uuids::uuid todouuid( const boost::filesystem::path& p ) {
     return asuuid(boost::filesystem::basename(p.filename()));
 }
 
-class todoliner : public postFilter {
+
+const boost::regex todoFilter::viewPat(".*todos/.+");
+const boost::filesystem::path todoFilter::active("/contrib/todos/active/");
+
+
+std::string todoFilter::asPath( const std::string& tag ) {
+    std::stringstream s;
+    s << active << tag << ".todo";
+    return s.str();
+}
+
+
+std::string todoFilter::asPath( boost::uuids::uuid tag ) {
+    std::stringstream s;
+    s << active << tag << ".todo";
+    return s.str();
+}
+
+
+
+class todoliner : public todoFilter {
 public:
 
     virtual void filters( const post& );
@@ -77,13 +82,13 @@ public:
 };
 
 
-class todocreator : public postFilter {
+class todocreator : public todoFilter {
 protected:
     const session *s;
 
 public:
     todocreator( const session& v, postFilter* n  ) 
-	: postFilter(n), s(&v) {}
+	: todoFilter(n), s(&v) {}
 
     virtual void filters( const post& );
 };
@@ -115,7 +120,7 @@ void todocreator::filters( const post& v ) {
 
 #ifndef READONLY
     boost::filesystem::ofstream file;
-    createfile(file,s->srcDir(todoAbsPath(p.tag)));
+    createfile(file,s->srcDir(asPath(p.tag)));
 
     blogwriter writer(file);
     writer.filters(p);	
@@ -141,7 +146,7 @@ void todoliner::filters( const post& p ) {
 	      << "<!-- " << p.score << " -->" << std::endl
 	      << html::td() << p.time.date() << html::td::end
 	      << html::td() << p.authorEmail << html::td::end
-	      << html::td() << html::a().href(todoAbsPath(p.tag)) 
+	      << html::td() << html::a().href(asPath(p.tag)) 
 	      << p.title 
 	      << html::a::end << html::td::end;
     std::cout << html::td()
@@ -293,7 +298,7 @@ void todoVoteSuccess::fetch( session& s,
        so we derive the document name from *href*. */
     boost::filesystem::path postname(boost::filesystem::exists(pathname) ? 
 				     pathname 
-				     : todoAbsPath(s.valueOf("referenceId")));
+			      : todoFilter::asPath(s.valueOf("referenceId")));
 
     if( !boost::filesystem::is_regular_file(postname) ) {
 	/* If *postname* does not point to a regular file,
@@ -314,8 +319,6 @@ void todoVoteSuccess::fetch( session& s,
     /* make temporary file */
     char tmpname[FILENAME_MAX] = "vote-XXXXXX";
     int fildes = mkstemp(tmpname);
-
-    std::cerr << "!!! tmpname = " << tmpname << std::endl;
 
     /* read/copy with score update */
     uint32_t score = 0;

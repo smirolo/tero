@@ -29,7 +29,7 @@
 	    </h1>
 	  </div>
 	  <p>Following fortylines <a href="/contrib/fortylines/doc/organization.book"> organizational principles</a>, features, bugs and issues are tracked as todo items with each item being its own text file living along side the other files in the source repository. The <a href="/seed/index.xml">web presentation engine</a> provides an easy and convenient way to create, browse and comment on todo items but nothing prevents any contributors to manipulate todo items from the command line or with a text editor as it would be done with any other file in the source repository.</p>
-	  <p>Users also have the unique chance to vote for the todo item they care the most about by making a small donation to it. The popularity based on the total donation amount is used to rank todo items and schedule fortylines contributors work appropriately. If a feature truly matters to you and you are ready to make a significant donation, please <a href="info@fortylines.com">contact us</a>.</p>
+	  <p>Users also have the unique chance to vote for the todo item they care the most about by making a small contribution to it. The popularity based on the total contribution amount is used to rank todo items and schedule fortylines contributors work appropriately. If a feature truly matters to you and you are ready to make a significant contribution, please <a href="info@fortylines.com">contact us</a>.</p>
 	  <a href="#todoCreate">Create todo</a>
 	  <table width="100%">
 	    <tr><th>date</th>

@@ -32,6 +32,27 @@
 boost::uuids::uuid todouuid( const boost::filesystem::path& p );
 
 
+class todoFilter : public postFilter {
+public:
+
+    /** Pattern used to select directories containing todo items. 
+     */
+    static const boost::regex viewPat;
+
+    /** Directory containing the active todo items.
+     */
+    static const boost::filesystem::path active;
+
+public:
+    todoFilter() {}
+
+    explicit todoFilter( postFilter* n  ) : postFilter(n) {}
+
+    static std::string asPath( const std::string& tag );
+    std::string asPath( boost::uuids::uuid tag );
+};
+
+
 /** Creating an item or commenting on an already existing item 
     use very similar mechanism. This abstract class implements
     such mechanism to append a post to an item.
