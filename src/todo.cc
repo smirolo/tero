@@ -328,8 +328,19 @@ void todoVoteSuccess::fetch( session& s,
     boost::uuids::uuid tag = asuuid(boost::filesystem::basename(postname));
 
     /* make temporary file */
-    char tmpname[FILENAME_MAX] = "vote-XXXXXX";
+    char tmpname[FILENAME_MAX] = "/tmp/vote-XXXXXX";
     int fildes = mkstemp(tmpname);
+    if( fildes == -1 ) {
+	std::cout << htmlContent;
+	std::cout << html::p() 
+		  << " Unable to create temporary file on the server"
+		  << " and thus your vote for it cannot be registered."
+	    " Please " << html::a().href("info@fortylines.com") << "contact us"
+		  << html::a::end << " about the issue."
+		  << " Sorry for the inconvienience."
+		  << html::p::end;
+	return;
+    }
 
     /* read/copy with score update */
     uint32_t score = 0;
