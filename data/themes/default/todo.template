@@ -33,7 +33,7 @@
 	  <div>
 	    <form method="post" class="post" action="/todoComment">
 	      <fieldset>       
-		<input type="hidden" name="href" value="<!-- tmpl_var name='title' -->"/>
+		<input type="hidden" name="href" value="<!-- tmpl_name 'document' -->"/>
 		<table width="100%">
 		  <tr>
 		    <td><label>From:</label></td>

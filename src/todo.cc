@@ -388,7 +388,6 @@ void todoWriteHtml::meta( session& s,
 void 
 todoWriteHtml::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    std::cerr << "write todo html " << pathname << " ..." << std::endl;
     htmlwriter writer(std::cout); 
     mailParser parser(writer);
     parser.fetch(s,pathname);

@@ -44,6 +44,7 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
 
+    static const boost::regex tmplname("<!-- tmpl_name '(\\S+)' -->");
     static const boost::regex tmplvar("<!-- tmpl_var name='(\\S+)' -->");
     static const boost::regex tmplinc("<!-- tmpl_include name='(\\S+)' -->");
     
@@ -56,6 +57,17 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	std::string line;
 	bool found = false;
 	std::getline(strm,line);
+	if( regex_search(line,m,tmplname) ) {
+	    std::string varname = m.str(1);
+	    session::variables::const_iterator v = s.vars.find(varname);
+	    if( v != s.vars.end() ) {
+		std::cout << m.prefix();
+		std::cout << v->second;
+		std::cout << m.suffix() << std::endl;
+	    }
+	    found = true;
+	}
+
 	if( regex_search(line,m,tmplvar) ) {
 	
 	    std::string varname = m.str(1);
