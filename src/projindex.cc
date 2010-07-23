@@ -174,6 +174,12 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    if( repository == NULL ) repository = project->first_node("patch");
 	    if( repository ) {
 		const char *sep = "";
+		std::cout << html::p() << "The repository is available at "
+			  << html::p::end;
+		std::cout << html::pre()
+			  << s.valueOf("remoteSrcTop") 
+			  << "/" << name << "/.git"
+			  << html::pre::end;
 		std::cout << html::p() << "The following prerequisites are "
 		    "necessary to build the project from source: ";
 		for( xml_node<> *dep = repository->first_node("dep");
@@ -194,15 +200,22 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    }
 		}	    
 		std::cout << '.';
-		std::cout << " You can install prerequisites, update the local"
-		    " source tree, make and install the binaries"
-		    " with the following commands:";
+		std::cout << " The easiest way to install prerequisites,"
+			  << " download the source tree locally,"
+			  << " make and install the binaries is to issue"
+			  << " a global " << html::a().href("/log")
+			  << "build" << html::a::end << " command."; 
+		std::cout << html::p::end;
+		std::cout << html::p();
+		std::cout << "You can then later update the local copy"
+		    " of the source tree, re-build the prerequisites re-make"
+		    " and re-install the binaries with the following commands:";
 		std::cout << html::p::end;
 		std::cout << html::pre();
-		std::cout << "dws update " << name << std::endl;
-		std::cout << "mkdir -p build/" << name << std::endl;
-		std::cout << "cd build/" << name << std::endl;
-		std::cout << "dws make recurse" << std::endl;
+		std::cout << "cd *buildTop*/" << name << std::endl;		
+		std::cout << html::a().href("/resources/dws") 
+			  << "dws" << html::a::end 
+			  << " make recurse" << std::endl;
 		std::cout << "dws make install" << std::endl;
 		std::cout << html::pre::end;
 	    }
