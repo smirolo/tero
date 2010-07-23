@@ -49,7 +49,7 @@ Right now pages are regenerated each time a document is accessed but there are n
     <title>Build View</title>
 
       <para>
-    <link linkend="dws.book">dws</link>, the inter-project dependency tool will generate a log file with XML markups as part of building projects on a local machine. That build log is uploaded onto the server and presented among logs coming from other machines as part of the build view.
+    <link linkend="/drop/index.xml">dws</link>, the inter-project dependency tool will generate a log file with XML markups as part of building projects on a local machine. That build log is uploaded onto the server and presented among logs coming from other machines as part of the build view.
   </para>
   <para>
     The build view gives an overview of the set of all projects at a glance and can be used to assess the stability of the whole as a release candidate.
@@ -86,7 +86,7 @@ Right now pages are regenerated each time a document is accessed but there are n
       The browser view presents a source file (.cc, .py, etc.) in the repository as a syntax highlighted document. A changeset and a directory listing widgets are associated to the current source file in the view. Each link in the changeset brings a diff view between the head and the link's revision.  
   </para>
   <para>
-While source code and documentation are usually maintained and published separately, Fortylines' <link linkend="/seed">seed</link> product enables source code and other documents to cross-reference each other easily through nice web looking presentation of source files and urls embedded in comments.
+While source code and documentation are usually maintained and published separately, Fortylines' <link linkend="/seed/index.xml">seed</link> product enables source code and other documents to cross-reference each other easily through nice web looking presentation of source files and urls embedded in comments.
 </para>
 </section>
 
