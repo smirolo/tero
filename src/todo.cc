@@ -317,6 +317,8 @@ void todoVoteSuccess::fetch( session& s,
 	std::cout << html::p() << postname 
 		  << " does not appear to be a regular file on the server"
 		  << " and thus your vote for it cannot be registered."
+	    " Please " << html::a().href("info@fortylines.com") << "contact us"
+		  << html::a::end << " about the issue."
 		  << " Sorry for the inconvienience."
 		  << html::p::end;
 	return;
