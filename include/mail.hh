@@ -58,8 +58,14 @@ protected:
 
     postFilter *filter;
 
+    /** Stop parsing after the first post is completed. 
+	(This is for todo items with embed comments).
+     */
+    bool stopOnFirst;
+
 public:
-    explicit mailParser( postFilter& f ) : filter(&f) {}
+    explicit mailParser( postFilter& f, bool sof = false ) 
+	: filter(&f), stopOnFirst(sof) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 

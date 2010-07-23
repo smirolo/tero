@@ -89,6 +89,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 	    /* Beginning of new message
 	       http://en.wikipedia.org/wiki/Mbox */	    
 	    if( !first ) {
+		if( stopOnFirst ) break;
 		p.descr = descr.str();
 		descr.str("");
 #if 0
@@ -98,6 +99,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 		filter->filters(p);
 	    }
 	    p = post();
+	    p.tag = asuuid(boost::filesystem::path(boost::filesystem::path(name).filename()).stem());
 	    p.score = 0;
 	    first = false;
 	    state = startParse;

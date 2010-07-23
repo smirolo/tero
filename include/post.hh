@@ -115,7 +115,8 @@ protected:
     std::ostream *ostr;
 
 public:
-    explicit blogwriter( std::ostream& o ) : ostr(&o) {}
+    explicit blogwriter( std::ostream& o ) 
+	: ostr(&o) {}
 
     virtual void filters( const post& );
 };

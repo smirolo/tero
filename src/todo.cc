@@ -115,6 +115,7 @@ void todoCreateFeedback::filters( const post& p ) {
 
 void todocreator::filters( const post& v ) {
     post p = v;
+    p.score = 0;
     p.tag = boost::uuids::random_generator()();   
     p.time = boost::posix_time::second_clock::local_time();
 
@@ -220,6 +221,7 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
     p.descr = s.valueOf("descr");
     p.time = boost::posix_time::second_clock::local_time();
     p.tag = todouuid(postname);
+    p.score = 0;
 
 #if 0
     if( p.valid() ) {
@@ -251,8 +253,14 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
     file.close();
     f_lock.unlock();
 
+#if 0
     std::cout << redirect(s.asUrl(postname).string()) 
 	      << htmlContent << std::endl;
+#else
+    /* \todo clean-up. We use this code such that the browser displays
+       the correct url. If we use a redirect, it only works with static pages (index.html). */
+    std::cout << htmlContent << std::endl << "<html><head><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0;URL=" << s.asUrl(postname).string() << "\"></head><body></body></html>" << std::endl;
+#endif
 
 #else
     std::cout << htmlContent << std::endl;
@@ -269,7 +277,7 @@ void todoIndexWriteHtml::fetch( session& s,
 {
     todoliner shortline;
     byScore order(shortline);
-    mailParser parser(order);
+    mailParser parser(order,true);
     parser.fetch(s,pathname);
 }
 

@@ -114,6 +114,7 @@ void blogwriter::filters( const post& p ) {
     *ostr << "Date: " << p.time << std::endl;
     *ostr << "Author: " << p.author << std::endl;
 #else
+    *ostr << "From " << p.authorEmail << std::endl;
     if( !p.title.empty() ) {
 	*ostr << "Subject: " << p.title << std::endl;
     }
@@ -123,5 +124,5 @@ void blogwriter::filters( const post& p ) {
     *ostr << "Score: " << p.score << std::endl;
     *ostr << std::endl << std::endl;
     /* \todo avoid description starting with "From " */
-    *ostr << p.descr << std::endl;
+    *ostr << p.descr << std::endl << std::endl;
 }

@@ -213,6 +213,7 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex("/todoCreate"),todocreate);
 	    todoComment todocomment(std::cin);
 	    docs.add("view",boost::regex("/todoComment"),todocomment);
+	    docs.add("document",boost::regex("/todoComment"),todocomment);
 	    todoVoteAbandon tva;
 	    docs.add("document",boost::regex("/todoVoteAbandon"),tva);
 	    todoVoteSuccess tvs;
