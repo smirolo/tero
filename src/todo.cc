@@ -307,7 +307,7 @@ void todoVoteSuccess::fetch( session& s,
        so we derive the document name from *href*. */
     boost::filesystem::path postname(boost::filesystem::exists(pathname) ? 
 				     pathname 
-			      : todoFilter::asPath(s.valueOf("referenceId")));
+		: s.srcDir(todoFilter::asPath(s.valueOf("referenceId"))));
 
     if( !boost::filesystem::is_regular_file(postname) ) {
 	/* If *postname* does not point to a regular file,
