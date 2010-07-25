@@ -24,12 +24,30 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cstdlib>
-#include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "todo.hh"
 #include "aws.hh"
+
+namespace {
+
+    std::string asString( boost::uuids::uuid tag ) {
+	std::stringstream s;
+	s << tag;
+	return s.str();
+    }
+
+} // namespace anonymous
+
+
+boost::uuids::uuid asuuid( const std::string& s )
+{
+    boost::uuids::uuid r;
+    std::stringstream in(s);
+    in >> r;
+    return r;
+}
 
 
 boost::uuids::uuid todouuid( const boost::filesystem::path& p ) {
@@ -46,14 +64,6 @@ std::string todoFilter::asPath( const std::string& tag ) {
     s << active << tag << ".todo";
     return s.str();
 }
-
-
-std::string todoFilter::asPath( boost::uuids::uuid tag ) {
-    std::stringstream s;
-    s << active << tag << ".todo";
-    return s.str();
-}
-
 
 
 class todoliner : public todoFilter {
@@ -108,7 +118,7 @@ public:
 
 void todoCreateFeedback::filters( const post& p ) {
     std::cout << htmlContent;
-    std::cout << html::p() << "item " << p.tag << " has been created." 
+    std::cout << html::p() << "item " << p.guid << " has been created." 
 	      << html::p::end;    
 }
 
@@ -116,12 +126,12 @@ void todoCreateFeedback::filters( const post& p ) {
 void todocreator::filters( const post& v ) {
     post p = v;
     p.score = 0;
-    p.tag = boost::uuids::random_generator()();   
+    p.guid = asString(boost::uuids::random_generator()());   
     p.time = boost::posix_time::second_clock::local_time();
 
 #ifndef READONLY
     boost::filesystem::ofstream file;
-    createfile(file,s->srcDir(asPath(p.tag)));
+    createfile(file,s->srcDir(asPath(p.guid)));
 
     blogwriter writer(file);
     writer.filters(p);	
@@ -147,7 +157,7 @@ void todoliner::filters( const post& p ) {
 	      << "<!-- " << p.score << " -->" << std::endl
 	      << html::td() << p.time.date() << html::td::end
 	      << html::td() << p.authorEmail << html::td::end
-	      << html::td() << html::a().href(asPath(p.tag)) 
+	      << html::td() << html::a().href(asPath(p.guid)) 
 	      << p.title 
 	      << html::a::end << html::td::end;
     std::cout << html::td()
@@ -220,7 +230,7 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
     p.authorEmail = s.valueOf("author");
     p.descr = s.valueOf("descr");
     p.time = boost::posix_time::second_clock::local_time();
-    p.tag = todouuid(postname);
+    p.guid = asString(todouuid(postname));
     p.score = 0;
 
 #if 0

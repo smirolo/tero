@@ -25,7 +25,6 @@
 
 #include <string>
 #include <locale>
-#include <boost/uuid/uuid_io.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include "mail.hh"
 #include "markup.hh"
@@ -77,7 +76,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
     parseState state;
 
     p.score = 0;
-    p.tag = asuuid(boost::filesystem::path(boost::filesystem::path(name).filename()).stem());
+    p.guid = boost::filesystem::path(boost::filesystem::path(name).filename()).stem();
 
     while( !ins.eof() ) {
 	boost::smatch m;
@@ -99,7 +98,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 		filter->filters(p);
 	    }
 	    p = post();
-	    p.tag = asuuid(boost::filesystem::path(boost::filesystem::path(name).filename()).stem());
+	    p.guid = boost::filesystem::path(boost::filesystem::path(name).filename()).stem();
 	    p.score = 0;
 	    first = false;
 	    state = startParse;

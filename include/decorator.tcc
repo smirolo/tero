@@ -137,11 +137,17 @@ void basicHtmlEscaper<charT,traitsT>::token( xmlEscToken token,
     case escData:
 	super::nextBuf->sputn(&line[first],last-first);
 	break;
+    case escAmpEscape:
+	super::nextBuf->sputn("&amp;",5);
+	break;
     case escLtEscape:
 	super::nextBuf->sputn("&lt;",4);
 	break;
     case escGtEscape:
 	super::nextBuf->sputn("&gt;",4);
+	break;
+    case escQuotEscape:
+	super::nextBuf->sputn("&quot;",6);
 	break;
     }
 }

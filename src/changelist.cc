@@ -24,7 +24,6 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cstdio>
-#include <boost/uuid/uuid_io.hpp>
 #include "changelist.hh"
 #include "markup.hh"
 
@@ -124,20 +123,6 @@ void changediff::embed( session& s, const std::string& varname ) {
 }
 
 
-void checkinliner::filters( const post& p ) {
-    std::stringstream s;
-    s << "todos/" << p.tag << ".todo";
-    std::cout << html::tr() 
-	      << html::td() << p.time << html::td::end
-	      << html::td() << p.authorEmail << html::td::end
-	      << html::td() << html::a().href(s.str()) 
-	      << p.title 
-	      << html::a::end << html::td::end;
-    std::cout << html::tr::end;
-
-}
-
-
 revisionsys *changelist::findRev( session& s,
 				  const boost::filesystem::path& pathname ) {
     for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
@@ -232,41 +217,64 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	htmlEscaper esc;
 
 	/* \todo get the title and domainname from the session. */
+#if 1
 	std::cout << "Content-Type:application/rss+xml;charset=iso-8859-1\r\n"
-		  << std::endl;
+		  << "\r\n";
+#endif
 	std::cout << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
+	
+#if 0
 	std::cout << ::rss().version("2.0")
 		  << channel()
-		  << rsslink()
-		  << s.asUrl("") << rsslink::end
 		  << title() 
 		  << boost::filesystem::basename(rev->rootpath)
 		  << title::end;
+		  << rsslink() << rsslink::end
+#else
+	std::cout << "<rss version='2.0' xmlns:lj='http://www.livejournal.org/rss/lj/1.0/' xmlns:atom=\"http://www.w3.org/2005/Atom\">" << std::endl;
+	std::cout << channel();
+	std::cout << title() 
+		  << boost::filesystem::basename(rev->rootpath)
+		  << title::end;
+	std::cout << "<description></description>\n";
+	std::cout << rsslink()
+		  << rsslink::end;
+ 
+	std::cout << "<atom:link href=\"index.rss\" rel=\"self\" type=\"application/rss+xml\" />" << std::endl;
+	
+#endif
 
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
 	    std::cout << item();
 	    std::cout << title() << ci->title << title::end;
+#if 0
+	    std::cout << rsslink() << rsslink::end;
+#endif
 	    std::cout << description();
 	    esc.attach(std::cout);
+	    std::cout << html::p();
 	    std::cout << ci->descr;
-	    std::cout.flush();
-	    esc.detach();
+	    std::cout << html::pre();
 	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
 		 file != ci->files.end(); ++file ) {
-		std::cout << html::a().href(file->string()) << *file << html::a::end;
+		std::cout << html::a().href(file->string()) 
+			  << *file << html::a::end << std::endl;
 	    }
+	    std::cout << html::pre::end;
+	    std::cout << html::p::end;
+	    std::cout.flush();
+	    esc.detach();
 	    std::cout << description::end;
 	    std::cout << author();
 	    esc.attach(std::cout);
 	    std::cout << ci->authorEmail;
 	    esc.detach();
 	    std::cout << author::end;
-#if 1
-	    std::cout << guid() << ci->title << guid::end;
-#else
-	    std::cout << guid() << ci->tag << guid::end;
+#if 0
+	    std::cout << "<guid isPermaLink=\"true\">";
 #endif
+	    std::cout << guid() << ci->guid << ".html" << guid::end;
 	    std::cout << pubDate(ci->time);
 	    std::cout << item::end;
 	}	

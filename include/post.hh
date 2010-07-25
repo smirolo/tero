@@ -27,19 +27,56 @@
 #define guardpost
 
 #include <boost/date_time.hpp>
-#include <boost/uuid/uuid.hpp>
 
-boost::uuids::uuid asuuid( const std::string& s );
-
+/** Snipset of information easily presented through different 
+    channels (web, rss feed, e-mail, ...).
+    
+    Blog entries, todo items and repository commits are all posts.
+    At the base, a post is made of a title, an author and some text
+    content. It also contains a unique identifier to facilitate
+    channel processing.
+ */
 class post {
 public:
-    uint32_t score;
-    boost::uuids::uuid tag;
-    std::string authorName;
-    std::string authorEmail;    
+
+    /** The post unique identifier is used in many case to associate
+	a post to a specific file.
+
+       Implementation Note: 
+       At some point the identifier was defined as a boost::uuids::uuid.
+       This works great when our application controls the generation
+       of identifiers (ex. todo items) but it fails when the format 
+       of the identifiers is imposed by an external application (ex. git).
+       guid generation. 
+    */
+    std::string guid;
+
+    /** The title of the post will be displayed as header of pages
+       and subject of e-mails. 
+    */
     std::string title;
-    boost::posix_time::ptime time;    
+
+    /** The text content of the post. 
+     */
     std::string descr;
+
+    /** The full name of the author of the post. 
+     */
+    std::string authorName;
+
+    /** The e-mail address of the author of the post.
+     */
+    std::string authorEmail;    
+
+    /** Time at which the post was published.
+     */
+    boost::posix_time::ptime time;    
+
+    /** Each post as an associated score that can be used to sort
+	posts by relevance. Currently, we use the score as the basis
+	for the micro-payment system.
+     */
+    uint32_t score;
 
     /** remove non meaningful whitespaces from the *author* and *title* fields. 
      */
@@ -49,6 +86,8 @@ public:
 };
 
 
+/** Comparaison functor based on a post's score.
+ */
 struct orderByScore : public std::binary_function<post, post, bool> {
     bool operator()( const post& left, const post& right ) const {
 	return left.score > right.score;

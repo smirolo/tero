@@ -25,19 +25,7 @@
 
 #include "mail.hh"
 #include "markup.hh"
-#include <boost/uuid/uuid_io.hpp>
 #include <boost/date_time/date_facet.hpp>
-#if 0
-#include <boost/date_time/time_facet.hpp>
-#endif
-
-boost::uuids::uuid asuuid( const std::string& s )
-{
-    boost::uuids::uuid r;
-    std::stringstream in(s);
-    in >> r;
-    return r;
-}
 
 
 void post::normalize() {
@@ -47,6 +35,11 @@ void post::normalize() {
 
 
 bool post::valid() const {
+    /* If there are any whitespaces in the guid, Thunderbird 3 will
+       hang verifying the rss feed... */
+    for( size_t i = 0; i < guid.size(); ++i ) {
+	if( isspace(guid[i]) ) return false;
+    }
     return (!title.empty() & !authorEmail.empty() & !descr.empty());
 }
 

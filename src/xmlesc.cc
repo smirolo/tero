@@ -31,9 +31,11 @@
 
 const char *xmlEscTokenTitles[] = {
     "escErr",
+    "escAmpEscape",
     "escData",
+    "escGtEscape",
     "escLtEscape",
-    "escGtEscape"
+    "escQuotEscape"
 };
 
 
@@ -81,6 +83,8 @@ advancePointer:
     switch( *p ) {
     case '<':
     case '>':
+    case '&':
+    case '"':
 	goto token;
     }
     advance(data);
@@ -106,6 +110,14 @@ advancePointer:
 	tok = escGtEscape;
 	advance(token);
 	break;
+    case '&':
+	tok = escAmpEscape;
+	advance(token);
+	break;	
+    case '"':
+	tok = escQuotEscape;
+	advance(token);
+	break;	
     }
     tok = escData;
     advance(data);

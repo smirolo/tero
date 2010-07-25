@@ -30,9 +30,11 @@
 
 enum xmlEscToken {
     escErr,
+    escAmpEscape,
     escData,
+    escGtEscape,
     escLtEscape,
-    escGtEscape
+    escQuotEscape
 };
 
 extern const char *xmlEscTokenTitles[];

@@ -121,7 +121,7 @@ void gitcmd::checkins( ::history& hist,
     while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
 	std::string line(lcstr);
 	if( strncmp(lcstr,"commit",6) == 0 ) {
-	    if( descrStarted ) {
+	    if( descrStarted ) {		
 		ci->title = title.str();
 		ci->descr = descr.str();		
 		descrStarted = false;
@@ -131,6 +131,7 @@ void gitcmd::checkins( ::history& hist,
 	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
 	    title.str("");
 	    title << strip(line.substr(7)) << " ";
+	    ci->guid = strip(line.substr(7));
 	    
 	} else if ( line.compare(0,7,"Author:") == 0 ) {
 	    /* The author field is formatted as "First Last <emailAddress>". */

@@ -28,6 +28,7 @@
 
 #include "document.hh"
 #include "mail.hh"
+#include <boost/uuid/uuid.hpp>
 
 boost::uuids::uuid todouuid( const boost::filesystem::path& p );
 
@@ -49,7 +50,6 @@ public:
     explicit todoFilter( postFilter* n  ) : postFilter(n) {}
 
     static std::string asPath( const std::string& tag );
-    std::string asPath( boost::uuids::uuid tag );
 };
 
 
