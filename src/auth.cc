@@ -34,22 +34,8 @@
 #include "auth.hh"
 #include "composer.hh"
 
+#if 0
 #include <security/pam_appl.h>
-
-void getPassword(char *recvbuf)
-{
-    int i=0, c;
-   char buf[20];
-
-   std::cerr << "asking for password..." << std::endl;
-   while((c = fgetc(stdin)) != '\n')
-         buf[i++] = c;
-   buf[i] = '\0';
-
-   strcpy(recvbuf,buf);
-
-}
-
 
 int su_conv( int num_msg,
 	     const struct pam_message **msgm,
@@ -91,7 +77,7 @@ int su_conv( int num_msg,
     *resp = r;
     return PAM_SUCCESS;
 }
-
+#endif
 
 void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
 #if 0
@@ -125,6 +111,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
 	throw invalidAuthentication();
     }
 
+#if 0
     /* PAM authentication 
        http://www.freebsd.org/doc/en/articles/pam/pam-essentials.html
        http://linux.die.net/man/3/pam
@@ -156,6 +143,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     if(pam_end(pamh,pam_status) != PAM_SUCCESS) { 
 	pamh = NULL;        
     }
+#endif
 
     s.start();
     
