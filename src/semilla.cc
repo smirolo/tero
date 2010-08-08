@@ -211,7 +211,7 @@ int main( int argc, char *argv[] )
 	    docs.add("view",todoFilter::viewPat,todos);
 	    todoIndexWriteHtml todoIdxDoc(std::cout,"todoVoteSuccess");
 
-	    std::string active("contrib/todos/active");
+	    std::string active("contrib/todos/active/");
 	    docs.add("document",
 		     boost::regex(std::string(".*") + active),
 		     todoIdxDoc);

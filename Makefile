@@ -45,7 +45,7 @@ semilla: semilla.cc session.o libsemilla.a libcryptopp.a liburiparser.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 
-semilla:	LDFLAGS	+= -lpam
+#semilla:	LDFLAGS	+= -lpam
 
 session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" $(OUTPUT_OPTION) $<
