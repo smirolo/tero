@@ -32,9 +32,10 @@ const char *licenseCodeTitles[] = {
 };
 
 
-checkfile::checkfile() : cached(false), 
-			 licenseType(unknownLicense),
-			 nbLines(0), nbCodeLines(0) {}
+checkfile::checkfile( std::ostream& o ) : document(o),
+					  cached(false), 
+					  licenseType(unknownLicense),
+					  nbLines(0), nbCodeLines(0) {}
 
 void checkfile::cache() {
     static const boost::regex 
@@ -87,16 +88,17 @@ void checkfile::fetch( session& s, const boost::filesystem::path& pathname ) {
 	name = pathname.string();
     }
 
-    std::cout << html::tr()
-	      << html::td() << html::a().href(href.string()) 
-	      << name << html::a::end << html::td::end
-	      << html::td() << license() << html::td::end
-	      << html::td() << nbCodeLines << html::td::end
-	      << html::td() << nbLines << html::td::end
-	      << html::tr::end;
+    *ostr << html::tr()
+	 << html::td() << html::a().href(href.string()) 
+	 << name << html::a::end << html::td::end
+	 << html::td() << license() << html::td::end
+	 << html::td() << nbCodeLines << html::td::end
+	 << html::td() << nbLines << html::td::end
+	 << html::tr::end;
 }
 
-cppCheckfile::cppCheckfile() : state(start), comment(emptyLine)
+cppCheckfile::cppCheckfile( std::ostream& o ) 
+    : checkfile(o), state(start), comment(emptyLine)
 {
 }
 

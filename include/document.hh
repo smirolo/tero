@@ -37,10 +37,14 @@ void createfile( boost::filesystem::ofstream& strm,
  */
 class document {
 protected:
+    std::ostream *ostr;
+
     void open( boost::filesystem::ifstream& strm, 
 	       const boost::filesystem::path& pathname ) const;
     
 public:
+    explicit document( std::ostream& o ) : ostr(&o) {}
+
     virtual void fetch( session& s, 
 			const boost::filesystem::path& pathname ) = 0;
 
@@ -99,6 +103,7 @@ protected:
     virtual void last() {}
 
 public:
+    explicit dirwalker( std::ostream& o ) : document(o) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 
@@ -116,10 +121,11 @@ protected:
     decorator *rightDec;
 
 public:
-    text() : leftDec(NULL), rightDec(NULL) {}
+    explicit text( std::ostream& o ) 
+	: document(o), leftDec(NULL), rightDec(NULL) {}
 
-    text( decorator& l,  decorator& r ) 
-	: leftDec(&l), rightDec(&r) {}
+    text( std::ostream& o, decorator& l,  decorator& r ) 
+	: document(o), leftDec(&l), rightDec(&r) {}
 
     /** \brief show difference between two texts side by side 
 

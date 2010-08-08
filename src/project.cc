@@ -23,22 +23,9 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guarddownload
-#define guarddownload
+#include "project.hh"
 
-#include "projfiles.hh"
+void projCreate::fetch(	session& s, const boost::filesystem::path& pathname ) {
+    
+}
 
-/** A page that permits to download the packaged project.
- */
-class download : public projfiles {
-protected:
-
-    void packages( session& s, const boost::filesystem::path& dirname );
-
-public:
-    download();
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
-#endif

@@ -34,7 +34,7 @@ void composer::embed( session& s, const std::string& value ) {
     try {
 	dispatchDoc::instance->fetch(s,value);
     } catch( const basic_filesystem_error<path>& e ) {
-	std::cout << "<p>" << e.what() << "</p>" << std::endl;
+	*ostr << "<p>" << e.what() << "</p>" << std::endl;
     }
 }
 
@@ -51,7 +51,7 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     ifstream strm;
     open(strm,fixed.empty() ? pathname : fixed);
 
-    std::cout << htmlContent;
+    *ostr << htmlContent;
     while( !strm.eof() ) {
 	smatch m;
 	std::string line;
@@ -61,9 +61,9 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    std::string varname = m.str(1);
 	    session::variables::const_iterator v = s.vars.find(varname);
 	    if( v != s.vars.end() ) {
-		std::cout << m.prefix();
-		std::cout << v->second;
-		std::cout << m.suffix() << std::endl;
+		*ostr << m.prefix();
+		*ostr << v->second;
+		*ostr << m.suffix() << std::endl;
 	    }
 	    found = true;
 	}
@@ -82,21 +82,21 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 		= dispatchDoc::instance->select(varname,s.valueOf(varname));
 	    if( doc != NULL ) {
 		boost::filesystem::path docname = s.valueAsPath(varname);
-		std::cout << m.prefix();
+		*ostr << m.prefix();
 		/* \todo code could be:
 		           doc->fetch(s,docname);  
 			 but that would skip over the override 
 			 of changediff::embed(). */
 		embed(s,varname);
-		std::cout << m.suffix() << std::endl;
+		*ostr << m.suffix() << std::endl;
 		found = true;
 	    
 	    } else {
 		v = s.vars.find(varname);
 		if( v != s.vars.end() ) {
-		    std::cout << m.prefix();
-		    std::cout << s.valueOf(varname);
-		    std::cout << m.suffix() << std::endl;
+		    *ostr << m.prefix();
+		    *ostr << s.valueOf(varname);
+		    *ostr << m.suffix() << std::endl;
 		    found = true;
 		}
 	    }
@@ -113,7 +113,7 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    found = true;
 	}
 	if( !found ) {
-	    std::cout << line << std::endl;
+	    *ostr << line << std::endl;
 	}
     }
     strm.close();

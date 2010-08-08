@@ -423,8 +423,9 @@ bool docbook::walkNodeEntry::operator<( const walkNodeEntry& right ) const {
 }
 
 
-docbook::docbook( decorator& l,  decorator& r ) 
-    : text(l,r), buffer(NULL), info(false), linebreak(false), sectionLevel(0) {}
+docbook::docbook( std::ostream& o, decorator& l,  decorator& r ) 
+    : text(o,l,r), 
+      buffer(NULL), info(false), linebreak(false), sectionLevel(0) {}
 
 docbook::~docbook() {
     if( buffer != NULL ) delete [] buffer;
@@ -435,31 +436,31 @@ void docbook::any( const rapidxml::xml_node<>& node ) {
 
 void docbook::captionEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::caption::end;
+	*ostr << html::caption::end;
     }
 }
 
 void docbook::captionStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::caption();
+	*ostr << html::caption();
     }
 }
 
 void docbook::emphasisEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::span::end;
+	*ostr << html::span::end;
     }
 }
 
 void docbook::emphasisStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::span().classref("emphasis");
+	*ostr << html::span().classref("emphasis");
     }
 }
 
 void docbook::imagedataEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::img::end;
+	*ostr << html::img::end;
     }
 }
 
@@ -469,12 +470,12 @@ void docbook::imagedataStart( const rapidxml::xml_node<>& node ) {
 	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( fileref != NULL ) {	
 	    if( role != NULL ) {
-		std::cout << html::img().src(fileref->value()).classref(role->value());
+		*ostr << html::img().src(fileref->value()).classref(role->value());
 	    } else {
-		std::cout << html::img().src(fileref->value());
+		*ostr << html::img().src(fileref->value());
 	    }
 	} else {
-	    std::cout << html::img();
+	    *ostr << html::img();
 	}
     }
 }
@@ -489,19 +490,19 @@ void docbook::infoStart( const rapidxml::xml_node<>& node ) {
 
 void docbook::informaltableEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::table::end;
+	*ostr << html::table::end;
     }
 }
 
 void docbook::informaltableStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::table();
+	*ostr << html::table();
     }
 }
 
 void docbook::linkEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::a::end;
+	*ostr << html::a::end;
     }
 }
 
@@ -512,9 +513,9 @@ void docbook::linkStart( const rapidxml::xml_node<>& node ) {
 	    href = node.first_attribute("linkend");
 	}
 	if( href != NULL ) {
-	    std::cout << html::a().href(href->value());
+	    *ostr << html::a().href(href->value());
 	} else {
-	    std::cout << html::a();
+	    *ostr << html::a();
 	}
     }
 }
@@ -536,13 +537,13 @@ void docbook::literallayoutStart( const rapidxml::xml_node<>& node ) {
 
 void docbook::itemEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::li::end;
+	*ostr << html::li::end;
     }
 }
 
 void docbook::itemStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::li();
+	*ostr << html::li();
     }
 }
 
@@ -551,12 +552,12 @@ void docbook::paraEnd( const rapidxml::xml_node<>& node ) {
 	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( role != NULL ) { 
 	    if( strncmp(role->value(),"code",4) == 0 ) {
-		std::cout << html::pre::end;
+		*ostr << html::pre::end;
 	    } else {
-		std::cout << html::p::end;
+		*ostr << html::p::end;
 	    }
 	} else {
-	    std::cout << html::p::end;
+	    *ostr << html::p::end;
 	}
     }
 }
@@ -566,19 +567,19 @@ void docbook::paraStart( const rapidxml::xml_node<>& node ) {
 	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( role != NULL ) { 
 	    if( strncmp(role->value(),"code",4) == 0 ) {
-		std::cout << html::pre().classref(role->value());
+		*ostr << html::pre().classref(role->value());
 	    } else {
-		std::cout << html::p().classref(role->value());
+		*ostr << html::p().classref(role->value());
 	    }
 	} else {
-	    std::cout << html::p();
+	    *ostr << html::p();
 	}
     }
 }
 
 void docbook::phraseEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::span::end;
+	*ostr << html::span::end;
     }
 }
 
@@ -586,22 +587,22 @@ void docbook::phraseStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( role != NULL ) { 
-	    std::cout << html::span().classref(role->value());
+	    *ostr << html::span().classref(role->value());
 	} else {
-	    std::cout << html::span();
+	    *ostr << html::span();
 	}
     }
 }
 
 void docbook::programlistingEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << code::end;
+	*ostr << code::end;
     }
 }
 
 void docbook::programlistingStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << code();
+	*ostr << code();
     }
 }
 
@@ -615,80 +616,80 @@ void docbook::sectionStart( const rapidxml::xml_node<>& node ) {
 
 void docbook::listEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::ul::end;
+	*ostr << html::ul::end;
     }
 }
 
 void docbook::listStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::ul();
+	*ostr << html::ul();
     }
 }
 
 void docbook::tableEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::table::end;
+	*ostr << html::table::end;
     }
 }
 
 void docbook::tableStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::table();
+	*ostr << html::table();
     }
 }
 
 void docbook::tdEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::td::end;
+	*ostr << html::td::end;
     }
 }
 
 void docbook::tdStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::td();
+	*ostr << html::td();
     }
 }
 
 void docbook::thEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::th::end;
+	*ostr << html::th::end;
     }
 }
 
 void docbook::thStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::th();
+	*ostr << html::th();
     }
 }
 
 void docbook::titleEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::h(sectionLevel - 1).end();
+	*ostr << html::h(sectionLevel - 1).end();
     }
 }
 
 void docbook::titleStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::h(sectionLevel - 1);
+	*ostr << html::h(sectionLevel - 1);
     }
 }
 
 void docbook::trEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::tr::end;
+	*ostr << html::tr::end;
     }
 }
 
 void docbook::trStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-        std::cout << html::tr();
+        *ostr << html::tr();
     }
 }
 
 
 void docbook::xrefEnd( const rapidxml::xml_node<>& node ) {
     if( !info ) {
-	std::cout << html::a::end;
+	*ostr << html::a::end;
     }
 }
 
@@ -696,11 +697,11 @@ void docbook::xrefStart( const rapidxml::xml_node<>& node ) {
     if( !info ) {
 	rapidxml::xml_attribute<> *linkend = node.first_attribute("linkend");
 	if( linkend != NULL ) {	
-	    std::cout << html::a().href(std::string("glossary.book#") 
+	    *ostr << html::a().href(std::string("glossary.book#") 
 					+ linkend->value());
-	    std::cout << linkend->value();
+	    *ostr << linkend->value();
 	} else {
-	    std::cout << html::a();
+	    *ostr << html::a();
 	}
     }
 }
@@ -722,8 +723,8 @@ void docbook::walk( const rapidxml::xml_node<>& node ) {
     case node_data:
     case node_cdata:
 	if( !info ) {
-	    std::cout << node.value();
-	    if( linebreak ) std::cout << "<br />" << std::endl;
+	    *ostr << node.value();
+	    if( linebreak ) *ostr << "<br />" << std::endl;
 	}
 	break;
     default:
@@ -785,8 +786,8 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
 
 
 void docbook::fetch( session& s, const boost::filesystem::path& pathname )
-{
-    leftDec->attach(std::cout);
+{    
+    leftDec->attach(*ostr);
 
     rapidxml::xml_node<> *root = doc.first_node();
     if( root != NULL ) {

@@ -42,10 +42,10 @@ void checkstyle::addFile( const session& s,
     using namespace boost::filesystem; 
 
     if( state == start ) {
-	std::cout << htmlContent;
-	std::cout << html::p() 
+	*ostr << htmlContent;
+	*ostr << html::p() 
 		  << "<table>";
-	std::cout << html::tr()
+	*ostr << html::tr()
 		  << html::th() << html::th::end
 		  << html::th() << "license" << html::th::end
 		  << html::th() << "code lines" << html::th::end
@@ -59,7 +59,7 @@ void checkstyle::addFile( const session& s,
 
 void checkstyle::flush() {
     if( state != start ) {
-	std::cout << "</table>"
+	*ostr << "</table>"
 		  << html::p::end;
     }
 }
@@ -96,11 +96,11 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 
 	    /* Description of the project */
 	    hrefLight dec(s);
-	    dec.attach(std::cout);
+	    dec.attach(*ostr);
 	    for( xml_node<> *descr
 		     = project->first_node("description"); descr != NULL; 
 		 descr = descr->next_sibling() ) {
-		std::cout << html::p()
+		*ostr << html::p()
 #if 0
 			  << descr->value();
 #endif
@@ -108,9 +108,9 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 		for( xml_node<> *child
 		     = descr->first_node(); child != NULL; 
 		     child = child->next_sibling() ) {
-		    std::cout << child->value();
+		    *ostr << child->value();
 		}
-		std::cout << html::p::end;
+		*ostr << html::p::end;
 	    }
 	    dec.detach();
 
@@ -120,16 +120,16 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 		xml_attribute<> *name = maintainer->first_attribute("name");
 		xml_attribute<> *email = maintainer->first_attribute("email");
 		if( name ) {
-		    std::cout << html::p() << "maintainer: ";
+		    *ostr << html::p() << "maintainer: ";
 		    if( email ) {
-			std::cout << html::a().href(std::string("mailto:") 
+			*ostr << html::a().href(std::string("mailto:") 
 						    + email->value());
 		    }
-		    std::cout << name->value();
+		    *ostr << name->value();
 		    if( email ) {
-			std::cout << html::a::end;
+			*ostr << html::a::end;
 		    }
-		    std::cout << html::p::end;
+		    *ostr << html::p::end;
 		}
 	    }
 
@@ -156,68 +156,68 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 		    }
 		}
 	    }
-	    std::cout << html::p();
+	    *ostr << html::p();
 	    if( candidates.empty() ) {
-		std::cout << "There are no prepackaged archive available for download.";
+		*ostr << "There are no prepackaged archive available for download.";
 	    } else {
 		for( candidateSet::const_iterator c = candidates.begin();
 		     c != candidates.end(); ++c ) {
-		    std::cout << html::a().href(c->string()) 
+		    *ostr << html::a().href(c->string()) 
 			      << c->filename() << html::a::end 
 			      << "<br />" << std::endl;
 		}
 	    }
-	    std::cout << html::p::end;
+	    *ostr << html::p::end;
 	   
 	    /* Dependencies to install the project from a source compilation. */
 	    xml_node<> *repository = project->first_node("repository");
 	    if( repository == NULL ) repository = project->first_node("patch");
 	    if( repository ) {
 		const char *sep = "";
-		std::cout << html::p() << "The repository is available at "
+		*ostr << html::p() << "The repository is available at "
 			  << html::p::end;
-		std::cout << html::pre()
+		*ostr << html::pre()
 			  << s.valueOf("remoteSrcTop") 
 			  << "/" << name << "/.git"
 			  << html::pre::end;
-		std::cout << html::p() << "The following prerequisites are "
+		*ostr << html::p() << "The following prerequisites are "
 		    "necessary to build the project from source: ";
 		for( xml_node<> *dep = repository->first_node("dep");
 		     dep != NULL; dep = dep->next_sibling() ) {
 		    xml_attribute<> *name = dep->first_attribute("name");
 		    if( name != NULL ) {
 			if( boost::filesystem::exists(s.srcDir(name->value())) ) {			
-			    std::cout << sep 
+			    *ostr << sep 
 				      << html::a().href(std::string("/") 
 							+ name->value()
 							+ "/index.xml") 
 				      << name->value()
 				      << html::a::end;
 			} else {
-			    std::cout << sep << name->value();
+			    *ostr << sep << name->value();
 			}
 			sep = ", ";
 		    }
 		}	    
-		std::cout << '.';
-		std::cout << " The easiest way to install prerequisites,"
+		*ostr << '.';
+		*ostr << " The easiest way to install prerequisites,"
 			  << " download the source tree locally,"
 			  << " make and install the binaries is to issue"
 			  << " a global " << html::a().href("/log")
 			  << "build" << html::a::end << " command."; 
-		std::cout << html::p::end;
-		std::cout << html::p();
-		std::cout << "You can then later update the local copy"
+		*ostr << html::p::end;
+		*ostr << html::p();
+		*ostr << "You can then later update the local copy"
 		    " of the source tree, re-build the prerequisites re-make"
 		    " and re-install the binaries with the following commands:";
-		std::cout << html::p::end;
-		std::cout << html::pre();
-		std::cout << "cd *buildTop*/" << name << std::endl;		
-		std::cout << html::a().href("/resources/dws") 
+		*ostr << html::p::end;
+		*ostr << html::pre();
+		*ostr << "cd *buildTop*/" << name << std::endl;		
+		*ostr << html::a().href("/resources/dws") 
 			  << "dws" << html::a::end 
 			  << " make recurse" << std::endl;
-		std::cout << "dws make install" << std::endl;
-		std::cout << html::pre::end;
+		*ostr << "dws make install" << std::endl;
+		*ostr << html::pre::end;
 	    }
 	}
     }

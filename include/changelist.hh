@@ -93,6 +93,9 @@ public:
  */
 class revisionsys {
 public:
+    typedef std::vector<revisionsys*> revsSet;
+    static revsSet revs;
+
     boost::filesystem::path rootpath;
 
     /** Directory name in which revision control meta information 
@@ -102,7 +105,7 @@ public:
 
 public:
     explicit revisionsys( const char* m ) 
-	: metadir(m) {}
+	: metadir(m) { revs.push_back(this); }
 
     virtual void diff( std::ostream& ostr, 
 		       const std::string& leftCommit, 
@@ -118,11 +121,11 @@ public:
 			   const session& s, 
 			   const boost::filesystem::path& pathname ) = 0;
     
-    /* Sets the path to the root of the source code control system.
+    /** returns the revision system associated with a pathname 
      */
-    void rootPath( const boost::filesystem::path& p ) {
-	rootpath = p;
-    }
+    static revisionsys*
+    findRev( session& s, const boost::filesystem::path& pathname );
+
 };
 
 
@@ -156,6 +159,8 @@ public:
 */
 class cancel : public document {
 public:
+    explicit cancel( std::ostream& o ) : document(o) {}
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -164,6 +169,8 @@ public:
 */
 class change : public document {
 public:
+    explicit change( std::ostream& o ) : document(o) {}
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -172,15 +179,14 @@ public:
  */
 class changediff : public composer {
 protected:
-    revisionsys *revision;
 	
     /** Embed the content of a variable into a page. 
      */
     virtual void embed( session& s, const std::string& value );
 
 public:
-    changediff( const boost::filesystem::path& f, revisionsys *r ) 
-	: composer(f,error), revision(r) {}
+    changediff( std::ostream& o, const boost::filesystem::path& f ) 
+	: composer(o,f,error) {}
 
 };
 
@@ -189,22 +195,12 @@ public:
  */
 class changelist : public document {
 protected:
-    typedef std::vector<revisionsys*> revsSet;
-    revsSet revs;
     
-    /* returns the revision system associated with a pathname */
-    revisionsys *findRev( session& s,
-			  const boost::filesystem::path& pathname );
-
 public:
-    explicit changelist( revisionsys *r ) { addRev(r); }
+    explicit changelist( std::ostream& o )
+	: document(o) {}
 
-    void addRev( revisionsys *r ) {
-	revs.push_back(r);
-    }
 
-    virtual void 
-    fetch( session& s, const boost::filesystem::path& pathname ) = 0;
 };
 
 /** Detailed description of a single changelist
@@ -213,11 +209,10 @@ class changedescr : public changelist {
 protected:
 
 public:
-    explicit changedescr( revisionsys *r ) 
-	: changelist(r) {}
+    explicit changedescr( std::ostream& o ) 
+	: changelist(o) {}
 
-    virtual void 
-    fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch(	session& s, const boost::filesystem::path& pathname );
 };
 
 
@@ -229,7 +224,7 @@ public:
  */
 class changecheckin : public changelist {
 public:
-    explicit changecheckin( revisionsys *r ) : changelist(r) {}
+    explicit changecheckin( std::ostream& o ) : changelist(o) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );	
 };
@@ -239,7 +234,7 @@ public:
  */
 class changehistory : public changelist {
 public:
-    explicit changehistory( revisionsys *r ) : changelist(r) {}
+    explicit changehistory( std::ostream& o ) : changelist(o) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );	
 };
@@ -249,9 +244,9 @@ public:
  */
 class changerss : public changelist {
 public:
-    explicit changerss( revisionsys *r ) : changelist(r) {}
+    explicit changerss( std::ostream& o ) : changelist(o) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );	
+    virtual void fetch(	session& s, const boost::filesystem::path& pathname );	
 };
 
 

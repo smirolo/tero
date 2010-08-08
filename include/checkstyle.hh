@@ -61,14 +61,14 @@ public:
     size_t nbCodeLines;
     
 public:
-    checkfile();
+    explicit checkfile( std::ostream& o );
 
     licenseCode license() {
 	if( !cached ) cache();
 	return licenseType;
     }
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch(	session& s, const boost::filesystem::path& pathname );
 
     virtual void meta( session& s, const boost::filesystem::path& pathname ) {}
 };
@@ -92,7 +92,7 @@ protected:
     commentCode comment;
 
 public:
-    cppCheckfile();
+    explicit cppCheckfile( std::ostream& o );
 
     virtual void newline(const char *line, int first, int last );
 
@@ -114,7 +114,7 @@ protected:
     stateCode state;
 
 public:
-    shCheckfile() {}
+    explicit shCheckfile( std::ostream& o ) : checkfile(o) {}
 
     virtual void newline(const char *line, int first, int last );
 

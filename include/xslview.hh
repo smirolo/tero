@@ -31,7 +31,8 @@
 class xslview : public document {
 public:
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( std::ostream& ostr,
+			session& s, const boost::filesystem::path& pathname );
 };
 
 #endif

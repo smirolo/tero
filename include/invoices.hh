@@ -61,7 +61,9 @@ protected:
 		    const boost::posix_time::ptime stop );
 
 public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    explicit statement( std::ostream& o ) : document(o) {}
+
+    virtual void fetch(	session& s, const boost::filesystem::path& pathname );
 };
 
 

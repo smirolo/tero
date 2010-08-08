@@ -34,6 +34,64 @@
 #include "auth.hh"
 #include "composer.hh"
 
+#include <security/pam_appl.h>
+
+void getPassword(char *recvbuf)
+{
+    int i=0, c;
+   char buf[20];
+
+   std::cerr << "asking for password..." << std::endl;
+   while((c = fgetc(stdin)) != '\n')
+         buf[i++] = c;
+   buf[i] = '\0';
+
+   strcpy(recvbuf,buf);
+
+}
+
+
+int su_conv( int num_msg,
+	     const struct pam_message **msgm,
+	     struct pam_response **resp,
+	     void *appdata)
+{
+    session *s = (session*)appdata;
+    
+    int count;
+    struct pam_response *r;   
+    r = (struct pam_response*)calloc(num_msg,sizeof(struct pam_response));
+    
+    for( count=0; count < num_msg; ++count) {	
+	char *value = NULL;
+	switch(msgm[count]->msg_style) {
+        case PAM_PROMPT_ECHO_OFF:
+	    std::cerr << msgm[count]->msg;
+	    value = (char*)malloc((s->valueOf("credentials").size() + 1)
+				  * sizeof(char));
+	    strcpy(value,s->valueOf("credentials").c_str());
+	    break;
+	case PAM_PROMPT_ECHO_ON:
+	    std::cerr << msgm[count]->msg;
+	    value = (char*)malloc((s->username.size() + 1)
+				  * sizeof(char));
+	    strcpy(value,s->username.c_str());
+	    break;	    
+        case PAM_ERROR_MSG:
+	case PAM_TEXT_INFO:
+	    std::cerr << msgm[count]->msg;
+	    break;
+        default:
+	    std::cerr << "Erroneous Conversation (" 
+		      << msgm[count]->msg_style << ")" << std::endl;
+	}
+	r[count].resp_retcode = 0;
+	r[count].resp = value;
+    }
+    *resp = r;
+    return PAM_SUCCESS;
+}
+
 
 void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
 #if 0
@@ -67,6 +125,38 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
 	throw invalidAuthentication();
     }
 
+    /* PAM authentication 
+       http://www.freebsd.org/doc/en/articles/pam/pam-essentials.html
+       http://linux.die.net/man/3/pam
+       http://www.linuxjournal.com/article/5940
+     */
+    struct pam_conv conv = {
+        su_conv,        //function pointer to the
+                        //conversation function
+        &s
+    };
+
+    pam_handle_t *pamh = NULL;
+    int retval = 0;
+    /* service, user, pam_conv, handle */
+    retval =  pam_start("semilla",NULL,&conv,&pamh);
+    if( retval != PAM_SUCCESS ) {
+	std::cerr << "error: pam_start" << std::endl;
+	throw invalidAuthentication();
+    }
+    /* handle, flags */
+    retval = pam_authenticate(pamh,0);
+    if(retval == PAM_SUCCESS) {
+        std::cerr << "Authenticated." << std::endl;
+    } else {
+	std::cerr << "Authentication Failed." << std::endl;
+	throw invalidAuthentication();
+    }
+    int pam_status = 0; 
+    if(pam_end(pamh,pam_status) != PAM_SUCCESS) { 
+	pamh = NULL;        
+    }
+
     s.start();
     
     /* \todo generate a random unique session id */
@@ -77,8 +167,8 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     /* Set a session cookie */
     std::stringstream id;
     id << sessionId;
-    std::cout << cookie("session",id.str());
-    std::cout << redirect(s.docAsUrl()) << '\n';
+    *ostr << cookie("session",id.str());
+    *ostr << redirect(s.docAsUrl()) << '\n';
 }
 
 
@@ -139,24 +229,24 @@ deauth::aggregate( const session& s ) const {
 }
 
 
-void deauth::fetch( session& s, const boost::filesystem::path& pathname ) {
+void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::posix_time;
     time_duration logged = s.stop();
     aggregate(s);
-    std::cout << "last session ran for ";
+    *ostr << "last session ran for ";
     const char *sep = "";
     if( logged.hours() > 0 ) {
-	std::cout << logged.hours() << " hours";
+	*ostr << logged.hours() << " hours";
 	sep = " ";
     }
     if( logged.minutes() > 0 ) {
-	std::cout << sep << logged.minutes() << " mins";
+	*ostr << sep << logged.minutes() << " mins";
 	sep = " ";
     }
     if( strlen(sep) == 0 ) {
-	std::cout << "less than a minute";
+	*ostr << "less than a minute";
     }
-    std::cout << "." << std::endl;
+    *ostr << "." << std::endl;
 }
 
 
@@ -168,16 +258,16 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
     if( s.id != 0 ) {
 	std::stringstream id;
 	id << s.id;
-	std::cout << cookie("session",id.str(),boost::posix_time::ptime::date_duration_type(-1));
+	*ostr << cookie("session",id.str(),boost::posix_time::ptime::date_duration_type(-1));
     }
     time_duration logged = s.stop();
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
     
-    std::cout << htmlContent << std::endl;
+    *ostr << htmlContent << std::endl;
     s.vars["hours"] = logstr.str();
     path uiPath(s.vars["uiDir"] + std::string("/logout.ui"));
-    composer pres(uiPath,composer::error);
+    composer pres(*ostr,uiPath,composer::error);
     pres.fetch(s,"document");
 }
 

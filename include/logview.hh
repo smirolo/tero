@@ -36,7 +36,7 @@ protected:
     virtual void meta( session& s, const boost::filesystem::path& pathname );
 
 public:
-    logview() {}
+    explicit logview( std::ostream& o ) : document(o) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
@@ -70,7 +70,7 @@ public:
  */
 class regressions : public document {
 public:
-    regressions() {}
+    explicit regressions( std::ostream& o ) : document(o) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };

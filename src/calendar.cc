@@ -154,34 +154,34 @@ void calendar::fetch( session& s, const boost::filesystem::path& pathname ) {
     {
 	std::stringstream s;
 	s << "/schedule.ics?month=" << (firstOfMonth - days(1)) << "";	
-	cout << html::a().href(s.str()) << "prev" << html::a::end;
+	*ostr << html::a().href(s.str()) << "prev" << html::a::end;
 	s.str("");
-	cout << " ";
+	*ostr << " ";
 	s << "/schedule.ics?month=" << (lastOfMonth + days(1)) << "";	
-	cout << html::a().href(s.str()) << "next" << html::a::end;	
+	*ostr << html::a().href(s.str()) << "next" << html::a::end;	
     }    
     
-    cout << html::table();
-    cout << "<caption>" << today.month() << " " << today.year() 
+    *ostr << html::table();
+    *ostr << "<caption>" << today.month() << " " << today.year() 
 	 << "</caption>" << std::endl;
-    cout << html::tr();
+    *ostr << html::tr();
     for( int day = 0; day < 7; ++day ) {
-	cout << html::th()
+	*ostr << html::th()
 	     << weekdayNames[day]
 	     << html::th::end;
     }
-    cout << html::tr::end;
+    *ostr << html::tr::end;
 
     date firstOfCal = firstOfMonth - days((size_t)firstOfMonth.day_of_week());
     for( date d = firstOfCal; d < lastOfMonth; ) {
-	cout << html::tr();
+	*ostr << html::tr();
 	for( int day = 0; day < 7; ++day ) {
-	    cout << html::td()
+	    *ostr << html::td()
 		 << d
 		 << html::td::end;	    
 	    d += days(1);	    
 	}
-	cout << html::tr::end;
+	*ostr << html::tr::end;
     }
-    cout << html::table::end;
+    *ostr << html::table::end;
 }

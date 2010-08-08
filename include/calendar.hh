@@ -49,6 +49,8 @@ protected:
     walkNodeEntry* walker( const std::string& s );
 
 public:
+    explicit calendar( std::ostream& o ) : document(o) {}
+
     void parse( session& s, std::istream& ins );
     void fetch( session& s, const boost::filesystem::path& pathname );
 };

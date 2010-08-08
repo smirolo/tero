@@ -107,15 +107,15 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	}
     }
 
-    std::cout << html::p() << "This build view page shows the stability "
+    *ostr << html::p() << "This build view page shows the stability "
 	"of all projects at a glance. Each column represents a build log "
 	"obtained by running the following command on a local machine:" 
 	      << html::p::end;
-    std::cout << html::pre() << html::a().href("/resources/dws") 
+    *ostr << html::pre() << html::a().href("/resources/dws") 
 	      << "dws" << html::a::end << " build " 
 	      << s.valueOf("remoteIndex")
 	      << html::pre::end;
-    std::cout << html::p() << "dws, the inter-project dependency tool "
+    *ostr << html::p() << "dws, the inter-project dependency tool "
 	"generates a build log file with XML markups as part of building "
 	"projects. That build log is then stamped with the local machine "
 	"hostname and time before being uploaded onto the remote machine. "
@@ -123,52 +123,52 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	"machine." << html::p::end;
 
     /* Display the table column headers. */
-    std::cout << html::table();
-    std::cout << html::tr();
-    std::cout << html::th() << html::th::end;
+    *ostr << html::table();
+    *ostr << html::tr();
+    *ostr << html::th() << html::th::end;
     for( colHeadersType::const_iterator col = colHeaders.begin();
 	 col != colHeaders.end(); ++col ) {
-	std::cout << html::th() 
+	*ostr << html::th() 
 		  << html::a().href(s.subdirpart(s.valueOf("siteTop"),
 						 dirname / col->string()).string())
 		  << *col << html::a::end << html::th::end;
     }
-    std::cout << html::tr::end;
+    *ostr << html::tr::end;
 
     /* Display one project per row, one build result per column. */
     for( tableType::const_iterator row = table.begin();
 	 row != table.end(); ++row ) {
-	std::cout << html::tr();
-	std::cout << html::th() << projhref(row->first) << html::th::end;
+	*ostr << html::tr();
+	*ostr << html::th() << projhref(row->first) << html::th::end;
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
 	    colType::const_iterator value = row->second.find(*col);
 	    if( value != row->second.end() ) {
 		if( value->second.second ) {
-		    std::cout << html::td().classref("positiveErrorCode");
+		    *ostr << html::td().classref("positiveErrorCode");
 		} else {
-		    std::cout << html::td();
+		    *ostr << html::td();
 		}
-		std::cout << value->second.first;	
+		*ostr << value->second.first;	
 	    } else {
-		std::cout << html::td();
+		*ostr << html::td();
 	    }
-	    std::cout << html::td::end;
+	    *ostr << html::td::end;
 	}
-	std::cout << html::tr::end;
+	*ostr << html::tr::end;
     }
-    std::cout << html::table::end;
+    *ostr << html::table::end;
 
     /* footer */
-    std::cout << html::p() << "Each cell contains the make target on which "
+    *ostr << html::p() << "Each cell contains the make target on which "
 	"the build stopped as in" << html::p::end;
-    std::cout << html::pre() << "dws make target target ..." << html::pre::end;
-    std::cout << html::p() << "If the build exited with an error code before "
+    *ostr << html::pre() << "dws make target target ..." << html::pre::end;
+    *ostr << html::p() << "If the build exited with an error code before "
 	"the completion of the last target, it is marked " 
 	      << html::span().classref("positiveErrorCode") 
 	      << "&nbsp;as such&nbsp;" << html::span::end << "." 
 	      << html::p::end;
-    std::cout << emptyParaHack;
+    *ostr << emptyParaHack;
 }
 
 
@@ -178,7 +178,7 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::filesystem;
 
     if( !boost::filesystem::exists(pathname) ) {
-	std::cout << html::p()
+	*ostr << html::p()
 		  << "There are no regression logs available for the unit tests."
 		  << html::p::end;
 	return;
@@ -200,45 +200,45 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 	size_t col = 1;
 	typedef std::map<std::string,size_t> colMap;
 	colMap colmap;	
-	std::cout << html::p();
-	std::cout << html::table() << std::endl;
-	std::cout << html::tr();
+	*ostr << html::p();
+	*ostr << html::table() << std::endl;
+	*ostr << html::tr();
 
-	std::cout << html::th();
+	*ostr << html::th();
 	xml_node<> *config = root->first_node("config");
 	if( config ) {
 	    xml_attribute<> *configName = config->first_attribute("name");
 	    if( configName ) {
-		std::cout << configName->value();
+		*ostr << configName->value();
 	    }
 	}       
-	std::cout << " vs." << html::th::end;
+	*ostr << " vs." << html::th::end;
 	
 	xml_node<> *ref = root->first_node("reference");
 	if( ref ) {
 	    for( ; ref != NULL; ref = ref->next_sibling() ) {
 		xml_attribute<> *id = ref->first_attribute("id");
 		if( id != NULL ) {		
-		    std::cout << html::th() << id->value() << html::th::end;
+		    *ostr << html::th() << id->value() << html::th::end;
 		    xml_attribute<> *name = ref->first_attribute("name");
 		    assert( name != NULL );
 		    colmap.insert(std::make_pair(name->value(),col++));
 		}
 	    }
 	} else {
-	    std::cout << html::th() << "No results to compare against."
+	    *ostr << html::th() << "No results to compare against."
 		      << html::th::end;
 	}
-	std::cout << html::tr::end;
+	*ostr << html::tr::end;
 
 	xml_node<>* cols[colmap.size() + 1];
 	for( xml_node<> *test = root->first_node("test");
 	     test != NULL; test = test->next_sibling() ) {
-	    std::cout << html::tr();
+	    *ostr << html::tr();
 	    memset(cols,0,sizeof(cols));
 	    xml_attribute<> *name = test->first_attribute("name");
 	    if( name != NULL ) {
-		std::cout << html::td() << name->value() << html::td::end;
+		*ostr << html::td() << name->value() << html::td::end;
 	    }
 	    for( xml_node<> *compare = test->first_node("compare");
 		 compare != NULL; compare = compare->next_sibling("compare") ) {
@@ -254,15 +254,15 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    }
 	    for( xml_node<> **c = &cols[1]; 
 		 c != &cols[colmap.size() + 1]; ++c ) {
-		std::cout << html::td();
+		*ostr << html::td();
 		if( *c != NULL )
-		    std::cout << (*c)->value();
-		std::cout << html::td::end;
+		    *ostr << (*c)->value();
+		*ostr << html::td::end;
       	    }
-	    std::cout << html::tr::end;
+	    *ostr << html::tr::end;
 #if 0
 	    /* display the actual ouput as an expandable row. */
-	    std::cout << html::tr();
+	    *ostr << html::tr();
 	    memset(cols,0,sizeof(cols));
 	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {
 		assert( *c == NULL );
@@ -284,15 +284,15 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 		}
 	    }
 	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {
-		std::cout << html::td() << html::pre();
+		*ostr << html::td() << html::pre();
 		if( *c != NULL )
-		    std::cout << (*c)->value();
-		std::cout << html::pre::end << html::td::end;
+		    *ostr << (*c)->value();
+		*ostr << html::pre::end << html::td::end;
 	    }
-	    std::cout << html::tr::end;
+	    *ostr << html::tr::end;
 #endif
 	}	
 
-	std::cout << "</table>" << html::p::end;
+	*ostr << "</table>" << html::p::end;
     }   
 }

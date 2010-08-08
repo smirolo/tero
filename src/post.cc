@@ -38,8 +38,10 @@ bool post::valid() const {
     /* If there are any whitespaces in the guid, Thunderbird 3 will
        hang verifying the rss feed... */
     for( size_t i = 0; i < guid.size(); ++i ) {
-	if( isspace(guid[i]) ) return false;
-    }
+	if( isspace(guid[i]) ) {
+	    return false;
+	}
+    }    
     return (!title.empty() & !authorEmail.empty() & !descr.empty());
 }
 

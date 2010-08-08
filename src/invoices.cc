@@ -71,18 +71,18 @@ void statement::footer()
     for( timesMap::const_iterator tm = billed.begin();
 	 tm != billed.end(); ++tm ) {
 
-	std::cout << "<section>";
-	std::cout << "<informaltable frame=\"none\">" << std::endl
+	*ostr << "<section>";
+	*ostr << "<informaltable frame=\"none\">" << std::endl
 		  << html::tr()
 		  << "<td>"
 		  << "<para>for services provided to:" << std::endl
 		  <<  "<literallayout>";
 	if( tm->second.address.empty() ) {
-	    std::cout << tm->first;
+	    *ostr << tm->first;
 	} else {
-	    std::cout << tm->second.address;
+	    *ostr << tm->second.address;
 	}
-	std::cout << "</literallayout>" 
+	*ostr << "</literallayout>" 
 		  << "</para>" << std::endl
 		  << "</td>"
 		  << "<td align=\"right\">"
@@ -92,9 +92,9 @@ void statement::footer()
 		  << html::td::end << html::tr::end << "</informaltable>"
 		  << std::endl;
 
-	std::cout << "<section>"	    
+	*ostr << "<section>"	    
 		  << "<title>" << tm->second.descr << "</title>";
-	std::cout << "<informaltable>"		  
+	*ostr << "<informaltable>"		  
 		  << "<tgroup cols=\"3\" rowsep=\"0\" colsep=\"1\">"
 		  << "<colspec colnum=\"1\" colname=\"Date\" align=\"left\" />"
 		  << "<colspec colnum=\"2\" colname=\"Hours\" align=\"right\" />"
@@ -118,7 +118,7 @@ void statement::footer()
 
 	    size_t fee = d.hours() * tm->second.tarif;
 	    total += fee;
-	    std::cout << "<row>"
+	    *ostr << "<row>"
 		      << "<entry>" << start.date() << "</entry>"
 		      << "<entry>" << d.hours() << "</entry>"
 		      << "<entry>$" << fee << "</entry>"
@@ -126,25 +126,25 @@ void statement::footer()
 	}
 
 	for( size_t i = 20; i > tm->second.hours.size(); --i ) {
-	    std::cout << "<row>"
+	    *ostr << "<row>"
 		      << "<entry></entry>"
 		      << "<entry></entry>"
 		      << "<entry></entry>"
 		      << "</row>";
 	}
-	std::cout << "</tbody>";
-        std::cout << "<tfoot>";
-	std::cout << "<row>" << "<entry>" << "Total" << "</entry>"
+	*ostr << "</tbody>";
+        *ostr << "<tfoot>";
+	*ostr << "<row>" << "<entry>" << "Total" << "</entry>"
 		  << "<entry>" << "</entry>"
 		  << "<entry>$" << total << "</entry>"
 		  << "</row>";
 	
-	std::cout << "</tfoot>"
+	*ostr << "</tfoot>"
 		  << "</tgroup>"		 
 		  << "</informaltable>"
 		  << std::endl;
 
-	std::cout << "</section></section>";
+	*ostr << "</section></section>";
     }
 }
 

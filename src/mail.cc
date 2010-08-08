@@ -48,7 +48,7 @@ void mailthread::filters( const post& p ) {
 void mailthread::flush() {
     for( indexMap::iterator idx = indexes.begin(); 
 	 idx != indexes.end(); ++idx ) {
-	std::cout << idx->first << "(" << idx->second << ")" << std::endl;
+	*ostr << idx->first << "(" << idx->second << ")" << std::endl;
     }
 }
 

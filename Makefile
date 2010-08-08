@@ -28,37 +28,43 @@
 include $(shell dws context)
 include $(etcBuildDir)/dws/prefix.mk
 
-bins 		:=	seed
-etcs		:=	seed.conf
-libs		:=	libseed.a
-shares		:=	seed.pdf
+bins 		:=	semilla
+etcs		:=	semilla.conf
+libs		:=	libsemilla.a
+shares		:=	semilla.pdf
 
-seedConfFile	?=	/etc/seed.conf
+semillaConfFile	?=	/etc/semilla.conf
 
 #CPPFLAGS	+=	-DREADONLY
 
-libseed.a: $(subst .cc,.o,\
-	      $(filter-out seed.cc session.cc,\
+libsemilla.a: $(subst .cc,.o,\
+	      $(filter-out semilla.cc session.cc,\
 		$(notdir $(wildcard $(srcDir)/src/*.cc))))
 
-seed: seed.cc session.o libseed.a libcryptopp.a liburiparser.a \
+semilla: semilla.cc session.o libsemilla.a libcryptopp.a liburiparser.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 
-session.o: session.cc
-	$(COMPILE.cc) -DCONFIG_FILE=\"$(seedConfFile)\" $(OUTPUT_OPTION) $<
+semilla:	LDFLAGS	+= -lpam
 
-seed.conf: $(shell dws context)
+session.o: session.cc
+	$(COMPILE.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" $(OUTPUT_OPTION) $<
+
+semilla.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@
 	echo "siteTop=/var/www" >> $@
 	echo "srcTop=/var/www/reps" >> $@
 	echo "remoteIndex=$(remoteIndex)" >> $@
-	echo "themeDir=$(shareDir)/seed/default" >> $@
+	echo "themeDir=$(shareDir)/semilla/default" >> $@
 
-seed.fo: $(call bookdeps,$(srcDir)/doc/seed.book)
+semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 
 include $(etcBuildDir)/dws/suffix.mk
 
 install:: $(wildcard $(srcDir)/data/themes/default/*)
-	$(installDirs) $(shareDir)/seed
-	cp -Rf $(srcDir)/data/themes $(shareDir)/seed
+	$(installDirs) $(shareDir)/semilla
+	cp -Rf $(srcDir)/data/themes $(shareDir)/semilla
+
+install:: $(srcDir)/src/semilla.pam
+	$(installDirs) $(etcDir)/pam.d
+	$(installFiles) $^ $(etcDir)/pam.d/$(basename $(notdir $^))

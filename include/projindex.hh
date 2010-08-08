@@ -39,10 +39,11 @@ protected:
     virtual void flush();
     
 public:
-    checkstyle() {}
+    explicit checkstyle( std::ostream& o ) : projfiles(o) {}
 
     template<typename iter>
-    checkstyle( iter first, iter last ) : projfiles(first,last) {}
+    checkstyle( std::ostream& o, iter first, iter last ) 
+	: projfiles(o,first,last) {}
 };
 
 /** Show a top-level page index of project.
@@ -60,8 +61,8 @@ protected:
     std::string name;
 
 public:
-    projindex() {}
-
+    explicit projindex( std::ostream& o ) : document(o) {}
+    
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 
     virtual void meta( session& s, const boost::filesystem::path& pathname );

@@ -44,12 +44,12 @@ void
 projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
     switch( state ) {
     case start:
-	std::cout << htmlContent;
-	std::cout << html::div().classref("MenuWidget");
+	*ostr << htmlContent;
+	*ostr << html::div().classref("MenuWidget");
 	break;
     case toplevelFiles:
     case direntryFiles:
-	std::cout << html::p::end;
+	*ostr << html::p::end;
 	break;	
     }
     state = direntryFiles;
@@ -60,24 +60,24 @@ projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
 	href = s.root() + dir.string().substr(srcTop.size()) + "/index.xml";
     }
     if( boost::filesystem::exists(dir.string() + "/index.xml") ) {
-	std::cout << html::a().href(href) 
+	*ostr << html::a().href(href) 
 		  << html::h(2)
 		  << dir.leaf() 
 		  << html::h(2).end()
 		  << html::a::end;
     } else {
-	std::cout << html::h(2) << dir.leaf() << html::h(2).end();
+	*ostr << html::h(2) << dir.leaf() << html::h(2).end();
     }
-    std::cout << html::p();
+    *ostr << html::p();
 }
 
 
 void 
 projfiles::addFile( const session& s, const boost::filesystem::path& file ) {
     if( state == start ) {
-	std::cout << htmlContent;
-	std::cout << html::div().classref("MenuWidget");
-	std::cout << html::p();
+	*ostr << htmlContent;
+	*ostr << html::div().classref("MenuWidget");
+	*ostr << html::p();
 	state = toplevelFiles;
     }
     std::string href = file.string();
@@ -85,7 +85,7 @@ projfiles::addFile( const session& s, const boost::filesystem::path& file ) {
     if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
 	href = s.root() + file.string().substr(srcTop.size());
     }
-    std::cout << html::a().href(href) 
+    *ostr << html::a().href(href) 
 	      << file.leaf() 
 	      << html::a::end << "<br />" << std::endl;
 }
@@ -96,8 +96,8 @@ void projfiles::flush()
     switch( state ) {
     case toplevelFiles:
     case direntryFiles:
-	std::cout << html::p::end;
-	std::cout << html::div::end;
+	*ostr << html::p::end;
+	*ostr << html::div::end;
 	break;	
     default:
 	/* Nothing to do excepts shutup gcc warnings. */

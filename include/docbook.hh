@@ -34,7 +34,7 @@
 
 /** Presents a file formatted with docbook markup as HTML.
 
-    In seed, formatted docbook is usually out-of-line design 
+    In semilla, formatted docbook is usually out-of-line design 
     documentation intended to tie up with the source code.
     The articles we are dealing with are relatively short
     and wiki-style so we are transforming them entirely 
@@ -108,7 +108,7 @@ protected:
     void walk( const rapidxml::xml_node<>& node );
 
 public:
-    docbook( decorator& l,  decorator& r );
+    docbook( std::ostream& o, decorator& l,  decorator& r );
 
     ~docbook();
 

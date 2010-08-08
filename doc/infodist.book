@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <section xmlns="http://docbook.org/ns/docbook" 
 	 xmlns:xlink="http://www.w3.org/1999/xlink">
+  <!-- Navigate -->
   <info>
     <title>Features and Technologies</title>
     <date>February 17th, 2010</date>
@@ -44,7 +45,7 @@
 
     <!-- \todo open source search engine. All files in srcTop make it easy 
 	 for indexing through same search engine. -->
-    <!-- \todo There are a few web repository browser (<link xlink:href="http://viewgit.sourceforge.net/">ViewGit</link>, Chora, ViewVC, Code Librarian) already available. Need to compare feature set with seed. -->
+    <!-- \todo There are a few web repository browser (<link xlink:href="http://viewgit.sourceforge.net/">ViewGit</link>, Chora, ViewVC, Code Librarian) already available. Need to compare feature set with semilla. -->
 
 </section>
 

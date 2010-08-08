@@ -50,12 +50,12 @@ protected:
     virtual void embed( session& s, const std::string& value );
     
 public:
-    composer() {}
+    composer( std::ostream& o, fileNotFoundBehavior b ) 
+	: document(o), behavior(b) {}
 
-    explicit composer( fileNotFoundBehavior b ) : behavior(b) {}
-
-    composer( const boost::filesystem::path& f, fileNotFoundBehavior b ) 
-	: behavior(b), fixed(f) {}
+    composer( std::ostream& o, 
+	      const boost::filesystem::path& f, fileNotFoundBehavior b ) 
+	: document(o), behavior(b), fixed(f) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };

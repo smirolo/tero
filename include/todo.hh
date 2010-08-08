@@ -40,16 +40,18 @@ public:
      */
     static const boost::regex viewPat;
 
-    /** Directory containing the active todo items.
+    /** Directory where modifications to todo item are stored.
      */
-    static const boost::filesystem::path active;
+    const boost::filesystem::path modifs;
 
 public:
-    todoFilter() {}
+    explicit todoFilter( const boost::filesystem::path& m )
+	: modifs(m) {}
 
-    explicit todoFilter( postFilter* n  ) : postFilter(n) {}
+    todoFilter( const boost::filesystem::path& m, postFilter* n  ) 
+	: postFilter(n), modifs(m) {}
 
-    static std::string asPath( const std::string& tag );
+    std::string asPath( const std::string& tag );
 };
 
 
@@ -57,17 +59,28 @@ public:
     use very similar mechanism. This abstract class implements
     such mechanism to append a post to an item.
 */
-class todoAppendPost : public document {
+class todoModifPost : public document {
 protected:
+
+    /** Directory where modifications to todo items are stored. */
+    const boost::filesystem::path modifs;
 
     /** Input stream containing the modification post 
 	formatted as an e-mail. */
     std::istream *istr;
 
-public:
-    explicit todoAppendPost( std::istream& is ) : istr(&is) {}
+    boost::filesystem::path asPath( const std::string& tag ) const;
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
+public:
+    todoModifPost( const boost::filesystem::path& m,
+		    std::ostream& o ) 
+	: document(o), modifs(m), istr(NULL) {}
+
+    todoModifPost( const boost::filesystem::path& m,
+		    std::ostream& o, 
+		    std::istream& is ) 
+	: document(o), modifs(m), istr(&is) {}
+
 };
 
 
@@ -77,9 +90,12 @@ public:
     write the post in a file whose name is based on that identifier
     and finally commit the file into the repository.
 */
-class todoCreate : public todoAppendPost {
+class todoCreate : public todoModifPost {
 public:
-    explicit todoCreate( std::istream& is ) : todoAppendPost(is) {}
+    todoCreate( const boost::filesystem::path& m,
+		std::ostream& o, 
+		std::istream& is ) 
+	: todoModifPost(m,o,is) {}
 
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
@@ -91,9 +107,12 @@ public:
     identifier of that item, append the post at the end of that file 
     and finally commit the file back into the repository.
 */
-class todoComment : public todoAppendPost {
+class todoComment : public todoModifPost {
 public:
-    explicit todoComment( std::istream& is ) : todoAppendPost(is) {}
+    todoComment( const boost::filesystem::path& m,
+		   std::ostream& o, 
+		   std::istream& is ) 
+	: todoModifPost(m,o,is) {}
 
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
@@ -109,8 +128,8 @@ protected:
     const char *voteCommand;
 
 public:
-    explicit todoIndexWriteHtml( const char *v ) 
-	: voteCommand(v) {}
+    todoIndexWriteHtml( std::ostream& o, const char *v ) 
+	: document(o), voteCommand(v) {}
 
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
@@ -120,6 +139,8 @@ public:
  */
 class todoVoteAbandon : public document {
 public:
+    explicit todoVoteAbandon( std::ostream& o ) : document(o) {}
+
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -131,8 +152,11 @@ public:
     'Score:' pattern and that line is modified to reflect the vote.
     Finally the file is committed back into the repository.
  */
-class todoVoteSuccess : public document {
+class todoVoteSuccess : public todoModifPost {
 public:
+    todoVoteSuccess( const boost::filesystem::path& m, std::ostream& o ) 
+	: todoModifPost(m,o) {}
+
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -141,9 +165,11 @@ public:
  */
 class todoWriteHtml : public document {
 public:
+    explicit todoWriteHtml( std::ostream& o ) : document(o) {}
+
     void meta( session& s, const boost::filesystem::path& pathname );
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch(	session& s, const boost::filesystem::path& pathname );
 };
 
 

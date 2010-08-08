@@ -379,11 +379,11 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     ifstream strm;
     open(strm,pathname);
 
-    std::cout << htmlContent;
+    *ostr << htmlContent;
 
     if( leftDec ) {
-	if( leftDec->formated() ) std::cout << code();
-	leftDec->attach(std::cout);
+	if( leftDec->formated() ) *ostr << code();
+	leftDec->attach(*ostr);
     }
 
     /* Skip over tags */
@@ -392,7 +392,7 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 	std::string line;
 	std::getline(strm,line);
 	if( !boost::regex_search(line,m,valueEx) ) {
-	    std::cout << line << std::endl;
+	    *ostr << line << std::endl;
 	    break;
 	}
     }
@@ -401,12 +401,12 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     while( !strm.eof() ) {
 	std::string line;
 	std::getline(strm,line);
-	std::cout << line << std::endl;
+	*ostr << line << std::endl;
     }
 
     if( leftDec ) {
 	leftDec->detach();
-	if( leftDec->formated() ) std::cout << html::pre::end;
+	if( leftDec->formated() ) *ostr << html::pre::end;
     }
 
     strm.close();

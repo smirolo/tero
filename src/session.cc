@@ -39,11 +39,14 @@ undefVariableError::undefVariableError( const std::string& varname )
     : std::runtime_error(std::string("undefined variable in session ") 
 			 + varname) {}
 
+bool session::pathOptionsInit = false;
+
 boost::program_options::options_description session::pathOptions("paths");
 
 session::session() : id(0) {
     using namespace boost::program_options;
 
+    if( !pathOptionsInit ) {
     pathOptions.add_options()
 	("binDir",value<std::string>(),"path to outside executables")
 	("buildTop",value<std::string>(),"path to build root")
@@ -60,6 +63,8 @@ session::session() : id(0) {
 	("awsAccessKey",value<std::string>(),"Amazon Access Key")
 	("awsSecretKey",value<std::string>(),"Amazon Secret Key")
 	("awsCertificate",value<std::string>(),"Amazon Public Certificate");
+    pathOptionsInit = true;
+    }
 }
 
 
@@ -206,10 +211,18 @@ void session::restore( const boost::program_options::variables_map& params )
 
     /* 2. load global information from the configuration file on the server */
     variables_map configVars;
-    ifstream istr(CONFIG_FILE);
+    
+    std::string config(CONFIG_FILE);
+    boost::program_options::variables_map::const_iterator 
+	configParam = params.find("config");
+    if( configParam != params.end() ) {
+	config = configParam->second.as<std::string>();
+    }
+
+    ifstream istr(config);
     if( istr.fail() ) {
 	boost::throw_exception(basic_filesystem_error<path>(std::string("file not found"),
-							    CONFIG_FILE, 
+							    config, 
 							    boost::system::error_code()));
     }
     

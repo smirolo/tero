@@ -60,6 +60,8 @@ public:
     
 public:
 
+    static bool pathOptionsInit;
+
     static boost::program_options::options_description pathOptions;
 
     static boost::filesystem::path storage;

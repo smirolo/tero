@@ -31,6 +31,8 @@
 
 class awsPayment : public document {
 public:
+    explicit awsPayment( std::ostream& o ) : document(o) {}
+
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
 

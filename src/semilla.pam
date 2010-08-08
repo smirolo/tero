@@ -1,0 +1,19 @@
+# OSX
+# "The OpenDirectory authenticaion module permits or denies users 
+#  based on OpenDirectory password authen-tication. authentication."
+
+auth       required       pam_opendirectory.so
+account    required       pam_nologin.so
+account    required       pam_opendirectory.so
+password   required       pam_deny.so
+session    required       pam_launchd.so
+session    required       pam_uwtmp.so
+
+# Linux ?
+#auth      required  pam_securetty.so
+#auth      required  pam_unix.so shadow
+#auth      required  pam_nologin.so
+#account   required  pam_unix.so
+#password  required  pam_cracklib.so retry=3
+#password  required  pam_unix.so shadow
+#session   required  pam_unix.so

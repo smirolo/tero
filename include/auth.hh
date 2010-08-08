@@ -29,7 +29,7 @@
 #include <exception>
 #include "document.hh"
 
-/* Contributors are <a href="/soil/doc/access.book">authenticated</a> before
+/* Contributors are <a href="/tero/doc/access.book">authenticated</a> before
    any write operation is performed. */
 
 
@@ -44,6 +44,8 @@ public:
 
 class auth : public document {
 public:
+    explicit auth( std::ostream& o ) : document(o) {}
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -54,6 +56,8 @@ public:
 */
 class login : public auth {
 public:
+    explicit login( std::ostream& o ) : auth(o) {}
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -64,6 +68,8 @@ protected:
     boost::posix_time::time_duration aggregate( const session& s ) const;
 
 public:
+    explicit deauth( std::ostream& o ) : document(o) {}
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -73,6 +79,8 @@ public:
 */
 class logout : public deauth {
 public:
+    explicit logout( std::ostream& o ) : deauth(o) {}
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 

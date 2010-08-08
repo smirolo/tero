@@ -23,56 +23,18 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmail
-#define guardmail
+#ifndef guardproject
+#define guardproject
 
 #include "document.hh"
-#include "post.hh"
 
-/* A *mailthread* filter attempts to gather all mails that appear 
-   to belong to the same thread together. */
-class mailthread : public postFilter {
-protected:
-    typedef std::map<std::string,uint32_t> indexMap;
-
-    indexMap indexes;
-    std::ostream* ostr;
-
+class projCreate : public document {
 public:
-    explicit mailthread( std::ostream& o ) : ostr(&o) {}
+    explicit projCreate( std::ostream& o ) : document(o) {}
 
-    mailthread( std::ostream& o, postFilter *n ) 
-	: postFilter(n), ostr(&o) {}
+    virtual void fetch(	session& s, const boost::filesystem::path& pathname );
 
-    virtual void filters( const post& );
-    virtual void flush();
 };
 
-
-class mailParser : public dirwalker {
-protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
-
-    postFilter *filter;
-
-    /** Stop parsing after the first post is completed. 
-	(This is for todo items with embed comments).
-     */
-    bool stopOnFirst;
-
-public:
-    mailParser( std::ostream& o, postFilter& f, bool sof = false ) 
-	: dirwalker(o), filter(&f), stopOnFirst(sof) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
-    void walk( session& s, std::istream& ins, const std::string& name = "" );
-};
-
-
+ 
 #endif

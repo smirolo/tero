@@ -43,10 +43,10 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
     using namespace std;
     using namespace boost::filesystem;
 
-    cout << htmlContent;
+    *ostr << htmlContent;
     
 #if 0
-    std::cout << html::table();    
+    *ostr << html::table();    
 #endif
     if( is_directory(pathname) ) {
 	for( directory_iterator entry = directory_iterator(pathname); 
@@ -56,17 +56,17 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 		    profilePathname = path(*entry) / "profile.blog";	
 		if( boost::filesystem::is_regular_file(profilePathname) ) {
 #if 0
-		    cout << html::tr() 
+		    *ostr << html::tr() 
 			 << html::td() 
 			 << "<img src=\"/resources/contrib/" 
 			 << entry->filename() << "/profile.jpg\">"
 			 << html::td::end
 			 << html::td();
 #endif		    
-		    text t;
+		    text t(*ostr);
 		    t.fetch(s,profilePathname);
 #if 0		    
-		    cout << html::td::end
+		    *ostr << html::td::end
 			 << html::tr::end;
 #endif
 		}
@@ -74,7 +74,7 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 	}
     }
 #if 0
-    std::cout << html::table::end;
+    *ostr << html::table::end;
 #endif
 }
 

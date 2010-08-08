@@ -45,11 +45,11 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 
 
 void cancel::fetch( session& s, const boost::filesystem::path& pathname ) {
-	std::cout << redirect(s.docAsUrl()) << '\n';
+	*ostr << redirect(s.docAsUrl()) << '\n';
 }
 
 
-void change::fetch( session& s, const boost::filesystem::path& pathname ) {
+void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
 
@@ -85,7 +85,23 @@ void change::fetch( session& s, const boost::filesystem::path& pathname ) {
 	file << docName;
 	file.close();
     }
-    std::cout << redirect(s.docAsUrl() + std::string(".edits")) << '\n';
+    *ostr << redirect(s.docAsUrl() + std::string(".edits")) << '\n';
+}
+
+
+revisionsys::revsSet revisionsys::revs;
+
+revisionsys*
+revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
+    for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
+	boost::filesystem::path sccsRoot 
+	    = s.root(s.src(pathname),(*r)->metadir);
+	if( !sccsRoot.empty() ) {
+	    (*r)->rootpath = sccsRoot;
+	    return *r;
+	}
+    }
+    return NULL;
 }
 
 
@@ -100,60 +116,50 @@ void changediff::embed( session& s, const std::string& varname ) {
 	std::string rightRevision = s.valueOf("right");
 	boost::filesystem::path docname(s.valueOf("srcTop") 
 					+ s.valueOf(varname));
-	boost::filesystem::path 
-	    gitrelname = relpath(docname,revision->rootpath);
-	revision->diff(text,leftRevision,rightRevision,gitrelname);
+
+	revisionsys *rev = revisionsys::findRev(s,docname);
+	if( rev != NULL ) {
+	    boost::filesystem::path 
+		gitrelname = relpath(docname,rev->rootpath);
+	    rev->diff(text,leftRevision,rightRevision,gitrelname);
 		
-	cout << "<table style=\"text-align: left;\">" << endl;
-	cout << html::tr();
-	cout << html::th() << leftRevision << html::th::end;
-	cout << html::th() << rightRevision << html::th::end;
-	cout << html::tr::end;
+	    cout << "<table style=\"text-align: left;\">" << endl;
+	    cout << html::tr();
+	    cout << html::th() << leftRevision << html::th::end;
+	    cout << html::th() << rightRevision << html::th::end;
+	    cout << html::tr::end;
 
-	boost::filesystem::ifstream input;
-	open(input,docname);
+	    boost::filesystem::ifstream input;
+	    open(input,docname);
 
-	/* \todo the session is not a parameter to between files... */	
-	document *doc = dispatchDoc::instance->select("document",docname.string());
-	((::text*)doc)->showSideBySide(input,text,false);
+	    /* \todo the session is not a parameter to between files... */	
+	    document *doc = dispatchDoc::instance->select("document",docname.string());
+	    ((::text*)doc)->showSideBySide(input,text,false);
 		
-	cout << html::table::end;
-	input.close();
-    }
-}
-
-
-revisionsys *changelist::findRev( session& s,
-				  const boost::filesystem::path& pathname ) {
-    for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
-	boost::filesystem::path sccsRoot 
-	    = s.root(s.src(pathname),(*r)->metadir);
-	if( !sccsRoot.empty() ) {
-	    (*r)->rootPath(sccsRoot);
-	    return *r;
+	    cout << html::table::end;
+	    input.close();
 	}
     }
-    return NULL;
 }
 
 
 void 
 changecheckin::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    revisionsys *rev = findRev(s,pathname);
+    revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	checkinref ref;
-	rev->history(std::cout,s,pathname,ref);
+	rev->history(*ostr,s,pathname,ref);
     }
 }
 
 void 
 changehistory::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    revisionsys *rev = findRev(s,pathname);
+    revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	diffref ref;
-	rev->history(std::cout,s,pathname,ref);
+	rev->history(*ostr,s,pathname,ref);
     }
 }
 
@@ -163,7 +169,7 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace std;
 
-    revisionsys *rev = findRev(s,pathname);
+    revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	history hist;
 	rev->checkins(hist,s,pathname);
@@ -172,29 +178,29 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 	/* RSS Icons: http://www.feedicons.com/ */
 	htmlEscaper esc;
 
-	std::cout << htmlContent << std::endl;
+	*ostr << htmlContent << std::endl;
 
 #if 1
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
-	    std::cout << html::h(2) << ci->title << html::h(2).end();
-	    std::cout << html::p();
-	    std::cout <<  ci->time << " - " << ci->authorEmail;
-	    std::cout << html::p::end;
-	    std::cout << html::p();
-	    esc.attach(std::cout);
-	    std::cout << ci->descr;
+	    *ostr << html::h(2) << ci->title << html::h(2).end();
+	    *ostr << html::p();
+	    *ostr <<  ci->time << " - " << ci->authorEmail;
+	    *ostr << html::p::end;
+	    *ostr << html::p();
+	    esc.attach(*ostr);
+	    *ostr << ci->descr;
 	    esc.detach();
-	    std::cout << html::p::end;
-	    std::cout << html::p();
+	    *ostr << html::p::end;
+	    *ostr << html::p();
 	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
 		 file != ci->files.end(); ++file ) {
-		std::cout << html::a().href(file->string()) << *file << html::a::end << "<br />" << std::endl;
+		*ostr << html::a().href(file->string()) << *file << html::a::end << "<br />" << std::endl;
 	    }
-	    std::cout << html::p::end;
+	    *ostr << html::p::end;
 	}
 #else
-	htmlwriter liner(std::cout);
+	htmlwriter liner(*ostr);
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
 	    liner.filters(*ci);
@@ -207,7 +213,7 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 void 
 changerss::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    revisionsys *rev = findRev(s,pathname);
+    revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	history hist;
 	rev->checkins(hist,s,pathname);
@@ -218,67 +224,66 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 
 	/* \todo get the title and domainname from the session. */
 #if 1
-	std::cout << "Content-Type:application/rss+xml;charset=iso-8859-1\r\n"
+	*ostr << "Content-Type:application/rss+xml;charset=iso-8859-1\r\n"
 		  << "\r\n";
 #endif
-	std::cout << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
+	*ostr << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
 	
 #if 0
-	std::cout << ::rss().version("2.0")
+	*ostr << ::rss().version("2.0")
 		  << channel()
 		  << title() 
 		  << boost::filesystem::basename(rev->rootpath)
 		  << title::end;
 		  << rsslink() << rsslink::end
 #else
-	std::cout << "<rss version='2.0' xmlns:lj='http://www.livejournal.org/rss/lj/1.0/' xmlns:atom=\"http://www.w3.org/2005/Atom\">" << std::endl;
-	std::cout << channel();
-	std::cout << title() 
+	*ostr << "<rss version='2.0' xmlns:lj='http://www.livejournal.org/rss/lj/1.0/' xmlns:atom=\"http://www.w3.org/2005/Atom\">" << std::endl;
+	*ostr << channel();
+	*ostr << title() 
 		  << boost::filesystem::basename(rev->rootpath)
 		  << title::end;
-	std::cout << "<description></description>\n";
-	std::cout << rsslink()
+	*ostr << "<description></description>\n";
+	*ostr << rsslink()
 		  << rsslink::end;
  
-	std::cout << "<atom:link href=\"index.rss\" rel=\"self\" type=\"application/rss+xml\" />" << std::endl;
+	*ostr << "<atom:link href=\"index.rss\" rel=\"self\" type=\"application/rss+xml\" />" << std::endl;
 	
 #endif
 
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
-	    std::cout << item();
-	    std::cout << title() << ci->title << title::end;
+	    *ostr << item();
+	    *ostr << title() << ci->title << title::end;
 #if 0
-	    std::cout << rsslink() << rsslink::end;
+	    *ostr << rsslink() << rsslink::end;
 #endif
-	    std::cout << description();
-	    esc.attach(std::cout);
-	    std::cout << html::p();
-	    std::cout << ci->descr;
-	    std::cout << html::pre();
+	    *ostr << description();
+	    esc.attach(*ostr);
+	    *ostr << html::p();
+	    *ostr << ci->descr;
+	    *ostr << html::pre();
 	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
 		 file != ci->files.end(); ++file ) {
-		std::cout << html::a().href(file->string()) 
+		*ostr << html::a().href(file->string()) 
 			  << *file << html::a::end << std::endl;
 	    }
-	    std::cout << html::pre::end;
-	    std::cout << html::p::end;
-	    std::cout.flush();
+	    *ostr << html::pre::end;
+	    *ostr << html::p::end;
+	    ostr->flush();
 	    esc.detach();
-	    std::cout << description::end;
-	    std::cout << author();
-	    esc.attach(std::cout);
-	    std::cout << ci->authorEmail;
+	    *ostr << description::end;
+	    *ostr << author();
+	    esc.attach(*ostr);
+	    *ostr << ci->authorEmail;
 	    esc.detach();
-	    std::cout << author::end;
+	    *ostr << author::end;
 #if 0
-	    std::cout << "<guid isPermaLink=\"true\">";
+	    *ostr << "<guid isPermaLink=\"true\">";
 #endif
-	    std::cout << guid() << ci->guid << ".html" << guid::end;
-	    std::cout << pubDate(ci->time);
-	    std::cout << item::end;
+	    *ostr << guid() << ci->guid << ".html" << guid::end;
+	    *ostr << pubDate(ci->time);
+	    *ostr << item::end;
 	}	
-	std::cout << channel::end
-		  << rss::end;	
+	*ostr << channel::end << rss::end;	
     }
 }

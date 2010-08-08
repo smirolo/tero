@@ -3,11 +3,11 @@
 	 xmlns:xlink="http://www.w3.org/1999/xlink"
 	 xmlns:xi="http://www.w3.org/2001/XInclude">
   <info>	 
-    <title>Fortylines Seed - Project Tracking</title>
+    <title>Fortylines Semilla - Project Tracking</title>
     <author><personname>Sebastien Mirolo</personname></author>
     <date>February 13th, 2010</date>
   </info>
-  <xi:include xlink:href="seedintro.book" />
+  <xi:include xlink:href="pengintro.book" />
   <xi:include xlink:href="infodist.book" />
   <xi:include xlink:href="views.book" />  
 </article>

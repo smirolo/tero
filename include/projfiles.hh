@@ -60,10 +60,11 @@ protected:
     bool selects( const boost::filesystem::path& pathname ) const;
     
 public:
-    projfiles() {}
+    explicit projfiles( std::ostream& o ) : document(o) {}
     
     template<typename iter>
-    projfiles( iter first, iter last ) {
+    projfiles( std::ostream& o, iter first, iter last )
+	: document(o) {
 	std::copy(first,last,std::back_inserter(filters));
     }
 

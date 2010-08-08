@@ -30,6 +30,8 @@
 
 class contribCreate : public document {
 public:
+    explicit contribCreate( std::ostream& o ) : document(o) {}
+
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
@@ -38,7 +40,9 @@ public:
     that contains the date, author and title of the contrib item.
  */
 class contribIdx : public document {
-protected:
+public:
+    explicit contribIdx( std::ostream& o ) : document(o) {}
+
     virtual void meta( session& s, const boost::filesystem::path& pathname );
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };

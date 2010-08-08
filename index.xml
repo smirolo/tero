@@ -1,15 +1,15 @@
 <?xml version="1.0" ?>
 <projects>
-  <project name="seed">
+  <project name="semilla">
     <title>web presentation engine</title>
     <description>
-      Seed is a web presentation engine to manage software projects that supports the Common Gateway Interface (CGI). A major feature not found in other related tools is that you can crosslink easily between documents, source code and build results (ex. look comment in include/auth.hh).
+      Semilla is a web presentation engine to manage software projects that supports the Common Gateway Interface (CGI). A major feature not found in other related tools is that you can crosslink easily between documents, source code and build results (ex. look comment in include/auth.hh).
     </description>
     <maintainer name="Sebastien Mirolo" email="smirolo@fortylines.com" />
     <repository>
-      <pathname name="seedConfFile">
+      <pathname name="semillaConfFile">
 	<description>
-	  The configuration file *seedConfFile* contain paths used by seed to find the source repositories, templates, etc.
+	  The configuration file *semillaConfFile* contain paths used by semilla to find the source repositories, templates, etc.
 	</description>
 	<base>buildTop</base>
 	<default>ws.mk</default>
@@ -18,8 +18,8 @@
 	<description>
 	  themeDir is a directory containing templates and css for the site
 	</description>
-	<base>srcTop</base>
-	<default>seed/data/themes/default</default>
+	<base>siteTop</base>
+	<default>theme</default>
       </pathname>
       <dep name="build-essential">
 	<bin>g++</bin>
@@ -29,7 +29,6 @@
       </dep>      
       <dep name="drop">
 	<bin>dws</bin>
-	<bin>buildpkg</bin>
 	<etc>.*/(dws)/prefix.mk</etc>
       </dep>
       <dep name="contrib/boost">
