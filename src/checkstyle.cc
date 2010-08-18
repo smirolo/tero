@@ -25,6 +25,9 @@
 
 #include "checkstyle.hh"
 #include "markup.hh"
+#include "slice.hh"
+#include "decorator.hh"
+
 
 const char *licenseCodeTitles[] = {
     "unknown",
@@ -80,7 +83,7 @@ void checkfile::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     url href;
     std::string name;
-    path projdir = s.root(pathname,"index.xml");
+    path projdir = s.root(pathname,"dws.xml");
     if( s.prefix(projdir,pathname) ) {
 	name = s.subdirpart(projdir,pathname).string();
 	href = s.asUrl(pathname);
@@ -255,3 +258,35 @@ void shCheckfile::fetch( session& s, const boost::filesystem::path& pathname )
     checkfile::fetch(s,pathname);
 }
 
+
+void checkstyle::addDir( const session& s, 
+			 const boost::filesystem::path& pathname ) {
+}
+
+
+void checkstyle::addFile( const session& s, 
+			  const boost::filesystem::path& pathname ) {
+    using namespace boost::filesystem; 
+
+    if( state == start ) {
+	*ostr << htmlContent;
+	*ostr << html::p() 
+		  << "<table>";
+	*ostr << html::tr()
+		  << html::th() << html::th::end
+		  << html::th() << "license" << html::th::end
+		  << html::th() << "code lines" << html::th::end
+		  << html::th() << "total lines" << html::th::end
+		  << html::tr::end;
+	state = toplevelFiles;
+    }
+    document *doc = dispatchDoc::instance->select("check",pathname.string());
+    doc->fetch((session&)s,pathname);
+}
+
+void checkstyle::flush() {
+    if( state != start ) {
+	*ostr << "</table>"
+		  << html::p::end;
+    }
+}

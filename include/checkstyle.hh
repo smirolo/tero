@@ -29,7 +29,7 @@
 #include "slice.hh"
 #include "cpptok.hh"
 #include "shtok.hh"
-#include "document.hh"
+#include "projfiles.hh"
 
 enum licenseCode {
     unknownLicense,
@@ -122,6 +122,25 @@ public:
 			int first, int last, bool fragment );
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+
+class checkstyle : public projfiles {
+protected:    
+    virtual void 
+    addDir( const session& s, const boost::filesystem::path& pathname );
+
+    virtual void 
+    addFile( const session& s, const boost::filesystem::path& pathname );
+
+    virtual void flush();
+    
+public:
+    explicit checkstyle( std::ostream& o ) : projfiles(o) {}
+
+    template<typename iter>
+    checkstyle( std::ostream& o, iter first, iter last ) 
+	: projfiles(o,first,last) {}
 };
 
 #endif

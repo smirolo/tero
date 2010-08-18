@@ -42,30 +42,6 @@ public:
 };
 
 
-/** output an hyper link to a project index page.
-*/
-class projhref {    
-protected:  
-    std::string name;
-
-    template<typename ch, typename tr>
-    friend inline std::basic_ostream<ch, tr>&
-    operator<<( std::basic_ostream<ch, tr>& ostr, const projhref& v ) {
-	ostr << html::a().href((boost::filesystem::path("/") 
-				/ v.name / "index.xml").string())
-	     << v.name << html::a::end;
-	return ostr;
-    }
-    
-public:  
-    explicit projhref( const std::string& n ) : name(n) {}
-
-};
-
-
-
-
-
 /** Display test unit regressions as provided by a regression.log 
  */
 class regressions : public document {

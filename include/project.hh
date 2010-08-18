@@ -27,6 +27,28 @@
 #define guardproject
 
 #include "document.hh"
+#include "markup.hh"
+
+/** output an hyper link to a project index page.
+*/
+class projhref {    
+protected:  
+    std::string name;
+
+    template<typename ch, typename tr>
+    friend inline std::basic_ostream<ch, tr>&
+    operator<<( std::basic_ostream<ch, tr>& ostr, const projhref& v ) {
+	ostr << html::a().href((boost::filesystem::path("/") 
+				/ v.name / "dws.xml").string())
+	     << v.name << html::a::end;
+	return ostr;
+    }
+    
+public:  
+    explicit projhref( const std::string& n ) : name(n) {}
+
+};
+
 
 class projCreate : public document {
 public:
@@ -34,6 +56,29 @@ public:
 
     virtual void fetch(	session& s, const boost::filesystem::path& pathname );
 
+};
+
+
+/** Show a top-level page index of project.
+
+    The project view description and dependencies of a project as stated 
+    in the index file. A project view also contains the list of unit 
+    failures, checkstyle failures and open issues. There are also links 
+    to download <!-- through e-commerce transaction? --> the project as 
+    a package, browse the source code and sign-on to the rss feed.
+*/
+class projindex : public document {
+protected:
+    /** name of the project 
+     */
+    std::string name;
+
+public:
+    explicit projindex( std::ostream& o ) : document(o) {}
+    
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+
+    virtual void meta( session& s, const boost::filesystem::path& pathname );
 };
 
  

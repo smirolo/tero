@@ -57,9 +57,9 @@ projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
     std::string href = dir.string();
     std::string srcTop = s.valueOf("srcTop");
     if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
-	href = s.root() + dir.string().substr(srcTop.size()) + "/index.xml";
+	href = s.root() + dir.string().substr(srcTop.size()) + "/dws.xml";
     }
-    if( boost::filesystem::exists(dir.string() + "/index.xml") ) {
+    if( boost::filesystem::exists(dir.string() + "/dws.xml") ) {
 	*ostr << html::a().href(href) 
 		  << html::h(2)
 		  << dir.leaf() 
@@ -113,7 +113,7 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
     using namespace boost::filesystem;
 
     state = start;
-    projdir = s.root(pathname,"index.xml");
+    projdir = s.root(pathname,"dws.xml");
     
     if( !projdir.empty() ) {
 	/* We insert pathnames into a set<> such that they later can be 

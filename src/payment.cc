@@ -27,13 +27,28 @@
 #include "todo.hh"
 #include "aws.hh"
 
-void awsPayment::fetch( session& s, const boost::filesystem::path& pathname ) {
-    awsStandardButton button(s.valueOf("awsAccessKey"),
-			     s.valueOf("awsSecretKey"),
-			     s.valueOf("awsCertificate"));
-    button.description = "Vote for a todo item with your dollars";
-    button.returnUrl = url(std::string("http://") + s.valueOf("domainName") + "/todoVoteSuccess");
+void payment::add( const boost::regex& r, 
+		   const char *retPath, adapter& a ) {
+    entries.push_back(entry(r,retPath,a));
+}
 
-    button.build(todouuid(pathname),1);
-    button.writehtml(*ostr);
+
+void payment::fetch( session& s, const boost::filesystem::path& pathname ) {
+    for( entrySeq::const_iterator e = entries.begin(); 
+	 e != entries.end(); ++e ) {
+	boost::smatch m;
+	if( boost::regex_search(pathname.string(),m,*e->regexp) ) {
+	    awsStandardButton button(s.valueOf("awsAccessKey"),
+				     s.valueOf("awsSecretKey"),
+				     s.valueOf("awsCertificate"));
+	    button.returnUrl = url(std::string("http://") 
+				   + s.valueOf("domainName") 
+				   + e->retPath);
+	    article a = e->adapt->fetch(s,pathname);
+	    button.description = a.descr;
+	    button.build(a.guid,a.value);
+	    button.writehtml(*ostr);    
+	    break;
+	}
+    }
 }

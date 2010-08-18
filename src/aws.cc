@@ -180,7 +180,7 @@ awsStandardButton::formatRequest( const std::string& httpMethod,
 }
 
 
-void awsStandardButton::build( boost::uuids::uuid r, uint32_t a ) {
+void awsStandardButton::build( const std::string& r, uint32_t a ) {
     std::stringstream s;
 
     referenceId = r;

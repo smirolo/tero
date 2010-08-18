@@ -50,7 +50,7 @@ Right now pages are regenerated each time a document is accessed but there are n
     <title>Build View</title>
 
       <para>
-    <link linkend="/drop/index.xml">dws</link>, the inter-project dependency tool will generate a log file with XML markups as part of building projects on a local machine. That build log is uploaded onto the server and presented among logs coming from other machines as part of the build view.
+    <link linkend="/drop/dws.xml">dws</link>, the inter-project dependency tool will generate a log file with XML markups as part of building projects on a local machine. That build log is uploaded onto the server and presented among logs coming from other machines as part of the build view.
   </para>
   <para>
     The build view gives an overview of the set of all projects at a glance and can be used to assess the stability of the whole as a release candidate.
@@ -63,7 +63,7 @@ Right now pages are regenerated each time a document is accessed but there are n
 	<section>
    <title>Project View</title>
   <para>
-    The project view gives the status of a project at a glance. It contains the description and dependencies of a project as stated in the index.xml. A project view also contains the list of unit failures, checkstyle failures and open issues. There are also links to download <!-- through e-commerce transaction? --> the project as a package, browse the source code and sign-on to the rss feed.  
+    The project view gives the status of a project at a glance. It contains the description and dependencies of a project as stated in the dws.xml. A project view also contains the list of unit failures, checkstyle failures and open issues. There are also links to download <!-- through e-commerce transaction? --> the project as a package, browse the source code and sign-on to the rss feed.  
   </para>
 </section>
 
@@ -87,7 +87,7 @@ Right now pages are regenerated each time a document is accessed but there are n
       The browser view presents a source file (.cc, .py, etc.) in the repository as a syntax highlighted document. A changeset and a directory listing widgets are associated to the current source file in the view. Each link in the changeset brings a diff view between the head and the link's revision.  
   </para>
   <para>
-While source code and documentation are usually maintained and published separately, Fortylines' <link linkend="/semilla/index.xml">semilla</link> product enables source code and other documents to cross-reference each other easily through nice web looking presentation of source files and urls embedded in comments.
+While source code and documentation are usually maintained and published separately, Fortylines' <link linkend="/semilla/dws.xml">semilla</link> product enables source code and other documents to cross-reference each other easily through nice web looking presentation of source files and urls embedded in comments.
 </para>
 </section>
 

@@ -1,3 +1,4 @@
+
 /* Copyright (c) 2009, Sebastien Mirolo
    All rights reserved.
 
@@ -28,9 +29,17 @@
 
 #include "document.hh"
 #include "mail.hh"
+#include "adapter.hh"
 #include <boost/uuid/uuid.hpp>
 
-boost::uuids::uuid todouuid( const boost::filesystem::path& p );
+/** An adapter is used to associate identifiers and pathnames
+ */
+class todoAdapter : public adapter {
+public:
+    article fetch( session& s, const boost::filesystem::path& pathname );    
+
+    boost::filesystem::path asPath( const boost::uuids::uuid& id ) const;
+};
 
 
 class todoFilter : public postFilter {
@@ -122,14 +131,9 @@ public:
     with the rows sorted in descending score order.
  */
 class todoIndexWriteHtml : public document {
-protected:
-
-    /* relative url for registering a vote. */
-    const char *voteCommand;
-
 public:
-    todoIndexWriteHtml( std::ostream& o, const char *v ) 
-	: document(o), voteCommand(v) {}
+    explicit todoIndexWriteHtml( std::ostream& o ) 
+	: document(o) {}
 
     void fetch( session& s, const boost::filesystem::path& pathname );
 };
@@ -153,9 +157,14 @@ public:
     Finally the file is committed back into the repository.
  */
 class todoVoteSuccess : public todoModifPost {
+protected:
+    const char *returnPath;
+
 public:
-    todoVoteSuccess( const boost::filesystem::path& m, std::ostream& o ) 
-	: todoModifPost(m,o) {}
+    todoVoteSuccess( const boost::filesystem::path& m, 
+		     const char *retPath,
+		     std::ostream& o ) 
+	: todoModifPost(m,o), returnPath(retPath) {}
 
     void fetch( session& s, const boost::filesystem::path& pathname );
 };

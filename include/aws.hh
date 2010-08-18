@@ -27,11 +27,9 @@
 #define guardaws
 
 #include <stdint.h>
-#include <boost/uuid/uuid.hpp>
 #include "webserve.hh"
 #include "markup.hh"
 #include "session.hh"
-#include <boost/uuid/uuid_io.hpp>
 
 class awsStandardButton {
 public:
@@ -42,7 +40,7 @@ protected:
     std::string secretKey;
     std::string certificate;
     uint32_t amount;
-    boost::uuids::uuid referenceId;
+    std::string referenceId;
     std::string signature;
     std::string signatureMethod;
     uint32_t signatureVersion;
@@ -74,7 +72,7 @@ public:
 		       const std::string& secretKey,
 		       const std::string& certificate );
 
-    void build( boost::uuids::uuid referenceId, uint32_t amount );
+    void build( const std::string& referenceId, uint32_t amount );
 
     /** returns true when the signature of the return request 
 	matches the one computed with the server's secretKey. */
@@ -92,6 +90,17 @@ void awsStandardButton::writehtml( std::basic_ostream<ch, tr>& ostr ) const {
     refid << referenceId;
 
     ostr << html::form().action(paypipeline).method("POST");
+
+#if 1
+    /* testing passing input field through amazon callback. */
+    ostr << "<fieldset>\n"		 
+	 << "<label>Domain name:</label>\n"
+	 << "<input size=\"30\" id=\"domainName\" name=\"domainName\" /><br />\n"
+	 << "<label>Admin login:</label>\n"
+	 << "<input size=\"30\" id=\"adminName\" name=\"adminName\" /><br />\n"
+	 << "</fieldset>\n";
+#endif
+
     if( !abandonUrl.empty() )
 	ostr << html::input()
 	    .type(html::input::hidden)

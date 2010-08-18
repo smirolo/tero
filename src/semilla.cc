@@ -34,8 +34,8 @@
 #include "composer.hh"
 #include "docbook.hh"
 #include "projfiles.hh"
+#include "project.hh"
 #include "logview.hh"
-#include "projindex.hh"
 #include "invoices.hh"
 #include "checkstyle.hh"
 #include "calendar.hh"
@@ -48,6 +48,17 @@
 /* We use this flag to trigger features that are currently in development. */
 #define devsite
 #endif
+
+
+class dservicesAdapter : public adapter {
+public:
+    virtual article fetch( session& s, 
+			   const boost::filesystem::path& pathname ) {
+	return article("dservices",
+		       "configuration through tero",25);
+    }
+};
+
 
 int main( int argc, char *argv[] )
 {
@@ -180,7 +191,7 @@ int main( int argc, char *argv[] )
 	    logview logv(std::cout);
 	    docs.add("document",boost::regex(".*/log/"),logv);
 
-	    /* A project index.xml "document" file show a description,
+	    /* A project dws.xml "document" file show a description,
 	       commits and unit test status of a single project through 
 	       a project "view". */
 	    regressions rgs(std::cout);
@@ -193,15 +204,15 @@ int main( int argc, char *argv[] )
 	    s.vars["regressions"] = regressname.string();
 
 	    changedescr checkinHist(std::cout);
-	    docs.add("history",boost::regex(".*index\\.xml"),checkinHist);
+	    docs.add("history",boost::regex(".*dws\\.xml"),checkinHist);
 	    projindex pind(std::cout);
-	    docs.add("document",boost::regex(".*index\\.xml"),pind);	 
+	    docs.add("document",boost::regex(".*dws\\.xml"),pind);	 
 
 	    /* Composer for a project view */
 	    composer project(std::cout,s.valueOf("themeDir")
 			     + std::string("/project.template"),
 			     composer::error);
-	    docs.add("view",boost::regex(".*index\\.xml"),project);	    
+	    docs.add("view",boost::regex(".*dws\\.xml"),project);	    
 
 
 	    /* Composer and document for the todos index view */
@@ -209,7 +220,7 @@ int main( int argc, char *argv[] )
 			     + std::string("/todos.template"),
 			     composer::error);
 	    docs.add("view",todoFilter::viewPat,todos);
-	    todoIndexWriteHtml todoIdxDoc(std::cout,"todoVoteSuccess");
+	    todoIndexWriteHtml todoIdxDoc(std::cout);
 
 	    std::string active("contrib/todos/active/");
 	    docs.add("document",
@@ -225,7 +236,7 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex("/todoComment"),todocomment);
 	    todoVoteAbandon tva(std::cout);
 	    docs.add("document",boost::regex("/todoVoteAbandon"),tva);
-	    todoVoteSuccess tvs(todoModifs,std::cout);
+	    todoVoteSuccess tvs(todoModifs,"/todoVoteSuccess",std::cout);
 	    docs.add("document",boost::regex("/todoVoteSuccess"),tvs);
 
 	    contribIdx contribIdxDoc(std::cout);
@@ -312,6 +323,9 @@ int main( int argc, char *argv[] )
 	    /* \todo !!! Hack for current tmpl_include implementation */
 	    text formatedText(std::cout,leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
+	    /* To display pages with embeded html forms. */
+	    composer payText(std::cout,composer::error);
+	    docs.add("document",boost::regex(".*\\.buy"),payText);
 	    docs.add("document",boost::regex(".*"),rawtext);
 
 #ifdef devsite
@@ -348,10 +362,13 @@ int main( int argc, char *argv[] )
 	    s.vars["projfiles"] = s.valueOf("document");
 
 	    /* button to Amazon payment */
-	    awsPayment awspay(std::cout);
-	    docs.add("aws",boost::regex(".*"),awspay);	    
+	    payment pay(std::cout);
+	    todoAdapter ta;
+	    dservicesAdapter da;
+	    pay.add(boost::regex(".*\\.todo"),"/todoVoteSuccess",ta);
+	    pay.add(boost::regex(".*\\.buy"),"/dservices",da);
+	    docs.add("aws",boost::regex(".*"),pay);	    
 	    s.vars["aws"] = s.valueOf("document");
-
       	    
 	    docs.fetch(s,"view");
 	}

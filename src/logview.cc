@@ -28,7 +28,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include "logview.hh"
 #include "markup.hh"
-
+#include "project.hh"
 
 void logview::meta( session& s, const boost::filesystem::path& pathname ) {
     s.vars["title"] = std::string("Build View");   

@@ -30,29 +30,20 @@
 #include "todo.hh"
 #include "aws.hh"
 
-namespace {
 
-    std::string asString( boost::uuids::uuid tag ) {
-	std::stringstream s;
-	s << tag;
-	return s.str();
-    }
+article 
+todoAdapter::fetch( session& s, const boost::filesystem::path& p ) {
+    return article(boost::filesystem::basename(p.filename()),
+		   "vote for todo item",1);
+}
 
-} // namespace anonymous
+#if 0
 
-
-boost::uuids::uuid asuuid( const std::string& s )
+boost::filesystem::path 
+todoAdapter::asPath( const boost::uuids::uuid& id ) const
 {
-    boost::uuids::uuid r;
-    std::stringstream in(s);
-    in >> r;
-    return r;
 }
-
-
-boost::uuids::uuid todouuid( const boost::filesystem::path& p ) {
-    return asuuid(boost::filesystem::basename(p.filename()));
-}
+#endif
 
 
 const boost::regex todoFilter::viewPat(".*todos/.+");
@@ -148,7 +139,10 @@ void todoCreateFeedback::filters( const post& p ) {
 void todocreator::filters( const post& v ) {
     post p = v;
     p.score = 0;
-    p.guid = asString(boost::uuids::random_generator()());   
+    
+    std::stringstream s;
+    s << boost::uuids::random_generator()();
+    p.guid = s.str();
     p.time = boost::posix_time::second_clock::local_time();
 
 #ifndef READONLY
@@ -303,7 +297,7 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
 	p.authorEmail = s.valueOf("author");
 	p.descr = s.valueOf("descr");
 	p.time = boost::posix_time::second_clock::local_time();
-	p.guid = asString(todouuid(postname));
+	p.guid = todoAdapter().fetch(s,postname).guid;
 	p.score = 0;
 	comment.filters(p);
    }
@@ -335,9 +329,8 @@ void todoVoteSuccess::fetch( session& s,
     awsStandardButton button(s.valueOf("awsAccessKey"),
 			     s.valueOf("awsSecretKey"),
 			     s.valueOf("awsCertificate"));
-    if( !button.checkReturn(s,"/todoVoteSuccess") ) {
-	*ostr << "error wrong request signature" << std::endl;
-	return;
+    if( !button.checkReturn(s,returnPath) ) {
+	throw std::runtime_error("wrong signature for request");
     }
 
     /* The pathname is set to the *todoVote* action name when we get here
@@ -362,7 +355,7 @@ void todoVoteSuccess::fetch( session& s,
     } 
 
 
-    boost::uuids::uuid tag = asuuid(boost::filesystem::basename(postname));
+    std::string tag = todoAdapter().fetch(s,postname).guid;
 
     /* make temporary file */
     char tmpname[FILENAME_MAX] = "/tmp/vote-XXXXXX";
@@ -426,7 +419,7 @@ void todoWriteHtml::meta( session& s,
     static const boost::regex valueEx("^(Subject):\\s+(.*)");
 
     std::stringstream title;
-    title << '[' << todouuid(pathname) << ']';
+    title << '[' << todoAdapter().fetch(s,pathname).guid << ']';
     ifstream strm;
     open(strm,pathname);
     while( !strm.eof() ) {

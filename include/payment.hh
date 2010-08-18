@@ -27,13 +27,33 @@
 #define guardpayment
 
 #include "document.hh"
+#include "adapter.hh"
 
+class payment : public document {
+protected:
+    struct entry {
+	const boost::regex* regexp;
+	const char *retPath;
+	adapter* adapt; 
 
-class awsPayment : public document {
+	entry() {}
+
+	entry( const boost::regex& r, const char *rp, adapter& a ) 
+	    : regexp(&r), retPath(rp), adapt(&a) {}
+
+    };
+
+    typedef std::vector<entry> entrySeq;
+
+    entrySeq entries;
+
 public:
-    explicit awsPayment( std::ostream& o ) : document(o) {}
+    explicit payment( std::ostream& o ) 
+	: document(o) {}
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void add( const boost::regex& r, const char *retPath, adapter& a );
+
+    void fetch( session& s, const boost::filesystem::path& pathname );    
 };
 
 
