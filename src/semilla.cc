@@ -43,6 +43,7 @@
 #include "todo.hh"
 #include "webserve.hh"
 #include "payment.hh"
+#include "confgen.hh"
 
 #if 1
 /* We use this flag to trigger features that are currently in development. */
@@ -104,6 +105,7 @@ int main( int argc, char *argv[] )
 
 	options_description opts;
 	opts.add(genOptions).add(authOptions).add(postOptions).add(calOptions);
+	confgenCheckout::addSessionVars(opts);
 	char *pathInfo = getenv("PATH_INFO");
 	if( pathInfo != NULL ) {	    
 	    store(parse_cgi_options(opts),params);
@@ -326,6 +328,12 @@ int main( int argc, char *argv[] )
 	    /* To display pages with embeded html forms. */
 	    composer payText(std::cout,composer::error);
 	    docs.add("document",boost::regex(".*\\.buy"),payText);
+
+	    confgenCheckout cfc(std::cout);
+	    confgenDeliver cfd(std::cout);
+	    docs.add("document",boost::regex("/teroCheckout"),cfc);
+	    docs.add("document",boost::regex("/teroDeliver"),cfd);
+
 	    docs.add("document",boost::regex(".*"),rawtext);
 
 #ifdef devsite

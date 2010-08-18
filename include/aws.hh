@@ -91,16 +91,6 @@ void awsStandardButton::writehtml( std::basic_ostream<ch, tr>& ostr ) const {
 
     ostr << html::form().action(paypipeline).method("POST");
 
-#if 1
-    /* testing passing input field through amazon callback. */
-    ostr << "<fieldset>\n"		 
-	 << "<label>Domain name:</label>\n"
-	 << "<input size=\"30\" id=\"domainName\" name=\"domainName\" /><br />\n"
-	 << "<label>Admin login:</label>\n"
-	 << "<input size=\"30\" id=\"adminName\" name=\"adminName\" /><br />\n"
-	 << "</fieldset>\n";
-#endif
-
     if( !abandonUrl.empty() )
 	ostr << html::input()
 	    .type(html::input::hidden)

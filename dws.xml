@@ -12,7 +12,7 @@
 	  The configuration file *semillaConfFile* contain paths used by semilla to find the source repositories, templates, etc.
 	</description>
 	<base>buildTop</base>
-	<default>ws.mk</default>
+	<default>dws.mk</default>
       </pathname>      
       <pathname name="themeDir">
 	<description>
