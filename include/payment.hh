@@ -53,7 +53,19 @@ public:
 
     void add( const boost::regex& r, const char *retPath, adapter& a );
 
+    static void 
+    addSessionVars( boost::program_options::options_description& opts );
+
+    static void checkReturn( session& s, const char* page );
+
     void fetch( session& s, const boost::filesystem::path& pathname );    
+
+    static void show( std::ostream& ostr,
+		      session& s, 
+		      const url& returnUrl, 
+		      const std::string& referenceId, 
+		      size_t value,
+		      const std::string& descr = "" );
 };
 
 

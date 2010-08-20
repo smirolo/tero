@@ -33,6 +33,27 @@ void payment::add( const boost::regex& r,
 }
 
 
+void 
+payment::addSessionVars( boost::program_options::options_description& opts ) {
+    using namespace boost::program_options;
+    /* For authentication with Amazon payment services. */
+    opts.add_options()
+	("awsAccessKey",value<std::string>(),"Amazon Access Key")
+	("awsSecretKey",value<std::string>(),"Amazon Secret Key")
+	("awsCertificate",value<std::string>(),"Amazon Public Certificate");
+}
+
+
+void payment::checkReturn( session& s, const char* page ) {
+    awsStandardButton button(s.valueOf("awsAccessKey"),
+			     s.valueOf("awsSecretKey"),
+			     s.valueOf("awsCertificate"));
+    if( !button.checkReturn(s,page) ) {
+	throw std::runtime_error("wrong signature for request");
+    }
+}
+
+
 void payment::fetch( session& s, const boost::filesystem::path& pathname ) {
     for( entrySeq::const_iterator e = entries.begin(); 
 	 e != entries.end(); ++e ) {
@@ -51,4 +72,19 @@ void payment::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    break;
 	}
     }
+}
+
+
+void payment::show( std::ostream& ostr,
+		    session& s, const url& returnUrl, 
+		    const std::string& referenceId, size_t value,
+		    const std::string& descr )
+{
+    awsStandardButton button(s.valueOf("awsAccessKey"),
+			     s.valueOf("awsSecretKey"),
+			     s.valueOf("awsCertificate"));
+    button.returnUrl = returnUrl;
+    button.description = descr;
+    button.build(referenceId,value);
+    button.writehtml(ostr);    
 }

@@ -59,100 +59,6 @@ relpath( const boost::filesystem::path& pathname,
 std::string uriEncode( const std::string& );
 
 
-/** \brief Generate a cookie on the client side
- */
-class cookie {
-private:
-    std::string name;
-    std::string value;
-    boost::posix_time::ptime::date_duration_type lifetime;
-    
-public:
-    cookie( const std::string& n, const std::string& v, 
-	    boost::posix_time::ptime::date_duration_type d 
-	    = boost::posix_time::ptime::date_duration_type(0) ) 
-	: name(n), value(v), lifetime(d) {}
-    
-    template<typename ch, typename tr>
-    friend std::basic_ostream<ch, tr>&
-    operator<<(std::basic_ostream<ch, tr>& ostr, const cookie& v ) {
-	using namespace boost::posix_time;
-	ptime now = second_clock::universal_time(); // Use the clock 
-	// Get the date part out of the time 
-	ptime::date_type today = now.date();        
-	ptime::date_type expires = today + v.lifetime;
-	
-	ostr << "Set-Cookie:" << v.name << "=" << v.value << ';'
-	     << " Path=/;";
-	if( v.lifetime != boost::posix_time::ptime::date_duration_type(0) ) {
-	    ostr << " expires=" 
-		 << expires.day_of_week()
-				  << ", " << expires.day()
-		 << ' ' << expires.month()
-		 << " " << std::setfill('0') << std::setw(2) << expires.year()
-		 << " " << std::setfill('0') << std::setw(2) 
-		 << now.time_of_day().hours()
-		 << ':' << std::setfill('0') << std::setw(2) 
-		 << now.time_of_day().minutes()
-		 << ':' << std::setfill('0') << std::setw(2) 
-		 << now.time_of_day().seconds()
-		 << " GMT;";
-	}
-	ostr << " Version=1\r\n";
-	return ostr;
-    }
-};
-
-
-/** \brief start serving an HTML document 
- */
-class htmlContentServe {
-private:
-    bool firstTime;
-
-public:
-    htmlContentServe();
-
-    template<typename ch, typename tr>
-    friend std::basic_ostream<ch, tr>&
-    operator<<(std::basic_ostream<ch, tr>& ostr, htmlContentServe& v ) {
-	if( v.firstTime ) {
-	    ostr << "Content-Type:text/html;charset=iso-8859-1\r\n\r\n";
-	    v.firstTime = false;
-	}
-	return ostr;
-    }
-    
-};
-
-extern htmlContentServe htmlContent;
-
-
-/** \brief redirect to another webpage
- */
-class redirect {
-private:
-    std::string url;
-    
-    bool absolute()  const {
-	return url.compare(0,5,"http:")
-	    || url.compare(0,6,"https:")
-	    || url.compare(0,1,"/");
-    }
-    
-public:
-    redirect( std::string u ) 
-	: url(u) {}
-    
-    template<typename ch, typename tr>
-    friend std::basic_ostream<ch, tr>&
-    operator<<(std::basic_ostream<ch, tr>& ostr, const redirect& v ) {
-	ostr << "Location: " << v.url << '\n';
-	return ostr;
-    };
-};
-
-
 /* \brief url syntax as per rfc1738
  */
 class url {
@@ -197,10 +103,106 @@ public:
 };
 
 
-/** \brief Populate options based on environment variables and stdin
- */
-boost::program_options::basic_parsed_options<char>
-parse_cgi_options( const boost::program_options::options_description& descr );
+/**/
+class httpHeaderSet {
+protected:
+    bool firstTime;
+
+    std::string contentTypeValue;
+    std::string contentTypeCharset;
+    size_t contentLengthValue;
+    std::string contentDispositionValue;
+    std::string contentDispositionFilename;
+    std::string setCookieName;
+    std::string setCookieValue;
+    boost::posix_time::ptime::date_duration_type setCookieLifetime;
+    url locationValue;
+    size_t refreshDelay;
+    url refreshUrl;
+
+    template<typename ch, typename tr>
+    friend std::basic_ostream<ch, tr>&
+    operator<<( std::basic_ostream<ch, tr>& ostr, httpHeaderSet& h ) {
+	if( !h.firstTime ) return ostr;
+       
+	if( !h.contentTypeValue.empty() ) {
+	    ostr << "Content-Type:" << h.contentTypeValue;
+	    if( !h.contentTypeCharset.empty() ) {
+		ostr << ";charset=" << h.contentTypeCharset;
+	    }
+	    ostr << "\r\n";
+	}
+	if( h.contentLengthValue > 0 ) {
+	    ostr << "Content-Length:" << h.contentLengthValue << "\r\n";
+	}
+	if( !h.contentDispositionValue.empty() ) {
+	    ostr << "Content-Disposition:" << h.contentDispositionValue;
+	    if( !h.contentDispositionFilename.empty() ) {
+		ostr << ";filename=" << h.contentDispositionFilename;
+	    }
+	    ostr << "\r\n";
+	}
+	if( !h.setCookieName.empty() ) {
+	    ostr << "Set-Cookie:" << h.setCookieName << "=" << h.setCookieValue
+		 << "; Path=/";
+	    if( h.setCookieLifetime 
+		!= boost::posix_time::ptime::date_duration_type(0) ) {
+		using namespace boost::posix_time;
+		ptime now = second_clock::universal_time(); // Use the clock 
+		// Get the date part out of the time 
+		ptime::date_type today = now.date();        
+		ptime::date_type expires = today + h.setCookieLifetime;
+		ostr << "; expires=" 
+		     << expires.day_of_week() 
+		     << ", " << expires.day()
+		     << ' ' << expires.month()
+		     << " " << std::setfill('0') << std::setw(2) 
+		     << expires.year()
+		     << " " << std::setfill('0') << std::setw(2) 
+		     << now.time_of_day().hours()
+		     << ':' << std::setfill('0') << std::setw(2) 
+		     << now.time_of_day().minutes()
+		     << ':' << std::setfill('0') << std::setw(2) 
+		     << now.time_of_day().seconds()
+		     << " GMT";
+	    }
+	    ostr << "; Version=1\r\n";
+	}
+	if( !h.locationValue.empty() ) {
+	    ostr << "Location: " << h.locationValue << "\r\n";
+	}
+	if( !h.refreshUrl.empty() ) {
+	    ostr << "Refresh:" << h.refreshDelay 
+		 << ";URL=" << h.refreshUrl << "\r\n";
+	}
+	ostr << "\r\n";
+	h.firstTime = false;
+	return ostr;
+    }
+
+public:
+    httpHeaderSet();
+
+    httpHeaderSet& contentDisposition( const std::string& value, 
+				       const std::string& filename );
+
+    httpHeaderSet& contentType( const std::string& value = "text/html", 
+				 const std::string& charset = "iso-8859-1" );
+
+    httpHeaderSet& contentLength( size_t length );
+
+    httpHeaderSet& location( const url& v );
+
+    httpHeaderSet& refresh( size_t delay, const url& v );
+
+    httpHeaderSet& 
+    setCookie( const std::string& name, 
+	       const std::string& value, 
+	       boost::posix_time::ptime::date_duration_type expires 
+	       = boost::posix_time::ptime::date_duration_type(0) );
+};
+
+extern httpHeaderSet httpHeaders;
 
 
 class emptyParaHackType {
@@ -221,5 +223,10 @@ public:
 };
 
 extern emptyParaHackType emptyParaHack;
+
+/** \brief Populate options based on environment variables and stdin
+ */
+boost::program_options::basic_parsed_options<char>
+parse_cgi_options( const boost::program_options::options_description& descr );
 
 #endif

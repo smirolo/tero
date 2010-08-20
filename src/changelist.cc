@@ -45,7 +45,7 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 
 
 void cancel::fetch( session& s, const boost::filesystem::path& pathname ) {
-	*ostr << redirect(s.docAsUrl()) << '\n';
+	*ostr << httpHeaders.location(s.docAsUrl()) << '\n';
 }
 
 
@@ -85,7 +85,8 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
 	file << docName;
 	file.close();
     }
-    *ostr << redirect(s.docAsUrl() + std::string(".edits")) << '\n';
+    *ostr << httpHeaders.location(url(s.docAsUrl().string() 
+				      + std::string(".edits")));
 }
 
 
@@ -178,8 +179,6 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 	/* RSS Icons: http://www.feedicons.com/ */
 	htmlEscaper esc;
 
-	*ostr << htmlContent << std::endl;
-
 #if 1
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
@@ -223,8 +222,11 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	htmlEscaper esc;
 
 	/* \todo get the title and domainname from the session. */
-#if 1
+#if 0
 	*ostr << "Content-Type:application/rss+xml;charset=iso-8859-1\r\n"
+		  << "\r\n";
+#else
+	*ostr << "Content-Type:application/rss+html;charset=iso-8859-1\r\n"
 		  << "\r\n";
 #endif
 	*ostr << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;

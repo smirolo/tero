@@ -69,17 +69,67 @@ std::string uriEncode( const std::string& s ) {
 }
 
 
-htmlContentServe htmlContent;
+httpHeaderSet::httpHeaderSet()
+    : firstTime(true), contentLengthValue(0)
+{
+}
+
+
+httpHeaderSet& httpHeaderSet::contentDisposition( const std::string& value, 
+						  const std::string& filename )
+{
+    contentDispositionValue = value;
+    contentDispositionFilename = filename;
+    return *this;    
+}
+
+
+httpHeaderSet& httpHeaderSet::contentType( const std::string& value, 
+					   const std::string& charset ) 
+{
+    contentTypeValue = value;
+    contentTypeCharset = charset;
+    return *this;
+}
+
+httpHeaderSet& httpHeaderSet::contentLength( size_t length ) 
+{
+    contentLengthValue = length;
+    return *this;
+}
+
+httpHeaderSet& httpHeaderSet::location( const url& v ) {
+    locationValue = v;
+    return *this;
+}
+
+
+httpHeaderSet& httpHeaderSet::refresh( size_t delay, const url& v ) {
+    refreshDelay = delay;
+    refreshUrl = v;
+    return *this;
+}
+
+
+httpHeaderSet& 
+httpHeaderSet::setCookie( const std::string& name, 
+			  const std::string& value, 
+			  boost::posix_time::ptime::date_duration_type exp )
+{
+    setCookieName = name;
+    setCookieValue = value;
+    setCookieLifetime = exp;
+    return *this;
+}
+
+httpHeaderSet httpHeaders;
+
 emptyParaHackType emptyParaHack;
-
-htmlContentServe::htmlContentServe() 
-    : firstTime(true) {}
-
 
 url::url( const std::string& name ) {
 	boost::smatch m;
 	boost::regex e("(\\S+:)?(//[^/]+)?(:[0-9]+)?(\\S+)?",
-				   boost::regex::normal | boost::regbase::icase);
+		       boost::regex::normal | boost::regbase::icase);
 	port = 0;
 	if( regex_search(name,m,e) ) {
 		if( !m.str(1).empty() ) 

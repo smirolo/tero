@@ -42,8 +42,6 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace std;
     using namespace boost::filesystem;
-
-    *ostr << htmlContent;
     
 #if 0
     *ostr << html::table();    

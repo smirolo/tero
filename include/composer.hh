@@ -30,7 +30,10 @@
 
 /** Display of a page based on a template file.
  */
-class composer : public document {
+class composer : public text {
+protected:
+    typedef text super;
+
 public:
 
     /* When the composer resolves a filename that is not present
@@ -51,11 +54,11 @@ protected:
     
 public:
     composer( std::ostream& o, fileNotFoundBehavior b ) 
-	: document(o), behavior(b) {}
+	: super(o), behavior(b) {}
 
     composer( std::ostream& o, 
 	      const boost::filesystem::path& f, fileNotFoundBehavior b ) 
-	: document(o), behavior(b), fixed(f) {}
+	: super(o), behavior(b), fixed(f) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };

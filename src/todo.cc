@@ -28,8 +28,8 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "todo.hh"
-#include "aws.hh"
-
+#include "payment.hh"
+#include "markup.hh"
 
 article 
 todoAdapter::fetch( session& s, const boost::filesystem::path& p ) {
@@ -130,7 +130,6 @@ public:
 
 
 void todoCreateFeedback::filters( const post& p ) {
-    *ostr << htmlContent;
     *ostr << html::p() << "item " << p.guid << " has been created." 
 	      << html::p::end;    
 }
@@ -198,7 +197,7 @@ void todocommentor::filters( const post& p ) {
 void todoCommentFeedback::filters( const post& p ) {
     /* \todo clean-up. We use this code such that the browser displays
        the correct url. If we use a redirect, it only works with static pages (index.html). */
-    *ostr << htmlContent << std::endl << "<html><head><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0;URL=" << posturl << "\"></head><body></body></html>" << std::endl;
+    *ostr << httpHeaders << std::endl << "<html><head><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0;URL=" << posturl << "\"></head><body></body></html>" << std::endl;
 }
 
 
@@ -315,7 +314,6 @@ void todoIndexWriteHtml::fetch( session& s,
 
 void todoVoteAbandon::fetch( session& s, 
 			     const boost::filesystem::path& pathname ) {
-	*ostr << htmlContent;
 	*ostr << html::p() << "You have abandon the transaction and thus"
 		  << " your vote has not been registered."
 		  << " Thank you for your interest." 
@@ -326,12 +324,7 @@ void todoVoteAbandon::fetch( session& s,
 void todoVoteSuccess::fetch( session& s, 
 			     const boost::filesystem::path& pathname )
 {
-    awsStandardButton button(s.valueOf("awsAccessKey"),
-			     s.valueOf("awsSecretKey"),
-			     s.valueOf("awsCertificate"));
-    if( !button.checkReturn(s,returnPath) ) {
-	throw std::runtime_error("wrong signature for request");
-    }
+    payment::checkReturn(s,returnPath);
 
     /* The pathname is set to the *todoVote* action name when we get here
        so we derive the document name from *href*. */
@@ -343,7 +336,6 @@ void todoVoteSuccess::fetch( session& s,
 	/* If *postname* does not point to a regular file,
 	   the inputs were incorrect somehome. 
 	 */
-	*ostr << htmlContent;
 	*ostr << html::p() << postname 
 		  << " does not appear to be a regular file on the server"
 		  << " and thus your vote for it cannot be registered."
@@ -361,7 +353,6 @@ void todoVoteSuccess::fetch( session& s,
     char tmpname[FILENAME_MAX] = "/tmp/vote-XXXXXX";
     int fildes = mkstemp(tmpname);
     if( fildes == -1 ) {
-	*ostr << htmlContent;
 	*ostr << html::p() 
 		  << " Unable to create temporary file on the server"
 		  << " and thus your vote for it cannot be registered."
@@ -397,13 +388,10 @@ void todoVoteSuccess::fetch( session& s,
     if( score > 0 ) {
 	boost::filesystem::remove(postname);
 	boost::filesystem::rename(tmpname,postname);
-
-	*ostr << htmlContent;
 	*ostr << html::p() << "Your vote for item " 
 		  << tag << " has been registered. Thank you." 
 		  << html::p::end;
     } else {
-	*ostr << htmlContent;
 	*ostr << html::p() << "There does not appear to have any"
 	    " score associated with item " << tag << " thus your"
 	    " vote cannot be registered. Sorry for the inconvienience."

@@ -155,8 +155,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     /* Set a session cookie */
     std::stringstream id;
     id << sessionId;
-    *ostr << cookie("session",id.str());
-    *ostr << redirect(s.docAsUrl()) << '\n';
+    *ostr << httpHeaders.setCookie("session",id.str()).location(s.docAsUrl());
 }
 
 
@@ -246,13 +245,14 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
     if( s.id != 0 ) {
 	std::stringstream id;
 	id << s.id;
-	*ostr << cookie("session",id.str(),boost::posix_time::ptime::date_duration_type(-1));
+	*ostr << httpHeaders.setCookie("session",id.str(),
+			      boost::posix_time::ptime::date_duration_type(-1));
     }
     time_duration logged = s.stop();
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
     
-    *ostr << htmlContent << std::endl;
+    *ostr << httpHeaders;
     s.vars["hours"] = logstr.str();
     path uiPath(s.vars["uiDir"] + std::string("/logout.ui"));
     composer pres(*ostr,uiPath,composer::error);

@@ -44,7 +44,6 @@ void
 projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
     switch( state ) {
     case start:
-	*ostr << htmlContent;
 	*ostr << html::div().classref("MenuWidget");
 	break;
     case toplevelFiles:
@@ -75,7 +74,6 @@ projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
 void 
 projfiles::addFile( const session& s, const boost::filesystem::path& file ) {
     if( state == start ) {
-	*ostr << htmlContent;
 	*ostr << html::div().classref("MenuWidget");
 	*ostr << html::p();
 	state = toplevelFiles;

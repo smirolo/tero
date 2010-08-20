@@ -269,7 +269,6 @@ void checkstyle::addFile( const session& s,
     using namespace boost::filesystem; 
 
     if( state == start ) {
-	*ostr << htmlContent;
 	*ostr << html::p() 
 		  << "<table>";
 	*ostr << html::tr()

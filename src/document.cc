@@ -374,28 +374,18 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem; 
-    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
     ifstream strm;
     open(strm,pathname);
 
-    *ostr << htmlContent;
+    *ostr << httpHeaders;
 
     if( leftDec ) {
 	if( leftDec->formated() ) *ostr << code();
 	leftDec->attach(*ostr);
     }
 
-    /* Skip over tags */
-    while( !strm.eof() ) {
-	boost::smatch m;
-	std::string line;
-	std::getline(strm,line);
-	if( !boost::regex_search(line,m,valueEx) ) {
-	    *ostr << line << std::endl;
-	    break;
-	}
-    }
+    skipOverTags(strm);
 
     /* remaining lines */
     while( !strm.eof() ) {
@@ -413,3 +403,18 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
 }
 
 
+void text::skipOverTags( std::istream& istr )
+{
+    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
+
+    /* Skip over tags */
+    while( !istr.eof() ) {
+	boost::smatch m;
+	std::string line;
+	std::getline(istr,line);
+	if( !boost::regex_search(line,m,valueEx) ) {	
+	    *ostr << line << std::endl;
+	    break;
+	}
+    }
+}

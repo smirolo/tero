@@ -120,6 +120,8 @@ protected:
     decorator *leftDec;
     decorator *rightDec;
 
+    void skipOverTags( std::istream& istr );
+
 public:
     explicit text( std::ostream& o ) 
 	: document(o), leftDec(NULL), rightDec(NULL) {}

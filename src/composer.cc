@@ -51,7 +51,14 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     ifstream strm;
     open(strm,fixed.empty() ? pathname : fixed);
 
-    *ostr << htmlContent;
+    document* doc = dispatchDoc::instance->select("document",
+						  s.valueOf("document"));
+    if( doc ) {
+	doc->meta(s,s.valueAsPath("document"));
+    }
+    *ostr << httpHeaders.contentType();
+
+    skipOverTags(strm);
     while( !strm.eof() ) {
 	smatch m;
 	std::string line;
@@ -73,10 +80,7 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    std::string varname = m.str(1);
 	    session::variables::const_iterator v = s.vars.find(varname);
 	    if( v == s.vars.end() ) {
-		document* 
-		    doc = dispatchDoc::instance->select("document",
-						     s.valueOf("document"));
-		doc->meta(s,s.valueAsPath("document"));
+		/* hmmm ... variable wasn't set in meta? */
 	    }
 	    document* doc 
 		= dispatchDoc::instance->select(varname,s.valueOf(varname));

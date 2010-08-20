@@ -80,7 +80,7 @@ public:
 
     /** document name as an url 
      */
-    std::string docAsUrl() const;
+    url docAsUrl() const;
         
     boost::filesystem::path contributorLog() const;
 

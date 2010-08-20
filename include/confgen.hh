@@ -31,23 +31,44 @@
 
 class confgenCheckout : public document {
 protected:
-
+    const char *nextPathname;
+    
 public:
-    explicit confgenCheckout( std::ostream& o ) 
-	: document(o) {}
+    confgenCheckout( std::ostream& o, const char* np ) 
+	: document(o), nextPathname(np) {}
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );
 
     void fetch( session& s, const boost::filesystem::path& pathname );    
+
+    void meta( session& s, const boost::filesystem::path& pathname );
 };
 
 
 class confgenDeliver : public document {
 protected:
+    const char *thisPathname;
+
+    std::string adminLogin;
+    std::string domainName;
+    boost::filesystem::path packagePath;
 
 public:
-    explicit confgenDeliver( std::ostream& o ) 
+    confgenDeliver( std::ostream& o, const char* tp ) 
+	: document(o), thisPathname(tp) {}
+    
+    void meta( session& s, const boost::filesystem::path& pathname );
+
+    void fetch( session& s, const boost::filesystem::path& pathname );    
+};
+
+
+class forceDownload : public document {
+protected:
+
+public:
+    explicit forceDownload( std::ostream& o ) 
 	: document(o) {}
 
     void fetch( session& s, const boost::filesystem::path& pathname );    

@@ -54,15 +54,10 @@ session::session() : id(0) {
 	("srcTop",value<std::string>(),"path to document top")
 	("domainName",value<std::string>(),"domain name of the web server")
 	("remoteSrcTop",value<std::string>(),"path to root of the project repositories")
-	("remoteIndex",value<std::string>(),"path to project interdependencies")
+	("remoteIndexFile",value<std::string>(),"path to project interdependencies")
 	("themeDir",value<std::string>(),"path to user interface elements")
 	("contractDb",value<std::string>(),"path to contracts database");
 
-    /* For authentication with Amazon payment services. */
-    pathOptions.add_options()
-	("awsAccessKey",value<std::string>(),"Amazon Access Key")
-	("awsSecretKey",value<std::string>(),"Amazon Secret Key")
-	("awsCertificate",value<std::string>(),"Amazon Public Certificate");
     pathOptionsInit = true;
     }
 }
@@ -92,10 +87,10 @@ bool session::prefix( const boost::filesystem::path& left,
 static std::string nullString("");
 boost::filesystem::path session::storage;
 
-std::string session::docAsUrl() const {
+url session::docAsUrl() const {
     variables::const_iterator doc = vars.find("document");
     assert( doc != vars.end() );
-    return doc->second.substr(1);
+    return url(doc->second.substr(1));
 }
 
 const std::string& session::valueOf( const std::string& name ) const {

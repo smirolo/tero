@@ -24,7 +24,35 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "confgen.hh"
-#include "aws.hh"
+#include "payment.hh"
+#include "markup.hh"
+#include <boost/filesystem/fstream.hpp>
+
+namespace {
+
+    void showConfig( std::ostream& ostr,
+		     const std::string& domainName, 
+		     const std::string& adminLogin ) {
+	ostr << html::p()
+	     << "The configuration package will use the following information:"
+	     << html::p::end;    
+    
+	ostr << html::table()
+	     << html::tr()
+	     << html::td() << "domainName" << html::td::end
+	     << html::td() << domainName << html::td::end
+	     << html::tr::end
+	     << html::tr()
+	     << html::td() << "adminLogin" << html::td::end
+	     << html::td() << adminLogin << html::td::end
+	     << html::tr::end
+	     << html::table::end;
+
+	ostr << html::p() << html::p::end;
+    }
+
+}  // anonymous namespace
+
 
 void confgenCheckout::addSessionVars( 
 			  boost::program_options::options_description& opts ) {
@@ -36,53 +64,161 @@ void confgenCheckout::addSessionVars(
 
 
 void 
+confgenCheckout::meta( session& s, const boost::filesystem::path& pathname ) 
+{
+    s.vars["title"] = "fortylines tero checkout";
+}
+
+void 
 confgenCheckout::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    awsStandardButton button(s.valueOf("awsAccessKey"),
-			     s.valueOf("awsSecretKey"),
-			     s.valueOf("awsCertificate"));
-    button.returnUrl = url(std::string("http://") 
-			   + s.valueOf("domainName") 
-			   + "/teroDeliver");
+    /* Build the *referenceId* that will be used to generate the *packageName*
+       as part of the delivery step and generate a meaningful description 
+       that will be displayed in the Amazon checkout page. */
+    std::string domainName = s.valueOf("confgenDomain");
+    std::string adminLogin = s.valueOf("confgenAdmin");
+    std::stringstream referenceId;
+    referenceId << s.valueOf("confgenAdmin") << '@' << domainName;
+    std::stringstream descr;
+    descr << "configuration of a stock Ubuntu 10.04 Server Edition"
+	" as a communication platform for " << domainName;
 
-    *ostr << "<p>domainName: " << s.valueOf("confgenDomain") << "</p>";
-    *ostr << "<p>adminName: " << s.valueOf("confgenAdmin") << "</p>";
+    /* Print the HTML that explains the product sold 
+       alongside the pay button. */
+    *ostr << html::p()
+	  << "For $25, you will be able to downlaod a package that configures"
+	" a stock Ubuntu 10.04 Server Edition (ubuntu-10.04-server-amd64.iso)"
+	" to serve as a communication platform for your development team."
+	  << html::p::end;
+    
+    *ostr << "This includes:"
+	  << html::ul()
+	  << html::li() << "A website for " << domainName
+	  << html::ul()
+	  << html::li() << "that supports http and https"
+	  << html::li() << "with a source repository browser"
+	  << html::li() << "with a todo tracking system"
+	  << html::ul::end
+	  << html::ul()
+	  << html::li() << "A SMTP mail server for " << domainName
+	  << html::li() << "with the following mailing list: dev@" << domainName
+	  << html::ul::end
+	  << "And, only accessible through a ssh tunnel,"
+	  << html::ul()
+	  << html::li() << "An IMAP mail account"
+	  << html::li() << "A private http server"
+	  << html::ul()
+          << html::li() << "for mailing list administration"
+          << html::li() << "for web tracking statistics"
+	  << html::ul::end
+	  << html::ul::end;
+    
+    showConfig(*ostr,domainName,adminLogin);
 
-    std::stringstream id;
-    id << s.valueOf("confgenAdmin") << '@' << s.valueOf("confgenDomain");
-    button.description = "tero config";
-    button.build(id.str(),25);
-    button.writehtml(*ostr);    
+    payment::show(*ostr,s,
+		  url("http",domainName,nextPathname),
+		  referenceId.str(),25,descr.str());
+    
+    *ostr << html::p() 
+	  << "If you are not convinced yet, feel free to keep browsing"
+	" around fortylines website. This server is running"
+	" the exact platform you will enjoy. As a matter of fact, we tear"
+	" our entire infrastructure down and put it back together on a regular"
+	" basis to insure the highest level of simplicity and reliability."
+	  << html::p::end;
+}
+
+
+void 
+confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
+{
+    /* Extract the *domainName* and *adminLogin* that will be used to generate
+       the configuration package.*/
+    std::string referenceId = s.valueOf("referenceId");
+    referenceId = "adm@codespin.is-a-geek.com";
+    adminLogin = referenceId.substr(0,referenceId.find('@'));
+    domainName = referenceId.substr(referenceId.find('@') + 1);
+    std::string packageName = domainName;
+    std::replace(packageName.begin(),packageName.end(),'.','-');
+    packagePath = s.valueOf("buildTop") 
+	+ "/" + packageName + "-ubuntu1_amd64.deb";
+
+    std::stringstream d;
+    d << "/download/" << packagePath.filename();
+    httpHeaders.refresh(0,url(d.str()));
 }
 
 
 void 
 confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    awsStandardButton button(s.valueOf("awsAccessKey"),
-			     s.valueOf("awsSecretKey"),
-			     s.valueOf("awsCertificate"));
-    if( !button.checkReturn(s,"/teroDeliver") ) {
-	throw std::runtime_error("wrong signature for request");
-    }
+#if 0
+    /* Check the request is actually coming from Amazon. */
+    payment::checkReturn(s,thisPathname);
+#endif
 
-    std::string referenceId = s.valueOf("referenceId");
-    std::string confgenAdmin = referenceId.substr(0,referenceId.find('@'));
-    std::string confgenDomain = referenceId.substr(referenceId.find('@'));
-
-    *ostr << "<p>Generate configuration for:</p>";
-    *ostr << "<p>domainName: " << confgenDomain << "</p>";
-    *ostr << "<p>adminName: " << confgenAdmin << "</p>";
-
-    char lcstr[256];
+#if 0
+    /* Execute the underlying script used to generate 
+       the configuration package. */
     std::stringstream cmd;
     cmd << s.valueOf("binDir") << "/dservices " 
-	<< confgenDomain << " " << confgenAdmin;
-    FILE *summary = popen(cmd.str().c_str(),"r");
-    assert( summary != NULL );   
-    while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
-	*ostr << lcstr;
+	<< domainName << " " << adminLogin;
+    err = system(cmd.str().c_str());
+    if( err ) {
+	throw std::runtime_error("error generating the configuration file");
     }
-    pclose(summary);
- 
+#endif 
+
+    /* Print a thank you note and the instruction to install the package
+       on the server machine. */
+
+    *ostr << html::p()
+	  << "Thank you for your kind business. The download of your personal"
+	  << " configuration package should start shortly. You should execute"
+	  << " the following command to install it onto your machine"
+	  << html::p::end;
+
+    *ostr << html::pre().classref("code")
+	  << "sudo dpkg -i --force-overwrite " << packagePath.filename()
+	  << html::pre::end;
+
+    *ostr << html::p()
+	  << "In order to verify the configuration is working correctly,"
+	  << " you can then follow a " << html::a().href("testing.book")
+	  << "few basic steps" << html::a::end << '.'
+	  <<  html::p::end;
+
+    showConfig(*ostr,domainName,adminLogin);
+
+    *ostr << html::p()
+	  << "For any reason or comment, please feel free to "
+	  << html::a().href("mailto:info@fortylines.com") 
+	  << "contact us" << html::a::end << '.'
+	  << html::p::end;
 }
+
+
+void 
+forceDownload::fetch( session& s, const boost::filesystem::path& pathname ) 
+{    
+    boost::filesystem::path packagePath = s.abspath(pathname);
+
+    size_t packageSize = boost::filesystem::file_size(packagePath);
+#if 0
+    *ostr << "Content-Type: application/octet-stream\r\n";
+#endif
+    *ostr << httpHeaders.contentType("application/octet-stream","")
+	.contentLength(packageSize)
+	.contentDisposition("attachment",pathname.filename());
+#if 0
+    *ostr << "Content-Disposition: attachment;filename=\""
+	  << pathname.filename() << "\"\r\n\r\n";
+#endif
+
+    boost::filesystem::ifstream istr(packagePath,std::ios::binary);
+    char conf[packageSize];
+    istr.read(conf,packageSize);
+    ostr->write(conf,packageSize);
+    istr.close();
+}
+

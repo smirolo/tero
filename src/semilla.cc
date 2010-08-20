@@ -105,6 +105,7 @@ int main( int argc, char *argv[] )
 
 	options_description opts;
 	opts.add(genOptions).add(authOptions).add(postOptions).add(calOptions);
+	payment::addSessionVars(opts);
 	confgenCheckout::addSessionVars(opts);
 	char *pathInfo = getenv("PATH_INFO");
 	if( pathInfo != NULL ) {	    
@@ -130,7 +131,7 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
 	    || s.vars["view"] == "/" ) {
-	    cout << redirect("index.html") << htmlContent << endl;
+	    cout << httpHeaders.location(url("index.html"));
 	    
 	} else {	    		       
 	    gitcmd revision(s.valueOf("binDir") + "/git");
@@ -329,10 +330,13 @@ int main( int argc, char *argv[] )
 	    composer payText(std::cout,composer::error);
 	    docs.add("document",boost::regex(".*\\.buy"),payText);
 
-	    confgenCheckout cfc(std::cout);
-	    confgenDeliver cfd(std::cout);
+	    confgenCheckout cfc(std::cout,"/teroDeliver");
+	    confgenDeliver cfd(std::cout,"/teroDeliver");
+	    forceDownload download(std::cout);
 	    docs.add("document",boost::regex("/teroCheckout"),cfc);
 	    docs.add("document",boost::regex("/teroDeliver"),cfd);
+	    docs.add("view",boost::regex("/download.*"),download);
+	    docs.add("document",boost::regex("/download.*"),download);
 
 	    docs.add("document",boost::regex(".*"),rawtext);
 
@@ -394,7 +398,7 @@ int main( int argc, char *argv[] )
 #endif
 	} catch( exception& e ) {
 	    /* Something went really wrong if we either get here. */
-	    cout << htmlContent << endl;
+	    cout << httpHeaders;
 	    cout << "<html>" << endl;
 	    cout << "<head>" << endl;
 	    cout << "<TITLE>It is really bad news...</TITLE>" << endl;
