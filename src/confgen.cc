@@ -175,7 +175,7 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     while( fgets(line,sizeof(line),cmdfile) != NULL ) {
 	std::cerr << line;
     }
-    err = pclose(diffFile);
+    err = pclose(cmdfile);
 #endif
 
     if( err ) {
