@@ -141,11 +141,11 @@ confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
     std::string packageName = domainName;
     std::replace(packageName.begin(),packageName.end(),'.','-');
     packagePath = s.valueOf("buildTop") 
-	+ "/" + packageName + "-ubuntu1_amd64.deb";
+	+ "/" + packageName + "_0.1" + "-ubuntu1_amd64.deb";
 
     std::stringstream d;
     d << "/download/" << packagePath.filename();
-    httpHeaders.refresh(0,url(d.str()));
+    httpHeaders.refresh(20,url(d.str()));
 }
 
 
@@ -156,6 +156,32 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     /* Check the request is actually coming from Amazon. */
     payment::checkReturn(s,thisPathname);
 #endif
+
+    /* Print a thank you note and the instruction to install the package
+       on the server machine. */
+    *ostr << html::p()
+	  << "Thank you for your kind business. The download of your personal"
+	  << " configuration package should start shortly. You should execute"
+	  << " the following command to install it onto your machine"
+	  << html::p::end;
+
+    *ostr << html::pre().classref("code")
+	  << "sudo dpkg -i --force-overwrite " << packagePath.filename()
+	  << html::pre::end;
+
+    *ostr << html::p()
+	  << "In order to verify the configuration is working correctly,"
+	  << " you can then follow a " << html::a().href("testing.book")
+	  << "few basic steps" << html::a::end << '.'
+	  <<  html::p::end;
+
+    showConfig(*ostr,domainName,adminLogin);
+
+    *ostr << html::p()
+	  << "For any reason or comment, please feel free to "
+	  << html::a().href("mailto:info@fortylines.com") 
+	  << "contact us" << html::a::end << '.'
+	  << html::p::end;
 
     /* Execute the underlying script used to generate 
        the configuration package. */
@@ -181,33 +207,6 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     if( err ) {
 	throw std::runtime_error("error generating the configuration file");
     }
-
-    /* Print a thank you note and the instruction to install the package
-       on the server machine. */
-
-    *ostr << html::p()
-	  << "Thank you for your kind business. The download of your personal"
-	  << " configuration package should start shortly. You should execute"
-	  << " the following command to install it onto your machine"
-	  << html::p::end;
-
-    *ostr << html::pre().classref("code")
-	  << "sudo dpkg -i --force-overwrite " << packagePath.filename()
-	  << html::pre::end;
-
-    *ostr << html::p()
-	  << "In order to verify the configuration is working correctly,"
-	  << " you can then follow a " << html::a().href("testing.book")
-	  << "few basic steps" << html::a::end << '.'
-	  <<  html::p::end;
-
-    showConfig(*ostr,domainName,adminLogin);
-
-    *ostr << html::p()
-	  << "For any reason or comment, please feel free to "
-	  << html::a().href("mailto:info@fortylines.com") 
-	  << "contact us" << html::a::end << '.'
-	  << html::p::end;
 }
 
 
