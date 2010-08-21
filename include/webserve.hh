@@ -227,6 +227,7 @@ extern emptyParaHackType emptyParaHack;
 /** \brief Populate options based on environment variables and stdin
  */
 boost::program_options::basic_parsed_options<char>
-parse_cgi_options( const boost::program_options::options_description& descr );
+parse_cgi_options( const boost::program_options::options_description& descr,
+		   std::map<std::string,std::string>& query );
 
 #endif

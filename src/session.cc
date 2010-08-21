@@ -27,6 +27,7 @@
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include "session.hh"
 #include <uriparser/Uri.h>
+#include "payment.hh"
 
 /* For security, we want to store the absolute path to the config
    file into the executable binary. */
@@ -39,15 +40,14 @@ undefVariableError::undefVariableError( const std::string& varname )
     : std::runtime_error(std::string("undefined variable in session ") 
 			 + varname) {}
 
-bool session::pathOptionsInit = false;
-
-boost::program_options::options_description session::pathOptions("paths");
+bool session::sessionOptionsInit = false;
+boost::program_options::options_description session::sessionOptions("session");
 
 session::session() : id(0) {
     using namespace boost::program_options;
 
-    if( !pathOptionsInit ) {
-    pathOptions.add_options()
+    if( !sessionOptionsInit ) {
+	sessionOptions.add_options()
 	("binDir",value<std::string>(),"path to outside executables")
 	("buildTop",value<std::string>(),"path to build root")
 	("siteTop",value<std::string>(),"path to the files published on the web site")
@@ -56,10 +56,16 @@ session::session() : id(0) {
 	("remoteSrcTop",value<std::string>(),"path to root of the project repositories")
 	("remoteIndexFile",value<std::string>(),"path to project interdependencies")
 	("themeDir",value<std::string>(),"path to user interface elements")
-	("contractDb",value<std::string>(),"path to contracts database");
-
-    pathOptionsInit = true;
+	("session",value<std::string>(),"session")
+	("message,m",value<std::string>(),"message");
+    sessionOptionsInit = true;
     }
+}
+
+void 
+session::addSessionVars( boost::program_options::options_description& opts )
+{
+    opts.add(sessionOptions);
 }
 
 
@@ -178,26 +184,6 @@ void session::restore( const boost::program_options::variables_map& params )
     using namespace boost::filesystem;
     using namespace boost::program_options;
 
-    /* If there are any QUERY_STRING, parse the parameters in it. */
-    char *cQueryString = getenv("QUERY_STRING");
-    if( cQueryString != NULL ) {
-	int err = 0;
-	int itemCount = 0;
-	UriQueryListA *queryList = NULL;
-	if( (err = uriDissectQueryMallocA(&queryList,
-					  &itemCount,
-					  cQueryString,
-					  &cQueryString[strlen(cQueryString)])) 
-	    == URI_SUCCESS ) {	
-	    for( UriQueryListStructA *item = queryList;
-		 item != NULL; item = item->next ) {
-		query[item->key] = item->value;
-		vars[item->key] = item->value;
-	    }
-	    uriFreeQueryListA(queryList);
-	}
-    }
-
     /* 1. initialize more configuration from the script input */
     for( variables_map::const_iterator param = params.begin(); 
 	 param != params.end(); ++param ) {
@@ -216,12 +202,19 @@ void session::restore( const boost::program_options::variables_map& params )
 
     ifstream istr(config);
     if( istr.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(std::string("file not found"),
-							    config, 
-							    boost::system::error_code()));
+	boost::throw_exception(
+		basic_filesystem_error<path>(std::string("file not found"),
+					     config, 
+					     boost::system::error_code()));
     }
-    
-    boost::program_options::store(parse_config_file(istr,pathOptions,true),
+
+#if 1
+    /* \todo HACK to get from the variables from config file. */
+    options_description opts;
+    payment::addSessionVars(opts);
+    opts.add(sessionOptions);
+#endif
+    boost::program_options::store(parse_config_file(istr,opts,true),
 				  configVars);
 	
     for( variables_map::const_iterator param = configVars.begin(); 

@@ -50,19 +50,17 @@ class session {
 public:
     typedef std::map<std::string,std::string> variables;
 
+protected:
+    static bool sessionOptionsInit;
+    static boost::program_options::options_description sessionOptions;
+
 public:
     /* \todo workout details of auth.cc first before making private. */
     /* map of variable names to values */
     variables vars;
-
-    /* map of (name,value) pairs present in the QUERY_STRING. */
     variables query;
     
 public:
-
-    static bool pathOptionsInit;
-
-    static boost::program_options::options_description pathOptions;
 
     static boost::filesystem::path storage;
 
@@ -73,6 +71,9 @@ public:
     
     
     session();
+
+    static void 
+    addSessionVars( boost::program_options::options_description& opts );
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */

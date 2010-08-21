@@ -51,6 +51,9 @@ protected:
 public:
     explicit calendar( std::ostream& o ) : document(o) {}
 
+    static void 
+    addSessionVars( boost::program_options::options_description& opts );
+
     void parse( session& s, std::istream& ins );
     void fetch( session& s, const boost::filesystem::path& pathname );
 };

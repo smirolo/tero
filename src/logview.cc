@@ -123,41 +123,46 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	"machine." << html::p::end;
 
     /* Display the table column headers. */
-    *ostr << html::table();
-    *ostr << html::tr();
-    *ostr << html::th() << html::th::end;
-    for( colHeadersType::const_iterator col = colHeaders.begin();
-	 col != colHeaders.end(); ++col ) {
-	*ostr << html::th() 
-		  << html::a().href(s.subdirpart(s.valueOf("siteTop"),
-						 dirname / col->string()).string())
-		  << *col << html::a::end << html::th::end;
-    }
-    *ostr << html::tr::end;
-
-    /* Display one project per row, one build result per column. */
-    for( tableType::const_iterator row = table.begin();
-	 row != table.end(); ++row ) {
+    if( colHeaders.empty() ) {
+	*ostr << html::pre() << "There are no logs available"
+	      << html::pre::end;
+    } else {
+	*ostr << html::table();
 	*ostr << html::tr();
-	*ostr << html::th() << projhref(row->first) << html::th::end;
+	*ostr << html::th() << html::th::end;
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
-	    colType::const_iterator value = row->second.find(*col);
-	    if( value != row->second.end() ) {
-		if( value->second.second ) {
-		    *ostr << html::td().classref("positiveErrorCode");
+	    *ostr << html::th() 
+		  << html::a().href(s.subdirpart(s.valueOf("siteTop"),
+					    dirname / col->string()).string())
+		  << *col << html::a::end << html::th::end;
+	}
+	*ostr << html::tr::end;
+
+	/* Display one project per row, one build result per column. */
+	for( tableType::const_iterator row = table.begin();
+	     row != table.end(); ++row ) {
+	    *ostr << html::tr();
+	    *ostr << html::th() << projhref(row->first) << html::th::end;
+	    for( colHeadersType::const_iterator col = colHeaders.begin();
+		 col != colHeaders.end(); ++col ) {
+		colType::const_iterator value = row->second.find(*col);
+		if( value != row->second.end() ) {
+		    if( value->second.second ) {
+			*ostr << html::td().classref("positiveErrorCode");
+		    } else {
+			*ostr << html::td();
+		    }
+		    *ostr << value->second.first;	
 		} else {
 		    *ostr << html::td();
 		}
-		*ostr << value->second.first;	
-	    } else {
-		*ostr << html::td();
+		*ostr << html::td::end;
 	    }
-	    *ostr << html::td::end;
+	    *ostr << html::tr::end;
 	}
-	*ostr << html::tr::end;
+	*ostr << html::table::end;
     }
-    *ostr << html::table::end;
 
     /* footer */
     *ostr << html::p() << "Each cell contains the make target on which "

@@ -78,6 +78,9 @@ public:
      */
     uint32_t score;
 
+    static void 
+    addSessionVars( boost::program_options::options_description& opts );
+
     /** remove non meaningful whitespaces from the *author* and *title* fields. 
      */
     void normalize();

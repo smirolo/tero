@@ -27,6 +27,20 @@
 #include "invoices.hh"
 #include "markup.hh"
 
+
+void 
+statement::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+
+    options_description statementOptions("statement");
+    statementOptions.add_options()
+	("client",value<std::string>(),"client")	    
+	("contractDb",value<std::string>(),"path to contracts database");
+    opts.add(statementOptions);
+}
+
+
 void statement::header() {
 }
 

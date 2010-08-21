@@ -79,6 +79,18 @@ int su_conv( int num_msg,
 }
 #endif
 
+
+void auth::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+    
+    options_description authOptions("authentication");
+    authOptions.add_options()
+	("credentials",value<std::string>(),"credentials")
+	("username",value<std::string>(),"username");
+    opts.add(authOptions);
+}
+
 void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
 #if 0
     /* This code is used to debug initial permission problems. */

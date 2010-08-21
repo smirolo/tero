@@ -72,57 +72,46 @@ int main( int argc, char *argv[] )
     try {
 	/* parse command line arguments */
 	variables_map params;
+	options_description opts;
 	options_description genOptions("general");
 	genOptions.add_options()
-	    ("help","produce help message")
-	    ("config",value<std::string>(),"load configuration file");
-
-	options_description authOptions("authentication");
-	authOptions.add_options()
-	    ("credentials",value<std::string>(),"credentials")
+	    ("config",value<std::string>(),"load configuration file")
 	    ("document",value<std::string>(),"document")
-	    ("right",value<std::string>(),"commit tag for right pane of diff")
-	    ("session",value<std::string>(),"session")
-	    ("username",value<std::string>(),"username")
-	    ("message,m",value<std::string>(),"message")
-	    ("view",value<std::string>(),"view")
-	    ("href",value<std::string>(),"href")
-	    ("client",value<std::string>(),"client")	    
-	    ("editedText",value<std::string>(),"text submitted after an online edit");
-
-	positional_options_description pd; 
-	pd.add("view", 1);
-
-	options_description calOptions("calendar");
-	calOptions.add_options()
-	    ("month",value<std::string>(),"month");
-
-	options_description postOptions("posts");
-	postOptions.add_options()
-	    ("title",value<std::string>(),"title")
-	    ("author",value<std::string>(),"author")
-	    ("descr",value<std::string>(),"descr");
-
-	options_description opts;
-	opts.add(genOptions).add(authOptions).add(postOptions).add(calOptions);
+	    ("help","produce help message")
+	    ("view",value<std::string>(),"view");
+	
+	opts.add(genOptions);
+	session::addSessionVars(opts);
+	auth::addSessionVars(opts);
+	change::addSessionVars(opts);
+	post::addSessionVars(opts);
+	calendar::addSessionVars(opts);
+	statement::addSessionVars(opts);
 	payment::addSessionVars(opts);
 	confgenCheckout::addSessionVars(opts);
+
 	char *pathInfo = getenv("PATH_INFO");
-	if( pathInfo != NULL ) {	    
-	    store(parse_cgi_options(opts),params);
+	command_line_parser parser(argc, argv);
+	parser.options(opts);
+	if( pathInfo != NULL ) {
+	    store(parser.run(),params);    
+	    store(parse_cgi_options(opts,s.query),params);
 	    
 	} else {
-	    /* There is no PATH_INFO environment variable
-	       so we might be running the application
-	       as a non-cgi from the command line. */
-	    command_line_parser parser(argc, argv);
-	    opts.add(session::pathOptions);
-	    parser.options(opts).positional(pd);
+	    /* There is no PATH_INFO environment variable so we might be 
+	       running the application as a non-cgi from the command line. */
+	    positional_options_description pd; 
+	    pd.add("view", 1);
+	    parser.positional(pd);
 	    store(parser.run(),params);
 	}
 	
 	if( params.count("help") ) {
 	    cout << opts << endl;
+	    cout << "1. Environment variables\n"
+		 << "2. Command-line arguments\n"
+		 << "3. Session database\n"
+		 << "4. Configuration file\n";
 	    return 0;
 	}
 	

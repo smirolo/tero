@@ -46,6 +46,9 @@ class auth : public document {
 public:
     explicit auth( std::ostream& o ) : document(o) {}
 
+    static void 
+    addSessionVars( boost::program_options::options_description& opts );
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 

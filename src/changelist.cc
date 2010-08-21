@@ -49,6 +49,20 @@ void cancel::fetch( session& s, const boost::filesystem::path& pathname ) {
 }
 
 
+void 
+change::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+
+    options_description changeOpts("changelist");
+    changeOpts.add_options()    
+	("href",value<std::string>(),"href")
+	("right",value<std::string>(),"commit tag for right pane of diff")
+	("editedText",value<std::string>(),"text submitted after an online edit");
+    opts.add(changeOpts);
+}
+
+
 void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
@@ -222,15 +236,9 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	htmlEscaper esc;
 
 	/* \todo get the title and domainname from the session. */
-#if 0
-	*ostr << "Content-Type:application/rss+xml;charset=iso-8859-1\r\n"
-		  << "\r\n";
-#else
-	*ostr << "Content-Type:application/rss+html;charset=iso-8859-1\r\n"
-		  << "\r\n";
-#endif
-	*ostr << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
-	
+	*ostr << httpHeaders.contentType("application/rss+xml");
+
+	*ostr << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;	
 #if 0
 	*ostr << ::rss().version("2.0")
 		  << channel()

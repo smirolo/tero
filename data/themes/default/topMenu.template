@@ -3,8 +3,10 @@
     <p>
       <a href="/log">builds</a><br />
       <a href="/contrib/todos/active/">todos</a><br />           
+      <!-- in development
       <a href="/schedule.ics">schedule</a><br />
       <a href="/contrib/">contributors</a><br />     
-      <a href="/lists/">mailing archives</a><br />
+      -->
+      <a href="/pipermail">mailing archives</a><br />
     </p>
   </div>

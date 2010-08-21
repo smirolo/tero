@@ -57,9 +57,11 @@ namespace {
 void confgenCheckout::addSessionVars( 
 			  boost::program_options::options_description& opts ) {
     using namespace boost::program_options;
-    opts.add_options()
+    options_description teroOpts("tero");
+    teroOpts.add_options()
 	("confgenDomain",value<std::string>(),"confgenDomain")
 	("confgenAdmin",value<std::string>(),"confgenAdmin");
+    opts.add(teroOpts);
 }
 
 
@@ -202,7 +204,7 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     cmd << s.valueOf("binDir") << "/dservices --skip-recurse " 
 	<< domainName << " " << adminLogin;
 
-#if 0
+#if 1
     err = system(cmd.str().c_str());
 #else
     char line[256];
@@ -228,16 +230,10 @@ forceDownload::fetch( session& s, const boost::filesystem::path& pathname )
     boost::filesystem::path packagePath = s.abspath(pathname);
 
     size_t packageSize = boost::filesystem::file_size(packagePath);
-#if 0
-    *ostr << "Content-Type: application/octet-stream\r\n";
-#endif
+
     *ostr << httpHeaders.contentType("application/octet-stream","")
 	.contentLength(packageSize)
 	.contentDisposition("attachment",pathname.filename());
-#if 0
-    *ostr << "Content-Disposition: attachment;filename=\""
-	  << pathname.filename() << "\"\r\n\r\n";
-#endif
 
     boost::filesystem::ifstream istr(packagePath,std::ios::binary);
     char conf[packageSize];

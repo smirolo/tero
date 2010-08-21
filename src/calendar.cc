@@ -87,6 +87,18 @@ void calendar::any( const std::string& s ) {
 }
 
 
+void 
+calendar::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+
+    options_description calOptions("calendar");
+    calOptions.add_options()
+	("month",value<std::string>(),"month");
+    opts.add(calOptions);
+}
+
+
 calendar::walkNodeEntry* calendar::walker( const std::string& s ) {
     walkNodeEntry *walkersEnd 
 	= &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];

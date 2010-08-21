@@ -27,6 +27,18 @@
 #include "markup.hh"
 #include <boost/date_time/date_facet.hpp>
 
+void 
+post::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+
+    options_description postOptions("posts");
+    postOptions.add_options()
+	("title",value<std::string>(),"title")
+	("author",value<std::string>(),"author")
+	("descr",value<std::string>(),"descr");
+    opts.add(postOptions);
+}
 
 void post::normalize() {
     title = ::normalize(title);

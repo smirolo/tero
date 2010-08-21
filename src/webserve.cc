@@ -183,9 +183,11 @@ std::string reverseCGIFormatting( const std::string& str ) {
 
 void parse_cgi_line( std::vector<boost::program_options::option>& opts, 
 		     const boost::program_options::options_description& descr,
-		     const char* input, size_t len, const char sep = '&' ) {
+		     const char* input, size_t len, 
+		     std::map<std::string,std::string>& query,
+		     const char sep = '&' ) {
     using namespace boost::program_options;
-    
+#if 0    
     bool final = false;
     const char *last = &input[len];
     const char *nameFirst = input;
@@ -213,18 +215,40 @@ void parse_cgi_line( std::vector<boost::program_options::option>& opts,
 	// cookies (name=value) are separated by a semi-colon and a space
 	while( *nameFirst == ' ' ) ++nameFirst;
     }
+#else
+    int err = 0;
+    int itemCount = 0;
+    UriQueryListA *queryList = NULL;
+    if( (err = uriDissectQueryMallocA(&queryList,&itemCount,
+				      input,&input[len])) == URI_SUCCESS ) {	
+	for( UriQueryListStructA *item = queryList;
+	     item != NULL; item = item->next ) {
+	    query[item->key] = item->value;
+	    option opt;
+	    const option_description* optDescr 
+		= descr.find_nothrow(item->key,false);
+	    if( optDescr != NULL ) {
+		opt.string_key = item->key;
+		opt.value.push_back(item->value);
+		opts.push_back(opt);
+	    }
+	}
+	uriFreeQueryListA(queryList);
+    }    
+#endif
 }
 
 
 boost::program_options::basic_parsed_options<char>
-parse_cgi_options( const boost::program_options::options_description& descr ) 
+parse_cgi_options( const boost::program_options::options_description& descr,
+		   std::map<std::string,std::string>& query ) 
 {
     using namespace boost::program_options;
     std::vector<option> opts;
     
     char *cookie = getenv("HTTP_COOKIE");
     if( cookie != NULL ) {
-	parse_cgi_line(opts,descr,cookie,strlen(cookie),';');
+	parse_cgi_line(opts,descr,cookie,strlen(cookie),query,';');
     }
     
     char *cPathInfo = getenv("PATH_INFO");
@@ -240,19 +264,19 @@ parse_cgi_options( const boost::program_options::options_description& descr )
 	    opt.original_tokens.push_back(pathInfo);
 	    opts.push_back(opt);
 	}
-	
-	char *cQueryString = getenv("QUERY_STRING");
-	if( cQueryString != NULL ) {
-	    parse_cgi_line(opts,descr,cQueryString,strlen(cQueryString));
-	}
     }
-    
+	
+    char *cQueryString = getenv("QUERY_STRING");
+    if( cQueryString != NULL ) {
+	parse_cgi_line(opts,descr,cQueryString,strlen(cQueryString),query);
+    }
+        
     long len;
     char *lenstr = getenv("CONTENT_LENGTH");
     if( lenstr != NULL && sscanf(lenstr,"%ld",&len) == 1 ) {
 	char input[len];
 	fgets(input, len + 1, stdin);
-	parse_cgi_line(opts,descr,input,len);
+	parse_cgi_line(opts,descr,input,len,query);
     }
     
     parsed_options result(&descr);

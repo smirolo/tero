@@ -52,6 +52,13 @@ void GetPublicKeyFromCert( const char* pathname,
 
     std::stringstream sg;
     std::ifstream pem(pathname);
+    if( pem.fail() ) {
+	using namespace boost::filesystem;
+	boost::throw_exception(
+	        basic_filesystem_error<path>(std::string("file not found"),
+							    pathname, 
+					     boost::system::error_code()));
+    }
     std::string line;
     std::getline(pem,line);
     while( !pem.eof() ) {

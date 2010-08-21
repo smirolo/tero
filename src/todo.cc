@@ -37,14 +37,6 @@ todoAdapter::fetch( session& s, const boost::filesystem::path& p ) {
 		   "vote for todo item",1);
 }
 
-#if 0
-
-boost::filesystem::path 
-todoAdapter::asPath( const boost::uuids::uuid& id ) const
-{
-}
-#endif
-
 
 const boost::regex todoFilter::viewPat(".*todos/.+");
 

@@ -37,10 +37,12 @@ void
 payment::addSessionVars( boost::program_options::options_description& opts ) {
     using namespace boost::program_options;
     /* For authentication with Amazon payment services. */
-    opts.add_options()
+    options_description amazonOpts("amazon");
+    amazonOpts.add_options()
 	("awsAccessKey",value<std::string>(),"Amazon Access Key")
 	("awsSecretKey",value<std::string>(),"Amazon Secret Key")
 	("awsCertificate",value<std::string>(),"Amazon Public Certificate");
+    opts.add(amazonOpts);
 }
 
 

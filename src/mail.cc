@@ -91,9 +91,6 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 		if( stopOnFirst ) break;
 		p.descr = descr.str();
 		descr.str("");
-#if 0
-		std::cerr << "new post at line " << lineCount << std::endl;
-#endif
 		p.normalize();
 		filter->filters(p);
 	    }
@@ -107,9 +104,6 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 	    try {
 		p.time = from_mbox_string(line.substr(5));
 	    } catch( std::exception& e ) {
-#if 0
-		std::cerr << "!!! exception " << e.what() << std::endl; 
-#endif
 	    }
 	    state = dateParse;
 	} else if( line.compare(0,5,"From:") == 0 ) {
