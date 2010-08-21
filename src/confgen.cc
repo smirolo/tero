@@ -157,17 +157,30 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     payment::checkReturn(s,thisPathname);
 #endif
 
-#if 0
     /* Execute the underlying script used to generate 
        the configuration package. */
+    int err = 0;
     std::stringstream cmd;
     cmd << s.valueOf("binDir") << "/dservices --skip-recurse " 
 	<< domainName << " " << adminLogin;
+
+#if 0
     err = system(cmd.str().c_str());
+#else
+    char line[256];
+    FILE *cmdfile = popen(cmd.str().c_str(),"r");
+    if( cmdfile == NULL ) {
+	throw std::runtime_error("error: unable to execute command.");
+    }
+    while( fgets(line,sizeof(line),cmdfile) != NULL ) {
+	std::cerr << line;
+    }
+    err = pclose(diffFile);
+#endif
+
     if( err ) {
 	throw std::runtime_error("error generating the configuration file");
     }
-#endif 
 
     /* Print a thank you note and the instruction to install the package
        on the server machine. */
