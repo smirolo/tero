@@ -135,7 +135,12 @@ confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
     /* Extract the *domainName* and *adminLogin* that will be used to generate
        the configuration package.*/
     std::string referenceId = s.valueOf("referenceId");
-    referenceId = "adm@codespin.is-a-geek.com";
+#if 1
+    if( referenceId.empty() ) {
+	/* Hack used for testing */
+	referenceId = "adm@codespin.is-a-geek.com";
+    }
+#endif
     adminLogin = referenceId.substr(0,referenceId.find('@'));
     domainName = referenceId.substr(referenceId.find('@') + 1);
     std::string packageName = domainName;
@@ -144,8 +149,12 @@ confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
 	+ "/" + packageName + "_0.1" + "-ubuntu1_amd64.deb";
 
     std::stringstream d;
+    d << "tero package for " << domainName;
+    s.vars["title"] = d.str();
+
+    d.str("");
     d << "/download/" << packagePath.filename();
-    httpHeaders.refresh(20,url(d.str()));
+    httpHeaders.refresh(10,url(d.str()));
 }
 
 
@@ -166,6 +175,9 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
 	  << html::p::end;
 
     *ostr << html::pre().classref("code")
+	  << "DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -y install"
+	" postfix mailman dovecot-imapd apache2 awstats libsasl2-2 sasl2-bin"
+	  << std::endl
 	  << "sudo dpkg -i --force-overwrite " << packagePath.filename()
 	  << html::pre::end;
 
@@ -178,7 +190,7 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     showConfig(*ostr,domainName,adminLogin);
 
     *ostr << html::p()
-	  << "For any reason or comment, please feel free to "
+	  << "For any comment, please feel free to "
 	  << html::a().href("mailto:info@fortylines.com") 
 	  << "contact us" << html::a::end << '.'
 	  << html::p::end;
