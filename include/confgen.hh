@@ -29,6 +29,12 @@
 #include "document.hh"
 #include <boost/program_options.hpp>
 
+/**
+   Pipeline to generate a "tero" configuration.
+
+   Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+*/
+
 class confgenCheckout : public document {
 protected:
     const char *nextPathname;

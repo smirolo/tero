@@ -28,6 +28,12 @@
 #include "markup.hh"
 #include <boost/filesystem/fstream.hpp>
 
+/** Tero processing pipeline
+
+    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+*/
+
+
 namespace {
 
     void showConfig( std::ostream& ostr,

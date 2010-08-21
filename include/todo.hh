@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2009, Sebastien Mirolo
+/* Copyright (c) 2009, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -13,10 +13,10 @@
        names of its contributors may be used to endorse or promote products
        derived from this software without specific prior written permission.
 
-   THIS SOFTWARE IS PROVIDED BY Sebastien Mirolo ''AS IS'' AND ANY
+   THIS SOFTWARE IS PROVIDED BY Fortylines LLC ''AS IS'' AND ANY
    EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-   DISCLAIMED. IN NO EVENT SHALL Sebastien Mirolo BE LIABLE FOR ANY
+   DISCLAIMED. IN NO EVENT SHALL Fortylines LLC BE LIABLE FOR ANY
    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -31,6 +31,12 @@
 #include "mail.hh"
 #include "adapter.hh"
 #include <boost/uuid/uuid.hpp>
+
+/** Pages related to todo items.
+
+    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+*/
+
 
 /** An adapter is used to associate identifiers and pathnames
  */
