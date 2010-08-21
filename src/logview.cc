@@ -113,7 +113,7 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	      << html::p::end;
     *ostr << html::pre() << html::a().href("/resources/dws") 
 	      << "dws" << html::a::end << " build " 
-	      << s.valueOf("remoteIndex")
+	      << s.valueOf("remoteIndexFile")
 	      << html::pre::end;
     *ostr << html::p() << "dws, the inter-project dependency tool "
 	"generates a build log file with XML markups as part of building "

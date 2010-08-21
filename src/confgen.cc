@@ -161,7 +161,7 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     /* Execute the underlying script used to generate 
        the configuration package. */
     std::stringstream cmd;
-    cmd << s.valueOf("binDir") << "/dservices " 
+    cmd << s.valueOf("binDir") << "/dservices --skip-recurse " 
 	<< domainName << " " << adminLogin;
     err = system(cmd.str().c_str());
     if( err ) {
