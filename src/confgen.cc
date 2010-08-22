@@ -122,8 +122,10 @@ confgenCheckout::fetch( session& s, const boost::filesystem::path& pathname )
     
     showConfig(*ostr,domainName,adminLogin);
 
+    /* Be careful to use our domainName here and not the domainName
+       being configured. */
     payment::show(*ostr,s,
-		  url("http",domainName,nextPathname),
+		  url("http",s.valueOf("domainName"),nextPathname),
 		  referenceId.str(),25,descr.str());
     
     *ostr << html::p() 
@@ -168,10 +170,8 @@ confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
 void 
 confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
-#if 0
     /* Check the request is actually coming from Amazon. */
     payment::checkReturn(s,thisPathname);
-#endif
 
     /* Print a thank you note and the instruction to install the package
        on the server machine. */
