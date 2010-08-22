@@ -182,8 +182,8 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
 	  << html::p::end;
 
     *ostr << html::pre().classref("code")
-	  << "DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -y install"
-	" postfix mailman dovecot-imapd apache2 awstats libsasl2-2 sasl2-bin"
+	  << "DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -y install \\\n"
+       "     postfix mailman dovecot-imapd apache2 awstats libsasl2-2 sasl2-bin"
 	  << std::endl
 	  << "sudo dpkg -i --force-overwrite " << packagePath.filename()
 	  << html::pre::end;

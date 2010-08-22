@@ -7,6 +7,8 @@
       <a href="/schedule.ics">schedule</a><br />
       <a href="/contrib/">contributors</a><br />     
       -->
+      <!-- \todo? /pipermail is not aliased on public website.
       <a href="/pipermail">mailing archives</a><br />
+      -->
     </p>
   </div>
