@@ -88,8 +88,7 @@ confgenCheckout::fetch( session& s, const boost::filesystem::path& pathname )
     std::stringstream referenceId;
     referenceId << s.valueOf("confgenAdmin") << '@' << domainName;
     std::stringstream descr;
-    descr << "configuration of a stock Ubuntu 10.04 Server Edition"
-	" as a communication platform for " << domainName;
+    descr << "config of " << domainName << " as a dev server";
 
     /* Print the HTML that explains the product sold 
        alongside the pay button. */
