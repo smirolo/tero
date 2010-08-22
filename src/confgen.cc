@@ -144,7 +144,7 @@ confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
     /* Extract the *domainName* and *adminLogin* that will be used to generate
        the configuration package.*/
     std::string referenceId = s.valueOf("referenceId");
-#if 1
+#if 0
     if( referenceId.empty() ) {
 	/* Hack used for testing */
 	referenceId = "adm@codespin.is-a-geek.com";
@@ -163,7 +163,7 @@ confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
 
     d.str("");
     d << "/download/" << packagePath.filename();
-    httpHeaders.refresh(10,url(d.str()));
+    httpHeaders.refresh(5,url(d.str()));
 }
 
 
@@ -209,7 +209,7 @@ confgenDeliver::fetch( session& s, const boost::filesystem::path& pathname )
     cmd << s.valueOf("binDir") << "/dservices --skip-recurse " 
 	<< domainName << " " << adminLogin;
 
-#if 1
+#if 0
     err = system(cmd.str().c_str());
 #else
     char line[256];
