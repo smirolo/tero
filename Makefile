@@ -26,7 +26,7 @@
 # -*- Makefile -*-
 
 include $(shell dws context)
-include $(etcBuildDir)/dws/prefix.mk
+include $(makeHelperDir)/prefix.mk
 
 bins 		:=	semilla
 etcs		:=	semilla.conf
@@ -59,7 +59,7 @@ semilla.conf: $(shell dws context)
 
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 
-include $(etcBuildDir)/dws/suffix.mk
+include $(makeHelperDir)/suffix.mk
 
 install:: $(wildcard $(srcDir)/data/themes/default/*)
 	$(installDirs) $(shareDir)/semilla
