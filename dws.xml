@@ -29,7 +29,7 @@
       </dep>      
       <dep name="drop">
 	<bin>dws</bin>
-	<etc>.*/(dws)/prefix.mk</etc>
+	<share>.*/(dws)/prefix.mk</share>
       </dep>
       <dep name="contrib/boost">
 	<include>.*/(boost)/version.hpp</include>
