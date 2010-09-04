@@ -124,7 +124,8 @@ public:
     
     /** \brief Load a session from persistent storage 
      */
-    void restore( const boost::program_options::variables_map& params );
+    void restore( const boost::program_options::options_description& opts,
+		  const boost::program_options::variables_map& params );
 
     /* look for a relative pathname *trigger* from *leaf* to the root
        of the filesystem and return the stem such that stem / *trigger*

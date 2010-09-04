@@ -127,7 +127,7 @@ void GetPublicKeyFromCert( const char* pathname,
 }
 
 
-#if 0
+#if 1
 const char *awsStandardButton::paypipeline 
     = "https://authorize.payments-sandbox.amazon.com/pba/paypipeline";
 #else

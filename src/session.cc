@@ -182,7 +182,8 @@ session::build( const boost::filesystem::path& p ) const
 }
 
 
-void session::restore( const boost::program_options::variables_map& params )
+void session::restore( const boost::program_options::options_description& opts,
+		       const boost::program_options::variables_map& params )
 {
     using namespace boost;
     using namespace boost::system;
@@ -213,12 +214,6 @@ void session::restore( const boost::program_options::variables_map& params )
 					     boost::system::error_code()));
     }
 
-#if 1
-    /* \todo HACK to get from the variables from config file. */
-    options_description opts;
-    payment::addSessionVars(opts);
-    opts.add(sessionOptions);
-#endif
     boost::program_options::store(parse_config_file(istr,opts,true),
 				  configVars);
 	

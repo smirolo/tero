@@ -120,7 +120,7 @@ int main( int argc, char *argv[] )
 	    return 0;
 	}
 	
-	s.restore(params);
+	s.restore(opts,params);
 
 	/* by default bring the index page */
 	if( s.vars["view"].empty()
