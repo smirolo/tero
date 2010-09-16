@@ -49,9 +49,23 @@ public:
 };
 
 
-/** A session instance is used to store "global variables" as defined
-    when the CGI script is invoked and translate relative pathnames 
-    into absolute pathnames to files on the server.
+/** A session instance is used to store "global variables", i.e. a set
+    of (name,value) pairs, persistent accross runs of the program and
+    thus implement a stateful application over stateless http connections.
+
+    1. The session is first initialized with environment variables passed
+       through the CGI invokation.
+    2. If a "sessionId" and a derived file exists, the (name,value) pairs 
+       in that session file are added to the session.
+    3. The command-line arguments are then added to the session as well.
+    4. If a "configFile" name does not exist at this point, a (configFile,
+       filename) pair compiled into the binary executable is added.
+    5. If the config file exists, the (name,value) pairs in that config file
+       are added to the session.
+    
+    Whether adding a (name,value) pair for an already existing name overrides
+    the previous value or get discarded is a policy choice between config
+    flexiblity and server control.
  */
 class session {
 public:
