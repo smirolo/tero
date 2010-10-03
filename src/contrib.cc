@@ -38,7 +38,7 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
 
 void contribIdx::meta( session& s, const boost::filesystem::path& pathname ) 
 {
-    s.vars["title"] = "A last word";
+    s.insert("title","A last word");
     document::meta(s,pathname);
 }
 

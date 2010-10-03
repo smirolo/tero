@@ -32,6 +32,63 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+payCheckoutButton::payCheckoutButton( url domainName )
+    : image("/resources/tryit.png"), 
+      paypipeline(domainName.string() + "/paypipeline")
+{}
+
+
+void payCheckoutButton::build( const std::string& r, uint32_t a )
+{
+    referenceId = r;
+    amount = a;
+}
+
+ 
+bool payCheckoutButton::checkReturn( const session& s, const char *requestURI )
+{
+    return true;
+}
+    
+ 
+template<typename ch, typename tr>
+void payCheckoutButton::writehtml( std::basic_ostream<ch, tr>& ostr ) const 
+{
+    std::stringstream refid;
+    refid << referenceId;
+
+    ostr << html::form().action(paypipeline).method("POST");
+
+    ostr << html::input()
+	.type(html::input::hidden)
+	.nameref("amount")
+	.value(amount)
+
+	 << html::input()
+	.type(html::input::hidden)
+	.nameref("description")
+	.value(description)
+
+	 << html::input()
+	.type(html::input::hidden)
+	.nameref("referenceId")
+	.value(refid.str());
+
+    if( !returnUrl.empty() )
+	ostr << html::input()
+	    .type(html::input::hidden)
+	    .nameref("returnUrl")
+	    .value(returnUrl.string());
+
+    ostr << html::input()
+	.type(html::input::image)
+	.src(image)
+
+	 << html::form::end;
+}
+
+
+
 void payment::add( const boost::regex& r, 
 		   const char *retPath, adapter& a ) {
     entries.push_back(entry(r,retPath,a));
@@ -54,9 +111,13 @@ payment::addSessionVars( boost::program_options::options_description& opts ) {
 
 
 void payment::checkReturn( session& s, const char* page ) {
+#if 0
     awsStandardButton button(s.valueOf("awsAccessKey"),
 			     s.valueOf("awsSecretKey"),
 			     s.valueOf("awsCertificate"));
+#else
+    payCheckoutButton button(url(s.valueOf("domainName")));
+#endif	    
     if( !button.checkReturn(s,page) ) {
 	throw std::runtime_error("wrong signature for request");
     }
@@ -68,9 +129,13 @@ void payment::fetch( session& s, const boost::filesystem::path& pathname ) {
 	 e != entries.end(); ++e ) {
 	boost::smatch m;
 	if( boost::regex_search(pathname.string(),m,*e->regexp) ) {
+#if 0
 	    awsStandardButton button(s.valueOf("awsAccessKey"),
 				     s.valueOf("awsSecretKey"),
 				     s.valueOf("awsCertificate"));
+#else
+	    payCheckoutButton button(url(s.valueOf("domainName")));
+#endif	    
 	    button.returnUrl = url(std::string("http://") 
 				   + s.valueOf("domainName") 
 				   + e->retPath);
@@ -89,11 +154,24 @@ void payment::show( std::ostream& ostr,
 		    const std::string& referenceId, size_t value,
 		    const std::string& descr )
 {
+#if 0
     awsStandardButton button(s.valueOf("awsAccessKey"),
 			     s.valueOf("awsSecretKey"),
 			     s.valueOf("awsCertificate"));
+#else
+    payCheckoutButton button(url(s.valueOf("domainName")));
+#endif	    
     button.returnUrl = returnUrl;
     button.description = descr;
     button.build(referenceId,value);
     button.writehtml(ostr);    
 }
+
+
+void payPipeline::fetch( session& s, const boost::filesystem::path& pathname )
+{
+    std::stringstream r;
+    r << s.valueOf("returnUrl") << "?referenceId=" << s.valueOf("referenceId");
+    *ostr << httpHeaders.refresh(0,url(r.str())) << std::endl;
+}    
+

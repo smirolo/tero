@@ -70,9 +70,9 @@ void createfile( boost::filesystem::ofstream& strm,
 void document::meta( session& s, const boost::filesystem::path& pathname ) {
     if( s.vars.find("title") == s.vars.end() ) {
 	if( s.vars.find("Subject") != s.vars.end() ) {
-	    s.vars["title"] = s.valueOf("Subject");
+	    s.insert("title",s.valueOf("Subject"));
 	} else {
-	    s.vars["title"] = s.valueOf("document");
+	    s.insert("title",s.valueOf("document"));
 	}
     }
 }
@@ -94,6 +94,7 @@ void dispatchDoc::add( const std::string& varname,
 	views[varname] = aliasSet();
 	aliases = views.find(varname);
     }
+    std::cerr << "!!! [" << varname << "] add(" << r << ")" << std::endl;
     aliases->second.push_back(std::make_pair(r,&d));
 }
 
@@ -113,7 +114,10 @@ document* dispatchDoc::select( const std::string& name,
 	const aliasSet& aliases = view->second;
 	for( aliasSet::const_iterator alias = aliases.begin(); 
 	     alias != aliases.end(); ++alias ) {
+	    std::cerr << "regex_match(" << value << "," 
+		      << alias->first << ")" << std::endl;
 	    if( regex_match(value,alias->first) ) {
+		std::cerr << "... true" << std::endl;
 		return alias->second;
 	    }
 	}
@@ -362,7 +366,7 @@ void text::meta( session& s, const boost::filesystem::path& pathname ) {
 	std::string line;
 	std::getline(strm,line);
 	if( boost::regex_search(line,m,valueEx) ) {
-	    s.vars[m.str(1)] = m.str(2);
+	    s.insert(m.str(1),m.str(2));
 	} else break;
     }
     strm.close();

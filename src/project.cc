@@ -38,9 +38,21 @@ void projCreate::fetch(	session& s, const boost::filesystem::path& pathname ) {
     
 }
 
+void 
+projindex::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+    
+    options_description vars("project");
+    vars.add_options()
+	("remoteSrcTop",value<std::string>(),"path to root of the project repositories");
+    opts.add(vars);
+}
+
+
 void projindex::meta( session& s, const boost::filesystem::path& pathname ) {
     name = pathname.parent_path().filename();
-    s.vars["title"] = name;
+    s.insert("title",name);
     document::meta(s,pathname);
 }
 

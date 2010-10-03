@@ -72,6 +72,9 @@ protected:
      /* print out monthly aggregates and return last one. */
     boost::posix_time::time_duration aggregate( const session& s ) const;
 
+    /* stop counter and return session time. */
+    boost::posix_time::time_duration stop( session& s );
+
 public:
     explicit deauth( std::ostream& o ) : document(o) {}
 

@@ -95,7 +95,7 @@ void awsStandardButton::writehtml( std::basic_ostream<ch, tr>& ostr ) const {
     std::stringstream refid;
     refid << referenceId;
 
-    ostr << html::form().action(paypipeline).method("POST");
+    ostr << html::form().action(url(paypipeline)).method("POST");
 
     if( !abandonUrl.empty() )
 	ostr << html::input()
@@ -171,7 +171,7 @@ void awsStandardButton::writehtml( std::basic_ostream<ch, tr>& ostr ) const {
 
     ostr << html::input()
 	.type(html::input::image)
-	.src(image)
+	.src(url(image))
 
 	 << html::form::end;
 }

@@ -418,7 +418,7 @@ void todoWriteHtml::meta( session& s,
 	}
     }
     strm.close();
-    s.vars["Subject"] = title.str();
+    s.insert("Subject",title.str());
     document::meta(s,pathname);
 }
 

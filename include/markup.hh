@@ -29,6 +29,7 @@
 #include <ostream>
 #include <boost/date_time.hpp>
 #include <boost/date_time/date_facet.hpp>
+#include "webserve.hh"
 
 /** Helper Markup tags on output stream
 
@@ -218,8 +219,8 @@ namespace html {
 	    return *this;
 	}	
 
-	form& action( const char *v ) {
-	    attrValues[actionAttr] = v;
+	form& action( const url& u ) {
+	    attrValues[actionAttr] = u.string();
 	    return *this;
 	}	
 
@@ -256,8 +257,8 @@ namespace html {
 	    return *this;
 	}	
 
-	img& src( const char *v ) {
-	    attrValues[srcAttr] = v;
+	img& src( const url& u ) {
+	    attrValues[srcAttr] = u.string();
 	    return *this;
 	}	
 
@@ -304,8 +305,8 @@ namespace html {
 	    return *this;
 	}	
 
-	input& src( const char *v ) {
-	    attrValues[srcAttr] = v;
+	input& src( const url& u ) {
+	    attrValues[srcAttr] = u.string();
 	    return *this;
 	}	
 

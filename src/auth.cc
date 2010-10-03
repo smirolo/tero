@@ -91,8 +91,7 @@ void auth::addSessionVars( boost::program_options::options_description& opts )
     
     options_description authOptions("authentication");
     authOptions.add_options()
-	("credentials",value<std::string>(),"credentials")
-	("username",value<std::string>(),"username");
+	("credentials",value<std::string>(),"credentials");
     opts.add(authOptions);
 }
 
@@ -114,7 +113,8 @@ void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
 	 << '(' << grp->gr_name << ')' << endl;
 #endif
 
-    s.start();
+    s.state("username",s.username());
+    s.store();
 }
 
 
@@ -124,7 +124,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::filesystem;
     
     session::variables::const_iterator credentials = s.vars.find("credentials");
-    if( s.username.empty() ) {
+    if( s.username().empty() ) {
 	throw invalidAuthentication();
     }
 
@@ -162,17 +162,12 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     }
 #endif
 
-    s.start();
-    
-    /* \todo generate a random unique session id */
-    uint64_t sessionId = 12345678;
-    s.id = sessionId;
-    s.store();
+    /* The authentication will create a persistent ("username",value)
+       pair that, in turn, will create a sessionId and a startTime. */
+    auth::fetch(s,pathname);
     
     /* Set a session cookie */
-    std::stringstream id;
-    id << sessionId;
-    *ostr << httpHeaders.setCookie("session",id.str()).location(s.docAsUrl());
+    *ostr << httpHeaders.setCookie(s.sessionName,s.id()).location(url(s.doc()));
 }
 
 
@@ -233,9 +228,53 @@ deauth::aggregate( const session& s ) const {
 }
 
 
+
+boost::posix_time::time_duration deauth::stop( session& s ) {
+    using namespace boost::system;
+    using namespace boost::posix_time;
+    using namespace boost::filesystem;
+
+    ptime start;
+    std::stringstream is(s.valueOf("startTime"));
+    is >> start;
+    ptime stop = second_clock::local_time();
+
+    ofstream file(s.contributorLog(),std::ios_base::app);
+    if( file.fail() ) {
+	boost::throw_exception(basic_filesystem_error<path>(
+				 std::string("error opening file"),
+				 s.contributorLog(), 
+				 error_code()));
+    }
+    std::string msg = s.valueOf("message");
+    if( !msg.empty() ) {
+	file << msg << ':' << std::endl;
+    }
+    time_duration aggregate = stop - start;
+    file << start << ' ' << stop << std::endl;
+    file.close();
+    s.remove();
+
+    return aggregate;
+}
+
+
 void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::posix_time;
-    time_duration logged = s.stop();
+
+    if( !s.exists() ) {
+	using namespace boost::filesystem;
+	for( directory_iterator entry 
+		 = directory_iterator(s.stateDir()); 
+	     entry != directory_iterator(); ++entry ) {
+	    path filename(entry->filename());
+	    s.id(boost::filesystem::basename(filename));
+	    s.restore(0,NULL);
+	    break;
+	}
+    }
+
+    time_duration logged = stop(s);
     aggregate(s);
     *ostr << "last session ran for ";
     const char *sep = "";
@@ -259,19 +298,17 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::posix_time;
     using namespace boost::filesystem;
 
-    if( s.id != 0 ) {
-	std::stringstream id;
-	id << s.id;
-	*ostr << httpHeaders.setCookie("session",id.str(),
+    if( !s.id().empty() ) {
+	*ostr << httpHeaders.setCookie(s.sessionName,s.id(),
 			      boost::posix_time::ptime::date_duration_type(-1));
     }
-    time_duration logged = s.stop();
+    time_duration logged = stop(s);
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
     
     *ostr << httpHeaders;
-    s.vars["hours"] = logstr.str();
-    path uiPath(s.vars["uiDir"] + std::string("/logout.ui"));
+    s.state("hours",logstr.str());
+    path uiPath(s.valueOf("uiDir") + std::string("/logout.ui"));
     composer pres(*ostr,uiPath,composer::error);
     pres.fetch(s,"document");
 }

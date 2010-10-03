@@ -33,6 +33,18 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+void 
+composer::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+    
+    options_description vars("composer");
+    vars.add_options()
+	("document",value<std::string>(),"document")
+	("themeDir",value<std::string>(),"path to user interface elements");
+    opts.add(vars);
+}
+
 
 void composer::embed( session& s, const std::string& value ) {
     using namespace boost::filesystem;
@@ -74,7 +86,7 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    session::variables::const_iterator v = s.vars.find(varname);
 	    if( v != s.vars.end() ) {
 		*ostr << m.prefix();
-		*ostr << v->second;
+		*ostr << v->second.value;
 		*ostr << m.suffix() << std::endl;
 	    }
 	    found = true;

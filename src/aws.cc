@@ -268,12 +268,15 @@ bool awsStandardButton::checkReturn( const session& s,
     const char *httpMethod = "GET";				     
     const char *hostHeader = s.valueOf("domainName").c_str();
 
-    for( session::variables::const_iterator p = s.query.begin();
-	 p != s.query.end(); ++p ) {
+    session::variables qs;
+    s.filters(qs,session::queryenv);
+
+    for( session::variables::const_iterator p = qs.begin();
+	 p != qs.end(); ++p ) {
 	if( p->first == std::string("signature") ) {
-	    signatureS = std::string(p->second);
+	    signatureS = std::string(p->second.value);
 	} else {
-	    params[p->first] = uriEncode(p->second);
+	    params[p->first] = uriEncode(p->second.value);
 	}
     }
     std::string request 

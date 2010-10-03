@@ -35,8 +35,20 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+void 
+logview::addSessionVars( boost::program_options::options_description& opts )
+{
+    using namespace boost::program_options;
+    
+    options_description vars("logview");
+    vars.add_options()
+	("remoteIndexFile",value<std::string>(),"path to project interdependencies");
+    opts.add(vars);
+}
+
+
 void logview::meta( session& s, const boost::filesystem::path& pathname ) {
-    s.vars["title"] = std::string("Build View");   
+    s.insert("title","Build View");   
     document::meta(s,pathname);
 }
 
@@ -63,6 +75,18 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     typedef std::map<path,std::pair<std::string,int> > colType;
     typedef std::map<std::string,colType> tableType;
     tableType table;
+
+    /* Populate the project names based on the directories in *srcTop*
+       which hold a repository control subdirectory (.git, .svn, etc.). */
+    path srcTop(s.valueOf("srcTop"));
+    for( directory_iterator entry = directory_iterator(srcTop); 
+	 entry != directory_iterator(); ++entry ) {
+	path repcontrol((srcTop / entry->filename()) / ".git");
+	if( boost::filesystem::exists(repcontrol) ) {
+	    table[entry->filename()] = colType();
+	}
+    }
+       
 
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));

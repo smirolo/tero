@@ -72,45 +72,42 @@ int main( int argc, char *argv[] )
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
-    session s;
-
     try {
 	/* parse command line arguments */
-	variables_map params;
 	options_description opts;
 	options_description genOptions("general");
 	genOptions.add_options()
-	    ("config",value<std::string>(),"load configuration file")
-	    ("document",value<std::string>(),"document")
 	    ("help","produce help message")
-	    ("view",value<std::string>(),"view");
+	    ("binDir",value<std::string>(),"path to outside executables");
 	
 	opts.add(genOptions);
-	session::addSessionVars(opts);
 	auth::addSessionVars(opts);
 	change::addSessionVars(opts);
+	composer::addSessionVars(opts);
 	post::addSessionVars(opts);
+	logview::addSessionVars(opts);
+	projindex::addSessionVars(opts);
 	calendar::addSessionVars(opts);
 	statement::addSessionVars(opts);
 	payment::addSessionVars(opts);
 	confgenCheckout::addSessionVars(opts);
 
-	char *pathInfo = getenv("PATH_INFO");
-	command_line_parser parser(argc, argv);
-	parser.options(opts);
-	if( pathInfo != NULL ) {
-	    store(parser.run(),params);    
-	    store(parse_cgi_options(opts,s.query),params);
-	    
-	} else {
-	    /* There is no PATH_INFO environment variable so we might be 
-	       running the application as a non-cgi from the command line. */
-	    positional_options_description pd; 
-	    pd.add("view", 1);
-	    parser.positional(pd);
-	    store(parser.run(),params);
+	session s("view","semillaId",opts);
+	s.privileged(false);
+	s.restore(argc,argv);
+
+	/* If no document is present, set document 
+	   as view in order to catch default dispatch 
+	   clause. */
+	session::variables::const_iterator doc = s.vars.find("document");
+	if( doc == s.vars.end() ) {
+	    s.insert("document",s.valueOf("view"));
 	}
-	
+
+	std::cerr << "!!! document: " << s.valueOf("document") << std::endl;
+	std::cerr << "!!! view: " << s.valueOf("view") << std::endl;
+
+#if 0	
 	if( params.count("help") ) {
 	    cout << opts << endl;
 	    cout << "1. Environment variables\n"
@@ -119,12 +116,11 @@ int main( int argc, char *argv[] )
 		 << "4. Configuration file\n";
 	    return 0;
 	}
-	
-	s.restore(opts,params);
+#endif	
 
 	/* by default bring the index page */
-	if( s.vars["view"].empty()
-	    || s.vars["view"] == "/" ) {
+	if( s.valueOf("view").empty()
+	    || s.valueOf("view") == "/" ) {
 	    cout << httpHeaders.location(url("index.html"));
 	    
 	} else {	    		       
@@ -147,7 +143,7 @@ int main( int argc, char *argv[] )
 	    change chg(std::cout);
 	    docs.add("view",boost::regex("/cancel"),cel);
 	    composer edit(std::cout,
-			  s.vars["themeDir"] + std::string("/edit.ui"),
+			  s.valueOf("themeDir") + std::string("/edit.ui"),
 			  composer::create);
 	    docs.add("view",boost::regex("/edit"),edit);
 	    login li(std::cout);
@@ -211,6 +207,12 @@ int main( int argc, char *argv[] )
 			     composer::error);
 	    docs.add("view",boost::regex(".*dws\\.xml"),project);	    
 
+	    /* Widget to generate a rss feed. Attention: it needs 
+	       to be declared before any of the todoFilter::viewPat 
+	       (i.e. todos/.+) since an rss feed exists for todo items
+	       as well. */
+	    changerss rss(std::cout);
+	    docs.add("view",boost::regex(".*index\\.rss"),rss);
 
 	    /* Composer and document for the todos index view */
 	    composer todos(std::cout,s.valueOf("themeDir")
@@ -332,6 +334,10 @@ int main( int argc, char *argv[] )
 	    docs.add("view",boost::regex("/download.*"),download);
 	    docs.add("document",boost::regex("/download.*"),download);
 
+	    payPipeline donothingPipeline(std::cout);
+	    docs.add("view",boost::regex(".*/paypipeline"),
+		     donothingPipeline);
+
 	    docs.add("document",boost::regex(".*"),rawtext);
 
 #ifdef devsite
@@ -342,9 +348,6 @@ int main( int argc, char *argv[] )
 			       composer::error);
 	    docs.add("view",boost::regex(".*\\.corp"),corporate);
 #endif
-	    /* Widget to generate a rss feed. */
-	    changerss rss(std::cout);
-	    docs.add("view",boost::regex(".*index\\.rss"),rss);
 
 	    docs.add("view",boost::regex(".*"),doc);
 

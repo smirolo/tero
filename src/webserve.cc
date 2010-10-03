@@ -186,14 +186,9 @@ std::string reverseCGIFormatting( const std::string& str ) {
 	return result.str();
 }
 
-
-void parse_cgi_line( std::vector<boost::program_options::option>& opts, 
-		     const boost::program_options::options_description& descr,
-		     const char* input, size_t len, 
-		     std::map<std::string,std::string>& query,
-		     const char sep = '&' ) {
-    using namespace boost::program_options;
-#if 0    
+void parseCookieLine( std::map<std::string,std::string>& query,
+		     const char* input, size_t len, 		     
+		     const char sep = ';' ) {
     bool final = false;
     const char *last = &input[len];
     const char *nameFirst = input;
@@ -201,7 +196,6 @@ void parse_cgi_line( std::vector<boost::program_options::option>& opts,
 	const char *valueLast = last;
 	const char *nameLast = strchr(nameFirst,'=');
 	if( nameLast != NULL ) {
-	    option opt;
 	    const char *valueFirst = nameLast + 1;
 	    valueLast = strchr(valueFirst,sep);
 	    if( valueLast == NULL ) {
@@ -209,20 +203,20 @@ void parse_cgi_line( std::vector<boost::program_options::option>& opts,
 		final = true;
 	    }
 	    std::string key(nameFirst,std::distance(nameFirst,nameLast));
-	    const option_description* optDescr = descr.find_nothrow(key,false);
-	    if( optDescr != NULL ) {
-		opt.string_key = key;
-		opt.value.push_back(reverseCGIFormatting(std::string(valueFirst,
-								     std::distance(valueFirst,valueLast))));
-		opts.push_back(opt);
-	    }
+	    std::string value(valueFirst,std::distance(valueFirst,valueLast));
+	    query[key] = value;
 	}
 	nameFirst = final ? valueLast : (valueLast + 1);
 	// cookies (name=value) are separated by a semi-colon and a space
 	while( *nameFirst == ' ' ) ++nameFirst;
     }
-#else
-    int err = 0;
+ 
+}
+
+void parseCGILine( std::map<std::string,std::string>& query,
+		     const char* input, size_t len, 		     
+		     const char sep = '&' ) {
+   int err = 0;
     int itemCount = 0;
     UriQueryListA *queryList = NULL;
     if( (err = uriDissectQueryMallocA(&queryList,&itemCount,
@@ -230,39 +224,29 @@ void parse_cgi_line( std::vector<boost::program_options::option>& opts,
 	for( UriQueryListStructA *item = queryList;
 	     item != NULL; item = item->next ) {
 	    query[item->key] = item->value;
-	    option opt;
-	    const option_description* optDescr 
-		= descr.find_nothrow(item->key,false);
-	    if( optDescr != NULL ) {
-		opt.string_key = item->key;
-		opt.value.push_back(item->value);
-		opts.push_back(opt);
-	    }
 	}
 	uriFreeQueryListA(queryList);
     }    
-#endif
 }
 
 
-boost::program_options::basic_parsed_options<char>
-parse_cgi_options( const boost::program_options::options_description& descr,
-		   std::map<std::string,std::string>& query ) 
-{
+boost::program_options::basic_parsed_options<char> 
+basic_cgi_parser::run() {
     using namespace boost::program_options;
-    std::vector<option> opts;
     
     char *cookie = getenv("HTTP_COOKIE");
     if( cookie != NULL ) {
-	parse_cgi_line(opts,descr,cookie,strlen(cookie),query,';');
+	parseCookieLine(query,cookie,strlen(cookie));
     }
     
     char *cPathInfo = getenv("PATH_INFO");
     if( cPathInfo != NULL ) {
-	std::string command("view");   // \todo hardcoded for wiki
 	std::string pathInfo(cPathInfo);
-	const option_description* optDescr = descr.find_nothrow(command,false);
-	if( optDescr != NULL ) {
+        const std::string& command = positionalDesc->name_for_position(0);
+	query[command] = pathInfo;
+#if 0
+	const option_description* d = optDesc->find_nothrow(command,false);
+	if( d != NULL ) {
 	    option opt;
 	    opt.string_key = command;
 	    opt.position_key = 1;
@@ -270,11 +254,12 @@ parse_cgi_options( const boost::program_options::options_description& descr,
 	    opt.original_tokens.push_back(pathInfo);
 	    opts.push_back(opt);
 	}
+#endif
     }
 	
     char *cQueryString = getenv("QUERY_STRING");
     if( cQueryString != NULL ) {
-	parse_cgi_line(opts,descr,cQueryString,strlen(cQueryString),query);
+	parseCGILine(query,cQueryString,strlen(cQueryString));
     }
         
     long len;
@@ -282,10 +267,24 @@ parse_cgi_options( const boost::program_options::options_description& descr,
     if( lenstr != NULL && sscanf(lenstr,"%ld",&len) == 1 ) {
 	char input[len];
 	fgets(input, len + 1, stdin);
-	parse_cgi_line(opts,descr,input,len,query);
+	parseCGILine(query,input,len);
     }
-    
-    parsed_options result(&descr);
+
+    /* initialize matching options */
+    std::vector<option> opts;
+    for( std::vector< boost::shared_ptr<option_description> >::const_iterator 
+	     od = optDesc->options().begin(); od != optDesc->options().end(); 
+	 ++od ) {	
+	option opt;
+#if 0
+	opt.string_key = od->long_name();
+	opt.value.push_back(query[od->long_name()]);
+	opt.original_tokens.push_back(query[od->long_name()]);
+	opts.push_back(opt);
+#endif
+    } 
+
+    parsed_options result(optDesc);
     result.options = opts;
     
     // Presense of parsed_options -> wparsed_options conversion

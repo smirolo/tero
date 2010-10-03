@@ -49,60 +49,93 @@ public:
 };
 
 
-/** A session instance is used to store "global variables", i.e. a set
-    of (name,value) pairs, persistent accross runs of the program and
-    thus implement a stateful application over stateless http connections.
+/** A session instance is used to store a set of (name,value) pairs
+    persistent accross runs of the program and thus one of the building 
+    block to implement a stateful application over stateless http connections.
 
-    1. The session is first initialized with environment variables passed
-       through the CGI invokation.
-    2. If a "sessionId" and a derived file exists, the (name,value) pairs 
-       in that session file are added to the session.
-    3. The command-line arguments are then added to the session as well.
-    4. If a "configFile" name does not exist at this point, a (configFile,
+    When restoring a session, (name,value) pairs are inserted in the following
+    order. If a (name,value) pair already exists for a specific name, 
+    the already existing value is retained.
+
+    1. The command-line arguments are added to the session.
+    2. If a "configFile" name does not exist at this point, a (configFile,
        filename) pair compiled into the binary executable is added.
-    5. If the config file exists, the (name,value) pairs in that config file
+    3. If the config file exists, the (name,value) pairs in that config file
        are added to the session.
-    
-    Whether adding a (name,value) pair for an already existing name overrides
-    the previous value or get discarded is a policy choice between config
-    flexiblity and server control.
- */
+    4. Parameters passed in environment variables through the CGI invokation
+       are then parsed.
+    5. If a "sessionId" and a derived file exists, the (name,value) pairs 
+       in that session file are added to the session.
+    6. The parsed CGI parameters are added to the session.
+*/
 class session {
 public:
-    typedef std::map<std::string,std::string> variables;
+
+    /** Source from which a session variable was initialized. 
+     */
+    enum sourceType {
+	unknown,
+	queryenv,
+	cmdline,
+	sessionfile,
+	configfile
+    };
+
+    struct valT {
+	std::string value;
+	sourceType source;
+
+	valT() {}
+
+        valT( const std::string& v )
+	    : value(v), source(unknown) {}
+
+        valT( const std::string& v, sourceType s )
+	    : value(v), source(s) {}
+    };
+
+    typedef std::map<std::string,valT> variables;
 
 protected:
-    static bool sessionOptionsInit;
-    static boost::program_options::options_description sessionOptions;
+
+    /** definition of variables that are valid and will be reported
+	in the help message. */
+    boost::program_options::options_description opts;
+    
+    /** Unique identifier for the session */
+    std::string sessionId;
+
+    /** Initialize the session instance from the content of a file.
+
+	The source *st* should either be *sessionfile* or *configfile*.
+     */
+    void load( const boost::filesystem::path& p, sourceType st );
 
 public:
+    /** name of the "command" option as a positional argument 
+     */
+    const char *posCmd;
+
+    /** All applications that keep state over multiple http connections
+	use a "session token". The name for such session identifier can
+	be specified when the session instance is created and thus help
+	administrators resolve conflicts when multiple applications run 
+	on the same server. */
+    const std::string sessionName;
+
     /* \todo workout details of auth.cc first before making private. */
     /* map of variable names to values */
     variables vars;
-    variables query;
     
 public:
-
-    static boost::filesystem::path storage;
-
-    /* unique identifier for the session */
-    int64_t id;
-
-    std::string username;
     
-    
-    session();
-
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
+    session( const char* posCmd,
+	     const std::string& sessionName,
+	     const boost::program_options::options_description& opts );
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */
     url asUrl( const boost::filesystem::path& p ) const;
-
-    /** document name as an url 
-     */
-    url docAsUrl() const;
         
     boost::filesystem::path contributorLog() const;
 
@@ -110,7 +143,9 @@ public:
      */
     boost::filesystem::path userPath() const;
     
-    bool exists() const { return id > 0; }
+    bool exists() const { return !sessionId.empty(); }
+
+    void filters( variables& results, sourceType source ) const;
     
     /** \brief Value of a variable as an absolute pathname
 	
@@ -131,6 +166,40 @@ public:
        rooted at siteTop. */
     boost::filesystem::path build( const boost::filesystem::path& p ) const;
 
+    /** name of the document (extended to commands) requested through 
+	the positional argument on the executable command line.
+     */
+    const std::string& doc() const {
+	return valueOf(posCmd);
+    }
+
+    void id( const std::string& v ) {
+	sessionId = v;
+    }
+
+    const std::string& id() const {
+	return sessionId;
+    }
+
+    void insert( const std::string& name, const std::string& value,
+		 sourceType source = unknown );
+
+    /** (name,value) will be stored into the session file and thus 
+	persistent accross execution. */
+    void state( const std::string& name, const std::string& value );
+
+    /** returns the directory name where state persistent accross 
+	executable run are stored. */
+    boost::filesystem::path stateDir() const;
+
+    /** returns the filename where persistent (name,value) pairs accross 
+	executable run are stored. */
+    boost::filesystem::path stateFilePath() const;
+
+    /** Toggle between privileged (true) and unprivileged(false) modes.
+     */
+    void privileged( bool v );
+
     /** returns true if *left* is a prefix of *right*.
      */
     bool prefix( const boost::filesystem::path& left, 
@@ -138,8 +207,7 @@ public:
     
     /** \brief Load a session from persistent storage 
      */
-    void restore( const boost::program_options::options_description& opts,
-		  const boost::program_options::variables_map& params );
+    void restore( int argc, char *argv[] );
 
     /* look for a relative pathname *trigger* from *leaf* to the root
        of the filesystem and return the stem such that stem / *trigger*
@@ -165,16 +233,14 @@ public:
     /** returns the absolute pathname formed by srcTop/p.
      */
     boost::filesystem::path srcDir( const boost::filesystem::path& p ) const;
-
-   /* session start time */
-    void start();
-
-    /* stop counter and return session time. */
-    boost::posix_time::time_duration stop();
     
     /** Store session information into persistent storage 
      */
     void store();
+
+    /** Remove the session file 
+     */
+    void remove();
 
     /** returns the path relative to *root* of *leaf* when both *root*
 	and *leaf* are absolute paths and *root* is a leading prefix 
@@ -184,7 +250,13 @@ public:
     subdirpart( const boost::filesystem::path& root,
 		  const boost::filesystem::path& leaf ) const;
 
-    /* Returns the value of a variable as an absolute pathname. */
+
+    const std::string& username() const {
+	return valueOf("username");
+    }
+
+    /* Returns the value of a variable as an absolute pathname. 
+     */
     boost::filesystem::path valueAsPath( const std::string& name ) const;
 
     /** returns the value of a variable

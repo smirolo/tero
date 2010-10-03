@@ -51,7 +51,7 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 
 
 void cancel::fetch( session& s, const boost::filesystem::path& pathname ) {
-	*ostr << httpHeaders.location(s.docAsUrl()) << '\n';
+    *ostr << httpHeaders.location(url(s.doc())) << '\n';
 }
 
 
@@ -73,10 +73,9 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
 
-    session::variables::const_iterator document = s.vars.find("document");
     session::variables::const_iterator text = s.vars.find("editedText");
     if( text != s.vars.end() ) {
-	path docName(s.vars["srcTop"] + document->second 
+	path docName(s.valueOf("srcTop") + s.valueOf("document")
 		     + std::string(".edits")); 
 
 	if( !exists(docName) ) {
@@ -90,7 +89,7 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
 		docName, 
 		error_code()));
 	}
-	file << text->second;
+	file << text->second.value;
 	file.close();
 
 	/* add entry in the changelist */
@@ -105,8 +104,7 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
 	file << docName;
 	file.close();
     }
-    *ostr << httpHeaders.location(url(s.docAsUrl().string() 
-				      + std::string(".edits")));
+    *ostr << httpHeaders.location(url(s.doc() + std::string(".edits")));
 }
 
 
@@ -233,6 +231,8 @@ void
 changerss::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
     revisionsys *rev = revisionsys::findRev(s,pathname);
+    std::cerr << "changerss::fetch(" << pathname << ") = "
+	      << rev << std::endl;
     if( rev ) {
 	history hist;
 	rev->checkins(hist,s,pathname);

@@ -62,6 +62,9 @@ public:
 	      const boost::filesystem::path& f, fileNotFoundBehavior b ) 
 	: super(o), behavior(b), fixed(f) {}
 
+    static void 
+    addSessionVars( boost::program_options::options_description& opts );
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 

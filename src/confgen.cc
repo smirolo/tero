@@ -74,7 +74,7 @@ void confgenCheckout::addSessionVars(
 void 
 confgenCheckout::meta( session& s, const boost::filesystem::path& pathname ) 
 {
-    s.vars["title"] = "fortylines tero checkout";
+    s.insert("title","fortylines tero checkout");
 }
 
 void 
@@ -159,7 +159,7 @@ confgenDeliver::meta( session& s, const boost::filesystem::path& pathname )
 
     std::stringstream d;
     d << "tero package for " << domainName;
-    s.vars["title"] = d.str();
+    s.insert("title",d.str());
 
     d.str("");
     d << "/download/" << packagePath.filename();

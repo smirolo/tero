@@ -33,7 +33,8 @@ etcs		:=	semilla.conf
 libs		:=	libsemilla.a
 shares		:=	semilla.pdf
 
-semillaConfFile	?=	/etc/semilla.conf
+semillaConfFile		?=	/etc/semilla.conf
+semillaSessionDir	?=	/var/semilla
 
 #CPPFLAGS	+=	-DREADONLY
 
@@ -48,7 +49,8 @@ semilla: semilla.cc session.o libsemilla.a libcryptopp.a liburiparser.a \
 #semilla:	LDFLAGS	+= -lpam
 
 session.o: session.cc
-	$(COMPILE.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" $(OUTPUT_OPTION) $<
+	$(COMPILE.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" \
+		      -DSESSION_DIR=\"$(semillaSessionDir)\" $(OUTPUT_OPTION) $<
 
 semilla.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@

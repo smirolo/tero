@@ -36,6 +36,36 @@
 */
 
 
+class payCheckoutButton {
+public:
+    typedef std::map<std::string,std::string> paramMap;
+
+    std::string description;
+    url returnUrl;
+
+protected:
+    uint32_t amount;
+    std::string referenceId;
+
+    const url image;    
+    const url paypipeline;
+
+public:
+    explicit payCheckoutButton( url domainName );
+    virtual ~payCheckoutButton() {}
+
+   void build( const std::string& referenceId, uint32_t amount );
+
+    /** returns true when the signature of the return request 
+	matches the one computed with the server's secretKey. */
+    bool checkReturn( const session& s, const char *requestURI );
+    
+    template<typename ch, typename tr>
+    void writehtml( std::basic_ostream<ch, tr>& ostr ) const;
+};
+
+
+
 class payment : public document {
 protected:
     struct entry {
@@ -73,6 +103,19 @@ public:
 		      const std::string& referenceId, 
 		      size_t value,
 		      const std::string& descr = "" );
+};
+
+
+/** "Do-nothing" pipeline to process payments 
+ */
+class payPipeline : public document {
+protected:
+public:
+    explicit payPipeline( std::ostream& o ) 
+	: document(o) {}
+
+    void fetch( session& s, const boost::filesystem::path& pathname );    
+
 };
 
 

@@ -44,7 +44,7 @@ namespace {
 	    switch( n->type() ) {
 	    case node_element:
 		/* author, title, date. */
-		s.vars[n->name()] = n->value();
+		s.insert(n->name(),n->value());
 	    default:
 		/* Nothing to do except prevent gcc from complaining. */
 		break;
@@ -475,9 +475,9 @@ void docbook::imagedataStart( const rapidxml::xml_node<>& node ) {
 	rapidxml::xml_attribute<> *role = node.first_attribute("role");
 	if( fileref != NULL ) {	
 	    if( role != NULL ) {
-		*ostr << html::img().src(fileref->value()).classref(role->value());
+		*ostr << html::img().src(url(fileref->value())).classref(role->value());
 	    } else {
-		*ostr << html::img().src(fileref->value());
+		*ostr << html::img().src(url(fileref->value()));
 	    }
 	} else {
 	    *ostr << html::img();
@@ -785,7 +785,7 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) {
 	}
     }
     if( s.vars.find("title") == s.vars.end() ) {
-	s.vars["title"] = s.valueOf("document");
+	s.insert("title",s.valueOf("document"));
     }
 }
 

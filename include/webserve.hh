@@ -225,10 +225,36 @@ public:
 
 extern emptyParaHackType emptyParaHack;
 
-/** \brief Populate options based on environment variables and stdin
- */
-boost::program_options::basic_parsed_options<char>
-parse_cgi_options( const boost::program_options::options_description& descr,
-		   std::map<std::string,std::string>& query );
+
+class basic_cgi_parser {
+public:
+    typedef std::map<std::string,std::string> querySet;
+
+private:
+    const boost::program_options::options_description* optDesc;
+    const boost::program_options::positional_options_description* positionalDesc;
+
+public:
+    querySet query;
+
+    basic_cgi_parser() : optDesc(NULL), positionalDesc(NULL) {}
+
+    /** Sets options descriptions to use. 
+     */
+    basic_cgi_parser& options( const boost::program_options::options_description& desc ) {
+        optDesc = &desc;
+        return *this;
+    }
+
+    /** Sets positional options description to use. */
+    basic_cgi_parser& positional( const boost::program_options::positional_options_description& desc ) {
+	positionalDesc = &desc;
+        return *this;
+    }
+
+    boost::program_options::basic_parsed_options<char> run();
+};
+
+typedef basic_cgi_parser cgi_parser;
 
 #endif

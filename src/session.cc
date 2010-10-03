@@ -23,11 +23,14 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+
+#include <sys/types.h>
 #include <unistd.h>
 #include <boost/date_time/c_local_time_adjustor.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "session.hh"
 #include <uriparser/Uri.h>
-#include "payment.hh"
 
 /** Session manager
 
@@ -39,38 +42,81 @@
 #ifndef CONFIG_FILE
 #error CONFIG_FILE should be defined when compiling this file
 #endif
+#ifndef SESSION_DIR
+#error SESSION_DIR should be defined when compiling this file
+#endif
 
 
 undefVariableError::undefVariableError( const std::string& varname ) 
     : std::runtime_error(std::string("undefined variable in session ") 
 			 + varname) {}
 
-bool session::sessionOptionsInit = false;
-boost::program_options::options_description session::sessionOptions("session");
 
-session::session() : id(0) {
+void session::load( const boost::filesystem::path& p, sourceType st )
+{
+    using namespace boost;
+    using namespace boost::system;
+    using namespace boost::filesystem;
     using namespace boost::program_options;
 
-    if( !sessionOptionsInit ) {
-	sessionOptions.add_options()
-	("binDir",value<std::string>(),"path to outside executables")
-	("buildTop",value<std::string>(),"path to build root")
-	("siteTop",value<std::string>(),"path to the files published on the web site")
-	("srcTop",value<std::string>(),"path to document top")
-	("domainName",value<std::string>(),"domain name of the web server")
-	("remoteSrcTop",value<std::string>(),"path to root of the project repositories")
-	("remoteIndexFile",value<std::string>(),"path to project interdependencies")
-	("themeDir",value<std::string>(),"path to user interface elements")
-	("session",value<std::string>(),"session")
-	("message,m",value<std::string>(),"message");
-    sessionOptionsInit = true;
+    if( boost::filesystem::exists(p) ) {
+	variables_map params;
+	ifstream istr(p);
+	if( istr.fail() ) {
+	    boost::throw_exception(
+		basic_filesystem_error<path>(std::string("file not found"),
+					     p, 
+					     boost::system::error_code()));
+	}
+
+	boost::program_options::store(parse_config_file(istr,opts,true),
+				      params);
+	
+	for( variables_map::const_iterator param = params.begin(); 
+	     param != params.end(); ++param ) {
+	    if( vars.find(param->first) == vars.end() ) {
+		insert(param->first,param->second.as<std::string>(),st);
+	    }
+	}
     }
 }
 
-void 
-session::addSessionVars( boost::program_options::options_description& opts )
+boost::filesystem::path session::stateDir() const {
+    std::string sessionDir = valueOf("sessionDir");
+    if( sessionDir.empty() ) {
+	sessionDir = SESSION_DIR;
+    }
+    return boost::filesystem::path(sessionDir);
+}
+
+
+boost::filesystem::path session::stateFilePath() const
 {
-    opts.add(sessionOptions);
+    return stateDir() / (sessionId + ".session");
+}
+
+
+session::session( const char* p,
+		  const std::string& sn,
+		  const boost::program_options::options_description& o ) 
+    : opts(o), sessionId(""), posCmd(p), sessionName(sn) {
+    using namespace boost::program_options;
+
+    opts.add_options()
+	("config",value<std::string>(),"path to the configuration file (defaults to "CONFIG_FILE")")
+	("sessionDir",value<std::string>(),"directory where session files are stored (defaults to "SESSION_DIR")")
+	(sessionName.c_str(),value<std::string>(),"name of the session id variable (or cookie)")
+	("username",value<std::string>(),"username")
+	(posCmd,value<std::string>(),posCmd)
+
+	("buildTop",value<std::string>(),"path to build root")
+	("srcTop",value<std::string>(),"path to document top")
+	("siteTop",value<std::string>(),"path to the files published on the web site")
+	/* \todo only in payments? */
+	("domainName",value<std::string>(),"domain name of the web server")
+
+	("message,m",value<std::string>(),"Message inserted in the contributor's hours log")
+	("startTime",value<std::string>(),"start time for the session");
 }
 
 
@@ -88,6 +134,47 @@ url session::asUrl( const boost::filesystem::path& p ) const
 }
 
 
+void session::filters( variables& results, sourceType source ) const
+{
+    for( variables::const_iterator p = vars.begin();
+	 p != vars.end(); ++p ) {
+	if( p->second.source == source ) {
+	    results[p->first] = p->second;
+	}
+    }
+}
+
+
+void session::insert( const std::string& name, const std::string& value,
+		      sourceType source ) 
+{
+    if( vars.find(name) == vars.end() ) { 
+	vars[name] = valT(value,source);
+    }
+}
+
+
+void session::state( const std::string& name, const std::string& value ) 
+{    
+    vars[name] = valT(value,sessionfile);
+    if( !exists() ) {
+	using namespace boost::posix_time;
+
+	std::stringstream s;
+	s << boost::uuids::random_generator()();
+	sessionId = s.str();
+
+	using namespace boost::filesystem;
+	variables::iterator iter = vars.find("message");
+	if( iter != vars.end() ) iter->second.source = sessionfile;
+
+	s.str("");
+	s << second_clock::local_time();
+	vars["startTime"] = valT(s.str(),sessionfile);
+    }
+}
+
+
 bool session::prefix( const boost::filesystem::path& left, 
 		      const boost::filesystem::path& right ) const 
 {
@@ -95,30 +182,28 @@ bool session::prefix( const boost::filesystem::path& left,
 }
 
 
-static std::string nullString("");
-boost::filesystem::path session::storage;
-
-url session::docAsUrl() const {
-    variables::const_iterator doc = vars.find("document");
-    assert( doc != vars.end() );
-    return url(doc->second.substr(1));
+void session::privileged( bool v ) {
 }
+
+
+static std::string nullString("");
+
 
 const std::string& session::valueOf( const std::string& name ) const {
     variables::const_iterator iter = vars.find(name);
     if( iter == vars.end() ) {
 	return nullString;
     }
-    return iter->second;
+    return iter->second.value;
 }
 
 
 boost::filesystem::path session::userPath() const {
     variables::const_iterator srcTop = vars.find("srcTop");
     assert( srcTop != vars.end() );
-    return boost::filesystem::path(srcTop->second) 
+    return boost::filesystem::path(srcTop->second.value) 
 	/ boost::filesystem::path("contrib") 
-	/ username;
+	/ username();
 }
 
 boost::filesystem::path session::contributorLog() const {
@@ -182,111 +267,107 @@ session::build( const boost::filesystem::path& p ) const
 }
 
 
-void session::restore( const boost::program_options::options_description& opts,
-		       const boost::program_options::variables_map& params )
+void session::restore( int argc, char *argv[] )
 {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem;
     using namespace boost::program_options;
 
-    /* 1. initialize more configuration from the script input */
-    for( variables_map::const_iterator param = params.begin(); 
-	 param != params.end(); ++param ) {
-	vars[param->first] = param->second.as<std::string>();
+    positional_options_description pd;     
+    pd.add(posCmd, 1);
+
+    /* 1. The command-line arguments are added to the session. */
+    {
+	variables_map params;
+	command_line_parser parser(argc, argv);
+	parser.options(opts);
+	parser.positional(pd);    
+	boost::program_options::store(parser.run(),params);  
+	for( variables_map::const_iterator param = params.begin(); 
+	     param != params.end(); ++param ) {	    
+	    insert(param->first,param->second.as<std::string>(),cmdline);
+	}
     }
 
-    /* 2. load global information from the configuration file on the server */
-    variables_map configVars;
-    
+    /* 2. If a "config" file name does not exist at this point, a (config,
+       filename) pair compiled into the binary executable is added. */
     std::string config(CONFIG_FILE);
-    boost::program_options::variables_map::const_iterator 
-	configParam = params.find("config");
-    if( configParam != params.end() ) {
-	config = configParam->second.as<std::string>();
+    variables::const_iterator cfg = vars.find("config");
+    if( cfg != vars.end() ) {
+	config = cfg->second.value;
     }
 
-    ifstream istr(config);
-    if( istr.fail() ) {
-	boost::throw_exception(
-		basic_filesystem_error<path>(std::string("file not found"),
-					     config, 
-					     boost::system::error_code()));
+    /* 3. If the config file exists, the (name,value) pairs in that config file
+       are added to the session. */
+    load(config,configfile);
+
+    /* 4. Parameters passed in environment variables through the CGI invokation
+       are then parsed. */
+    variables_map cgiParams;
+    cgi_parser parser;
+    parser.options(opts);
+    parser.positional(pd);
+    boost::program_options::store(parser.run(),cgiParams);
+
+    /* 5. If a "sessionName" and a derived file exists, the (name,value) pairs 
+       in that session file are added to the session. */
+    cgi_parser::querySet::const_iterator sid 
+	= parser.query.find(sessionName);
+    if( sid != parser.query.end() ) {
+	sessionId = sid->second;
+    }
+    if( exists() ) {
+	load(stateFilePath(),sessionfile);
     }
 
-    boost::program_options::store(parse_config_file(istr,opts,true),
-				  configVars);
-	
-    for( variables_map::const_iterator param = configVars.begin(); 
-	 param != configVars.end(); ++param ) {
-	if( vars.find(param->first) == vars.end() ) {
-	    vars[param->first] = param->second.as<std::string>();
-	}
-    }
-	
-    /* If no document is present, set document 
-       as view in order to catch default dispatch 
-       clause. */
-    if( params["document"].empty() ) {
-	vars["document"] = vars["view"];
-    }
-    /* Append a trailing '/' if the document is a directory
-       to match Apache's rewrite rules. */    
-    std::string document = abspath(vars["document"]).string();
-    if( boost::filesystem::is_directory(document) 
-	&& (document.size() == 0 
-	    || document[document.size() - 1] != '/') ) {
-	vars["document"] = document + '/';
-    }
-
-    session::variables::const_iterator v = vars.find("username");
-    if( v != vars.end() ) {
-	username = v->second;
+    /* 6. The parsed CGI parameters are added to the session. */
+    for( std::map<std::string,std::string>::const_iterator 
+	     p = parser.query.begin(); p != parser.query.end(); ++p ) {    
+	insert(p->first,p->second,queryenv);
     }
     
-    /* 3. load session specific information */
-    session::storage = vars["srcTop"] + std::string("/personal/sessions");
-    if( vars.find("session") != vars.end() ) {
-	id = atol(vars["session"].c_str());
-	
-	static boost::regex format("(.*):(.*)");
-	bool found = false;
-	
-	if( boost::filesystem::exists(session::storage) ) {
-	    /* 1. open session file */
-	    ifstream sessions(session::storage);
-	    if( sessions.fail() ) {
-		boost::throw_exception(basic_filesystem_error<path>(std::string("error opening file"),
-								    session::storage, 
-								    error_code()));
-	    }
-	    
-	    /* 2. search for id */
-	    while( !sessions.eof() ) {
-		smatch m;
-		std::string line;
-		getline(sessions,line);
-		if( regex_search(line,m,format) ) {
-		    if( id == atol(m[1].str().c_str()) ) {
-			found = true;
-			username = m[2].str();
-			break;
-		    }
-		}
-	    }
-	    sessions.close();
-	}
-    }
-
     /* set the username to the value of LOGNAME in case no information
        can be retrieved for the session. It helps with keeping track
        of time spent with a shell command line. */
-    if( username.empty() ) {
+    session::variables::const_iterator v = vars.find("username");
+    if( v == vars.end() ) {
 	char *logName = getenv("LOGNAME");
 	if( logName != NULL ) {
-	    username = logName;
+	    insert("username",logName);
 	}
     }
+
+
+    /* Append a trailing '/' if the document is a directory
+       to match Apache's rewrite rules. */    
+    std::string document = abspath(valueOf(posCmd)).string();
+    if( boost::filesystem::is_directory(document) 
+	&& (document.size() == 0 
+	    || document[document.size() - 1] != '/') ) {
+	insert(posCmd,document + '/');
+    }
+
+#if 0
+    /* change uid. */
+    /* \todo Setting the setuid flag. 
+       The first digit selects attributes
+           set user ID (4)
+           set group ID (2) 
+           sticky (1) 
+
+       chmod 4755 semilla
+       sudo chown root semilla
+*/
+    uid_t real_uid = getuid();
+    uid_t effective_uid = geteuid();
+    std::cerr << "!!! real_uid=" << real_uid << ", effective_uid="
+	      << effective_uid << std::endl;
+    if( setuid(502) < 0 ) {
+	std::cerr << "error: setuid to zero: " 
+		  << ((errno == EINVAL) ? "invalid" : "eperm") << std::endl;	
+    }
+#endif
 }
 
 
@@ -316,14 +397,24 @@ session::root( const boost::filesystem::path& leaf,
 
 
 void session::show( std::ostream& ostr ) {
-    if( id != 0 ) {
-	ostr << "session " << id << " for " << username << std::endl;
+
+    static const char *sourceTypeNames[] = {
+	"unknown",
+	"queryenv",
+	"cmdline",
+	"sessionfile",
+	"configfile"
+    };
+
+    if( exists() ) {
+	ostr << "session " << sessionId << " for " << username() << std::endl;
     } else {
 	ostr << "no session id" << std::endl;
     }
     for( variables::const_iterator var = vars.begin(); 
 	 var != vars.end(); ++var ) {
-	ostr << var->first << ": " << var->second << std::endl;
+	ostr << var->first << ": " << var->second.value 
+	     << " [" << sourceTypeNames[var->second.source] << "]" << std::endl;
     }
 }
 
@@ -352,68 +443,27 @@ void session::store() {
     using namespace boost::system;
     using namespace boost::filesystem;
 
-	/* \todo lock session file */
-	/* 1. open session file to append */
-    ofstream sessions(session::storage,std::ios::app);
+    /* 1. open session file based on session id. */
+    ofstream sessions(stateFilePath());
     if( sessions.fail() ) {
-		boost::throw_exception(basic_filesystem_error<path>(
-							std::string("error opening file"),
-							session::storage, 
-							error_code()));
-    }
-	/* 2. write session information */
-	sessions << id << ':' << username << std::endl;
-	sessions.close();
-	/* \todo unlock session file */
-}
-
-
-void session::start() {
-    using namespace boost::filesystem;
-
-    variables::const_iterator iter = vars.find("message");
-    if( iter == vars.end() ) {
-	std::stringstream buffer;
-	buffer << "touch " << contributorLog();
-	system(buffer.str().c_str());
-    } else {
-	ofstream file(contributorLog(),std::ios_base::app);
-	if( file.fail() ) {
-	    boost::throw_exception(basic_filesystem_error<path>(
-				 std::string("error opening file"),
-				 contributorLog(), 
-				 boost::system::error_code()));
-	}
-	file << iter->second << ':' << std::endl;
-	file.close();
-    }
-}
-
-
-boost::posix_time::time_duration session::stop() {
-    using namespace boost::system;
-    using namespace boost::posix_time;
-    using namespace boost::filesystem;
-
-    /* This local adjustor depends on the machine TZ settings
-       and that seems the right thing to do in this context. */
-    typedef boost::date_time::c_local_adjustor<ptime> local_adj;
-    ptime start = local_adj::utc_to_local(
-		       from_time_t(last_write_time(contributorLog())));
-    ptime stop = second_clock::local_time();
-
-    ofstream file(contributorLog(),std::ios_base::app);
-    if( file.fail() ) {
 	boost::throw_exception(basic_filesystem_error<path>(
-				 std::string("error opening file"),
-				 contributorLog(), 
-				 error_code()));
+			       std::string("error opening file"),
+			       stateFilePath(), 
+			       error_code()));
     }
-    time_duration aggregate = stop - start;
-    file << start << ' ' << stop << ' ' << valueOf("message") << std::endl;
-    file.close();
+    /* 2. write session information */
+    for( variables::const_iterator v = vars.begin(); v != vars.end(); ++v ) {
+	if( v->second.source == sessionfile ) {
+	    sessions << v->first << '=' << v->second.value << std::endl; 
+	}
+    }
+    sessions.close();
+}
 
-    return aggregate;
+
+void session::remove() {
+    boost::filesystem::remove(stateFilePath());
+    sessionId = "";
 }
 
 
@@ -431,5 +481,5 @@ session::valueAsPath( const std::string& name ) const {
     if( iter == vars.end() ) {
 	boost::throw_exception(undefVariableError(name));
     }
-    return abspath(boost::filesystem::path(iter->second));
+    return abspath(boost::filesystem::path(iter->second.value));
 }
