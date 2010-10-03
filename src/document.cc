@@ -94,7 +94,6 @@ void dispatchDoc::add( const std::string& varname,
 	views[varname] = aliasSet();
 	aliases = views.find(varname);
     }
-    std::cerr << "!!! [" << varname << "] add(" << r << ")" << std::endl;
     aliases->second.push_back(std::make_pair(r,&d));
 }
 
@@ -114,10 +113,7 @@ document* dispatchDoc::select( const std::string& name,
 	const aliasSet& aliases = view->second;
 	for( aliasSet::const_iterator alias = aliases.begin(); 
 	     alias != aliases.end(); ++alias ) {
-	    std::cerr << "regex_match(" << value << "," 
-		      << alias->first << ")" << std::endl;
 	    if( regex_match(value,alias->first) ) {
-		std::cerr << "... true" << std::endl;
 		return alias->second;
 	    }
 	}

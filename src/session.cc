@@ -31,6 +31,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "session.hh"
 #include <uriparser/Uri.h>
+#include "markup.hh"
 
 /** Session manager
 
@@ -286,7 +287,12 @@ void session::restore( int argc, char *argv[] )
 	boost::program_options::store(parser.run(),params);  
 	for( variables_map::const_iterator param = params.begin(); 
 	     param != params.end(); ++param ) {	    
-	    insert(param->first,param->second.as<std::string>(),cmdline);
+	    /* Without the strip(), there is a ' ' appended to the command
+	       line on Linux apache2. */
+	    std::string s = strip(param->second.as<std::string>());
+	    if( !s.empty() ) {
+		insert(param->first,s,cmdline);
+	    }
 	}
     }
 

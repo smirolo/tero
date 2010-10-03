@@ -104,9 +104,6 @@ int main( int argc, char *argv[] )
 	    s.insert("document",s.valueOf("view"));
 	}
 
-	std::cerr << "!!! document: " << s.valueOf("document") << std::endl;
-	std::cerr << "!!! view: " << s.valueOf("view") << std::endl;
-
 #if 0	
 	if( params.count("help") ) {
 	    cout << opts << endl;

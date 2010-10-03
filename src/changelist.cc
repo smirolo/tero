@@ -231,8 +231,6 @@ void
 changerss::fetch( session& s, const boost::filesystem::path& pathname ) 
 {
     revisionsys *rev = revisionsys::findRev(s,pathname);
-    std::cerr << "changerss::fetch(" << pathname << ") = "
-	      << rev << std::endl;
     if( rev ) {
 	history hist;
 	rev->checkins(hist,s,pathname);
