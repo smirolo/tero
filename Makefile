@@ -63,6 +63,11 @@ semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 
 include $(makeHelperDir)/suffix.mk
 
+# the installation of this executable is special because we need
+# to dynamically change ownership in order to execute admin commands.
+#install:: semilla
+#	/usr/bin/install -s -p -m 4755 -o root $< $(binDir)
+
 install:: $(wildcard $(srcDir)/data/themes/default/*)
 	$(installDirs) $(shareDir)/semilla
 	cp -Rf $(srcDir)/data/themes $(shareDir)/semilla

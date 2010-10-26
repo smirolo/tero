@@ -53,7 +53,8 @@ undefVariableError::undefVariableError( const std::string& varname )
 			 + varname) {}
 
 
-void session::load( const boost::filesystem::path& p, sourceType st )
+void session::load( const boost::program_options::options_description& opts,
+		    const boost::filesystem::path& p, sourceType st )
 {
     using namespace boost;
     using namespace boost::system;
@@ -94,30 +95,6 @@ boost::filesystem::path session::stateDir() const {
 boost::filesystem::path session::stateFilePath() const
 {
     return stateDir() / (sessionId + ".session");
-}
-
-
-session::session( const char* p,
-		  const std::string& sn,
-		  const boost::program_options::options_description& o ) 
-    : opts(o), sessionId(""), posCmd(p), sessionName(sn) {
-    using namespace boost::program_options;
-
-    opts.add_options()
-	("config",value<std::string>(),"path to the configuration file (defaults to "CONFIG_FILE")")
-	("sessionDir",value<std::string>(),"directory where session files are stored (defaults to "SESSION_DIR")")
-	(sessionName.c_str(),value<std::string>(),"name of the session id variable (or cookie)")
-	("username",value<std::string>(),"username")
-	(posCmd,value<std::string>(),posCmd)
-
-	("buildTop",value<std::string>(),"path to build root")
-	("srcTop",value<std::string>(),"path to document top")
-	("siteTop",value<std::string>(),"path to the files published on the web site")
-	/* \todo only in payments? */
-	("domainName",value<std::string>(),"domain name of the web server")
-
-	("message,m",value<std::string>(),"Message inserted in the contributor's hours log")
-	("startTime",value<std::string>(),"start time for the session");
 }
 
 
@@ -184,6 +161,26 @@ bool session::prefix( const boost::filesystem::path& left,
 
 
 void session::privileged( bool v ) {
+    /* change uid. */
+    /* \todo Setting the setuid flag. 
+       The first digit selects attributes
+           set user ID (4)
+           set group ID (2) 
+           sticky (1) 
+
+       chmod 4755 semilla
+       sudo chown root semilla
+*/
+    uid_t realId = getuid();
+    uid_t effectiveId = geteuid();
+    std::cerr << "!!! real_uid=" << realId << ", effective_uid="
+	      << effectiveId << std::endl;
+
+    uid_t newId = v ? 0 : realId;
+    if( setuid(newId) < 0 ) {
+	std::cerr << "error: setuid to zero: " 
+		  << ((errno == EINVAL) ? "invalid" : "eperm") << std::endl;	
+    }
 }
 
 
@@ -268,12 +265,31 @@ session::build( const boost::filesystem::path& p ) const
 }
 
 
-void session::restore( int argc, char *argv[] )
+void session::restore( int argc, char *argv[],
+		       const boost::program_options::options_description& o )
 {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem;
     using namespace boost::program_options;
+
+    boost::program_options::options_description opts(o);
+    opts.add_options()
+	("config",value<std::string>(),"path to the configuration file (defaults to "CONFIG_FILE")")
+	("sessionDir",value<std::string>(),"directory where session files are stored (defaults to "SESSION_DIR")")
+	(sessionName.c_str(),value<std::string>(),"name of the session id variable (or cookie)")
+	("username",value<std::string>(),"username")
+	(posCmd,value<std::string>(),posCmd)
+
+	("buildTop",value<std::string>(),"path to build root")
+	("srcTop",value<std::string>(),"path to document top")
+	("siteTop",value<std::string>(),"path to the files published on the web site")
+	/* \todo only in payments? */
+	("domainName",value<std::string>(),"domain name of the web server")
+
+	("message,m",value<std::string>(),"Message inserted in the contributor's hours log")
+	("startTime",value<std::string>(),"start time for the session");
+
 
     positional_options_description pd;     
     pd.add(posCmd, 1);
@@ -306,7 +322,7 @@ void session::restore( int argc, char *argv[] )
 
     /* 3. If the config file exists, the (name,value) pairs in that config file
        are added to the session. */
-    load(config,configfile);
+    load(opts,config,configfile);
 
     /* 4. Parameters passed in environment variables through the CGI invokation
        are then parsed. */
@@ -324,7 +340,7 @@ void session::restore( int argc, char *argv[] )
 	sessionId = sid->second;
     }
     if( exists() ) {
-	load(stateFilePath(),sessionfile);
+	load(opts,stateFilePath(),sessionfile);
     }
 
     /* 6. The parsed CGI parameters are added to the session. */
@@ -353,27 +369,6 @@ void session::restore( int argc, char *argv[] )
 	    || document[document.size() - 1] != '/') ) {
 	insert(posCmd,document + '/');
     }
-
-#if 0
-    /* change uid. */
-    /* \todo Setting the setuid flag. 
-       The first digit selects attributes
-           set user ID (4)
-           set group ID (2) 
-           sticky (1) 
-
-       chmod 4755 semilla
-       sudo chown root semilla
-*/
-    uid_t real_uid = getuid();
-    uid_t effective_uid = geteuid();
-    std::cerr << "!!! real_uid=" << real_uid << ", effective_uid="
-	      << effective_uid << std::endl;
-    if( setuid(502) < 0 ) {
-	std::cerr << "error: setuid to zero: " 
-		  << ((errno == EINVAL) ? "invalid" : "eperm") << std::endl;	
-    }
-#endif
 }
 
 

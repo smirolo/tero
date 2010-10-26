@@ -97,10 +97,6 @@ public:
     typedef std::map<std::string,valT> variables;
 
 protected:
-
-    /** definition of variables that are valid and will be reported
-	in the help message. */
-    boost::program_options::options_description opts;
     
     /** Unique identifier for the session */
     std::string sessionId;
@@ -109,7 +105,8 @@ protected:
 
 	The source *st* should either be *sessionfile* or *configfile*.
      */
-    void load( const boost::filesystem::path& p, sourceType st );
+    void load( const boost::program_options::options_description& opts,
+	       const boost::filesystem::path& p, sourceType st );
 
 public:
     /** name of the "command" option as a positional argument 
@@ -129,9 +126,9 @@ public:
     
 public:
     
-    session( const char* posCmd,
-	     const std::string& sessionName,
-	     const boost::program_options::options_description& opts );
+    session( const char* p,
+	     const std::string& sn ) 
+	: sessionId(""), posCmd(p), sessionName(sn) {}
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */
@@ -207,7 +204,8 @@ public:
     
     /** \brief Load a session from persistent storage 
      */
-    void restore( int argc, char *argv[] );
+    void restore( int argc, char *argv[], 
+		  const boost::program_options::options_description& opts );
 
     /* look for a relative pathname *trigger* from *leaf* to the root
        of the filesystem and return the stem such that stem / *trigger*

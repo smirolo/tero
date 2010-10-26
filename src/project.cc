@@ -35,7 +35,67 @@
 
 
 void projCreate::fetch(	session& s, const boost::filesystem::path& pathname ) {
-    
+#if 0
+def pubCreate(args):
+    '''create               projectName
+                       Create a new directory and initial it as a project
+                       repository.
+    '''
+    prev = os.getcwd()
+    projName = args[0]
+    projDir = os.path.join(context.value('srcTop'),projName)
+    if os.path.exists(projDir):
+        raise Error(projDir + ' already exists')
+    os.makedirs(projDir)
+    os.chdir(projDir)
+    shellCommand(['git', 'init'])
+    hookSample = os.path.join('.git','hooks','post-update.sample')
+    hook = os.path.join('.git','hooks','post-update')
+    if os.path.isfile(hookSample):
+        shutil.move(hookSample,hook)
+    if os.path.isfile(hook):
+        shellCommand(['chmod', '755', hook])
+    config = open( os.path.join('.git','config'))
+    lines = config.readlines()
+    config.close()
+    foundReceive = -1
+    foundDenyCurrentBranch = -1
+    for i in range(0,len(lines)):
+        if re.match('[receive]',lines[i]):            
+            foundReceive = i
+        elif re.match('\s*denyCurrentBranch = (\S+)',lines[i]):
+            foundDenyCurrentBranch = i
+    config = open(os.path.join('.git','config'),'w')
+    if foundReceive >= 0:
+       if foundDenyCurrentBranch >= 0:
+           config.write(''.join(lines[0:foundDenyCurrentBranch]))
+           config.write('\tdenyCurrentBranch = ignore\n')
+           config.write(''.join(lines[foundDenyCurrentBranch + 1:]))
+       else:
+           config.write(''.join(lines[0:foundDenyCurrentBranch]))
+           config.write('\tdenyCurrentBranch = ignore\n')
+           config.write(''.join(lines[foundDenyCurrentBranch:]))
+    else:
+        config.write(''.join(lines))
+        config.write('[receive]\n')
+        config.write('\tdenyCurrentBranch = ignore\n')
+    config.close()
+    index = open(os.path.join(context.indexName),'w')
+    index.write('''<?xml version="1.0" ?>
+<projects>
+  <project name="''' + projName + '''">
+    <title></title>
+    <description></description>
+    <maintainer name="" email="" />
+    <repository>
+    </repository>
+  </project>
+</projects>
+''')
+    index.close()
+    shellCommand(['git', 'add', '.'])
+    shellCommand(['git', 'commit', '-m', "'initial index (template)'"])
+#endif    
 }
 
 void 

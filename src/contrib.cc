@@ -33,6 +33,20 @@
 
 void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
 {
+    s.privileged(true);
+
+    /* \todo useradd
+       It's in the shadow-utils package on Redhat 6.0.
+       Hint: rpm -qf /usr/sbin/useradd
+       On openSUSE useradd is from package pwdutils. 
+       Homepage http://www.thkukuk.de/pam/pwdutils/, 
+       source ftp://ftp.kernel.org/pub/linux/utils/net/NIS/pwdutils-3.2.9.tar.gz
+    */
+    *ostr << httpHeaders
+	  << "create contributor with " << s.valueOf("contribName")
+	  << ", " << s.valueOf("contribPasswd");
+
+    s.privileged(false);
 }
 
 

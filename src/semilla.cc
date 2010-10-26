@@ -72,6 +72,9 @@ int main( int argc, char *argv[] )
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
+    session s("view","semillaId");
+    s.privileged(false);
+
     try {
 	/* parse command line arguments */
 	options_description opts;
@@ -92,9 +95,7 @@ int main( int argc, char *argv[] )
 	payment::addSessionVars(opts);
 	confgenCheckout::addSessionVars(opts);
 
-	session s("view","semillaId",opts);
-	s.privileged(false);
-	s.restore(argc,argv);
+	s.restore(argc,argv,opts);
 
 	/* If no document is present, set document 
 	   as view in order to catch default dispatch 
@@ -238,7 +239,7 @@ int main( int argc, char *argv[] )
 	    contribIdx contribIdxDoc(std::cout);
 	    contribCreate contribcreate(std::cout);
 	    docs.add("document",boost::regex(".*contrib/"),contribIdxDoc);
-	    docs.add("view",boost::regex("/contribCreate"),contribcreate);
+	    docs.add("document",boost::regex("/contribCreate"),contribcreate);
 
 	    calendar ical(std::cout);
 	    docs.add("document",boost::regex(".*\\.ics"),ical);
@@ -319,9 +320,11 @@ int main( int argc, char *argv[] )
 	    /* \todo !!! Hack for current tmpl_include implementation */
 	    text formatedText(std::cout,leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
+
 	    /* To display pages with embeded html forms. */
-	    composer payText(std::cout,composer::error);
-	    docs.add("document",boost::regex(".*\\.buy"),payText);
+	    composer htmlText(std::cout,composer::error);
+	    docs.add("document",boost::regex(".*\\.buy"),htmlText);
+	    docs.add("document",boost::regex(".*\\.htm"),htmlText);
 
 	    confgenCheckout cfc(std::cout,"/teroDeliver");
 	    confgenDeliver cfd(std::cout,"/teroDeliver");

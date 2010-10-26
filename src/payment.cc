@@ -104,6 +104,7 @@ payment::addSessionVars( boost::program_options::options_description& opts ) {
 	("awsAccessKey",value<std::string>(),"Amazon Access Key")
 	("awsSecretKey",value<std::string>(),"Amazon Secret Key")
 	("awsCertificate",value<std::string>(),"Amazon Public Certificate")
+	("paypalSecretKey",value<std::string>(),"Paypal Private Key File")
 	("referenceId",value<std::string>(),
 	 "Identifier of the article being paid for");
     opts.add(amazonOpts);

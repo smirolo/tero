@@ -23,7 +23,7 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "aws.hh"
+#include "paypal.hh"
 #include <cryptopp/oids.h>
 #include <cryptopp/hmac.h>
 #include <cryptopp/rsa.h>
@@ -32,13 +32,43 @@
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 
-/** Amazon Payment Services.
+#include <cryptopp/smartptr.h>
+#include <cryptopp/modes.h>
+#include <cryptopp/aes.h>
+#if 0
+#include <cryptopp/rijndael.h>
+#endif
+#include <cryptopp/cryptlib.h>
+
+/** Paypal Payment Services.
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 
 namespace {
+
+    void Load(const std::string& filename, CryptoPP::BufferedTransformation& bt)
+{
+        // http://www.cryptopp.com/docs/ref/class_file_source.html
+        CryptoPP::FileSource file(filename.c_str(), true /*pumpAll*/);
+
+        file.TransferTo(bt);
+        bt.MessageEnd();
+}
+
+    void LoadPrivateKey(const std::string& filename, CryptoPP::PrivateKey& key)
+{
+        // http://www.cryptopp.com/docs/ref/class_byte_queue.html
+        CryptoPP::ByteQueue queue;
+
+	std::cerr << "!!! load private key from " << filename << std::endl;
+
+        Load(filename, queue);
+        key.Load(queue);        
+}
+
+
 
 /** Reads an X.509 v3 certificate from a PEM file, extracts 
     the subjectPublicKeyInfo structure (which is one way PK_Verifiers 
@@ -128,26 +158,24 @@ void GetPublicKeyFromCert( const char* pathname,
 
 
 #if 1
-const char *awsStandardButton::paypipeline 
-    = "https://authorize.payments-sandbox.amazon.com/pba/paypipeline";
+const char *paypalStandardButton::paypipeline 
+    = "https://www.paypal.com/cgi-bin/webscr";
 #else
-const char *awsStandardButton::paypipeline 
-    = "https://authorize.payments.amazon.com/pba/paypipeline";
+const char *paypalStandardButton::paypipeline 
+    = "https://www.paypal.com/cgi-bin/webscr";
 #endif
 
-const char *awsStandardButton::image 
-    = "http://g-ecx.images-amazon.com/images/G/01/asp/"
-	"golden_small_paynow_withmsg_whitebg.gif";
+const char *paypalStandardButton::image 
+= "https://www.paypal.com/en_US/i/btn/btn_buynow_LG.gif";
 
 const char *httpMethod = "GET";
 const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
 const char *requestURI = "/pba/paypipeline";
 
-awsStandardButton::awsStandardButton( const std::string& ak,
-				      const std::string& sk,
-				      const std::string& cf )
-    : accessKey(ak),
-      secretKey(sk),
+paypalStandardButton::paypalStandardButton( 
+		        const boost::filesystem::path& skp,
+			const std::string& cf )
+    : secretKeyPath(skp),
       certificate(cf),
       amount(0),
       referenceId(),
@@ -166,8 +194,41 @@ awsStandardButton::awsStandardButton( const std::string& ak,
 {
 }
 
+std::string
+paypalStandardButton::loadSecretKey( const boost::filesystem::path& p ) {
+    using namespace boost::filesystem;
+    using namespace CryptoPP;
+
+    std::stringstream sg;
+    ifstream pem(p);
+    if( pem.fail() ) {
+	using namespace boost::filesystem;
+	boost::throw_exception(
+	        basic_filesystem_error<path>(std::string("file not found"),
+					     p, 
+					     boost::system::error_code()));
+    }
+    std::string line;
+    std::getline(pem,line);
+    while( !pem.eof() ) {
+	if( line.compare(0,5,"-----") != 0 ) {
+	    sg << line;
+	}
+	std::getline(pem,line);
+    }
+
+    std::string result;
+    CryptoPP::StringSource((const byte*)sg.str().c_str(),
+			   sg.str().size(),
+			   true,
+			  new CryptoPP::Base64Decoder(new StringSink(result)));
+    return result;   
+}
+
+
+
 std::string 
-awsStandardButton::formatRequest( const std::string& httpMethod,
+paypalStandardButton::formatRequest( const std::string& httpMethod,
 				  const std::string& hostHeader,
 				  const std::string& requestURI,
 				  const paramMap& params,
@@ -198,115 +259,99 @@ awsStandardButton::formatRequest( const std::string& httpMethod,
 }
 
 
-void awsStandardButton::build( const std::string& r, uint32_t a ) {
+void paypalStandardButton::build( const std::string& r, uint32_t a ) {
+
+    using namespace CryptoPP;
+
     std::stringstream s;
 
     referenceId = r;
     amount = a;
 
-    paramMap params;
-    if( !abandonUrl.empty() ) params["abandonUrl"] = abandonUrl.string();
-    params["accessKey"] = accessKey;
-    s << amount;
-    params["amount"] = s.str();
-    params["cobrandingStyle"] = cobrandingStyle;
-    params["collectShippingAddress"] = collectShippingAddress;
-    params["description"] = description;
-    params["immediateReturn"] = immediateReturn;
-    if( !ipnUrl.empty() ) params["ipnUrl"] = ipnUrl.string();
-    params["processImmediate"] = processImmediate;
-    s.str("");
-    s << referenceId;
-    params["referenceId"] = s.str();
-    if( !returnUrl.empty() ) params["returnUrl"] = returnUrl.string();
-
-    std::string request 
-	= formatRequest(httpMethod,hostHeader,requestURI,params);
-    
-    /* Calculate an RFC 2104-compliant HMAC with the previously created string,
-       the Secret Access Key, and SHA256 or SHA1 as the hash algorithm.
-       (reference: http://www.ietf.org/rfc/rfc2104.txt)
-
-       Crypto++ Library 5.6.0 - http://www.cryptopp.com/ */
-    typedef CryptoPP::HMAC<CryptoPP::SHA256> HMAC_SHA256;
-    HMAC_SHA256 md((const byte*)secretKey.c_str(),secretKey.size());
-    CryptoPP::SecByteBlock digest(md.DigestSize());
-    md.Update((const byte*)request.c_str(),request.size());
-    md.Final(digest);
-
     /*
-    CryptoPP::Base64Encoder b64e;
-    b64e.Update(digest);
-    
-    From http://www.cryptopp.com/wiki/User_Guide:_base64.h
+      certPath = args[0];
+      keyPath = args[1];
+      paypalCertPath = args[2];
+      keyPass = args[3];
+      cmdText = args[4];
+      output = args[5];
+
+      ClientSide client_side 
+      = new ClientSide( keyPath, certPath, paypalCertPath, keyPass );
+      
+      String result = client_side.getButtonEncryptionValue( cmdText, 
+      keyPath, certPath, paypalCertPath, keyPass );
+
+      getButtonEncryptionValue():
+      # fortylines-paypal-pubcert.pem
+      X509Certificate certificate 
+          = cf.generateCertificate( new FileInputStream(_certPath) );
+	  
+      signedGenerator.addSigner( privateKey, certificate, 
+                      CMSSignedDataGenerator.DIGEST_SHA1 );
+      CMSSignedData signedData = signedGenerator.generate(cmsByteArray, true, "BC");
+
+      RFC 3852
+
     */
-    CryptoPP::StringSource((const byte*)digest,digest.size(), true,
-	   new CryptoPP::Base64Encoder(
-	       new CryptoPP::StringSink(signature),false));
+    
+    /* create the request to send to Paypal. */
+    std::stringstream request;
+    request << "cert_id=XF4YCV7SZUJ2Q\n";
+    request << "cmd=_xclick\nbusiness=info@fortylines.com\nitem_name=Handheld Computer\nitem_number=1234\ncustom=sc-id-789\namount=500.00\ncurrency_code=USD\ntax=41.25\nshipping=20.00\naddress_override=1\naddress1=123 Main St\ncity=Austin\nstate=TX\nzip=94085\ncountry=US\nno_note=1cancel_return=http://www.fortylines.com/cancel.htm\n";
+
+    /* Sign the request with our private key. 
+
+       signedGenerator.addSigner( privateKey, certificate, 
+       CMSSignedDataGenerator.DIGEST_SHA1 );
+
+       See CMS (PKCS7/RFC 3852) - http://tools.ietf.org/html/rfc3852 */
+#if 0
+    std::string secretKey = loadSecretKey(secretKeyPath);
+#else
+    RSA::PrivateKey secretKey;
+    LoadPrivateKey(secretKeyPath.string(),secretKey);
+#endif
+    std::string decodedKey;
+
+#if 0
+    member_ptr<MessageAuthenticationCode> mac;
+    StringSource((const byte*)secretKey.data(),secretKey.size(), true, new HexDecoder(new StringSink(decodedKey)));
+#endif
+
+#if 0
+    mac.reset(new HMAC<SHA1>((const byte *)decodedKey.data(), decodedKey.size()));
+
+    StringSource((const byte*)request.str().data(),request.str().size(), true, 
+	       new HashFilter(*mac, new HexEncoder(new FileSink(std::cerr))));
+#endif
+
+#if 1
+    /* PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const
+       EVP_CIPHER *cipher, int flags); 
+       PKCS #1 v1.5 padded encryption
+       scheme based on RSA. 
+       PKCS7 http://tools.ietf.org/html/rfc5652 */
+    /* RSASignFile(const char *privFilename, 
+       const char *messageFilename, const char *signatureFilename)
+    */
+    {
+	using namespace CryptoPP;
+
+	/* RandomNumberGenerator & GlobalRNG() */
+	static OFB_Mode<AES>::Encryption s_globalRNG;
+
+    StringSource privKey((const byte*)decodedKey.data(),decodedKey.size(), 
+			 true);
+    RSASS<PKCS1v15, SHA>::Signer priv(secretKey);
+    StringSource((const byte*)request.str().data(),request.str().size(), true,
+  new SignerFilter(s_globalRNG, priv, new HexEncoder(new FileSink(std::cerr))));
+    }
+#endif
 }
 
     
-bool awsStandardButton::checkReturn( const session& s,
+bool paypalStandardButton::checkReturn( const session& s,
 				     const char *requestURI ) 
 {    
-    using namespace CryptoPP;
-
-    /* Read the public key out of the PEM certificate. */
-    ByteQueue keyBytes;
-    try {
-	GetPublicKeyFromCert(certificate.c_str(),keyBytes);
-    } catch( std::exception& ) {
-	std::cerr << 
-	    "Failed to extract the public key from the CA certificate." 
-		  << std::endl;
-	return false;
-    }
-
-    /* Recreate the message that was signed. */
-    std::string signatureS;
-    paramMap params;
-    const char *httpMethod = "GET";				     
-    const char *hostHeader = s.valueOf("domainName").c_str();
-
-    session::variables qs;
-    s.filters(qs,session::queryenv);
-
-    for( session::variables::const_iterator p = qs.begin();
-	 p != qs.end(); ++p ) {
-	if( p->first == std::string("signature") ) {
-	    signatureS = std::string(p->second.value);
-	} else {
-	    params[p->first] = uriEncode(p->second.value);
-	}
-    }
-    std::string request 
-	= formatRequest(httpMethod,hostHeader,requestURI,params,"&");
-#if 0
-    std::cerr << "- request to sign:" << std::endl;
-    std::cerr << request << std::endl;
-    std::cerr << "- expected signature: " << std::endl;
-    std::cerr << signatureS << std::endl;
-#endif
-    /* Verify the signature attached to the request. */
-    CryptoPP::StringSource signatureFile((const byte*)signatureS.c_str(),
-					 signatureS.size(), true, 
-					 new CryptoPP::Base64Decoder());
-
-    CryptoPP::RSASS<CryptoPP::PKCS1v15, CryptoPP::SHA>::Verifier pub(keyBytes);
-    if( signatureFile.MaxRetrievable() != pub.SignatureLength() ) {
-	std::cerr << "error: expected signature of " << pub.SignatureLength()
-		  << " bytes but only " << signatureFile.MaxRetrievable() 
-		  << " available." << std::endl; 
-	return false;
-    }
-
-    CryptoPP::SecByteBlock signature(pub.SignatureLength());
-    signatureFile.Get(signature, signature.size());
-    
-    CryptoPP::VerifierFilter *verifierFilter = new CryptoPP::VerifierFilter(pub);
-    verifierFilter->Put(signature, pub.SignatureLength());
-    CryptoPP::StringSource msg((const byte*)request.c_str(),
-			       request.size(),true,verifierFilter);
-
-    return verifierFilter->GetLastResult();
 }

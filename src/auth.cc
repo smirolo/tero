@@ -269,7 +269,7 @@ void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) {
 	     entry != directory_iterator(); ++entry ) {
 	    path filename(entry->filename());
 	    s.id(boost::filesystem::basename(filename));
-	    s.restore(0,NULL);
+	    s.restore(0,NULL,boost::program_options::options_description());
 	    break;
 	}
     }
