@@ -24,13 +24,174 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cstdio>
+#include <sys/stat.h>
 #include "changelist.hh"
 #include "markup.hh"
+#include <boost/regex.hpp>
 
 /** Execute git commands
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+void gitcmd::create( const boost::filesystem::path& pathname )
+{
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+    typedef std::list<std::string> configText;
+
+    if( !exists(pathname) ) {
+	create_directories(pathname);
+    }
+
+    /* The git command needs to be issued from within a directory where .git
+       can be found by walking up the tree structure. */
+    boost::filesystem::initial_path(); 
+    boost::filesystem::current_path(pathname);
+
+    std::stringstream cmd;
+    cmd << executable << " init";
+
+    int err = system(cmd.str().c_str());
+    if( err ) {
+	throw basic_filesystem_error<path>(std::string("create repository"),
+					   pathname, 
+					   error_code());
+
+    }
+
+    path hook(path(".git") / path("hooks") / path("post-update"));
+    path hookSample(hook.string() + ".sample");
+    if( is_regular_file(hookSample) ) {
+        rename(hookSample,hook);
+    }
+    if( is_regular_file(hook) ) {
+        chmod(hook.string().c_str(),S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+    }
+
+    configText lines;
+    path configPath(path(".git") / path("config"));
+    int foundReceiveIdx = -1;
+    int foundDenyCurrentBranchIdx = -1;
+    {
+	/* Look for the *denyCurrentBranch* configuration attribute
+	   inside the *receive* block. */
+	int n = -1;
+	ifstream config(configPath);
+	while( !config.eof() ) {
+	    boost::smatch m;
+	    std::string line;
+	    std::getline(config,line);
+	    lines.push_back(line);
+	    ++n;
+	    if( boost::regex_match(line,m,boost::regex("[receive]")) ) {
+		foundReceiveIdx = n;
+	    } else if( regex_match(line,m,
+			   boost::regex("\\s*denyCurrentBranch = (\\S+)")) ) {
+		foundDenyCurrentBranchIdx = n;
+	    }
+	    
+	}
+	config.close();
+    }
+
+    {
+	/* Add "denyCurrentBranch = ignore" into the git config file
+	   such that it is possible to push commits into the repository
+	   even though it is not a bare .git repository. */
+	ofstream config(configPath);
+	configText::const_iterator foundReceive = lines.end();
+	if( foundReceiveIdx >= 0 ) {
+	    foundReceive = lines.begin();
+	    std::advance(foundReceive,foundReceiveIdx);
+	}
+	configText::const_iterator foundDenyCurrentBranch = lines.end();
+	if( foundDenyCurrentBranchIdx >= 0 ) {
+	    foundDenyCurrentBranch = lines.begin();
+	    std::advance(foundDenyCurrentBranch,foundDenyCurrentBranchIdx);
+	}
+	
+	configText::const_iterator line = lines.begin();
+	for( ; line != foundReceive; ++line ) {
+	    config << *line << std::endl;
+	}
+	if( foundReceive != lines.end() ) {
+	    for( ; line != foundDenyCurrentBranch; ++line ) {
+		config << *line << std::endl;
+	    }
+	    config << "\tdenyCurrentBranch = ignore\n";
+	    if( foundDenyCurrentBranch != lines.end() ) {
+		++line;
+	    }
+	    for( ; line != lines.end(); ++line ) {
+		config << *line << std::endl;
+	    }
+	} else {
+	    config << "[receive]\n";
+	    config << "\tdenyCurrentBranch = ignore\n";
+	}
+	config.close();
+    }
+
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+    rootpath = pathname;
+}
+
+
+void gitcmd::add( const boost::filesystem::path& pathname )
+{
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+   /* The git command needs to be issued from within a directory where .git
+       can be found by walking up the tree structure. */
+    boost::filesystem::initial_path(); 
+    boost::filesystem::current_path(rootpath);
+
+    if( pathname.string().compare(0,rootpath.string().size(),
+				  rootpath.string()) == 0 ) {	
+	std::string relative 
+	    = (pathname.string().size() == rootpath.string().size()) ?
+	    std::string(".") :
+	    pathname.string().substr(rootpath.string().size() + 1);
+
+	std::stringstream cmd;
+	cmd << executable << " add " << relative;
+	int err = system(cmd.str().c_str());
+	if( err ) {
+	    throw basic_filesystem_error<path>(std::string("add files"),
+					       pathname, 
+					       error_code());
+	    
+	}
+    }
+
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+}
+
+
+void gitcmd::commit( const std::string& msg ) 
+{
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+   /* The git command needs to be issued from within a directory where .git
+       can be found by walking up the tree structure. */
+    boost::filesystem::initial_path(); 
+    boost::filesystem::current_path(rootpath);
+
+    std::stringstream cmd;
+    cmd << executable << " commit -m '" << msg << "'";
+    int err = system(cmd.str().c_str());
+    if( err ) {
+	throw basic_filesystem_error<path>(std::string("commit"),
+					   "", 
+					   error_code());
+    }
+
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+}
 
 
 void gitcmd::diff( std::ostream& ostr, 

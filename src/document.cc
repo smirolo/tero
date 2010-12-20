@@ -130,7 +130,9 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
     if( is_directory(pathname) ) {
 	for( directory_iterator entry = directory_iterator(pathname); 
 	     entry != directory_iterator(); ++entry ) {
-	    if( !is_directory(*entry) ) {
+	    boost::smatch m;
+	    if( !is_directory(*entry) 
+		&& boost::regex_match(entry->string(),m,filematch) ) {		
 		boost::filesystem::ifstream infile;
 		open(infile,*entry);
 		walk(s,infile,entry->string());
@@ -384,6 +386,7 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     open(strm,pathname);
 
     *ostr << httpHeaders;
+    if( !header.empty() ) *ostr << header;
 
     if( leftDec ) {
 	if( leftDec->formated() ) *ostr << code();

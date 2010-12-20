@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2010, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,68 +23,25 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmail
-#define guardmail
+#include "blog.hh"
+#include "mail.hh"
 
-#include "document.hh"
-#include "post.hh"
+/** Pages related to blog posts.
 
-/**
-   Parses e-mail messages
-
-   Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 
-/* A *mailthread* filter attempts to gather all mails that appear 
-   to belong to the same thread together. */
-class mailthread : public postFilter {
-protected:
-    typedef std::map<std::string,uint32_t> indexMap;
+blogIndex::indexSet blogIndex::indices;
 
-    indexMap indexes;
-    std::ostream* ostr;
-
-public:
-    explicit mailthread( std::ostream& o ) : ostr(&o) {}
-
-    mailthread( std::ostream& o, postFilter *n ) 
-	: postFilter(n), ostr(&o) {}
-
-    virtual void filters( const post& );
-    virtual void flush();
-};
-
-
-class mailParser : public dirwalker {
-protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
-
-    postFilter *filter;
-
-    /** Stop parsing after the first post is completed. 
-	(This is for todo items with embed comments).
-     */
-    bool stopOnFirst;
-
-public:
-    mailParser( std::ostream& o, postFilter& f, bool sof = false ) 
-	: dirwalker(o), filter(&f), stopOnFirst(sof) {}
-    
-    mailParser( std::ostream& o, const boost::regex& fm, 
-		postFilter& f, bool sof = false )
-	: dirwalker(o,fm), filter(&f), stopOnFirst(sof) {}
-
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
-    void walk( session& s, std::istream& ins, const std::string& name = "" );
-};
-
-
-#endif
+void blogIndex::fetch( session& s, const boost::filesystem::path& pathname )
+{
+    if( indices.empty() ) {
+	boost::filesystem::path root = s.root(pathname,"blog");
+	if( !root.empty() ) {
+	    addPostIndex filler(*this);
+	    mailParser parser(*ostr,boost::regex(".*\\.blog"),filler,true);
+	    parser.fetch(s,root / "blog");
+	}
+    }
+}

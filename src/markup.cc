@@ -106,26 +106,30 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
     year += (s[p++] - '0') * 100;
     year += (s[p++] - '0') * 10;
     year += (s[p++] - '0');
+    t = boost::posix_time::ptime(boost::gregorian::date(year,month,day));
 
-    /* time formatted as 24-hour:minutes:seconds */
+    /* optional time formatted as 24-hour:minutes:seconds */
     while( s[p] == ' ' ) ++p;
-    int hours = (s[p++] - '0') * 10;
-    hours += (s[p++] - '0');
-    if( s[p++] != ':' )
-	boost::throw_exception(std::ios_base::failure("Parse date failure"));
-
-    while( s[p] == ' ' ) ++p;
-    int minutes = (s[p++] - '0') * 10;
-    minutes += (s[p++] - '0');
-    if( s[p++] != ':' )
-	boost::throw_exception(std::ios_base::failure("Parse date failure"));
+    if( p < s.size() ) {
+	int hours = (s[p++] - '0') * 10;
+	hours += (s[p++] - '0');
+	if( s[p++] != ':' )
+	    boost::throw_exception(std::ios_base::failure("Parse date failure"));
 	
-    while( s[p] == ' ' ) ++p;
-    int seconds = (s[p++] - '0') * 10;
-    seconds += (s[p++] - '0');
+	while( s[p] == ' ' ) ++p;
+	int minutes = (s[p++] - '0') * 10;
+	minutes += (s[p++] - '0');
+	if( s[p++] != ':' )
+	    boost::throw_exception(std::ios_base::failure("Parse date failure"));
+	
+	while( s[p] == ' ' ) ++p;
+	int seconds = (s[p++] - '0') * 10;
+	seconds += (s[p++] - '0');
 
-    t = boost::posix_time::ptime(boost::gregorian::date(year,month,day),
-				 boost::posix_time::time_duration(hours,minutes,seconds)); 
+	t = boost::posix_time::ptime(boost::gregorian::date(year,month,day),
+				     boost::posix_time::time_duration(hours,minutes,seconds)); 
+    }
+
 #endif
     return t;
 }

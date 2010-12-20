@@ -39,6 +39,11 @@
 	<lib>boost_regex</lib>
 	<lib>boost_system</lib>
       </dep>
+      <!-- zettair for search engine 
+	   http://www.seg.rmit.edu.au/zettair/ -->
+      <dep name="contrib/zettair">
+	<bin>zet</bin>
+      </dep>
       <alternates>
 	<alternate>
 	  <tag>Ubuntu</tag>
@@ -60,6 +65,11 @@
 	  <dep name="uriparser">
 	    <include>(uriparser)/Uri.h</include>
 	    <lib>uriparser</lib>
+	  </dep>
+	  <!-- POCO C++ for SMTP client 
+	       http://pocoproject.org/license.html -->
+	  <dep name="poco">
+	    <include>(Poco)/Net/SMTPClientSession.h</include>
 	  </dep>
 	</alternate>
       </alternates>

@@ -81,7 +81,8 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
     parseState state;
 
     p.score = 0;
-    p.guid = boost::filesystem::path(boost::filesystem::path(name).filename()).stem();
+    p.filename = boost::filesystem::path(name);
+    p.guid = boost::filesystem::path(p.filename.filename()).stem();
 
     while( !ins.eof() ) {
 	boost::smatch m;
@@ -100,7 +101,8 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 		filter->filters(p);
 	    }
 	    p = post();
-	    p.guid = boost::filesystem::path(boost::filesystem::path(name).filename()).stem();
+	    p.filename = boost::filesystem::path(name);
+	    p.guid = boost::filesystem::path(p.filename.filename()).stem();
 	    p.score = 0;
 	    first = false;
 	    state = startParse;
@@ -119,6 +121,19 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name )
 	    state = titleParse;
 	} else if( line.compare(0,7,"Score: ") == 0 ) {
 	    p.score = atoi(line.substr(7).c_str());
+
+	} else if( line.compare(0,6,"Tags: ") == 0 ) {
+	    size_t first = 6, last = 6;
+	    while( last != line.size() ) {
+		if( line[last] == ',' ) {
+		    std::string s = strip(line.substr(first,last-first));
+		    if( ! s.empty() ) p.tags.insert(s);
+		    first = last + 1;
+		}
+		++last;
+	    }
+	    std::string s = strip(line.substr(first,last-first));
+	    if( ! s.empty() ) p.tags.insert(s);
 
 	} else if( regex_match(line,m,metainfo) ) {
 	    /* This is more meta information we donot interpret */

@@ -213,7 +213,7 @@ boost::filesystem::path
 session::abspath( const boost::filesystem::path& relpath ) const {
 
     /* This is an absolute path so it is safe to return it as such. */
-    if( boost::filesystem::exists(relpath) ) {
+    if( relpath.string()[0] == '/' && boost::filesystem::exists(relpath) ) {
 	return relpath;
     }
 

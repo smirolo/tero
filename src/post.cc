@@ -33,6 +33,11 @@
 */
 
 
+shortPost::shortPost( const post& p, const std::string& t ) 
+    : postBase(p), tag(t)
+{
+}
+
 
 void 
 post::addSessionVars( boost::program_options::options_description& opts )

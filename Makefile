@@ -28,7 +28,7 @@
 include $(shell dws context)
 include $(makeHelperDir)/prefix.mk
 
-bins 		:=	semilla
+bins 		:=	semilla semMail
 etcs		:=	semilla.conf
 libs		:=	libsemilla.a
 shares		:=	semilla.pdf
@@ -43,6 +43,10 @@ libsemilla.a: $(subst .cc,.o,\
 		$(notdir $(wildcard $(srcDir)/src/*.cc))))
 
 semilla: semilla.cc session.o libsemilla.a libcryptopp.a liburiparser.a \
+	libboost_date_time.a libboost_regex.a libboost_program_options.a \
+	libboost_filesystem.a libboost_system.a
+
+semMail: semMail.cc session.o libsemilla.a libcryptopp.a liburiparser.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 

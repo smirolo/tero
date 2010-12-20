@@ -101,16 +101,21 @@ public:
 
 
 /** If the pathname is a directory, iterate through all files and call back
-    walk.
+    walk() for file whose name match the regular expression *filematch*.
 */
 class dirwalker : public document {
 protected:
+    boost::regex filematch;
 
     virtual void first() {}
     virtual void last() {}
 
 public:
-    explicit dirwalker( std::ostream& o ) : document(o) {}
+    explicit dirwalker( std::ostream& o ) 
+	: document(o), filematch(".*") {}
+
+    dirwalker( std::ostream& o, const boost::regex& fm  ) 
+	: document(o), filematch(fm) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 
@@ -124,6 +129,10 @@ public:
 
 class text : public document {
 protected:
+    /** fixed header printed before the main body of text.
+     */
+    std::string header;
+
     decorator *leftDec;
     decorator *rightDec;
 
@@ -132,6 +141,9 @@ protected:
 public:
     explicit text( std::ostream& o ) 
 	: document(o), leftDec(NULL), rightDec(NULL) {}
+
+    text( std::ostream& o, const std::string& h ) 
+	: document(o), header(h), leftDec(NULL), rightDec(NULL) {}
 
     text( std::ostream& o, decorator& l,  decorator& r ) 
 	: document(o), leftDec(&l), rightDec(&r) {}

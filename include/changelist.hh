@@ -109,6 +109,18 @@ public:
     explicit revisionsys( const char* m ) 
 	: metadir(m) { revs.push_back(this); }
 
+    /** Create a new repository from directory *pathname*. 
+     */
+    virtual void create( const boost::filesystem::path& pathname ) = 0;
+
+    /** Add *pathname* to the changelist to be committed. 
+     */
+    virtual void add( const boost::filesystem::path& pathname ) = 0;
+
+    /** Commit the default changelist.
+     */
+    virtual void commit( const std::string& msg ) = 0;
+
     virtual void diff( std::ostream& ostr, 
 		       const std::string& leftCommit, 
 		       const std::string& rightCommit, 
@@ -140,6 +152,12 @@ protected:
 public:
     gitcmd( const boost::filesystem::path& exec ) 
 	: revisionsys(".git"), executable(exec) {}
+
+    void create( const boost::filesystem::path& pathname );
+
+    void add( const boost::filesystem::path& pathname );
+
+    void commit( const std::string& msg );
 
     void checkins( ::history& hist,
 		   const session& s,

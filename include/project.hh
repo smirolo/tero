@@ -26,8 +26,8 @@
 #ifndef guardproject
 #define guardproject
 
-#include "document.hh"
 #include "markup.hh"
+#include "changelist.hh"
 
 /**
    Pages related to projects.
@@ -57,9 +57,16 @@ public:
 };
 
 
+/** Create a new directory and initialize it as a project repository.
+*/
 class projCreate : public document {
+protected:
+    /** revision system to use to create the project. */
+    revisionsys* rev;
+
 public:
-    explicit projCreate( std::ostream& o ) : document(o) {}
+    projCreate( std::ostream& o, revisionsys& r ) 
+	: document(o), rev(&r) {}
 
     virtual void fetch(	session& s, const boost::filesystem::path& pathname );
 

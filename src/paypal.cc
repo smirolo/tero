@@ -306,25 +306,12 @@ void paypalStandardButton::build( const std::string& r, uint32_t a ) {
        CMSSignedDataGenerator.DIGEST_SHA1 );
 
        See CMS (PKCS7/RFC 3852) - http://tools.ietf.org/html/rfc3852 */
-#if 0
-    std::string secretKey = loadSecretKey(secretKeyPath);
-#else
+
     RSA::PrivateKey secretKey;
     LoadPrivateKey(secretKeyPath.string(),secretKey);
-#endif
-    std::string decodedKey;
 
-#if 0
-    member_ptr<MessageAuthenticationCode> mac;
-    StringSource((const byte*)secretKey.data(),secretKey.size(), true, new HexDecoder(new StringSink(decodedKey)));
-#endif
-
-#if 0
-    mac.reset(new HMAC<SHA1>((const byte *)decodedKey.data(), decodedKey.size()));
-
-    StringSource((const byte*)request.str().data(),request.str().size(), true, 
-	       new HashFilter(*mac, new HexEncoder(new FileSink(std::cerr))));
-#endif
+    ByteQueue apiPublicKeyBytes;
+    GetPublicKeyFromCert(certificate.c_str(),apiPublicKeyBytes);
 
 #if 1
     /* PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const
@@ -340,13 +327,46 @@ void paypalStandardButton::build( const std::string& r, uint32_t a ) {
 
 	/* RandomNumberGenerator & GlobalRNG() */
 	static OFB_Mode<AES>::Encryption s_globalRNG;
+#if 0
+	std::string seed = IntToString(time(NULL));
+#else
+	std::string seed = "defaultseed";
+#endif
+	seed.resize(16);
+	s_globalRNG.SetKeyWithIV((byte *)seed.data(), 16, (byte *)seed.data());
 
-    StringSource privKey((const byte*)decodedKey.data(),decodedKey.size(), 
-			 true);
-    RSASS<PKCS1v15, SHA>::Signer priv(secretKey);
+    RSASS<PKCS1v15, SHA>::Signer priv(secretKey);    
     StringSource((const byte*)request.str().data(),request.str().size(), true,
   new SignerFilter(s_globalRNG, priv, new HexEncoder(new FileSink(std::cerr))));
+
+    /*
+      CMSEnvelopedDataGenerator envGenerator = new CMSEnvelopedDataGenerator();
+      envGenerator.addKeyTransRecipient(payPalCert);
+      CMSEnvelopedData envData 
+          = envGenerator.generate(new CMSProcessableByteArray(signed),
+	                 CMSEnvelopedDataGenerator.DES_EDE3_CBC, "BC" );
+      byte[] pkcs7Bytes = envData.getEncoded();
+      return new String( DERtoPEM(pkcs7Bytes, "PKCS7") );
+     */
+
+#if 0
+    /* http://www.mail-archive.com/cryptopp-users@googlegroups.com/msg00095.html */
+    /* from ~/build/cryptopp-5.6.0/validat1.cpp */
+    const byte iv[] = {0x12,0x34,0x56,0x78,0x90,0xab,0xcd,0xef};
+
+    DES_EDE3_Encryption en(apiPublicKeyBytes);
+    CBC_CTS_Encryptor encryptor(en, iv);
+    
+    memcpy(&keyStruct->key_iv[0], apiPublicKeyBytes, DES_EDE3_KEYSIZE);
+    memcpy(&keyStruct->key_iv[(int)DES_EDE3_KEYSIZE], iv, 
+	   DES_EDE3_Encryption::BLOCKSIZE);
+    FileSink fs1(payloadFileName);
+    fs1.Put((const byte *) &keyResult->key_iv [0], sizeof(keyResult->key_iv));
+#endif
+
+
     }
+
 #endif
 }
 

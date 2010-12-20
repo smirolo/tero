@@ -186,6 +186,12 @@ void statement::fetch( session& s, const boost::filesystem::path& pathname ) {
     ptime firstDay(date(from_simple_string(s.valueOf("month"))));
     ptime lastDay(firstDay.date().end_of_month() + days(1));
 
+#if 0
+    std::cerr << "firstDay: " << firstDay 
+	      << ", lastDay: " << lastDay 
+	      << ", client: " << client << std::endl;
+#endif
+
     ifstream file(s.contributorLog());
     if( file.fail() ) {
 	boost::throw_exception(basic_filesystem_error<path>(

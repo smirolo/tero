@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2010, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,68 +23,62 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardmail
-#define guardmail
+#include "auth.hh"
+#include "todo.hh"
 
-#include "document.hh"
-#include "post.hh"
-
-/**
-   Parses e-mail messages
-
-   Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
-*/
-
-
-/* A *mailthread* filter attempts to gather all mails that appear 
-   to belong to the same thread together. */
-class mailthread : public postFilter {
-protected:
-    typedef std::map<std::string,uint32_t> indexMap;
-
-    indexMap indexes;
-    std::ostream* ostr;
-
+class todoModifFilter : public todoFilter {
 public:
-    explicit mailthread( std::ostream& o ) : ostr(&o) {}
+    explicit todoModifFilter( const boost::filesystem::path& m )
+	: todoFilter(m) {}
 
-    mailthread( std::ostream& o, postFilter *n ) 
-	: postFilter(n), ostr(&o) {}
+    todoModifFilter( const boost::filesystem::path& m, postFilter* n  ) 
+	: todoFilter(m,n) {}
 
-    virtual void filters( const post& );
-    virtual void flush();
+    virtual void filters( const post& p ) {
+	static const boost::regex 
+	    guidPat("(\\[([a-z]|\\d){8}-([a-z]|\\d){4}-([a-z]|\\d){4}-([a-z]|\\d){4}-([a-z]|\\d){12}\\])");
+
+	boost::smatch m;
+	if( boost::regex_search(p.title,m,guidPat) ) {
+	    std::cerr << "comment on " << m.str(1) << "..." << std::endl;
+	} else {
+	    std::cerr << "create..." << std::endl;
+	}
+    }
 };
 
 
-class mailParser : public dirwalker {
-protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
+int main( int argc, char *argv[] )
+{
+    using namespace std;
+    using namespace boost::program_options;
+    using namespace boost::filesystem;
 
-    postFilter *filter;
+    session s("view","semillaId");
+    s.privileged(false);
 
-    /** Stop parsing after the first post is completed. 
-	(This is for todo items with embed comments).
-     */
-    bool stopOnFirst;
+    try {
+	/* parse command line arguments */
+	options_description opts;
+	options_description genOptions("general");
+	genOptions.add_options()
+	    ("help","produce help message")
+	    ("binDir",value<std::string>(),"path to outside executables");
+	
+	opts.add(genOptions);
+	auth::addSessionVars(opts);
 
-public:
-    mailParser( std::ostream& o, postFilter& f, bool sof = false ) 
-	: dirwalker(o), filter(&f), stopOnFirst(sof) {}
-    
-    mailParser( std::ostream& o, const boost::regex& fm, 
-		postFilter& f, bool sof = false )
-	: dirwalker(o,fm), filter(&f), stopOnFirst(sof) {}
+	s.restore(argc,argv,opts);
+
+	todoModifFilter modif(".");
+	if( !std::cin.eof() ) {
+	    mailParser parser(std::cout,modif);
+	    parser.walk(s,std::cin);
+	}
+    } catch( exception& e ) {
+	std::cerr << "!!! exception: " << e.what() << std::endl;
+    }
 
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
-    void walk( session& s, std::istream& ins, const std::string& name = "" );
-};
-
-
-#endif
+    return 0;
+}

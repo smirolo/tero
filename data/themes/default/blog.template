@@ -1,0 +1,50 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.w3.org/1999/xhtml
+                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title><!-- tmpl_var name='title' --></title>
+<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
+</head>
+
+<body>
+  <div id="wrap">
+    <!-- tmpl_include name='header.template' -->
+
+  <div id="document">
+    <table>
+      <tr>
+	<td id="sidebar">
+	  <!-- tmpl_include name='topMenu.template' -->
+	  <div class="MenuWidget">
+	    <h1>By Date</h1>
+	    <p><!-- tmpl_var name='dates' --></p>
+	  </div>
+	  <div class="MenuWidget">
+	    <h1>By Tags</h1>	    
+	    <p><!-- tmpl_var name='tags' --></p>  
+	  </div>
+	</td>
+	<td id="entry">	  
+	  <div id="title">
+	    <h1><!-- tmpl_var name='title' -->	      
+	      <a href="index.rss">
+		<img class="imgrss"
+		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
+	      </a>
+	    </h1>
+	  </div>	  
+	  <!-- tmpl_var name='document' -->	  
+	</td>
+
+      </tr>
+    </table>
+  </div>
+  </div>
+
+  <!-- tmpl_include name='footer.template' -->
+
+</body>
+</html>

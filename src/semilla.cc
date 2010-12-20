@@ -41,6 +41,7 @@
 #include "calendar.hh"
 #include "contrib.hh"
 #include "todo.hh"
+#include "blog.hh"
 #include "webserve.hh"
 #include "payment.hh"
 #include "confgen.hh"
@@ -194,6 +195,10 @@ int main( int argc, char *argv[] )
 		   + std::string("-test/regression.log"));
 	    s.vars["regressions"] = regressname.string();
 
+	    /* Command to create a new project */
+	    projCreate projcreate(std::cout,revision);
+	    docs.add("view",boost::regex(".*/create"),projcreate);
+
 	    changedescr checkinHist(std::cout);
 	    docs.add("history",boost::regex(".*dws\\.xml"),checkinHist);
 	    projindex pind(std::cout);
@@ -236,6 +241,63 @@ int main( int argc, char *argv[] )
 	    todoVoteSuccess tvs(todoModifs,"/todoVoteSuccess",std::cout);
 	    docs.add("document",boost::regex("/todoVoteSuccess"),tvs);
 
+	    /* blog presentation */ 
+#if 0
+	    composer blogs(std::cout,s.valueOf("themeDir")
+			   + std::string("/blog.template"),
+			     composer::error);
+	    docs.add("view",boost::regex(std::string(".*/blog/.*")),blogs);
+	    blogByDate blogtext(std::cout);
+	    docs.add("document",
+		     boost::regex(std::string(".*/blog/.*")),
+		     blogtext);
+	    blogDateLinks dates(std::cout);
+	    docs.add("dates",
+		     boost::regex(std::string(".*/blog/.*")),
+		     dates);
+	    blogTagLinks tags(std::cout);
+	    docs.add("tags",
+		     boost::regex(std::string(".*/blog/.*")),
+		     tags);
+#else
+	    composer blogs(std::cout,s.valueOf("themeDir")
+			   + std::string("/blog.template"),
+			     composer::error);
+	    blogByDate blogtext(std::cout);
+	    blogByTags blogtags(std::cout);
+	    blogDateLinks dates(std::cout);
+	    blogTagLinks tags(std::cout);
+	    struct {
+		const char *name;
+		boost::regex pat;
+		document& doc;
+	    } lines[] = {
+		{ "view", 
+		  boost::regex(std::string(".*/blog/.*")),
+		  blogs },
+		{ "document",
+		  boost::regex(std::string(".*/blog/tags/.*")),
+		  blogtags },
+		{ "document",
+		  boost::regex(std::string(".*/blog/.*")),
+		  blogtext },
+		{ "dates",
+		  boost::regex(std::string(".*/blog/.*")),
+		  dates },
+		{ "tags",
+		  boost::regex(std::string(".*/blog/.*")),
+		  tags }
+	    };
+
+	    for( size_t i = 0; i < sizeof(lines) / sizeof(lines[0]); ++i ) {
+		docs.add(lines[i].name,lines[i].pat,lines[i].doc);
+	    }
+
+#endif
+	    s.vars["dates"] = s.valueOf("document");
+	    s.vars["tags"] = s.valueOf("document");
+    
+	    /* contribution */
 	    contribIdx contribIdxDoc(std::cout);
 	    contribCreate contribcreate(std::cout);
 	    docs.add("document",boost::regex(".*contrib/"),contribIdxDoc);

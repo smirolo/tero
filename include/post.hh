@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2010, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,9 @@
 #define guardpost
 
 #include <boost/date_time.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
+
 
 /** Snipset of information easily presented through different 
     channels (web, rss feed, e-mail, ...).
@@ -38,7 +41,71 @@
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-class post {
+
+
+/** Base class with common information present in every post
+    such as date, title and author. */
+class postBase {
+public:
+    /** File this short post is derived from. 
+     */
+    boost::filesystem::path filename;
+
+    /** The full name of the author of the post. 
+     */
+    std::string authorName;
+
+    /** The e-mail address of the author of the post.
+     */
+    std::string authorEmail;    
+
+    /** Time at which the post was published.
+     */
+    boost::posix_time::ptime time;    
+
+    /** The title of the post will be displayed as header of pages
+       and subject of e-mails. 
+    */
+    std::string title;   
+
+#if 0
+    postBase() {}
+
+    postBase( const postBase& p ) 
+	: filename(p.filename),
+	  authorName(p.authorName),
+	  authorEmail(p.authorEmail),
+	  time(p.time),
+	  title(p.title) {}
+#endif
+};
+
+
+class post;   // forward declaration
+
+
+/** Short posts are used to construct sets of links to actual post content.
+    Outside the common information (author, time), tags are usually used 
+    to filter posts and thus every tag associated to a post ends up generating
+    as many shortPosts.
+ */
+class shortPost : public postBase {
+public:
+    std::string tag;
+
+    shortPost() {}
+
+    shortPost( const post& p, const std::string& t );
+
+};
+
+
+/** Full-length post with textual content. 
+*/
+class post : public postBase {
+public:
+    typedef std::set<std::string> tagSet;
+
 public:
 
     /** The post unique identifier is used in many case to associate
@@ -53,32 +120,19 @@ public:
     */
     std::string guid;
 
-    /** The title of the post will be displayed as header of pages
-       and subject of e-mails. 
-    */
-    std::string title;
-
     /** The text content of the post. 
      */
     std::string descr;
-
-    /** The full name of the author of the post. 
-     */
-    std::string authorName;
-
-    /** The e-mail address of the author of the post.
-     */
-    std::string authorEmail;    
-
-    /** Time at which the post was published.
-     */
-    boost::posix_time::ptime time;    
 
     /** Each post as an associated score that can be used to sort
 	posts by relevance. Currently, we use the score as the basis
 	for the micro-payment system.
      */
     uint32_t score;
+
+    /** tags associated to a post. 
+     */
+    tagSet tags;
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );
@@ -98,6 +152,98 @@ struct orderByScore : public std::binary_function<post, post, bool> {
 	return left.score > right.score;
     }
 };
+
+
+template<typename vT>
+struct orderByTime : public std::binary_function<vT,vT,bool> {
+    typedef vT valueType;
+    typedef boost::posix_time::ptime keyType;
+
+    static const char *name;
+
+    valueType first( const std::string& init = "" ) const {
+	using namespace boost::gregorian;
+	using namespace boost::posix_time;
+	valueType v;
+	if( init.empty() ) {
+	    v.time = second_clock::local_time();
+	} else {
+	    v.time = ptime(date(from_simple_string(init)));
+	}
+	/* decreasing order. */
+	v.time = ptime(v.time.date().end_of_month());
+	return v;
+    }
+
+    valueType last( const std::string& init = "" ) const {
+	using namespace boost::gregorian;
+	using namespace boost::posix_time;
+	valueType v;
+	if( init.empty() ) {
+	    v.time =  second_clock::local_time();
+	} else {
+	    v.time = ptime(date(from_simple_string(init)));
+	}
+	/* decreasing order. */
+	v.time = ptime((v.time.date() 
+			- boost::gregorian::months(1)).end_of_month());
+	return v;
+    }
+    
+    /** The key is made of year and month and used to group posts together.
+     */ 
+    keyType key( const valueType& p ) const {
+	using namespace boost::gregorian;
+	try {
+	    date d(date_from_tm(boost::posix_time::to_tm(p.time)));	
+	    return keyType(date(d.year(),d.month(),1));
+	} catch( const std::out_of_range& ) {
+	    /* in case it is not-a-date-time */
+	}
+	return keyType(not_a_date_time);
+    }
+
+    bool operator()( const valueType& left, const valueType& right ) const {
+	return left.time > right.time;
+    }
+};
+
+template<typename vT>
+const char* orderByTime<vT>::name = "archive";
+
+
+/** \todo tag value in post indices
+*/
+template<typename vT>
+struct orderByTag : public std::binary_function<vT, vT, bool> {
+    typedef vT valueType;
+    typedef std::string keyType;
+
+    static const char *name;
+
+    valueType first( const std::string& init = "" ) const {
+	valueType v;
+	v.tag = init;
+	return v;
+    }
+
+    valueType last( const std::string& init = "" ) const {
+	valueType v;
+	v.tag = init;
+	return v;
+    }
+
+    keyType key( const valueType& p ) const {
+	return p.tag;
+    }
+
+    bool operator()( const valueType& left, const valueType& right ) const {
+	return left.tag > right.tag;
+    }
+};
+
+template<typename vT>
+const char* orderByTag<vT>::name = "tags";
 
 
 class postFilter {
