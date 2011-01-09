@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -173,9 +173,10 @@ void session::privileged( bool v ) {
 */
     uid_t realId = getuid();
     uid_t effectiveId = geteuid();
+#if 0
     std::cerr << "!!! real_uid=" << realId << ", effective_uid="
 	      << effectiveId << std::endl;
-
+#endif
     uid_t newId = v ? 0 : realId;
     if( setuid(newId) < 0 ) {
 	std::cerr << "error: setuid to zero: " 

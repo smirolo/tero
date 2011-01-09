@@ -39,7 +39,6 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-#if 0
 #include <security/pam_appl.h>
 
 int su_conv( int num_msg,
@@ -64,9 +63,9 @@ int su_conv( int num_msg,
 	    break;
 	case PAM_PROMPT_ECHO_ON:
 	    std::cerr << msgm[count]->msg;
-	    value = (char*)malloc((s->username.size() + 1)
+	    value = (char*)malloc((s->username().size() + 1)
 				  * sizeof(char));
-	    strcpy(value,s->username.c_str());
+	    strcpy(value,s->username().c_str());
 	    break;	    
         case PAM_ERROR_MSG:
 	case PAM_TEXT_INFO:
@@ -82,7 +81,7 @@ int su_conv( int num_msg,
     *resp = r;
     return PAM_SUCCESS;
 }
-#endif
+
 
 
 void auth::addSessionVars( boost::program_options::options_description& opts )
@@ -96,21 +95,21 @@ void auth::addSessionVars( boost::program_options::options_description& opts )
 }
 
 void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
-#if 0
+#if 1
     /* This code is used to debug initial permission problems. */
     struct passwd *pw;
     struct group *grp;
     
     pw = getpwuid(getuid());
     grp = getgrgid(getgid());
-    cerr << "real      : " << getuid() 
-	 << '(' << pw->pw_name << ")\t" << getgid() 
-	 << '(' << grp->gr_name << ')' << endl;
+    std::cerr << "real      : " << getuid() 
+	      << '(' << pw->pw_name << ")\t" << getgid() 
+	      << '(' << grp->gr_name << ')' << std::endl;
     pw = getpwuid(geteuid());
     grp = getgrgid(getegid());
-    cerr << "effective : " << geteuid() 
-	 << '(' << pw->pw_name << ")\t" << getegid() 
-	 << '(' << grp->gr_name << ')' << endl;
+    std::cerr << "effective : " << geteuid() 
+	      << '(' << pw->pw_name << ")\t" << getegid() 
+	      << '(' << grp->gr_name << ')' << std::endl;
 #endif
 
     s.state("username",s.username());
@@ -128,7 +127,6 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
 	throw invalidAuthentication();
     }
 
-#if 0
     /* PAM authentication 
        http://www.freebsd.org/doc/en/articles/pam/pam-essentials.html
        http://linux.die.net/man/3/pam
@@ -160,7 +158,6 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     if(pam_end(pamh,pam_status) != PAM_SUCCESS) { 
 	pamh = NULL;        
     }
-#endif
 
     /* The authentication will create a persistent ("username",value)
        pair that, in turn, will create a sessionId and a startTime. */

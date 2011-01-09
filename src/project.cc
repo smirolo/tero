@@ -51,7 +51,9 @@ void projCreate::fetch(	session& s, const boost::filesystem::path& pathname ) {
 					   error_code());
     }
 
-    rev->create(projectDir);
+    /* \todo HACK: force group to true to run projCreateTest 
+       while the login feature is not fully working. */
+    rev->create(projectDir,true);
 
     ofstream index(projectDir / path("dws.xml"));
     index << "<?xml version=\"1.0\" ?>\n"
@@ -59,17 +61,18 @@ void projCreate::fetch(	session& s, const boost::filesystem::path& pathname ) {
 	  << "  <project name=\"" << projectname << "\">\n"
 	  << "    <title></title>\n"
 	  << "    <description></description>\n"
-	  << "    <maintainer name="" email="" />\n"
+	  << "    <maintainer name=\"\" email=\"\" />\n"
 	  << "    <repository>\n"
 	  << "    </repository>\n"
 	  << "  </project>\n"
 	  << "</projects>\n";
     index.close();
 
-    std::cerr << "!!! add " << projectDir << std::endl;
     rev->add(projectDir);
-    std::cerr << "!!! commit " << std::endl;
-    rev->commit("initial index (template)");   
+    rev->commit("initial index (template)");
+
+    *ostr << httpHeaders.refresh(0,url("/" + projectname.string() + "/dws.xml")) 
+	  << std::endl;   
 }
 
 

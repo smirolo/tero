@@ -139,9 +139,9 @@ const char *awsStandardButton::image
     = "http://g-ecx.images-amazon.com/images/G/01/asp/"
 	"golden_small_paynow_withmsg_whitebg.gif";
 
-const char *httpMethod = "GET";
-const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
-const char *requestURI = "/pba/paypipeline";
+static const char *httpMethod = "GET";
+static const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
+static const char *requestURI = "/pba/paypipeline";
 
 awsStandardButton::awsStandardButton( const std::string& ak,
 				      const std::string& sk,

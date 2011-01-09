@@ -109,9 +109,13 @@ public:
     explicit revisionsys( const char* m ) 
 	: metadir(m) { revs.push_back(this); }
 
-    /** Create a new repository from directory *pathname*. 
+    /** Create a new repository from directory *pathname*. When *group*
+	is true, all users in the same group as the creator have permissions
+	to push changes into the repository otherwise only the creator
+	can push changes.
      */
-    virtual void create( const boost::filesystem::path& pathname ) = 0;
+    virtual void create( const boost::filesystem::path& pathname,
+			 bool group = false ) = 0;
 
     /** Add *pathname* to the changelist to be committed. 
      */
@@ -147,13 +151,20 @@ public:
  */
 class gitcmd : public revisionsys {
 protected:
-	boost::filesystem::path executable;
+    boost::filesystem::path executable;
+
+    /** Execute a command line catching stdout such that apache does
+	not end-up with malformed headers and throwing an exception
+	when the command fails.
+     */
+    void shellcmd( const std::string& cmdline );
 
 public:
     gitcmd( const boost::filesystem::path& exec ) 
 	: revisionsys(".git"), executable(exec) {}
-
-    void create( const boost::filesystem::path& pathname );
+   
+    void create( const boost::filesystem::path& pathname,
+		 bool group = false );
 
     void add( const boost::filesystem::path& pathname );
 

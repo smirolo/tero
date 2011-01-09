@@ -34,7 +34,31 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-void gitcmd::create( const boost::filesystem::path& pathname )
+void gitcmd::shellcmd( const std::string& cmdline )
+{
+    using namespace boost::system;
+    using namespace boost::filesystem;
+    FILE *f = popen(cmdline.c_str(),"r");
+    if( f == NULL ) {
+	throw basic_filesystem_error<path>(std::string("executing"),
+					   cmdline, 
+					   error_code());
+    }
+    char line[256];
+    while( fgets(line,sizeof(line),f) != NULL ) {
+	std::cerr << line;
+    }
+    int err = pclose(f);
+    if( err ) {
+	throw basic_filesystem_error<path>(std::string("exiting"),
+					   cmdline, 
+					   error_code());
+    }
+}
+
+
+void gitcmd::create( const boost::filesystem::path& pathname, 
+		     bool group )
 {
     using namespace boost::system;
     using namespace boost::filesystem;
@@ -43,6 +67,8 @@ void gitcmd::create( const boost::filesystem::path& pathname )
 
     if( !exists(pathname) ) {
 	create_directories(pathname);
+	if( group ) chmod(pathname.string().c_str(),
+			  S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
 
     /* The git command needs to be issued from within a directory where .git
@@ -52,22 +78,49 @@ void gitcmd::create( const boost::filesystem::path& pathname )
 
     std::stringstream cmd;
     cmd << executable << " init";
+    if( group ) {
+	cmd << " --shared=group";
+    }
+    shellcmd(cmd.str());
 
-    int err = system(cmd.str().c_str());
-    if( err ) {
-	throw basic_filesystem_error<path>(std::string("create repository"),
-					   pathname, 
-					   error_code());
-
+    {
+	/* Enable the post-update hook because the repository is accessible
+	   through http. */
+	path hookName(path(".git") / path("hooks") / path("post-update"));
+	path hookNameSample(hookName.string() + ".sample");
+	if( is_regular_file(hookNameSample) ) {
+	    rename(hookNameSample,hookName);
+	}
+	if( is_regular_file(hookName) ) {
+	    chmod(hookName.string().c_str(),
+		  S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+	}	
     }
 
-    path hook(path(".git") / path("hooks") / path("post-update"));
-    path hookSample(hook.string() + ".sample");
-    if( is_regular_file(hookSample) ) {
-        rename(hookSample,hook);
-    }
-    if( is_regular_file(hook) ) {
-        chmod(hook.string().c_str(),S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+    {
+	/* The presentation engine works on regular files so we have to make
+	   sure the pages will be in sync with the repository head. We need
+	   to issue the checkout command after the commit. This cannot be
+	   done in post-update. */
+	path hookName(path(".git") / path("hooks") / path("post-receive"));
+	path hookNameSample(hookName.string() + ".sample");
+	if( is_regular_file(hookNameSample) ) {
+	    rename(hookNameSample,hookName);
+	}
+	if( is_regular_file(hookName) ) {
+	    chmod(hookName.string().c_str(),
+		  S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+	}	
+	ofstream hook(hookName,std::ios_base::out | std::ios_base::app);
+#if 0
+	hook << "p=`pwd`" << std::endl;
+	hook << "echo \"!!! pwd=$p\"" << std::endl;
+	hook << "cd .." << std::endl;
+	hook << "p=`pwd`" << std::endl;
+	hook << "echo \"!!! GIT_DIR=$GIT_DIR\"" << std::endl;
+#endif
+	hook << "cd .. && GIT_DIR=.git git checkout -f" << std::endl;
+	hook.close();
     }
 
     configText lines;
@@ -95,6 +148,10 @@ void gitcmd::create( const boost::filesystem::path& pathname )
 	}
 	config.close();
     }
+
+    std::cerr << "!!! foundReceive at line " << foundReceiveIdx 
+	      << "and foundDenyCurrentBranch at line " 
+	      << foundDenyCurrentBranchIdx << std::endl;
 
     {
 	/* Add "denyCurrentBranch = ignore" into the git config file
@@ -158,13 +215,7 @@ void gitcmd::add( const boost::filesystem::path& pathname )
 
 	std::stringstream cmd;
 	cmd << executable << " add " << relative;
-	int err = system(cmd.str().c_str());
-	if( err ) {
-	    throw basic_filesystem_error<path>(std::string("add files"),
-					       pathname, 
-					       error_code());
-	    
-	}
+	shellcmd(cmd.str());
     }
 
     boost::filesystem::current_path(boost::filesystem::initial_path());
@@ -183,13 +234,7 @@ void gitcmd::commit( const std::string& msg )
 
     std::stringstream cmd;
     cmd << executable << " commit -m '" << msg << "'";
-    int err = system(cmd.str().c_str());
-    if( err ) {
-	throw basic_filesystem_error<path>(std::string("commit"),
-					   "", 
-					   error_code());
-    }
-
+    shellcmd(cmd.str());
     boost::filesystem::current_path(boost::filesystem::initial_path());
 }
 

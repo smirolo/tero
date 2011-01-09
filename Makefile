@@ -28,9 +28,10 @@
 include $(shell dws context)
 include $(makeHelperDir)/prefix.mk
 
-bins 		:=	semilla semMail
+#bins 		:=	semilla
+bins 		:=	semilla smailui
 etcs		:=	semilla.conf
-libs		:=	libsemilla.a
+libs		:=	libsemilla.a libpayproc.a session.o
 shares		:=	semilla.pdf
 
 semillaConfFile		?=	/etc/semilla.conf
@@ -38,19 +39,27 @@ semillaSessionDir	?=	/var/semilla
 
 #CPPFLAGS	+=	-DREADONLY
 
-libsemilla.a: $(subst .cc,.o,\
-	      $(filter-out semilla.cc session.cc,\
-		$(notdir $(wildcard $(srcDir)/src/*.cc))))
+libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
+			checkstyle.o composer.o contrib.o cpptok.o \
+			docbook.o document.o hreftok.o gitcmd.o logview.o \
+			mail.o markup.o project.o projfiles.o post.o \
+			shtok.o todo.o webserve.o xmlesc.o xmltok.o
 
-semilla: semilla.cc session.o libsemilla.a libcryptopp.a liburiparser.a \
+libpayprocObjs	:=	aws.o payment.o paypal.o	
+
+libsemilla.a: $(libsemillaObjs)
+
+libpayproc.a: $(libpayprocObjs)
+
+semilla: semilla.cc session.o libsemilla.a libpayproc.a \
+	libcryptopp.a liburiparser.a libpam.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
 
-semMail: semMail.cc session.o libsemilla.a libcryptopp.a liburiparser.a \
+smailui: smailui.cc session.o libsemilla.a \
+	libcryptopp.a liburiparser.a libpam.a \
 	libboost_date_time.a libboost_regex.a libboost_program_options.a \
 	libboost_filesystem.a libboost_system.a
-
-#semilla:	LDFLAGS	+= -lpam
 
 session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" \

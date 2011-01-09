@@ -36,7 +36,6 @@
 #include "projfiles.hh"
 #include "project.hh"
 #include "logview.hh"
-#include "invoices.hh"
 #include "checkstyle.hh"
 #include "calendar.hh"
 #include "contrib.hh"
@@ -44,7 +43,6 @@
 #include "blog.hh"
 #include "webserve.hh"
 #include "payment.hh"
-#include "confgen.hh"
 
 #if 1
 /* We use this flag to trigger features that are currently in development. */
@@ -55,16 +53,6 @@
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-
-
-class dservicesAdapter : public adapter {
-public:
-    virtual article fetch( session& s, 
-			   const boost::filesystem::path& pathname ) {
-	return article("dservices",
-		       "configuration through tero",25);
-    }
-};
 
 
 int main( int argc, char *argv[] )
@@ -92,9 +80,6 @@ int main( int argc, char *argv[] )
 	logview::addSessionVars(opts);
 	projindex::addSessionVars(opts);
 	calendar::addSessionVars(opts);
-	statement::addSessionVars(opts);
-	payment::addSessionVars(opts);
-	confgenCheckout::addSessionVars(opts);
 
 	s.restore(argc,argv,opts);
 
@@ -130,14 +115,7 @@ int main( int argc, char *argv[] )
 	       generic order since the matcher will apply each the first
 	       one that yields a positive match. */	    
 
-#if 1
-	    composer invoice(std::cout,s.valueOf("themeDir") 
-			     + std::string("/invoice.template"),
-			     composer::create);
-	    statement stmt(std::cout);
-	    docs.add("document",boost::regex("/statement"),stmt);	 
-	    docs.add("view",boost::regex("/statement"),invoice);	    
-
+#if 0
 	    cancel cel(std::cout);
 	    change chg(std::cout);
 	    docs.add("view",boost::regex("/cancel"),cel);
@@ -383,23 +361,6 @@ int main( int argc, char *argv[] )
 	    text formatedText(std::cout,leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
 
-	    /* To display pages with embeded html forms. */
-	    composer htmlText(std::cout,composer::error);
-	    docs.add("document",boost::regex(".*\\.buy"),htmlText);
-	    docs.add("document",boost::regex(".*\\.htm"),htmlText);
-
-	    confgenCheckout cfc(std::cout,"/teroDeliver");
-	    confgenDeliver cfd(std::cout,"/teroDeliver");
-	    forceDownload download(std::cout);
-	    docs.add("document",boost::regex("/teroCheckout"),cfc);
-	    docs.add("document",boost::regex("/teroDeliver"),cfd);
-	    docs.add("view",boost::regex("/download.*"),download);
-	    docs.add("document",boost::regex("/download.*"),download);
-
-	    payPipeline donothingPipeline(std::cout);
-	    docs.add("view",boost::regex(".*/paypipeline"),
-		     donothingPipeline);
-
 	    docs.add("document",boost::regex(".*"),rawtext);
 
 #ifdef devsite
@@ -435,11 +396,9 @@ int main( int argc, char *argv[] )
 	    /* button to Amazon payment */
 	    payment pay(std::cout);
 	    todoAdapter ta;
-	    dservicesAdapter da;
 	    pay.add(boost::regex(".*\\.todo"),"/todoVoteSuccess",ta);
-	    pay.add(boost::regex(".*\\.buy"),"/dservices",da);
-	    docs.add("aws",boost::regex(".*"),pay);	    
-	    s.vars["aws"] = s.valueOf("document");
+	    docs.add("payproc",boost::regex(".*"),pay);	    
+	    s.vars["payproc"] = s.valueOf("document");
       	    
 	    docs.fetch(s,"view");
 	}

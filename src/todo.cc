@@ -28,7 +28,9 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "todo.hh"
+#if 0
 #include "payment.hh"
+#endif
 #include "markup.hh"
 
 /** Pages related to todo items.
@@ -322,7 +324,9 @@ void todoVoteAbandon::fetch( session& s,
 void todoVoteSuccess::fetch( session& s, 
 			     const boost::filesystem::path& pathname )
 {
+#if 0
     payment::checkReturn(s,returnPath);
+#endif
 
     /* The pathname is set to the *todoVote* action name when we get here
        so we derive the document name from *href*. */

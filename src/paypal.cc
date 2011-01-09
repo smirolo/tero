@@ -168,9 +168,9 @@ const char *paypalStandardButton::paypipeline
 const char *paypalStandardButton::image 
 = "https://www.paypal.com/en_US/i/btn/btn_buynow_LG.gif";
 
-const char *httpMethod = "GET";
-const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
-const char *requestURI = "/pba/paypipeline";
+static const char *httpMethod = "GET";
+static const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
+static const char *requestURI = "/pba/paypipeline";
 
 paypalStandardButton::paypalStandardButton( 
 		        const boost::filesystem::path& skp,
