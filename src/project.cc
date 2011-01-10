@@ -122,7 +122,7 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    dec.attach(*ostr);
 	    for( xml_node<> *descr
 		     = project->first_node("description"); descr != NULL; 
-		 descr = descr->next_sibling() ) {
+		 descr = descr->next_sibling("description") ) {
 		*ostr << html::p()
 #if 0
 			  << descr->value();
