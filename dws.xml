@@ -39,6 +39,12 @@
 	<lib>boost_regex</lib>
 	<lib>boost_system</lib>
       </dep>
+      <!-- Ubuntu jaunty complains about the virtual package
+	   and requires to install libpam0g-dev directly -->
+      <dep name="libpam-dev">
+	<include>(security)/pam_appl.h</include>
+	<lib>pam</lib>
+      </dep>
       <!-- zettair for search engine 
 	   http://www.seg.rmit.edu.au/zettair/ -->
       <dep name="contrib/zettair">
@@ -54,10 +60,6 @@
 	  <dep name="liburiparser-dev">
 	    <include>(uriparser)/Uri.h</include>
 	    <lib>uriparser</lib>
-	  </dep>
-	  <dep name="libpam-dev">
-	    <include>(security)/pam_appl.h</include>
-	    <lib>pam</lib>
 	  </dep>
 	</alternate>
 	<alternate>

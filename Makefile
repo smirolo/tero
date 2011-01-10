@@ -51,15 +51,19 @@ libsemilla.a: $(libsemillaObjs)
 
 libpayproc.a: $(libpayprocObjs)
 
+# On Ubuntu jaunty, libpam.a requires this library. 
+# This is not the case on Ubuntu lucid.
+LDFLAGS		+=	-ldl
+
 semilla: semilla.cc session.o libsemilla.a libpayproc.a \
-	libcryptopp.a liburiparser.a libpam.a \
-	libboost_date_time.a libboost_regex.a libboost_program_options.a \
-	libboost_filesystem.a libboost_system.a
+		-lcryptopp -luriparser -lpam \
+		-lboost_date_time -lboost_regex -lboost_program_options \
+		-lboost_filesystem -lboost_system
 
 smailui: smailui.cc session.o libsemilla.a \
-	libcryptopp.a liburiparser.a libpam.a \
-	libboost_date_time.a libboost_regex.a libboost_program_options.a \
-	libboost_filesystem.a libboost_system.a
+		-lcryptopp -luriparser -lpam \
+		-lboost_date_time -lboost_regex -lboost_program_options \
+		-lboost_filesystem -lboost_system
 
 session.o: session.cc
 	$(COMPILE.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" \
@@ -69,7 +73,7 @@ semilla.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@
 	echo "siteTop=/var/www" >> $@
 	echo "srcTop=/var/www/reps" >> $@
-	echo "remoteIndex=$(remoteIndex)" >> $@
+	echo "remoteIndexFile=$(remoteIndexFile)" >> $@
 	echo "themeDir=$(shareDir)/semilla/default" >> $@
 
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)

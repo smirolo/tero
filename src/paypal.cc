@@ -335,10 +335,11 @@ void paypalStandardButton::build( const std::string& r, uint32_t a ) {
 	seed.resize(16);
 	s_globalRNG.SetKeyWithIV((byte *)seed.data(), 16, (byte *)seed.data());
 
+#if 0
     RSASS<PKCS1v15, SHA>::Signer priv(secretKey);    
     StringSource((const byte*)request.str().data(),request.str().size(), true,
   new SignerFilter(s_globalRNG, priv, new HexEncoder(new FileSink(std::cerr))));
-
+#endif
     /*
       CMSEnvelopedDataGenerator envGenerator = new CMSEnvelopedDataGenerator();
       envGenerator.addKeyTransRecipient(payPalCert);
