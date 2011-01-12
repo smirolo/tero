@@ -23,10 +23,10 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "changefs.hh"
+#include "feeds.hh"
 
-void changeAggregate::fetch( session& s, 
-			     const boost::filesystem::path& pathname )
+void feedAggregate::fetch( session& s, 
+			   const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem;
 
@@ -49,3 +49,4 @@ void changeAggregate::fetch( session& s,
 	}
     }
 }
+

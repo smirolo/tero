@@ -32,7 +32,7 @@
 */
 
 
-extern const char *shTokenTitles[] = {
+const char *shTokenTitles[] = {
     "shErr",
     "shComment",
     "shCode"

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include "auth.hh"
+#include "feeds.hh"
 #include "changelist.hh"
 #include "composer.hh"
 #include "docbook.hh"
@@ -177,7 +178,7 @@ int main( int argc, char *argv[] )
 	    projCreate projcreate(std::cout,revision);
 	    docs.add("view",boost::regex(".*/create"),projcreate);
 
-	    changedescr checkinHist(std::cout);
+	    htmlRepository checkinHist(std::cout);
 	    docs.add("history",boost::regex(".*dws\\.xml"),checkinHist);
 	    projindex pind(std::cout);
 	    docs.add("document",boost::regex(".*dws\\.xml"),pind);	 
@@ -192,8 +193,8 @@ int main( int argc, char *argv[] )
 	       to be declared before any of the todoFilter::viewPat 
 	       (i.e. todos/.+) since an rss feed exists for todo items
 	       as well. */
-	    changerss rss(std::cout);
-	    docs.add("view",boost::regex(".*index\\.rss"),rss);
+	    rssRepository rss(std::cout);
+	    docs.add("document",boost::regex(".*index\\.rss"),rss);
 
 	    /* Composer and document for the todos index view */
 	    composer todos(std::cout,s.valueOf("themeDir")

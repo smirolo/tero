@@ -111,11 +111,7 @@ void htmlwriter::filters( const post& p ) {
     esc.detach();
     *ostr << html::h(2).end();    
 
-    *ostr << html::p();
-    esc.attach(*ostr);
-    *ostr << p.descr;
-    esc.detach();
-    *ostr << html::p::end;
+    *ostr << p.content(*ostr);
 
     if( postNum > 0 ) {
 	*ostr << html::div::end;

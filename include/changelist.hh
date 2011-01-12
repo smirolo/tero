@@ -238,18 +238,6 @@ public:
 
 };
 
-/** Detailed description of a single changelist
- */
-class changedescr : public changelist {
-protected:
-
-public:
-    explicit changedescr( std::ostream& o ) 
-	: changelist(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
 
 /** Short history of changes to a project under revision control. 
 
@@ -272,16 +260,6 @@ public:
     explicit changehistory( std::ostream& o ) : changelist(o) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );	
-};
-
-
-/** RSS of changes to a file under revision control
- */
-class changerss : public changelist {
-public:
-    explicit changerss( std::ostream& o ) : changelist(o) {}
-
-    virtual void fetch(	session& s, const boost::filesystem::path& pathname );	
 };
 
 

@@ -309,6 +309,11 @@ public:
     
     Reference: http://www.rssboard.org/rss-specification
     RSS Icons: http://www.feedicons.com/
+
+   Reference documentation says that the RSS documents should be delivered
+   with ContentType="application/rss+xml" none-the-less Thunderbird does
+   not seem to accept this very well and "text/html; charset=UTF-8"
+   might still be more appropriate.
 */
 class rsswriter : public postFilter {
 protected:

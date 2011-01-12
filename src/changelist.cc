@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -57,9 +57,9 @@ void cancel::fetch( session& s, const boost::filesystem::path& pathname ) {
 
 std::ostream& checkin::content( std::ostream& ostr ) const
 {
-    *ostr << html::p();
+    ostr << html::p();
     post::content(ostr);
-    *ostr << html::p::end;
+    ostr << html::p::end;
     ostr << html::pre();
     for( checkin::fileSet::const_iterator file = files.begin(); 
 	 file != files.end(); ++file ) {
@@ -200,67 +200,5 @@ changehistory::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void 
-changedescr::fetch( session& s, const boost::filesystem::path& pathname )
-{
-    using namespace std;
-
-    revisionsys *rev = revisionsys::findRev(s,pathname);
-    if( rev ) {
-	history hist;
-	rev->checkins(hist,s,pathname);
-
-	htmlEscaper esc;
-
-#if 1
-	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    *ostr << html::h(2) << ci->title << html::h(2).end();
-	    *ostr << html::p();
-	    *ostr <<  ci->time << " - " << ci->authorEmail;
-	    *ostr << html::p::end;
-	    *ostr << html::p();
-	    esc.attach(*ostr);
-	    *ostr << ci->descr;
-	    esc.detach();
-	    *ostr << html::p::end;
-	    *ostr << html::p();
-	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
-		 file != ci->files.end(); ++file ) {
-		*ostr << html::a().href(file->string()) << *file << html::a::end << "<br />" << std::endl;
-	    }
-	    *ostr << html::p::end;
-	}
-#else
-	htmlwriter liner(*ostr);
-	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    liner.filters(*ci);
-	}	
-#endif	  
-    }
-}
 
 
-void 
-changerss::fetch( session& s, const boost::filesystem::path& pathname ) 
-{
-    revisionsys *rev = revisionsys::findRev(s,pathname);
-    if( rev ) {
-	history hist;
-	rev->checkins(hist,s,pathname);
-
-	rsswriter rssw(*ostr);
-
-#if 0
-	/* \todo How to get this one out to Apache? 
-	   use text/html; charset=UTF-8 ? */
-	*ostr << httpHeaders.contentType("application/rss+xml");
-#endif
-
-	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    rssw.filters(*ci);
-	}	
-    }
-}

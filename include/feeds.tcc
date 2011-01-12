@@ -1,3 +1,4 @@
+// -*- C++ -*-
 /* Copyright (c) 2011, Fortylines LLC
    All rights reserved.
 
@@ -23,9 +24,24 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include "changelist.hh"
+
+
 template<typename postFilter>
-void changeDirRef<postFilter>::fetch( session& s, 
-				      const boost::filesystem::path& pathname )
+void feedContent<postFilter>::fetch( session& s, 
+				    const boost::filesystem::path& pathname )
+{
+    using namespace boost::filesystem;
+
+    path dirname(s.abspath(is_directory(pathname) ?
+			   pathname : pathname.parent_path()));
+    mailParser::fetch(s,dirname);
+}
+
+
+template<typename postFilter>
+void feedNames<postFilter>::fetch( session& s, 
+				   const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem;
 
@@ -50,14 +66,62 @@ void changeDirRef<postFilter>::fetch( session& s,
 
 
 template<typename postFilter>
-void changeDirContent<postFilter>::fetch( session& s, 
-				    const boost::filesystem::path& pathname )
+void feedRepository<postFilter>::fetch( session& s, 
+			    const boost::filesystem::path& pathname ) 
 {
-    using namespace boost::filesystem;
+    revisionsys *rev = revisionsys::findRev(s,pathname);
+    if( rev ) {
+	history hist;
+	rev->checkins(hist,s,pathname);
 
-    path dirname(s.abspath(is_directory(pathname) ?
-			   pathname : pathname.parent_path()));
-    mailParser::fetch(s,dirname);
+	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
+	     ci != hist.checkins.end(); ++ci ) {
+	    writer.filters(*ci);
+	}	
+    }
 }
 
+#if 0
+/* deprecated - left here to check output of htmlwriter matches. */
+void 
+changedescr::fetch( session& s, const boost::filesystem::path& pathname )
+{
+    using namespace std;
+
+    revisionsys *rev = revisionsys::findRev(s,pathname);
+    if( rev ) {
+	history hist;
+	rev->checkins(hist,s,pathname);
+
+	htmlEscaper esc;
+
+#if 1
+	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
+	     ci != hist.checkins.end(); ++ci ) {
+	    *ostr << html::h(2) << ci->title << html::h(2).end();
+	    *ostr << html::p();
+	    *ostr <<  ci->time << " - " << ci->authorEmail;
+	    *ostr << html::p::end;
+	    *ostr << html::p();
+	    esc.attach(*ostr);
+	    *ostr << ci->descr;
+	    esc.detach();
+	    *ostr << html::p::end;
+	    *ostr << html::p();
+	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
+		 file != ci->files.end(); ++file ) {
+		*ostr << html::a().href(file->string()) << *file << html::a::end << "<br />" << std::endl;
+	    }
+	    *ostr << html::p::end;
+	}
+#else
+	htmlwriter liner(*ostr);
+	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
+	     ci != hist.checkins.end(); ++ci ) {
+	    liner.filters(*ci);
+	}	
+#endif	  
+    }
+}
+#endif
 

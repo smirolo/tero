@@ -29,59 +29,81 @@
 #include "mail.hh"
 #include "post.hh"
 
-/* Different displays of changes to an underlying source control repository.
+/* Feeds can be generated out of repository commits or directories,
+   aggregated together and presented as HTML or RSS.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-/** Base class for commands displaying changes to a directory
+
+/** Aggregate feeds
  */
-template<typename postFilter>
-class changeDirRef : public document {
-protected:
-    boost::regex filematch;
-    postFilter writer;
-
+class feedAggregate : public document {
 public:
-    explicit changeDirRef( std::ostream& o, 
-			   const boost::regex& filePat = boost::regex(".*") )
-	: document(o), filematch(filePat), writer(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
-typedef changeDirRef<htmlwriter> htmlDirRef;
-typedef changeDirRef<rsswriter> rssDirRef;
-
-
-/** Base class for commands displaying changes to a directory
- */
-template<typename postFilter>
-class changeDirContent : public mailParser {
-protected:
-    postFilter writer;
-
-public:
-    changeDirContent( std::ostream& o, 
-		      const boost::regex& filePat = boost::regex(".*") )
-	: mailParser(o,filePat,writer,true), writer(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
-};
-
-typedef changeDirContent<htmlwriter> htmlDirContent;
-typedef changeDirContent<rsswriter> rssDirContent;
-
-
-class changeAggregate : public document {
-public:
-    explicit changeAggregate( std::ostream& o )
+    explicit feedAggregate( std::ostream& o )
 	: document(o) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 
-#include "changefs.tcc"
+/** Feed of text file content from a directory
+ */
+template<typename postFilter>
+class feedContent : public mailParser {
+protected:
+    postFilter writer;
+
+public:
+    feedContent( std::ostream& o, 
+		 const boost::regex& filePat = boost::regex(".*") )
+	: mailParser(o,filePat,writer,true), writer(o) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+typedef feedContent<htmlwriter> htmlContent;
+typedef feedContent<rsswriter> rssContent;
+
+
+/** Feed of filenames from a directory 
+ */
+template<typename postFilter>
+class feedNames : public document {
+protected:
+    postFilter writer;
+    boost::regex filematch;
+
+public:
+    feedNames( std::ostream& o,
+	       const boost::regex& filePat = boost::regex(".*") )
+	: document(o), writer(o), filematch(filePat) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+};
+
+typedef feedNames<htmlwriter> htmlNames;
+typedef feedNames<rsswriter> rssNames;
+
+
+/** Feed from a repository commits
+ */
+template<typename postFilter>
+class feedRepository : public document {
+protected:
+    postFilter writer;
+
+public:
+    explicit feedRepository( std::ostream& o ) 
+	: document(o), writer(o) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );	
+};
+
+typedef feedRepository<htmlwriter> htmlRepository;
+typedef feedRepository<rsswriter> rssRepository;
+
+
+#include "feeds.tcc"
 
 #endif
