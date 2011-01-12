@@ -42,7 +42,8 @@ logview::addSessionVars( boost::program_options::options_description& opts )
     
     options_description vars("logview");
     vars.add_options()
-	("remoteIndexFile",value<std::string>(),"path to project interdependencies");
+	("remoteIndexFile",value<std::string>(),"path to project interdependencies")
+        ("indexFile",value<std::string>(),"path to project interdependencies");
     opts.add(vars);
 }
 
@@ -76,9 +77,10 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     typedef std::map<std::string,colType> tableType;
     tableType table;
 
+    path srcTop(s.valueOf("srcTop"));
+#if 0
     /* Populate the project names based on the directories in *srcTop*
        which hold a repository control subdirectory (.git, .svn, etc.). */
-    path srcTop(s.valueOf("srcTop"));
     for( directory_iterator entry = directory_iterator(srcTop); 
 	 entry != directory_iterator(); ++entry ) {
 	path repcontrol((srcTop / entry->filename()) / ".git");
@@ -86,6 +88,37 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    table[entry->filename()] = colType();
 	}
     }
+#else
+    /* Populate the project names based on the projects specified
+       in the index file. */
+    size_t fileSize = file_size(s.valueOf("indexFile"));
+    char text[ fileSize + 1 ];
+    ifstream file(s.valueOf("indexFile"));
+    if( file.fail() ) {
+	boost::throw_exception(basic_filesystem_error<path>(
+		std::string("error opening file"),
+		s.valueOf("indexFile"), 
+		boost::system::error_code()));
+    }
+    file.read(text,fileSize);
+    text[fileSize] = '\0';
+    xml_document<> doc;    // character type defaults to char
+    doc.parse<0>(text);     // 0 means default parse flags
+    
+    xml_node<> *root = doc.first_node();
+    if( root != NULL ) {
+	for( xml_node<> *project = root->first_node("project");
+	     project != NULL; project = project->next_sibling("project") ) {
+	    xml_attribute<> *name = project->first_attribute("name");
+	    if( name != NULL ) {
+		path repcontrol((srcTop / path(name->value())) / ".git");
+		if( boost::filesystem::exists(repcontrol) ) {
+		    table[name->value()] = colType();
+		}
+	    }
+	}
+    }
+#endif
        
 
     path dirname(s.abspath(is_directory(pathname) ?
@@ -194,10 +227,8 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
     }
 
     /* footer */
-    *ostr << html::p() << "Each cell contains the make target on which "
-	"the build stopped as in" << html::p::end;
-    *ostr << html::pre() << "dws make target target ..." << html::pre::end;
-    *ostr << html::p() << "If the build exited with an error code before "
+    *ostr << html::p() << "Each cell contains the time it took to make "
+	  "a specific project. If make exited with an error code before "
 	"the completion of the last target, it is marked " 
 	      << html::span().classref("positiveErrorCode") 
 	      << "&nbsp;as such&nbsp;" << html::span::end << "." 
