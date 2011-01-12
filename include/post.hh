@@ -67,17 +67,6 @@ public:
        and subject of e-mails. 
     */
     std::string title;   
-
-#if 0
-    postBase() {}
-
-    postBase( const postBase& p ) 
-	: filename(p.filename),
-	  authorName(p.authorName),
-	  authorEmail(p.authorEmail),
-	  time(p.time),
-	  title(p.title) {}
-#endif
 };
 
 
@@ -136,6 +125,10 @@ public:
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );
+
+    /** Write the content (i.e. *descr* for base posts) to an output stream.
+     */
+    virtual std::ostream& content( std::ostream& ostr ) const;
 
     /** remove non meaningful whitespaces from the *author* and *title* fields. 
      */
@@ -307,6 +300,24 @@ protected:
 public:
     explicit blogwriter( std::ostream& o ) 
 	: ostr(&o) {}
+
+    virtual void filters( const post& );
+};
+
+
+/** Mark-up a post with RSS element tags 
+    
+    Reference: http://www.rssboard.org/rss-specification
+    RSS Icons: http://www.feedicons.com/
+*/
+class rsswriter : public postFilter {
+protected:
+    /** stream used to write the post to
+     */
+    std::ostream *ostr;
+
+public:
+    explicit rsswriter( std::ostream& o ) : ostr(&o) {}
 
     virtual void filters( const post& );
 };

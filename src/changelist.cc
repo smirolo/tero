@@ -55,6 +55,22 @@ void cancel::fetch( session& s, const boost::filesystem::path& pathname ) {
 }
 
 
+std::ostream& checkin::content( std::ostream& ostr ) const
+{
+    *ostr << html::p();
+    post::content(ostr);
+    *ostr << html::p::end;
+    ostr << html::pre();
+    for( checkin::fileSet::const_iterator file = files.begin(); 
+	 file != files.end(); ++file ) {
+	ostr << html::a().href(file->string()) 
+	      << *file << html::a::end << std::endl;
+    }
+    ostr << html::pre::end;
+    return ostr;
+}
+
+
 void 
 change::addSessionVars( boost::program_options::options_description& opts )
 {
@@ -112,9 +128,10 @@ revisionsys::revsSet revisionsys::revs;
 
 revisionsys*
 revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
+    /* The pathname is absolute at this point. */
+    boost::filesystem::path start(pathname);
     for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
-	boost::filesystem::path sccsRoot 
-	    = s.root(s.src(pathname),(*r)->metadir);
+	boost::filesystem::path sccsRoot = s.root(start,(*r)->metadir);
 	if( !sccsRoot.empty() ) {
 	    (*r)->rootpath = sccsRoot;
 	    return *r;
@@ -193,8 +210,6 @@ changedescr::fetch( session& s, const boost::filesystem::path& pathname )
 	history hist;
 	rev->checkins(hist,s,pathname);
 
-	/* Reference: http://www.rssboard.org/rss-specification */
-	/* RSS Icons: http://www.feedicons.com/ */
 	htmlEscaper esc;
 
 #if 1
@@ -235,69 +250,17 @@ changerss::fetch( session& s, const boost::filesystem::path& pathname )
 	history hist;
 	rev->checkins(hist,s,pathname);
 
-	/* Reference: http://www.rssboard.org/rss-specification */
-	/* http://www.feedicons.com/ */
-	htmlEscaper esc;
+	rsswriter rssw(*ostr);
 
-	/* \todo get the title and domainname from the session. */
-	*ostr << httpHeaders.contentType("application/rss+xml");
-
-	*ostr << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;	
 #if 0
-	*ostr << ::rss().version("2.0")
-		  << channel()
-		  << title() 
-		  << boost::filesystem::basename(rev->rootpath)
-		  << title::end;
-		  << rsslink() << rsslink::end
-#else
-	*ostr << "<rss version='2.0' xmlns:lj='http://www.livejournal.org/rss/lj/1.0/' xmlns:atom=\"http://www.w3.org/2005/Atom\">" << std::endl;
-	*ostr << channel();
-	*ostr << title() 
-		  << boost::filesystem::basename(rev->rootpath)
-		  << title::end;
-	*ostr << "<description></description>\n";
-	*ostr << rsslink()
-		  << rsslink::end;
- 
-	*ostr << "<atom:link href=\"index.rss\" rel=\"self\" type=\"application/rss+xml\" />" << std::endl;
-	
+	/* \todo How to get this one out to Apache? 
+	   use text/html; charset=UTF-8 ? */
+	*ostr << httpHeaders.contentType("application/rss+xml");
 #endif
 
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
-	    *ostr << item();
-	    *ostr << title() << ci->title << title::end;
-#if 0
-	    *ostr << rsslink() << rsslink::end;
-#endif
-	    *ostr << description();
-	    esc.attach(*ostr);
-	    *ostr << html::p();
-	    *ostr << ci->descr;
-	    *ostr << html::pre();
-	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
-		 file != ci->files.end(); ++file ) {
-		*ostr << html::a().href(file->string()) 
-			  << *file << html::a::end << std::endl;
-	    }
-	    *ostr << html::pre::end;
-	    *ostr << html::p::end;
-	    ostr->flush();
-	    esc.detach();
-	    *ostr << description::end;
-	    *ostr << author();
-	    esc.attach(*ostr);
-	    *ostr << ci->authorEmail;
-	    esc.detach();
-	    *ostr << author::end;
-#if 0
-	    *ostr << "<guid isPermaLink=\"true\">";
-#endif
-	    *ostr << guid() << ci->guid << ".html" << guid::end;
-	    *ostr << pubDate(ci->time);
-	    *ostr << item::end;
+	    rssw.filters(*ci);
 	}	
-	*ostr << channel::end << rss::end;	
     }
 }

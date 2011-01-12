@@ -113,7 +113,16 @@ document* dispatchDoc::select( const std::string& name,
 	const aliasSet& aliases = view->second;
 	for( aliasSet::const_iterator alias = aliases.begin(); 
 	     alias != aliases.end(); ++alias ) {
-	    if( regex_match(value,alias->first) ) {
+	    boost::smatch m;
+	    if( regex_match(value,m,alias->first) ) {
+#if 0
+		std::cerr << "select(" << value << ") = ";
+		for( boost::smatch::const_iterator p = m.begin();
+		     p != m.end(); ++p ) {
+		    std::cerr << ", " << *p;
+		}
+		std::cerr << std::endl;
+#endif		
 		return alias->second;
 	    }
 	}

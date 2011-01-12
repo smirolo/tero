@@ -71,6 +71,7 @@ public:
 	files.push_back(pathname);
     }
 
+    virtual std::ostream& content( std::ostream& ostr ) const;
 };
 
 
@@ -246,7 +247,7 @@ public:
     explicit changedescr( std::ostream& o ) 
 	: changelist(o) {}
 
-    virtual void fetch(	session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
 
 

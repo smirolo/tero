@@ -250,7 +250,7 @@ session::abspath( const boost::filesystem::path& relpath ) const {
        in case the document could not be found.
        !!! We have to return from srcTop because that is how
        the website is configured for rss feeds. */
-    return fromSrcTop;
+    return fromSiteTop;
 }
 
 
@@ -383,6 +383,9 @@ session::root( const boost::filesystem::path& leaf,
     if( !is_directory(dirname) ) {
 	dirname = dirname.parent_path();
     }
+#if 0
+    std::cerr << "root(" << leaf << "," << trigger << "), start=" << dirname;
+#endif
     bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
     while( !foundProject && (dirname.string() != srcTop) ) {
 	dirname.remove_leaf();

@@ -315,7 +315,8 @@ void gitcmd::checkins( ::history& hist,
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
 
-    boost::filesystem::path project = s.subdirpart(s.valueOf("srcTop"),rootpath);
+    boost::filesystem::path project \
+	= s.subdirpart(s.valueOf("srcTop"),rootpath);
 
     /* shows only the last 2 commits */
     std::stringstream sstm;

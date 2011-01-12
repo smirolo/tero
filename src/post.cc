@@ -52,6 +52,14 @@ post::addSessionVars( boost::program_options::options_description& opts )
     opts.add(postOptions);
 }
 
+
+std::ostream& post::content( std::ostream& ostr ) const
+{
+    ostr << descr;
+    return ostr;
+}
+
+
 void post::normalize() {
     title = ::normalize(title);
     authorEmail = ::normalize(authorEmail);
@@ -144,4 +152,32 @@ void blogwriter::filters( const post& p ) {
     *ostr << std::endl << std::endl;
     /* \todo avoid description starting with "From " */
     *ostr << p.descr << std::endl << std::endl;
+}
+
+
+void rsswriter::filters( const post& p ) {
+    htmlEscaper esc;
+
+    *ostr << item();
+    *ostr << title() << p.title << title::end;
+
+    *ostr << description();
+    esc.attach(*ostr);
+    p.content(*ostr);
+    ostr->flush();
+    esc.detach();
+    *ostr << description::end;
+
+    *ostr << author();
+    esc.attach(*ostr);
+    *ostr << p.authorEmail;
+    esc.detach();
+    *ostr << author::end;
+
+#if 0
+    *ostr << "<guid isPermaLink=\"true\">";
+#endif
+    *ostr << guid() << p.guid << ".html" << guid::end;
+    *ostr << pubDate(p.time);
+    *ostr << item::end;
 }
