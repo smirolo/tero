@@ -41,7 +41,7 @@ semillaSessionDir	?=	/var/semilla
 
 libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			checkstyle.o composer.o contrib.o cpptok.o \
-			docbook.o document.o feeds.o hreftok.o gitcmd.o \
+			docbook.o document.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o projfiles.o \
 			post.o shtok.o todo.o webserve.o xmlesc.o xmltok.o
 

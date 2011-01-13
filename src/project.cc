@@ -34,9 +34,12 @@
 */
 
 
-void projCreate::fetch(	session& s, const boost::filesystem::path& pathname ) {
+void projCreate::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::filesystem;
+
+    /** revision system to use to create the project. */
+    revisionsys* rev = revisionsys::findRevByMetadir(s,".git");
 
     /* remove the "create" command, then derive the project name 
        as a relative path inside srcTop. */

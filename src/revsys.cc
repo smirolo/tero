@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,92 @@
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+
+/** interaction with a git repository.
+ */
+class gitcmd : public revisionsys {
+protected:
+    boost::filesystem::path executable;
+
+    /** Execute a command line catching stdout such that apache does
+	not end-up with malformed headers and throwing an exception
+	when the command fails.
+     */
+    void shellcmd( const std::string& cmdline );
+
+    static gitcmd _instance;
+
+public:
+    gitcmd() : revisionsys(".git") {}
+
+    static gitcmd& instance( const boost::filesystem::path& binDir ) {
+	_instance.executable = binDir / "git";
+	return _instance;
+    }
+
+    void create( const boost::filesystem::path& pathname,
+		 bool group = false );
+
+    void add( const boost::filesystem::path& pathname );
+
+    void commit( const std::string& msg );
+
+    void checkins( ::history& hist,
+		   const session& s,
+		   const boost::filesystem::path& pathname );
+
+    void diff( std::ostream& ostr, 
+	       const std::string& leftCommit, 
+	       const std::string& rightCommit, 
+	       const boost::filesystem::path& pathname );
+    
+    void history( std::ostream& ostr, 
+		  const session& s, 
+		  const boost::filesystem::path& pathname,
+		  historyref& r );	
+}; 
+
+gitcmd gitcmd::_instance;
+
+
+revisionsys::revsSet revisionsys::revs;
+
+revisionsys*
+revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
+    if( revs.empty() ) {
+	/* first time */
+	revs.push_back(&gitcmd::instance(s.valueOf("binDir")));
+    }
+
+    /* The pathname is absolute at this point. */
+    boost::filesystem::path start(pathname);
+    for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
+	boost::filesystem::path sccsRoot = s.root(start,(*r)->metadir);
+	if( !sccsRoot.empty() ) {
+	    (*r)->rootpath = sccsRoot;
+	    return *r;
+	}
+    }
+    return NULL;
+}
+
+
+revisionsys*
+revisionsys::findRevByMetadir( session& s, const std::string& metadir ) {
+    if( revs.empty() ) {
+	/* first time */
+	revs.push_back(&gitcmd::instance(s.valueOf("binDir")));
+    }
+
+    for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
+	if( (*r)->metadir == metadir ) {
+	    return *r;
+	}
+    }
+    return NULL;
+}
+
 
 void gitcmd::shellcmd( const std::string& cmdline )
 {
@@ -407,3 +493,5 @@ void gitcmd::checkins( ::history& hist,
     }
     boost::filesystem::current_path(boost::filesystem::initial_path());
 }
+
+

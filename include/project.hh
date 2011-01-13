@@ -60,15 +60,11 @@ public:
 /** Create a new directory and initialize it as a project repository.
 */
 class projCreate : public document {
-protected:
-    /** revision system to use to create the project. */
-    revisionsys* rev;
-
 public:
-    projCreate( std::ostream& o, revisionsys& r ) 
-	: document(o), rev(&r) {}
+    explicit projCreate( std::ostream& o ) 
+	: document(o) {}
 
-    virtual void fetch(	session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
 
 };
 

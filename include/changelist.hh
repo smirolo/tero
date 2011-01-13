@@ -107,8 +107,7 @@ public:
     const char* metadir;
 
 public:
-    explicit revisionsys( const char* m ) 
-	: metadir(m) { revs.push_back(this); }
+    explicit revisionsys( const char* m ) : metadir(m) {}
 
     /** Create a new repository from directory *pathname*. When *group*
 	is true, all users in the same group as the creator have permissions
@@ -145,46 +144,12 @@ public:
     static revisionsys*
     findRev( session& s, const boost::filesystem::path& pathname );
 
-};
-
-
-/** interaction with a git repository.
- */
-class gitcmd : public revisionsys {
-protected:
-    boost::filesystem::path executable;
-
-    /** Execute a command line catching stdout such that apache does
-	not end-up with malformed headers and throwing an exception
-	when the command fails.
+    /** returns the revision system associated with a specific metadir
      */
-    void shellcmd( const std::string& cmdline );
+    static revisionsys*
+    findRevByMetadir( session& s, const std::string& metadir );
 
-public:
-    gitcmd( const boost::filesystem::path& exec ) 
-	: revisionsys(".git"), executable(exec) {}
-   
-    void create( const boost::filesystem::path& pathname,
-		 bool group = false );
-
-    void add( const boost::filesystem::path& pathname );
-
-    void commit( const std::string& msg );
-
-    void checkins( ::history& hist,
-		   const session& s,
-		   const boost::filesystem::path& pathname );
-
-    void diff( std::ostream& ostr, 
-	       const std::string& leftCommit, 
-	       const std::string& rightCommit, 
-	       const boost::filesystem::path& pathname );
-    
-    void history( std::ostream& ostr, 
-		  const session& s, 
-		  const boost::filesystem::path& pathname,
-		  historyref& r );	
-}; 
+};
 
 
 /** Command to cancel web edits

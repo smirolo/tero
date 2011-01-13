@@ -109,7 +109,6 @@ int main( int argc, char *argv[] )
 	    cout << httpHeaders.location(url("index.html"));
 	    
 	} else {	    		       
-	    gitcmd revision(s.valueOf("binDir") + "/git");
 	    dispatchDoc docs(s.valueOf("srcTop"));
 
 	    /* The pattern need to be inserted in more specific to more 
@@ -175,7 +174,7 @@ int main( int argc, char *argv[] )
 	    s.vars["regressions"] = regressname.string();
 
 	    /* Command to create a new project */
-	    projCreate projcreate(std::cout,revision);
+	    projCreate projcreate(std::cout);
 	    docs.add("view",boost::regex(".*/create"),projcreate);
 
 	    htmlRepository checkinHist(std::cout);

@@ -124,23 +124,6 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
 }
 
 
-revisionsys::revsSet revisionsys::revs;
-
-revisionsys*
-revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
-    /* The pathname is absolute at this point. */
-    boost::filesystem::path start(pathname);
-    for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
-	boost::filesystem::path sccsRoot = s.root(start,(*r)->metadir);
-	if( !sccsRoot.empty() ) {
-	    (*r)->rootpath = sccsRoot;
-	    return *r;
-	}
-    }
-    return NULL;
-}
-
-
 void changediff::embed( session& s, const std::string& varname ) {
     using namespace std;
 
