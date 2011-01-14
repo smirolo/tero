@@ -703,4 +703,16 @@ public:
     title() : markup(name,NULL,NULL,0) {}
 };
 
+
+/** Write a pathname *p* as an html href link in an output stream *ostr*. 
+ */
+template<typename charT, typename traitsT>
+std::basic_ostream<charT,traitsT>& 
+writelink( std::basic_ostream<charT,traitsT>& ostr, 
+	   const boost::filesystem::path& p ) {
+    ostr << html::a().href(p.string()) << p << html::a::end;
+    return ostr;
+}
+
+
 #endif

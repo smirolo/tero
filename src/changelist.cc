@@ -63,8 +63,8 @@ std::ostream& checkin::content( std::ostream& ostr ) const
     ostr << html::pre();
     for( checkin::fileSet::const_iterator file = files.begin(); 
 	 file != files.end(); ++file ) {
-	ostr << html::a().href(file->string()) 
-	      << *file << html::a::end << std::endl;
+	writelink(ostr,*file);
+	ostr << std::endl;
     }
     ostr << html::pre::end;
     return ostr;

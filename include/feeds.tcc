@@ -25,7 +25,9 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "changelist.hh"
-
+#include <sys/stat.h>
+#include <pwd.h>
+#include "markup.hh"
 
 template<typename postFilter>
 void feedContent<postFilter>::fetch( session& s, 
@@ -53,12 +55,39 @@ void feedNames<postFilter>::fetch( session& s,
 	boost::smatch m;
 	if( !is_directory(*entry) 
 	    && boost::regex_match(entry->string(),m,filematch) ) {	
-	    path filename(dirname / entry->filename());	
+	    path filename(dirname / entry->filename());
+	    std::string reluri = s.subdirpart(s.valueOf("siteTop"),
+					      filename).string();	
 	    post p;
-	    p.title = filename.string();
-	    p.descr = filename.string();
+	    p.guid = reluri;
+	    p.title = reluri;
+	    
+	    std::stringstream s;
+	    writelink(s,reluri);
+	    p.descr = s.str();
 	    std::time_t lwt = last_write_time(filename);
 	    p.time = boost::posix_time::from_time_t(lwt);
+	    
+	    {
+		/* \todo donot seem to find functionality to find
+		         owner through boost. */
+		struct stat statbuf;
+		if( stat(filename.string().c_str(),&statbuf) ) {
+		    p.authorEmail = "info";
+		} else {
+		    struct passwd *pwd = getpwuid(statbuf.st_uid);
+		    if( pwd == NULL ) {
+			p.authorEmail = "info";
+		    } else {
+			p.authorEmail = pwd->pw_name;
+		    }
+		}
+#if 1
+		/* \todo remove this code once we figure out how to get
+		         the domain name. */
+		p.authorEmail = "info@ocalhost.localdomain";
+#endif
+	    }
 	    writer.filters(p);
 	}
     }

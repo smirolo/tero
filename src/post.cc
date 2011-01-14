@@ -173,7 +173,7 @@ void rsswriter::filters( const post& p ) {
 #if 0
     *ostr << "<guid isPermaLink=\"true\">";
 #endif
-    *ostr << guid() << p.guid << ".html" << guid::end;
+    *ostr << guid() << p.guid << guid::end;
     *ostr << pubDate(p.time);
     *ostr << item::end;
 }
