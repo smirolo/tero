@@ -114,6 +114,9 @@ document* dispatchDoc::select( const std::string& name,
 	for( aliasSet::const_iterator alias = aliases.begin(); 
 	     alias != aliases.end(); ++alias ) {
 	    boost::smatch m;
+#if 0
+	    std::cerr << "match(" << value << ", " << alias->first << ")?" << std::endl;
+#endif
 	    if( regex_match(value,m,alias->first) ) {
 #if 0
 		std::cerr << "select(" << value << ") = ";

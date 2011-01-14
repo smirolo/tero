@@ -6,11 +6,13 @@ template<typename cmp>
 void blogByOrder<cmp>::provide()
 {
     std::sort(indices.begin(),indices.end(),cmp());
+#if 0
     for( indexSet::const_iterator p = indices.begin();
 	 p != indices.end(); ++p ) {
 	std::cerr << p->time << " - "
 		  << p->tag << " - " << p->title << std::endl;
     }
+#endif
 }
 
 
@@ -45,7 +47,7 @@ void blogByOrder<cmp>::fetch( session& s,
 
     indexSet::const_iterator last 
 	= std::upper_bound(indices.begin(),indices.end(),top,c);
-
+#if 0
    std::cerr << "!!! bottom: " << bottom.time
 	      << ", first: " << first->time
 	      << ", top: " << top.time
@@ -57,7 +59,7 @@ void blogByOrder<cmp>::fetch( session& s,
 	      << ", top: " << top.tag
 	      << ", last: " << (( last == indices.end() ) ? "end" : last->tag)
 	      << std::endl;
-
+#endif
     /** Read the actual blog post file and use an html filter 
 	to display it. */
     shortPost prev;
