@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,8 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardchangefs
-#define guardchangefs
+#ifndef guardfeeds
+#define guardfeeds
 
 #include "mail.hh"
 #include "post.hh"
@@ -40,26 +40,22 @@
  */
 class feedAggregate : public document {
 public:
-    explicit feedAggregate( std::ostream& o )
-	: document(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
 /** Feed of text file content from a directory
  */
 template<typename postFilter>
-class feedContent : public mailParser {
+class feedContent : public dirwalker {
 protected:
-    postFilter writer;
+    boost::regex filePat;
 
 public:
-    feedContent( std::ostream& o, 
-		 const boost::regex& filePat = boost::regex(".*") )
-	: mailParser(o,filePat,writer,true), writer(o) {}
+    explicit feedContent(const boost::regex& filePat = boost::regex(".*") )
+	: dirwalker(filePat) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 typedef feedContent<htmlwriter> htmlContent;
@@ -69,17 +65,12 @@ typedef feedContent<rsswriter> rssContent;
 /** Feed of filenames from a directory 
  */
 template<typename postFilter>
-class feedNames : public document {
-protected:
-    postFilter writer;
-    boost::regex filematch;
-
+class feedNames : public dirwalker {
 public:
-    feedNames( std::ostream& o,
-	       const boost::regex& filePat = boost::regex(".*") )
-	: document(o), writer(o), filematch(filePat) {}
+    feedNames( const boost::regex& filePat = boost::regex(".*") )
+	: dirwalker(filePat) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 typedef feedNames<htmlwriter> htmlNames;
@@ -90,14 +81,8 @@ typedef feedNames<rsswriter> rssNames;
  */
 template<typename postFilter>
 class feedRepository : public document {
-protected:
-    postFilter writer;
-
 public:
-    explicit feedRepository( std::ostream& o ) 
-	: document(o), writer(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );	
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;	
 };
 
 typedef feedRepository<htmlwriter> htmlRepository;

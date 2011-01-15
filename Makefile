@@ -1,4 +1,4 @@
-# Copyright (c) 2009, Fortylines LLC
+# Copyright (c) 2009-2011, Fortylines LLC
 #   All rights reserved.
 #
 #   Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ include $(makeHelperDir)/prefix.mk
 #bins 		:=	semilla
 bins 		:=	semilla smailui
 etcs		:=	semilla.conf
-libs		:=	libsemilla.a libpayproc.a session.o
+libs		:=	libsemilla.a libpayproc.a
 shares		:=	semilla.pdf
 
 semillaConfFile		?=	/etc/semilla.conf
@@ -43,7 +43,8 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			checkstyle.o composer.o contrib.o cpptok.o \
 			docbook.o document.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o projfiles.o \
-			post.o shtok.o todo.o webserve.o xmlesc.o xmltok.o
+			post.o session.o shtok.o todo.o webserve.o \
+			xmlesc.o xmltok.o
 
 libpayprocObjs	:=	aws.o payment.o paypal.o	
 
@@ -55,19 +56,21 @@ libpayproc.a: $(libpayprocObjs)
 # This is not the case on Ubuntu lucid.
 LDFLAGS		+=	-ldl
 
-semilla: semilla.cc session.o libsemilla.a libpayproc.a \
+semilla: CPPFLAGS += -DCONFIG_FILE=\"$(semillaConfFile)\" \
+		      -DSESSION_DIR=\"$(semillaSessionDir)\"
+
+semilla: semilla.cc libsemilla.a libpayproc.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system
 
-smailui: smailui.cc session.o libsemilla.a \
+smailui: CPPFLAGS += -DCONFIG_FILE=\"$(semillaConfFile)\" \
+		      -DSESSION_DIR=\"$(semillaSessionDir)\"
+
+smailui: smailui.cc libsemilla.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system
-
-session.o: session.cc
-	$(COMPILE.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" \
-		      -DSESSION_DIR=\"$(semillaSessionDir)\" $(OUTPUT_OPTION) $<
 
 semilla.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -89,7 +89,7 @@ calendar::walkNodeEntry calendar::walkers[] = {
 };
 
 
-void calendar::any( const std::string& s ) {
+void calendar::any( const std::string& s ) const {
 }
 
 
@@ -105,7 +105,7 @@ calendar::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-calendar::walkNodeEntry* calendar::walker( const std::string& s ) {
+calendar::walkNodeEntry* calendar::walker( const std::string& s ) const {
     walkNodeEntry *walkersEnd 
 	= &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
     walkNodeEntry *d;
@@ -118,7 +118,7 @@ calendar::walkNodeEntry* calendar::walker( const std::string& s ) {
 }
 
 
-void calendar::parse( session& s, std::istream& ins ) {
+void calendar::parse( session& s, std::istream& ins ) const {
 
     static const boost::regex syntax("^(\\S+):(.+)");
 
@@ -136,7 +136,7 @@ void calendar::parse( session& s, std::istream& ins ) {
 }
 
 
-void calendar::fetch( session& s, const boost::filesystem::path& pathname ) {
+void calendar::fetch( session& s, const boost::filesystem::path& pathname ) const {
     using namespace std;
     using namespace boost::gregorian;
     using namespace boost::posix_time;
@@ -170,36 +170,36 @@ void calendar::fetch( session& s, const boost::filesystem::path& pathname ) {
     };
 
     {
-	std::stringstream s;
-	s << "/schedule.ics?month=" << (firstOfMonth - days(1)) << "";	
-	*ostr << html::a().href(s.str()) << "prev" << html::a::end;
-	s.str("");
-	*ostr << " ";
-	s << "/schedule.ics?month=" << (lastOfMonth + days(1)) << "";	
-	*ostr << html::a().href(s.str()) << "next" << html::a::end;	
+	std::stringstream strm;
+	strm << "/schedule.ics?month=" << (firstOfMonth - days(1)) << "";	
+	s.out() << html::a().href(strm.str()) << "prev" << html::a::end;
+	strm.str("");
+	s.out() << " ";
+	strm << "/schedule.ics?month=" << (lastOfMonth + days(1)) << "";	
+	s.out() << html::a().href(strm.str()) << "next" << html::a::end;	
     }    
     
-    *ostr << html::table();
-    *ostr << "<caption>" << today.month() << " " << today.year() 
+    s.out() << html::table();
+    s.out() << "<caption>" << today.month() << " " << today.year() 
 	 << "</caption>" << std::endl;
-    *ostr << html::tr();
+    s.out() << html::tr();
     for( int day = 0; day < 7; ++day ) {
-	*ostr << html::th()
+	s.out() << html::th()
 	     << weekdayNames[day]
 	     << html::th::end;
     }
-    *ostr << html::tr::end;
+    s.out() << html::tr::end;
 
     date firstOfCal = firstOfMonth - days((size_t)firstOfMonth.day_of_week());
     for( date d = firstOfCal; d < lastOfMonth; ) {
-	*ostr << html::tr();
+	s.out() << html::tr();
 	for( int day = 0; day < 7; ++day ) {
-	    *ostr << html::td()
+	    s.out() << html::td()
 		 << d
 		 << html::td::end;	    
 	    d += days(1);	    
 	}
-	*ostr << html::tr::end;
+	s.out() << html::tr::end;
     }
-    *ostr << html::table::end;
+    s.out() << html::table::end;
 }

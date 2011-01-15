@@ -40,54 +40,79 @@
 class blogIndex : public document {
 protected:
 
+    typedef std::vector<shortPost> indexSet;
+
     class addPostIndex : public postFilter {
     protected:
-	blogIndex* blog;
+	indexSet* indices;
 	
     public:
-	explicit addPostIndex( blogIndex& b ) : blog(&b) {}
+	explicit addPostIndex( indexSet& v ) : indices(&v) {}
 
 	virtual void filters( const post& p ) {
 	    /* create one shortPost per post tag. */
 	    if( p.tags.empty() ) {
-		std::cerr << "no tags for " << p.filename << std::endl;
-		blog->indices.push_back(shortPost(p,""));
+		indices->push_back(shortPost(p,""));
 	    } else {
 		for( post::tagSet::const_iterator t = p.tags.begin();
 		     t != p.tags.end(); ++t ) {
-		    blog->indices.push_back(shortPost(p,*t));
+		    indices->push_back(shortPost(p,*t));
 		}
 	    }
 	}
     };
 
-    typedef std::vector<shortPost> indexSet;
-
     static indexSet indices;
 
 public:
-    explicit blogIndex( std::ostream& o ) 
-	: document(o) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
-/** Present the blog entries that match a specific criteria. 
+/** Present blog entries ordered by *cmp*.
 */
 template<typename cmp>
 class blogByOrder : public blogIndex {
 protected:
-    void provide();
+    void provide() const;
 
-public:
-    explicit blogByOrder( std::ostream& o ) 
-	: blogIndex(o) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void write( session& s,
+		indexSet::const_iterator first,
+		indexSet::const_iterator last ) const;
 };
 
-typedef blogByOrder<orderByTime<shortPost> > blogByDate;
-typedef blogByOrder<orderByTag<shortPost> > blogByTags;
+
+/** Present blog entries in a specific interval [first,last[
+    where first and last are based on *cmp*.
+*/
+template<typename cmp>
+class blogByInterval : public blogByOrder<cmp> {
+protected:
+    typedef blogByOrder<cmp> super;
+
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
+};
+
+
+typedef blogByInterval<orderByTime<shortPost> > blogByIntervalDate;
+typedef blogByInterval<orderByTag<shortPost> > blogByIntervalTags;
+
+
+/** Present blog entries in a specific block [base,length[
+    where base is an index and length is a number of entries.
+*/
+template<typename cmp>
+class blogByBlock : public blogByOrder<cmp> {
+protected:
+    typedef blogByOrder<cmp> super;
+
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
+};
+
+typedef blogByBlock<orderByTime<shortPost> > blogByBlockDate;
+typedef blogByBlock<orderByTag<shortPost> > blogByBlockTags;
+
  
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
 */
@@ -97,13 +122,10 @@ protected:
     /* store the number blog entries with a specific key. */
     typedef std::map<typename cmp::keyType,uint32_t> linkSet;
 
-    linkSet links;
+    mutable linkSet links;
 
 public:
-    explicit blogSetLinks( std::ostream& o ) 
-	: blogIndex(o) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 typedef blogSetLinks<orderByTime<shortPost> > blogDateLinks;

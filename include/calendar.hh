@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 class calendar : public document {
 protected:
     typedef void 
-    (calendar::* walkNodePtr)( const std::string& s );
+    (calendar::* walkNodePtr)( const std::string& s ) const;
 
     struct walkNodeEntry {
 	const char* name;
@@ -49,17 +49,15 @@ protected:
 
     static walkNodeEntry walkers[];
 
-    void any( const std::string& s );
-    walkNodeEntry* walker( const std::string& s );
+    void any( const std::string& s ) const;
+    walkNodeEntry* walker( const std::string& s ) const;
 
 public:
-    explicit calendar( std::ostream& o ) : document(o) {}
-
     static void 
     addSessionVars( boost::program_options::options_description& opts );
 
-    void parse( session& s, std::istream& ins );
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void parse( session& s, std::istream& ins ) const;
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 #endif

@@ -71,6 +71,12 @@ public:
 class session {
 public:
 
+    /* For security, we want to store the absolute path to the config
+       file into the executable binary. */
+    static const char* configFile;
+    static const char* sessionDir;
+
+
     /** Source from which a session variable was initialized. 
      */
     enum sourceType {
@@ -123,12 +129,15 @@ public:
     /* \todo workout details of auth.cc first before making private. */
     /* map of variable names to values */
     variables vars;
-    
+
+    std::ostream *ostr;
+
 public:
     
     session( const char* p,
-	     const std::string& sn ) 
-	: sessionId(""), posCmd(p), sessionName(sn) {}
+	     const std::string& sn,
+	     std::ostream& o ) 
+	: sessionId(""), posCmd(p), sessionName(sn), ostr(&o) {}
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */
@@ -180,6 +189,8 @@ public:
 
     void insert( const std::string& name, const std::string& value,
 		 sourceType source = unknown );
+
+    std::ostream& out() { return *ostr; }
 
     /** (name,value) will be stored into the session file and thus 
 	persistent accross execution. */

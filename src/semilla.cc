@@ -45,6 +45,17 @@
 #include "webserve.hh"
 #include "payment.hh"
 
+#ifndef CONFIG_FILE
+#error "CONFIG_FILE should be defined when compiling this file"
+#endif
+#ifndef SESSION_DIR
+#error "SESSION_DIR should be defined when compiling this file"
+#endif
+
+const char* session::configFile = CONFIG_FILE;
+const char* session::sessionDir = SESSION_DIR;
+
+
 #if 1
 /* We use this flag to trigger features that are currently in development. */
 #define devsite
@@ -62,7 +73,7 @@ int main( int argc, char *argv[] )
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
-    session s("view","semillaId");
+    session s("view","semillaId",std::cout);
     s.privileged(false);
 
     try {
@@ -116,16 +127,15 @@ int main( int argc, char *argv[] )
 	       one that yields a positive match. */	    
 
 #if 0
-	    cancel cel(std::cout);
-	    change chg(std::cout);
+	    cancel cel;        
+	    change chg           ;
 	    docs.add("view",boost::regex("/cancel"),cel);
-	    composer edit(std::cout,
-			  s.valueOf("themeDir") + std::string("/edit.ui"),
+	    composer edit(s.valueOf("themeDir") + std::string("/edit.ui"),
 			  composer::create);
 	    docs.add("view",boost::regex("/edit"),edit);
-	    login li(std::cout);
+	    login li;
 	    docs.add("view",boost::regex("/login"),li);
-	    logout lo(std::cout);
+	    logout lo;
 	    docs.add("view",boost::regex("/logout"),lo);
 	    docs.add("view",boost::regex("/save"),chg);
 #endif
@@ -134,8 +144,8 @@ int main( int argc, char *argv[] )
 	       in a web browser. It is very often convinient to quickly
 	       start and stop recording worked hours from the command line.
 	       In that case, "work" and "rest" can be used as substitute. */
-	    auth work(std::cout);
-	    deauth rest(std::cout);
+	    auth work;
+	    deauth rest;
 	    docs.add("view",boost::regex("work"),work);
 	    docs.add("view",boost::regex("rest"),rest);
 
@@ -149,7 +159,7 @@ int main( int argc, char *argv[] )
 	    if( ext.empty() ) ext = ".";	    
 	    path extTemplate(path(s.valueOf("themeDir")) /
 			     (ext.substr(1) + ".template"));
-	    composer entry(std::cout,extTemplate,composer::error);
+	    composer entry(extTemplate,composer::error);
 	    if( boost::filesystem::exists(extTemplate) ) {
 		docs.add("view",boost::regex(std::string(".*\\") + ext),
 			 entry);		
@@ -158,13 +168,13 @@ int main( int argc, char *argv[] )
 	    /* The build "document" gives an overview of the set 
 	       of all projects at a glance and can be used to assess 
 	       the stability of the whole as a release candidate. */
-	    logview logv(std::cout);
+	    logview logv;
 	    docs.add("document",boost::regex(".*/log/"),logv);
 
 	    /* A project dws.xml "document" file show a description,
 	       commits and unit test status of a single project through 
 	       a project "view". */
-	    regressions rgs(std::cout);
+	    regressions rgs;
 	    docs.add("regressions",boost::regex(".*regression\\.log"),rgs);
 	    boost::filesystem::path regressname
 		= s.valueOf("siteTop") 
@@ -174,16 +184,16 @@ int main( int argc, char *argv[] )
 	    s.vars["regressions"] = regressname.string();
 
 	    /* Command to create a new project */
-	    projCreate projcreate(std::cout);
-	    docs.add("view",boost::regex(".*/create"),projcreate);
+	    projCreate projcreate;
+	    docs.add("view",boost::regex(".*/reps/.*/create"),projcreate);
 
-	    htmlRepository checkinHist(std::cout);
+	    htmlRepository checkinHist;
 	    docs.add("history",boost::regex(".*dws\\.xml"),checkinHist);
-	    projindex pind(std::cout);
+	    projindex pind;
 	    docs.add("document",boost::regex(".*dws\\.xml"),pind);	 
 
 	    /* Composer for a project view */
-	    composer project(std::cout,s.valueOf("themeDir")
+	    composer project(s.valueOf("themeDir")
 			     + std::string("/project.template"),
 			     composer::error);
 	    docs.add("view",boost::regex(".*dws\\.xml"),project);	    
@@ -192,15 +202,15 @@ int main( int argc, char *argv[] )
 	       to be declared before any of the todoFilter::viewPat 
 	       (i.e. todos/.+) since an rss feed exists for todo items
 	       as well. */
-	    rssRepository rss(std::cout);
-	    docs.add("document",boost::regex(".*index\\.rss"),rss);
+	    rssRepository rss;
+	    docs.add("document",boost::regex(".*\\.git/index\\.rss"),rss);
 
 	    /* Composer and document for the todos index view */
-	    composer todos(std::cout,s.valueOf("themeDir")
+	    composer todos(s.valueOf("themeDir")
 			     + std::string("/todos.template"),
 			     composer::error);
 	    docs.add("view",todoFilter::viewPat,todos);
-	    todoIndexWriteHtml todoIdxDoc(std::cout);
+	    todoIndexWriteHtml todoIdxDoc;
 
 	    std::string active("contrib/todos/active/");
 	    docs.add("document",
@@ -209,42 +219,42 @@ int main( int argc, char *argv[] )
 
 	    boost::filesystem::path 
 		todoModifs(s.srcDir(active)); 
-	    todoCreate todocreate(todoModifs,std::cout,std::cin);
+	    todoCreate todocreate(todoModifs,std::cin);
 	    docs.add("document",boost::regex("/todoCreate"),todocreate);
-	    todoComment todocomment(todoModifs,std::cout,std::cin);
+	    todoComment todocomment(todoModifs,std::cin);
 	    docs.add("view",boost::regex("/todoComment"),todocomment);
 	    docs.add("document",boost::regex("/todoComment"),todocomment);
-	    todoVoteAbandon tva(std::cout);
+	    todoVoteAbandon tva;
 	    docs.add("document",boost::regex("/todoVoteAbandon"),tva);
-	    todoVoteSuccess tvs(todoModifs,"/todoVoteSuccess",std::cout);
+	    todoVoteSuccess tvs(todoModifs,"/todoVoteSuccess");
 	    docs.add("document",boost::regex("/todoVoteSuccess"),tvs);
 
 	    /* blog presentation */ 
 #if 0
-	    composer blogs(std::cout,s.valueOf("themeDir")
+	    composer blogs(s.valueOf("themeDir")
 			   + std::string("/blog.template"),
 			     composer::error);
 	    docs.add("view",boost::regex(std::string(".*/blog/.*")),blogs);
-	    blogByDate blogtext(std::cout);
+	    blogByDate blogtext;
 	    docs.add("document",
 		     boost::regex(std::string(".*/blog/.*")),
 		     blogtext);
-	    blogDateLinks dates(std::cout);
+	    blogDateLinks dates;
 	    docs.add("dates",
 		     boost::regex(std::string(".*/blog/.*")),
 		     dates);
-	    blogTagLinks tags(std::cout);
+	    blogTagLinks tags;
 	    docs.add("tags",
 		     boost::regex(std::string(".*/blog/.*")),
 		     tags);
 #else
-	    composer blogs(std::cout,s.valueOf("themeDir")
+	    composer blogs(s.valueOf("themeDir")
 			   + std::string("/blog.template"),
 			     composer::error);
-	    blogByDate blogtext(std::cout);
-	    blogByTags blogtags(std::cout);
-	    blogDateLinks dates(std::cout);
-	    blogTagLinks tags(std::cout);
+	    blogByIntervalDate blogtext;
+	    blogByIntervalTags blogtags;
+	    blogDateLinks dates;
+	    blogTagLinks tags;
 	    struct {
 		const char *name;
 		boost::regex pat;
@@ -276,12 +286,12 @@ int main( int argc, char *argv[] )
 	    s.vars["tags"] = s.valueOf("document");
     
 	    /* contribution */
-	    contribIdx contribIdxDoc(std::cout);
-	    contribCreate contribcreate(std::cout);
+	    contribIdx contribIdxDoc;
+	    contribCreate contribcreate;
 	    docs.add("document",boost::regex(".*contrib/"),contribIdxDoc);
 	    docs.add("document",boost::regex("/contribCreate"),contribcreate);
 
-	    calendar ical(std::cout);
+	    calendar ical;
 	    docs.add("document",boost::regex(".*\\.ics"),ical);
 	    
 	    /* Source code "document" files are syntax-highlighted 
@@ -289,17 +299,17 @@ int main( int argc, char *argv[] )
 	    path sourceTmpl(s.valueOf("themeDir") 
 			    + std::string("/source.template"));
 
-	    changediff diff(std::cout,sourceTmpl);
+	    changediff diff(sourceTmpl);
 	    docs.add("view",boost::regex("/diff"),diff);
 
-	    mailthread mt(std::cout);
-	    mailParser mp(std::cout,mt);
+	    mailthread mt(s.out());
+	    mailParser mp(mt);
 	    docs.add("document",boost::regex(".*\\.eml"),mp);
 
-	    todoWriteHtml todoItemWriteHtml(std::cout);
+	    todoWriteHtml todoItemWriteHtml;
 	    docs.add("document",boost::regex(".*\\.todo"),todoItemWriteHtml);
 
-	    composer source(std::cout,sourceTmpl,composer::error);
+	    composer source(sourceTmpl,composer::error);
 	    linkLight leftLinkStrm(s);
 	    linkLight rightLinkStrm(s);
 	    cppLight leftCppStrm;
@@ -311,8 +321,8 @@ int main( int argc, char *argv[] )
 	    rightChain.push_back(rightLinkStrm);
 	    rightChain.push_back(rightCppStrm);
 	    
-	    text cpp(std::cout,leftChain,rightChain);
-	    cppCheckfile cppCheck(std::cout);
+	    text cpp(leftChain,rightChain);
+	    cppCheckfile cppCheck;
 	    projfiles::filterContainer filters;
 	    filters.push_back(boost::regex(".*\\.c"));
 	    filters.push_back(boost::regex(".*\\.h"));
@@ -326,10 +336,10 @@ int main( int argc, char *argv[] )
 		docs.add("view",*f,source);		
 	    }
 
-	    shCheckfile shCheck(std::cout);
+	    shCheckfile shCheck;
 	    htmlEscaper leftLinkText;
 	    htmlEscaper rightLinkText;
-	    text rawtext(std::cout,leftLinkText,rightLinkText);
+	    text rawtext(leftLinkText,rightLinkText);
 	    boost::regex shFilterPats[] = {
 		boost::regex(".*\\.mk"),
 		boost::regex(".*\\.py"),
@@ -348,17 +358,17 @@ int main( int argc, char *argv[] )
 	       and .corp "document" files and interpret all other unknown 
 	       extension files as raw text. In all cases we use a default
 	       document.template interface "view" to present those files. */ 
-	    composer doc(std::cout,s.valueOf("themeDir") 
+	    composer doc(s.valueOf("themeDir") 
 			   + std::string("/document.template"),
 			   composer::error);
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
-	    docbook formatedDoc(std::cout,leftFormatedText,rightFormatedText);
+	    docbook formatedDoc(leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.book"),formatedDoc);
 	    docs.add("document",boost::regex(".*\\.corp"),formatedDoc);
 
 	    /* \todo !!! Hack for current tmpl_include implementation */
-	    text formatedText(std::cout,leftFormatedText,rightFormatedText);
+	    text formatedText(leftFormatedText,rightFormatedText);
 	    docs.add("document",boost::regex(".*\\.template"),formatedText);
 
 	    docs.add("document",boost::regex(".*"),rawtext);
@@ -366,7 +376,7 @@ int main( int argc, char *argv[] )
 #ifdef devsite
 	    /* We insert advertisement in non corporate pages so we need
 	       to use a different template composer for corporate pages. */
-	    composer corporate(std::cout,s.valueOf("themeDir")
+	    composer corporate(s.valueOf("themeDir")
 			       + std::string("/corporate.template"),
 			       composer::error);
 	    docs.add("view",boost::regex(".*\\.corp"),corporate);
@@ -376,25 +386,25 @@ int main( int argc, char *argv[] )
 
 	    /* Widget to display status of static analysis of a project 
 	       source files in the absence of a more restrictive pattern. */
-	    checkstyle cks(std::cout,filters.begin(),filters.end());
+	    checkstyle cks(filters.begin(),filters.end());
 	    docs.add("checkstyle",boost::regex(".*"),cks);
 	    s.vars["checkstyle"] = s.valueOf("document");
 
 	    /* Widget to display the history of a file under revision control
 	       in the absence of a more restrictive pattern. */	   
-	    changehistory diffHist(std::cout);
+	    changehistory diffHist;
 	    docs.add("history",boost::regex(".*"),diffHist);
 	    s.vars["history"] = s.valueOf("document");
 	    
 	    /* Widget to display a list of files which are part of a project.
 	       This widget is used through different "view"s to browse 
 	       the source repository. */
-	    projfiles filelist(std::cout,filters.begin(),filters.end());
+	    projfiles filelist(filters.begin(),filters.end());
 	    docs.add("projfiles",boost::regex(".*"),filelist);
 	    s.vars["projfiles"] = s.valueOf("document");
 
 	    /* button to Amazon payment */
-	    payment pay(std::cout);
+	    payment pay;
 	    todoAdapter ta;
 	    pay.add(boost::regex(".*\\.todo"),"/todoVoteSuccess",ta);
 	    docs.add("payproc",boost::regex(".*"),pay);	    

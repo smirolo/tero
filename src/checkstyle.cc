@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,7 @@ const char *licenseCodeTitles[] = {
 };
 
 
-checkfile::checkfile( std::ostream& o ) : document(o),
-					  cached(false), 
-					  licenseType(unknownLicense),
-					  nbLines(0), nbCodeLines(0) {}
-
-void checkfile::cache() {
+void checker::cache() {
     static const boost::regex 
 	bsdex("\\S?\\S?\\s*Copyright \\(c\\) ((\\d+)(-\\d+)*), (.*)\\s+"
     "\\S?\\s*All rights reserved.\\s+"
@@ -82,36 +77,15 @@ void checkfile::cache() {
 }
 
 
+cppChecker::cppChecker() 
+    : comment(emptyLine),    
+      tokenizer(*this)
 
-void checkfile::fetch( session& s, const boost::filesystem::path& pathname ) {
-    using namespace boost::filesystem; 
-
-    url href;
-    std::string name;
-    path projdir = s.root(pathname,"dws.xml");
-    if( s.prefix(projdir,pathname) ) {
-	name = s.subdirpart(projdir,pathname).string();
-	href = s.asUrl(pathname);
-    } else {
-	name = pathname.string();
-    }
-
-    *ostr << html::tr()
-	 << html::td() << html::a().href(href.string()) 
-	 << name << html::a::end << html::td::end
-	 << html::td() << license() << html::td::end
-	 << html::td() << nbCodeLines << html::td::end
-	 << html::td() << nbLines << html::td::end
-	 << html::tr::end;
-}
-
-cppCheckfile::cppCheckfile( std::ostream& o ) 
-    : checkfile(o), state(start), comment(emptyLine)
 {
 }
 
     
-void cppCheckfile::newline(const char *line, 
+void cppChecker::newline(const char *line, 
 			 int first, int last ) {	
     switch( state ) {
     case readLicense:
@@ -127,7 +101,7 @@ void cppCheckfile::newline(const char *line,
 }
 
 
-void cppCheckfile::token( cppToken token, const char *line, 
+void cppChecker::token( cppToken token, const char *line, 
 			  int first, int last, bool fragment ) {
     switch( token ) {
     case cppComment:
@@ -162,36 +136,7 @@ void cppCheckfile::token( cppToken token, const char *line,
 }
 
 
-void cppCheckfile::fetch( session& s, const boost::filesystem::path& pathname )
-{
-    using namespace boost::filesystem; 
-
-    state = start;
-    comment = emptyLine;
-    cached = false; 
-    licenseType = unknownLicense;
-    nbLines = 0;
-    nbCodeLines = 0;
-    licenseText = slice<const char>();
-    
-    cppTokenizer tokenizer(*this);
-
-    ifstream file;
-    size_t fileSize = file_size(pathname);
-    char buffer[ fileSize + 1 ];
-    
-    open(file,pathname);
-    file.read(buffer,fileSize);
-    buffer[fileSize] = '\0';
-    file.close();
-
-    tokenizer.tokenize(buffer,fileSize);
-
-    checkfile::fetch(s,pathname);
-}
-
-
-void shCheckfile::newline(const char *line, int first, int last ) 
+void shChecker::newline(const char *line, int first, int last ) 
 {
     switch( state ) {
     case readLicense:
@@ -206,7 +151,7 @@ void shCheckfile::newline(const char *line, int first, int last )
 }
 
 
-void shCheckfile::token( shToken token, const char *line, 
+void shChecker::token( shToken token, const char *line, 
 			 int first, int last, bool fragment )
 {
     switch( token ) {
@@ -237,46 +182,19 @@ void shCheckfile::token( shToken token, const char *line,
 }
 
 
-void shCheckfile::fetch( session& s, const boost::filesystem::path& pathname )
-{
-    using namespace boost::filesystem; 
-
-    cached = false; 
-    licenseType = unknownLicense;
-    nbLines = 0;
-    nbCodeLines = 0;
-    licenseText = slice<const char>();
-    state = start;
-
-    shTokenizer tokenizer(*this);
-
-    ifstream file;
-    size_t fileSize = file_size(pathname);
-    char buffer[ fileSize + 1 ];
-    
-    open(file,pathname);
-    file.read(buffer,fileSize);
-    buffer[fileSize] = '\0';
-    file.close();
-
-    tokenizer.tokenize(buffer,fileSize);
-    checkfile::fetch(s,pathname);
+void checkstyle::addDir( session& s, 
+			 const boost::filesystem::path& pathname ) const {
 }
 
 
-void checkstyle::addDir( const session& s, 
-			 const boost::filesystem::path& pathname ) {
-}
-
-
-void checkstyle::addFile( const session& s, 
-			  const boost::filesystem::path& pathname ) {
+void checkstyle::addFile( session& s, 
+			  const boost::filesystem::path& pathname ) const {
     using namespace boost::filesystem; 
 
     if( state == start ) {
-	*ostr << html::p() 
-		  << "<table>";
-	*ostr << html::tr()
+	s.out() << html::p() 
+		<< html::table();
+	s.out() << html::tr()
 		  << html::th() << html::th::end
 		  << html::th() << "license" << html::th::end
 		  << html::th() << "code lines" << html::th::end
@@ -284,13 +202,14 @@ void checkstyle::addFile( const session& s,
 		  << html::tr::end;
 	state = toplevelFiles;
     }
-    document *doc = dispatchDoc::instance->select("check",pathname.string());
-    doc->fetch((session&)s,pathname);
+    const document *doc = dispatchDoc::instance->select("check",pathname.string());
+    doc->fetch(s,pathname);
 }
 
-void checkstyle::flush() {
+void checkstyle::flush( session& s ) const 
+{
     if( state != start ) {
-	*ostr << "</table>"
+	s.out() << html::table::end
 		  << html::p::end;
     }
 }

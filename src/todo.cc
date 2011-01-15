@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -249,18 +249,18 @@ boost::filesystem::path todoModifPost::asPath( const std::string& tag ) const
 }
 
 
-void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
+void todoCreate::fetch( session& s, const boost::filesystem::path& pathname ) const
 {    
     boost::filesystem::path 
 	dirname(boost::filesystem::exists(pathname) ? 
 		pathname : s.abspath(modifs));
     
 
-    todoCreateFeedback fb(*ostr);
+    todoCreateFeedback fb(s.out());
     todocreator create(dirname,&fb);
 #if 0
     if( !istr->eof() ) {
-	mailParser parser(*ostr,create);
+	mailParser parser(create);
 	parser.walk(s,*istr);
     } else 
 #endif
@@ -276,18 +276,18 @@ void todoCreate::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
+void todoComment::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     boost::filesystem::path 
 	postname(boost::filesystem::exists(pathname) ? 
 		 pathname : s.abspath(s.valueOf("href")));
 
-    todoCommentFeedback fb(*ostr,s.asUrl(postname).string());
+    todoCommentFeedback fb(s.out(),s.asUrl(postname).string());
     todocommentor comment(postname,&fb);
 
 #if 0
     if( !istr->eof() ) {
-	mailParser parser(*ostr,comment);
+	mailParser parser(comment);
 	parser.walk(s,*istr); 	
     } else 
 #endif
@@ -303,18 +303,18 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 void todoIndexWriteHtml::fetch( session& s, 
-				const boost::filesystem::path& pathname ) 
+				const boost::filesystem::path& pathname ) const
 {
-    todoliner shortline(*ostr);
-    byScore order(*ostr,shortline);
-    mailParser parser(*ostr,order,true);
+    todoliner shortline(s.out());
+    byScore order(s.out(),shortline);
+    mailParser parser(order,true);
     parser.fetch(s,pathname);
 }
 
 
 void todoVoteAbandon::fetch( session& s, 
-			     const boost::filesystem::path& pathname ) {
-	*ostr << html::p() << "You have abandon the transaction and thus"
+			     const boost::filesystem::path& pathname ) const {
+	s.out() << html::p() << "You have abandon the transaction and thus"
 		  << " your vote has not been registered."
 		  << " Thank you for your interest." 
 		  << html::p::end;
@@ -322,7 +322,7 @@ void todoVoteAbandon::fetch( session& s,
 
 
 void todoVoteSuccess::fetch( session& s, 
-			     const boost::filesystem::path& pathname )
+			     const boost::filesystem::path& pathname ) const
 {
 #if 0
     payment::checkReturn(s,returnPath);
@@ -338,7 +338,7 @@ void todoVoteSuccess::fetch( session& s,
 	/* If *postname* does not point to a regular file,
 	   the inputs were incorrect somehome. 
 	 */
-	*ostr << html::p() << postname 
+	s.out() << html::p() << postname 
 		  << " does not appear to be a regular file on the server"
 		  << " and thus your vote for it cannot be registered."
 	    " Please " << html::a().href("info@fortylines.com") << "contact us"
@@ -355,7 +355,7 @@ void todoVoteSuccess::fetch( session& s,
     char tmpname[FILENAME_MAX] = "/tmp/vote-XXXXXX";
     int fildes = mkstemp(tmpname);
     if( fildes == -1 ) {
-	*ostr << html::p() 
+	s.out() << html::p() 
 		  << " Unable to create temporary file on the server"
 		  << " and thus your vote for it cannot be registered."
 	    " Please " << html::a().href("info@fortylines.com") << "contact us"
@@ -390,11 +390,11 @@ void todoVoteSuccess::fetch( session& s,
     if( score > 0 ) {
 	boost::filesystem::remove(postname);
 	boost::filesystem::rename(tmpname,postname);
-	*ostr << html::p() << "Your vote for item " 
+	s.out() << html::p() << "Your vote for item " 
 		  << tag << " has been registered. Thank you." 
 		  << html::p::end;
     } else {
-	*ostr << html::p() << "There does not appear to have any"
+	s.out() << html::p() << "There does not appear to have any"
 	    " score associated with item " << tag << " thus your"
 	    " vote cannot be registered. Sorry for the inconvienience."
 		  << html::p::end;
@@ -404,7 +404,7 @@ void todoVoteSuccess::fetch( session& s,
 
 
 void todoWriteHtml::meta( session& s, 
-			  const boost::filesystem::path& pathname ) {
+			  const boost::filesystem::path& pathname ) const {
     using namespace boost::filesystem; 
     static const boost::regex valueEx("^(Subject):\\s+(.*)");
 
@@ -427,9 +427,9 @@ void todoWriteHtml::meta( session& s,
 }
 
 void 
-todoWriteHtml::fetch( session& s, const boost::filesystem::path& pathname ) 
+todoWriteHtml::fetch( session& s, const boost::filesystem::path& pathname ) const 
 {
-    htmlwriter writer(*ostr); 
-    mailParser parser(*ostr,writer);
+    htmlwriter writer(s.out()); 
+    mailParser parser(writer);
     parser.fetch(s,pathname);
 }

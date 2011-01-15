@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -61,10 +61,7 @@ public:
 */
 class projCreate : public document {
 public:
-    explicit projCreate( std::ostream& o ) 
-	: document(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
 };
 
@@ -79,19 +76,19 @@ public:
 */
 class projindex : public document {
 protected:
+#if 0
     /** name of the project 
      */
     std::string name;
+#endif
 
 public:
-    explicit projindex( std::ostream& o ) : document(o) {}
-
     static void 
     addSessionVars( boost::program_options::options_description& opts );
     
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 };
 
  

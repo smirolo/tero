@@ -34,13 +34,13 @@
 
 blogIndex::indexSet blogIndex::indices;
 
-void blogIndex::fetch( session& s, const boost::filesystem::path& pathname )
+void blogIndex::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     if( indices.empty() ) {
 	boost::filesystem::path root = s.root(pathname,"blog");
 	if( !root.empty() ) {
-	    addPostIndex filler(*this);
-	    mailParser parser(*ostr,boost::regex(".*\\.blog"),filler,true);
+	    addPostIndex filler(this->indices);
+	    mailParser parser(boost::regex(".*\\.blog"),filler,true);
 	    parser.fetch(s,root / "blog");
 	}
     }

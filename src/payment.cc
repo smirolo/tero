@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,7 @@ void payment::checkReturn( session& s, const char* page ) {
 }
 
 
-void payment::fetch( session& s, const boost::filesystem::path& pathname ) {
+void payment::fetch( session& s, const boost::filesystem::path& pathname ) const {
     for( entrySeq::const_iterator e = entries.begin(); 
 	 e != entries.end(); ++e ) {
 	boost::smatch m;
@@ -145,7 +145,7 @@ void payment::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    article a = e->adapt->fetch(s,pathname);
 	    button.description = a.descr;
 	    button.build(a.guid,a.value);
-	    button.writehtml(*ostr);    
+	    button.writehtml(s.out());    
 	    break;
 	}
     }
@@ -171,10 +171,10 @@ void payment::show( std::ostream& ostr,
 }
 
 
-void payPipeline::fetch( session& s, const boost::filesystem::path& pathname )
+void payPipeline::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     std::stringstream r;
     r << s.valueOf("returnUrl") << "?referenceId=" << s.valueOf("referenceId");
-    *ostr << httpHeaders.refresh(0,url(r.str())) << std::endl;
+    s.out() << httpHeaders.refresh(0,url(r.str())) << std::endl;
 }    
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 #include "feeds.hh"
 
 void feedAggregate::fetch( session& s, 
-			   const boost::filesystem::path& pathname )
+			   const boost::filesystem::path& pathname ) const
 {
     using namespace boost::filesystem;
 
@@ -39,7 +39,7 @@ void feedAggregate::fetch( session& s,
 	boost::smatch m;
 	if( is_directory(*entry) ) {	
 	    path trackname(dirname / entry->filename() / track);
-	    document* doc 
+	    const document* doc 
 		= dispatchDoc::instance->select("document",trackname.string());
 	    if( doc != NULL ) {		
 		doc->fetch(s,trackname);

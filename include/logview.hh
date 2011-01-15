@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -35,15 +35,13 @@
 */
 class logview : public document {
 protected:
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 
 public:
-    explicit logview( std::ostream& o ) : document(o) {}
-
     static void 
     addSessionVars( boost::program_options::options_description& opts );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -51,9 +49,7 @@ public:
  */
 class regressions : public document {
 public:
-    explicit regressions( std::ostream& o ) : document(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -43,37 +43,35 @@ public:
 	direntryFiles
     };
 
-    stateCode state;
+    mutable stateCode state;
 
 protected:
     filterContainer filters;
     
     /** directory in the source tree which is the root of the project (srcDir)
      */
-    boost::filesystem::path projdir;
+    mutable boost::filesystem::path projdir;
     
     virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
+    addDir( session& s, const boost::filesystem::path& pathname ) const;
 
     virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
+    addFile( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void flush();
+    virtual void flush( session& s ) const;
 
     /** returns true when the pathname matches one of the pattern in *filters*.
      */
     bool selects( const boost::filesystem::path& pathname ) const;
     
 public:
-    explicit projfiles( std::ostream& o ) : document(o) {}
     
     template<typename iter>
-    projfiles( std::ostream& o, iter first, iter last )
-	: document(o) {
+    projfiles( iter first, iter last ) {
 	std::copy(first,last,std::back_inserter(filters));
     }
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 

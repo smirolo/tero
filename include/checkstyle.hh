@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -52,11 +52,18 @@ operator<<( std::basic_ostream<ch, tr>& ostr, licenseCode v ) {
 }
 
 
-class checkfile : public document {
+class checker {
 public:
     slice<const char> licenseText;
 
 protected:
+    enum stateCode {
+	start,
+	readLicense,
+	doneLicense
+    };
+    stateCode state;
+
     bool cached;
     licenseCode licenseType;
 
@@ -68,29 +75,20 @@ public:
     size_t nbCodeLines;
     
 public:
-    explicit checkfile( std::ostream& o );
+    checker() : state(start), cached(false), 
+		licenseType(unknownLicense),
+		nbLines(0), nbCodeLines(0) {}
 
     licenseCode license() {
 	if( !cached ) cache();
 	return licenseType;
     }
-
-    virtual void fetch(	session& s, const boost::filesystem::path& pathname );
-
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) {}
 };
 
 
-class cppCheckfile : public checkfile,
+class cppChecker : public checker,
 		     public cppTokListener {
-protected:
-    enum stateCode {
-	start,
-	readLicense,
-	doneLicense
-    };
-    stateCode state;
-    
+protected:    
     enum commentCode {
 	emptyLine,
 	codeLine,
@@ -98,56 +96,73 @@ protected:
     };
     commentCode comment;
 
+    cppTokenizer tokenizer;
+
 public:
-    explicit cppCheckfile( std::ostream& o );
+    cppChecker();
 
     virtual void newline(const char *line, int first, int last );
 
     virtual void token( cppToken token, const char *line, 
 			int first, int last, bool fragment );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    size_t tokenize( const char *line, size_t n ) {
+	return tokenizer.tokenize(line,n);
+    }
 };
 
 
-class shCheckfile : public checkfile,
+class shChecker : public checker,
 		    public shTokListener {
 protected:
-    enum stateCode {
-	start,
-	readLicense,
-	doneLicense
-    };
-    stateCode state;
+    shTokenizer tokenizer;
+
 
 public:
-    explicit shCheckfile( std::ostream& o ) : checkfile(o) {}
+    shChecker() : tokenizer(*this) {}
 
     virtual void newline(const char *line, int first, int last );
 
     virtual void token( shToken token, const char *line, 
 			int first, int last, bool fragment );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    size_t tokenize( const char *line, size_t n ) {
+	return tokenizer.tokenize(line,n);
+    }
 };
+
+
+template<typename checker>
+class checkfile : public document {
+public:
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const {}
+};
+
+
+typedef checkfile<cppChecker> cppCheckfile;
+typedef checkfile<shChecker> shCheckfile;
 
 
 class checkstyle : public projfiles {
 protected:    
     virtual void 
-    addDir( const session& s, const boost::filesystem::path& pathname );
+    addDir( session& s, const boost::filesystem::path& pathname ) const;
 
     virtual void 
-    addFile( const session& s, const boost::filesystem::path& pathname );
+    addFile( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void flush();
+    virtual void flush( session& s ) const;
     
 public:
-    explicit checkstyle( std::ostream& o ) : projfiles(o) {}
-
     template<typename iter>
-    checkstyle( std::ostream& o, iter first, iter last ) 
-	: projfiles(o,first,last) {}
+    checkstyle( iter first, iter last ) 
+	: projfiles(first,last) {}
 };
+
+
+#include "checkstyle.tcc"
+
 
 #endif

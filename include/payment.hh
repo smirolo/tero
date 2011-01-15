@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -85,9 +85,6 @@ protected:
     entrySeq entries;
 
 public:
-    explicit payment( std::ostream& o ) 
-	: document(o) {}
-
     void add( const boost::regex& r, const char *retPath, adapter& a );
 
     static void 
@@ -95,7 +92,7 @@ public:
 
     static void checkReturn( session& s, const char* page );
 
-    void fetch( session& s, const boost::filesystem::path& pathname );    
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;    
 
     static void show( std::ostream& ostr,
 		      session& s, 
@@ -111,10 +108,7 @@ public:
 class payPipeline : public document {
 protected:
 public:
-    explicit payPipeline( std::ostream& o ) 
-	: document(o) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname );    
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;    
 
 };
 

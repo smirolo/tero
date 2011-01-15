@@ -1,5 +1,4 @@
-
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -87,14 +86,12 @@ protected:
     boost::filesystem::path asPath( const std::string& tag ) const;
 
 public:
-    todoModifPost( const boost::filesystem::path& m,
-		    std::ostream& o ) 
-	: document(o), modifs(m), istr(NULL) {}
+    explicit todoModifPost( const boost::filesystem::path& m ) 
+	: modifs(m), istr(NULL) {}
 
-    todoModifPost( const boost::filesystem::path& m,
-		    std::ostream& o, 
+    todoModifPost( const boost::filesystem::path& m,		    
 		    std::istream& is ) 
-	: document(o), modifs(m), istr(&is) {}
+	: modifs(m), istr(&is) {}
 
 };
 
@@ -108,11 +105,10 @@ public:
 class todoCreate : public todoModifPost {
 public:
     todoCreate( const boost::filesystem::path& m,
-		std::ostream& o, 
 		std::istream& is ) 
-	: todoModifPost(m,o,is) {}
+	: todoModifPost(m,is) {}
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -125,11 +121,10 @@ public:
 class todoComment : public todoModifPost {
 public:
     todoComment( const boost::filesystem::path& m,
-		   std::ostream& o, 
 		   std::istream& is ) 
-	: todoModifPost(m,o,is) {}
+	: todoModifPost(m,is) {}
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -138,10 +133,7 @@ public:
  */
 class todoIndexWriteHtml : public document {
 public:
-    explicit todoIndexWriteHtml( std::ostream& o ) 
-	: document(o) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -149,9 +141,7 @@ public:
  */
 class todoVoteAbandon : public document {
 public:
-    explicit todoVoteAbandon( std::ostream& o ) : document(o) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -168,11 +158,10 @@ protected:
 
 public:
     todoVoteSuccess( const boost::filesystem::path& m, 
-		     const char *retPath,
-		     std::ostream& o ) 
-	: todoModifPost(m,o), returnPath(retPath) {}
+		     const char *retPath ) 
+	: todoModifPost(m), returnPath(retPath) {}
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -180,11 +169,9 @@ public:
  */
 class todoWriteHtml : public document {
 public:
-    explicit todoWriteHtml( std::ostream& o ) : document(o) {}
+    void meta( session& s, const boost::filesystem::path& pathname ) const;
 
-    void meta( session& s, const boost::filesystem::path& pathname );
-
-    void fetch(	session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 

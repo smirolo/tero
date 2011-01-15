@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -46,14 +46,14 @@ bool projfiles::selects( const boost::filesystem::path& pathname ) const {
 
 
 void 
-projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
+projfiles::addDir( session& s, const boost::filesystem::path& dir ) const {
     switch( state ) {
     case start:
-	*ostr << html::div().classref("MenuWidget");
+	s.out() << html::div().classref("MenuWidget");
 	break;
     case toplevelFiles:
     case direntryFiles:
-	*ostr << html::p::end;
+	s.out() << html::p::end;
 	break;	
     }
     state = direntryFiles;
@@ -64,23 +64,23 @@ projfiles::addDir( const session& s, const boost::filesystem::path& dir ) {
 	href = s.root() + dir.string().substr(srcTop.size()) + "/dws.xml";
     }
     if( boost::filesystem::exists(dir.string() + "/dws.xml") ) {
-	*ostr << html::a().href(href) 
+	s.out() << html::a().href(href) 
 		  << html::h(2)
 		  << dir.leaf() 
 		  << html::h(2).end()
 		  << html::a::end;
     } else {
-	*ostr << html::h(2) << dir.leaf() << html::h(2).end();
+	s.out() << html::h(2) << dir.leaf() << html::h(2).end();
     }
-    *ostr << html::p();
+    s.out() << html::p();
 }
 
 
 void 
-projfiles::addFile( const session& s, const boost::filesystem::path& file ) {
+projfiles::addFile( session& s, const boost::filesystem::path& file ) const {
     if( state == start ) {
-	*ostr << html::div().classref("MenuWidget");
-	*ostr << html::p();
+	s.out() << html::div().classref("MenuWidget");
+	s.out() << html::p();
 	state = toplevelFiles;
     }
     std::string href = file.string();
@@ -88,19 +88,19 @@ projfiles::addFile( const session& s, const boost::filesystem::path& file ) {
     if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
 	href = s.root() + file.string().substr(srcTop.size());
     }
-    *ostr << html::a().href(href) 
+    s.out() << html::a().href(href) 
 	      << file.leaf() 
 	      << html::a::end << "<br />" << std::endl;
 }
 
 
-void projfiles::flush() 
+void projfiles::flush( session& s ) const 
 {
     switch( state ) {
     case toplevelFiles:
     case direntryFiles:
-	*ostr << html::p::end;
-	*ostr << html::div::end;
+	s.out() << html::p::end;
+	s.out() << html::div::end;
 	break;	
     default:
 	/* Nothing to do excepts shutup gcc warnings. */
@@ -109,7 +109,7 @@ void projfiles::flush()
 }
 
 
-void projfiles::fetch( session& s, const boost::filesystem::path& pathname ) 
+void projfiles::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     using namespace std;
     using namespace boost::system;
@@ -155,6 +155,6 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 		}
 	    }
 	}
-	flush();
+	flush(s);
     }
 }

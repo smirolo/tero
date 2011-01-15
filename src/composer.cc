@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -46,17 +46,18 @@ composer::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void composer::embed( session& s, const std::string& value ) {
+void composer::embed( session& s, const std::string& value ) const {
     using namespace boost::filesystem;
     try {
 	dispatchDoc::instance->fetch(s,value);
     } catch( const basic_filesystem_error<path>& e ) {
-	*ostr << "<p>" << e.what() << "</p>" << std::endl;
+	s.out() << "<p>" << e.what() << "</p>" << std::endl;
     }
 }
 
 
-void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
+void composer::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem;
@@ -68,14 +69,14 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
     ifstream strm;
     open(strm,fixed.empty() ? pathname : fixed);
 
-    document* doc = dispatchDoc::instance->select("document",
+    const document* doc = dispatchDoc::instance->select("document",
 						  s.valueOf("document"));
     if( doc ) {
 	doc->meta(s,s.valueAsPath("document"));
     }
-    *ostr << httpHeaders.contentType();
+    s.out() << httpHeaders.contentType();
 
-    skipOverTags(strm);
+    skipOverTags(s,strm);
     while( !strm.eof() ) {
 	smatch m;
 	std::string line;
@@ -85,9 +86,9 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    std::string varname = m.str(1);
 	    session::variables::const_iterator v = s.vars.find(varname);
 	    if( v != s.vars.end() ) {
-		*ostr << m.prefix();
-		*ostr << v->second.value;
-		*ostr << m.suffix() << std::endl;
+		s.out() << m.prefix();
+		s.out() << v->second.value;
+		s.out() << m.suffix() << std::endl;
 	    }
 	    found = true;
 	}
@@ -99,25 +100,25 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    if( v == s.vars.end() ) {
 		/* hmmm ... variable wasn't set in meta? */
 	    }
-	    document* doc 
+	    const document* doc 
 		= dispatchDoc::instance->select(varname,s.valueOf(varname));
 	    if( doc != NULL ) {
 		boost::filesystem::path docname = s.valueAsPath(varname);
-		*ostr << m.prefix();
+		s.out() << m.prefix();
 		/* \todo code could be:
 		           doc->fetch(s,docname);  
 			 but that would skip over the override 
 			 of changediff::embed(). */
 		embed(s,varname);
-		*ostr << m.suffix() << std::endl;
+		s.out() << m.suffix() << std::endl;
 		found = true;
 	    
 	    } else {
 		v = s.vars.find(varname);
 		if( v != s.vars.end() ) {
-		    *ostr << m.prefix();
-		    *ostr << s.valueOf(varname);
-		    *ostr << m.suffix() << std::endl;
+		    s.out() << m.prefix();
+		    s.out() << s.valueOf(varname);
+		    s.out() << m.suffix() << std::endl;
 		    found = true;
 		}
 	    }
@@ -127,14 +128,14 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) {
 	     out varnames and pathnames... */
 	    path incpath((fixed.empty() ? pathname.parent_path() 
 			  : fixed.parent_path()) / m.str(1));
-	    document* doc = dispatchDoc::instance->select("document",incpath.string());
+	    const document* doc = dispatchDoc::instance->select("document",incpath.string());
 	    if( doc != NULL ) {
 		doc->fetch(s,incpath);
 	    }
 	    found = true;
 	}
 	if( !found ) {
-	    *ostr << line << std::endl;
+	    s.out() << line << std::endl;
 	}
     }
     strm.close();

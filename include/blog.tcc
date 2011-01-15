@@ -3,7 +3,7 @@
 #include "markup.hh" 
 
 template<typename cmp>
-void blogByOrder<cmp>::provide()
+void blogByOrder<cmp>::provide() const
 {
     std::sort(indices.begin(),indices.end(),cmp());
 #if 0
@@ -17,49 +17,13 @@ void blogByOrder<cmp>::provide()
 
 
 template<typename cmp>
-void blogByOrder<cmp>::fetch( session& s, 
-			      const boost::filesystem::path& pathname )
+void blogByOrder<cmp>::write( session& s,
+			      indexSet::const_iterator first,
+			      indexSet::const_iterator last ) const
 {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-    blogIndex::fetch(s,pathname);
-
-    provide();
-
-    /* \todo need to specify bounds... 
-       [first,last[ range out of session or if does not exist
-       get default from cmp operator.
-       \todo Need to be able to specify range or start + nbEntries 
-       (+max page size?)
-    */
-    cmp c;
-
-    std::string firstName = boost::filesystem::basename(pathname);
-
-    shortPost bottom = c.first(firstName);
-    shortPost top = c.last(firstName);
-
-    /* sorted from decreasing order most recent to oldest. */
-    indexSet::const_iterator first 
-	= std::lower_bound(indices.begin(),indices.end(),bottom,c);
-    if( first == indices.end() ) first = indices.begin();
-
-    indexSet::const_iterator last 
-	= std::upper_bound(indices.begin(),indices.end(),top,c);
-#if 0
-   std::cerr << "!!! bottom: " << bottom.time
-	      << ", first: " << first->time
-	      << ", top: " << top.time
-	     << ", last: " << (( last == indices.end() ) ? boost::posix_time::ptime() : last->time)
-	      << std::endl;
-
-    std::cerr << "!!! 2. bottom: " << bottom.tag
-	      << ", first: " << first->tag
-	      << ", top: " << top.tag
-	      << ", last: " << (( last == indices.end() ) ? "end" : last->tag)
-	      << std::endl;
-#endif
     /** Read the actual blog post file and use an html filter 
 	to display it. */
     shortPost prev;
@@ -81,7 +45,7 @@ void blogByOrder<cmp>::fetch( session& s,
 		       << html::div::end;
 	    }
 	    header << html::div::end;
-	    text t(*ostr,header.str());
+	    text t(header.str());
 	    t.fetch(s,first->filename);
 	}
 	prev = *first;
@@ -90,8 +54,68 @@ void blogByOrder<cmp>::fetch( session& s,
 
 
 template<typename cmp>
+void blogByInterval<cmp>::fetch( session& s, 
+				 const boost::filesystem::path& pathname ) const
+{
+    blogIndex::fetch(s,pathname);
+
+    blogByOrder<cmp>::provide();
+
+    /* \todo need to specify bounds... 
+       [first,last[ range out of session or if does not exist
+       get default from cmp operator.
+       \todo Need to be able to specify range or start + nbEntries 
+       (+max page size?)
+    */
+    cmp c;
+
+    std::string firstName = boost::filesystem::basename(pathname);
+
+    shortPost bottom = c.first(firstName);
+    shortPost top = c.last(firstName);
+
+    /* sorted from decreasing order most recent to oldest. */
+    blogIndex::indexSet::const_iterator first 
+	= std::lower_bound(super::indices.begin(),super::indices.end(),
+			   bottom,c);
+    if( first == super::indices.end() ) first = super::indices.begin();
+
+    blogIndex::indexSet::const_iterator last 
+	= std::upper_bound(super::indices.begin(),
+			   super::indices.end(),top,c);
+#if 0
+   std::cerr << "!!! bottom: " << bottom.time
+	      << ", first: " << first->time
+	      << ", top: " << top.time
+	     << ", last: " << (( last == indices.end() ) ? boost::posix_time::ptime() : last->time)
+	      << std::endl;
+
+    std::cerr << "!!! 2. bottom: " << bottom.tag
+	      << ", first: " << first->tag
+	      << ", top: " << top.tag
+	      << ", last: " << (( last == indices.end() ) ? "end" : last->tag)
+	      << std::endl;
+#endif
+    super::write(s,first,last);
+}
+
+
+template<typename cmp>
+void blogByBlock<cmp>::fetch( session& s, 
+			      const boost::filesystem::path& pathname ) const
+{
+    blogIndex::fetch(s,pathname);
+    blogByOrder<cmp>::provide();
+
+    blogIndex::indexSet::const_iterator first = super::indices.begin();
+    blogIndex::indexSet::const_iterator last = super::indices.end();
+    super::write(s,first,last);
+}
+
+
+template<typename cmp>
 void blogSetLinks<cmp>::fetch( session& s, 
-			       const boost::filesystem::path& pathname )
+			       const boost::filesystem::path& pathname ) const
 {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
@@ -118,15 +142,15 @@ void blogSetLinks<cmp>::fetch( session& s,
     time_facet* facet(new time_facet("%b %Y"));
     time_facet* linkfacet(new time_facet("%Y-%m-01"));    
     strm.imbue(std::locale(strm.getloc(), linkfacet));
-    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
+    s.out().imbue(std::locale(s.out().getloc(), facet));
     for( typename linkSet::const_iterator link = links.begin();
 	 link != links.end(); ++link ) {
 	strm.str("");
 	strm << "/" << root << "blog/" << c.name << "/" << link->first;       
-	*ostr << html::a().href(strm.str()) 
-	      << link->first << " (" << link->second << ")"
-	      << html::a::end 
-	      << "<br />" << std::endl;
+	s.out() << html::a().href(strm.str()) 
+		<< link->first << " (" << link->second << ")"
+		<< html::a::end 
+		<< "<br />" << std::endl;
     }
 }
 

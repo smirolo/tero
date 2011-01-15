@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -94,30 +94,32 @@ void auth::addSessionVars( boost::program_options::options_description& opts )
     opts.add(authOptions);
 }
 
-void auth::fetch( session& s, const boost::filesystem::path& pathname ) {
-#if 1
+void auth::fetch( session& s, const boost::filesystem::path& pathname ) const {
+
     /* This code is used to debug initial permission problems. */
     struct passwd *pw;
     struct group *grp;
     
     pw = getpwuid(getuid());
     grp = getgrgid(getgid());
+#if 0
     std::cerr << "real      : " << getuid() 
 	      << '(' << pw->pw_name << ")\t" << getgid() 
 	      << '(' << grp->gr_name << ')' << std::endl;
+#endif
     pw = getpwuid(geteuid());
     grp = getgrgid(getegid());
+#if 0
     std::cerr << "effective : " << geteuid() 
 	      << '(' << pw->pw_name << ")\t" << getegid() 
 	      << '(' << grp->gr_name << ')' << std::endl;
 #endif
-
     s.state("username",s.username());
     s.store();
 }
 
 
-void login::fetch( session& s, const boost::filesystem::path& pathname ) {
+void login::fetch( session& s, const boost::filesystem::path& pathname ) const {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
@@ -164,7 +166,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) {
     auth::fetch(s,pathname);
     
     /* Set a session cookie */
-    *ostr << httpHeaders.setCookie(s.sessionName,s.id()).location(url(s.doc()));
+    s.out() << httpHeaders.setCookie(s.sessionName,s.id()).location(url(s.doc()));
 }
 
 
@@ -226,7 +228,7 @@ deauth::aggregate( const session& s ) const {
 
 
 
-boost::posix_time::time_duration deauth::stop( session& s ) {
+boost::posix_time::time_duration deauth::stop( session& s ) const {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
@@ -256,7 +258,7 @@ boost::posix_time::time_duration deauth::stop( session& s ) {
 }
 
 
-void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) {
+void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) const {
     using namespace boost::posix_time;
 
     if( !s.exists() ) {
@@ -273,40 +275,40 @@ void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) {
 
     time_duration logged = stop(s);
     aggregate(s);
-    *ostr << "last session ran for ";
+    s.out() << "last session ran for ";
     const char *sep = "";
     if( logged.hours() > 0 ) {
-	*ostr << logged.hours() << " hours";
+	s.out() << logged.hours() << " hours";
 	sep = " ";
     }
     if( logged.minutes() > 0 ) {
-	*ostr << sep << logged.minutes() << " mins";
+	s.out() << sep << logged.minutes() << " mins";
 	sep = " ";
     }
     if( strlen(sep) == 0 ) {
-	*ostr << "less than a minute";
+	s.out() << "less than a minute";
     }
-    *ostr << "." << std::endl;
+    s.out() << "." << std::endl;
 }
 
 
-void logout::fetch( session& s, const boost::filesystem::path& pathname ) {
+void logout::fetch( session& s, const boost::filesystem::path& pathname ) const {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
 
     if( !s.id().empty() ) {
-	*ostr << httpHeaders.setCookie(s.sessionName,s.id(),
+	s.out() << httpHeaders.setCookie(s.sessionName,s.id(),
 			      boost::posix_time::ptime::date_duration_type(-1));
     }
     time_duration logged = stop(s);
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
     
-    *ostr << httpHeaders;
+    s.out() << httpHeaders;
     s.state("hours",logstr.str());
     path uiPath(s.valueOf("uiDir") + std::string("/logout.ui"));
-    composer pres(*ostr,uiPath,composer::error);
+    composer pres(uiPath,composer::error);
     pres.fetch(s,"document");
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
 class docbook : public text {
 protected:
     typedef void 
-    (docbook::* walkNodePtr) ( const rapidxml::xml_node<>& node );
+    (docbook::* walkNodePtr) ( session& s, const rapidxml::xml_node<>& node ) const;
 
     struct walkNodeEntry {
 	const char* name;
@@ -58,65 +58,65 @@ protected:
 
     static walkNodeEntry walkers[];
 
-    char *buffer;
-    size_t length;
-    rapidxml::xml_document<> doc;
+    mutable char *buffer;
+    mutable size_t length;
+    mutable rapidxml::xml_document<> doc;
 
-    bool info;
-    bool linebreak;
-    int sectionLevel;
+    mutable bool info;
+    mutable bool linebreak;
+    mutable int sectionLevel;
    
-    void any( const rapidxml::xml_node<>& node );
+    void any( session& s, const rapidxml::xml_node<>& node ) const;
 
-    void captionEnd( const rapidxml::xml_node<>& node );
-    void captionStart( const rapidxml::xml_node<>& node );
-    void emphasisEnd( const rapidxml::xml_node<>& node );
-    void emphasisStart( const rapidxml::xml_node<>& node );
-    void imagedataEnd( const rapidxml::xml_node<>& node );
-    void imagedataStart( const rapidxml::xml_node<>& node );
-    void infoEnd( const rapidxml::xml_node<>& node );
-    void infoStart( const rapidxml::xml_node<>& node );
-    void informaltableEnd( const rapidxml::xml_node<>& node );
-    void informaltableStart( const rapidxml::xml_node<>& node );
-    void linkEnd( const rapidxml::xml_node<>& node );
-    void linkStart( const rapidxml::xml_node<>& node );
-    void literallayoutStart( const rapidxml::xml_node<>& node );
-    void literallayoutEnd( const rapidxml::xml_node<>& node );
-    void itemEnd( const rapidxml::xml_node<>& node );
-    void itemStart( const rapidxml::xml_node<>& node );
-    void paraEnd( const rapidxml::xml_node<>& node );
-    void paraStart( const rapidxml::xml_node<>& node );
-    void programlistingStart( const rapidxml::xml_node<>& node );
-    void programlistingEnd( const rapidxml::xml_node<>& node );
-    void phraseEnd( const rapidxml::xml_node<>& node );
-    void phraseStart( const rapidxml::xml_node<>& node );
-    void sectionEnd( const rapidxml::xml_node<>& node );
-    void sectionStart( const rapidxml::xml_node<>& node );
-    void listEnd( const rapidxml::xml_node<>& node );
-    void listStart( const rapidxml::xml_node<>& node );
-    void tableEnd( const rapidxml::xml_node<>& node );
-    void tableStart( const rapidxml::xml_node<>& node );
-    void tdEnd( const rapidxml::xml_node<>& node );
-    void tdStart( const rapidxml::xml_node<>& node );
-    void thEnd( const rapidxml::xml_node<>& node );
-    void thStart( const rapidxml::xml_node<>& node );
-    void titleEnd( const rapidxml::xml_node<>& node );
-    void titleStart( const rapidxml::xml_node<>& node );
-    void trEnd( const rapidxml::xml_node<>& node );
-    void trStart( const rapidxml::xml_node<>& node );
-    void xrefEnd( const rapidxml::xml_node<>& node );
-    void xrefStart( const rapidxml::xml_node<>& node );
+    void captionEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void captionStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void emphasisEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void emphasisStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void imagedataEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void imagedataStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void infoEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void infoStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void informaltableEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void informaltableStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void linkEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void linkStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void literallayoutStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void literallayoutEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void itemEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void itemStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void paraEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void paraStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void programlistingStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void programlistingEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void phraseEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void phraseStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void sectionEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void sectionStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void listEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void listStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void tableEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void tableStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void tdEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void tdStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void thEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void thStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void titleEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void titleStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void trEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void trStart( session& s, const rapidxml::xml_node<>& node ) const;
+    void xrefEnd( session& s, const rapidxml::xml_node<>& node ) const;
+    void xrefStart( session& s, const rapidxml::xml_node<>& node ) const;
 
-    void walk( const rapidxml::xml_node<>& node );
+    void walk( session& s, const rapidxml::xml_node<>& node ) const;
 
 public:
-    docbook( std::ostream& o, decorator& l,  decorator& r );
+    docbook( decorator& l,  decorator& r );
 
     ~docbook();
 
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 #endif

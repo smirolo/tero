@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -73,15 +73,14 @@ protected:
     bool stopOnFirst;
 
 public:
-    mailParser( std::ostream& o, postFilter& f, bool sof = false ) 
-	: dirwalker(o), filter(&f), stopOnFirst(sof) {}
+    mailParser( postFilter& f, bool sof = false ) 
+	: filter(&f), stopOnFirst(sof) {}
     
-    mailParser( std::ostream& o, const boost::regex& fm, 
+    mailParser( const boost::regex& fm, 
 		postFilter& f, bool sof = false )
-	: dirwalker(o,fm), filter(&f), stopOnFirst(sof) {}
+	: dirwalker(fm), filter(&f), stopOnFirst(sof) {}
 
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
     void walk( session& s, std::istream& ins, const std::string& name = "" );
 };

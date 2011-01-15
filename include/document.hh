@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -44,16 +44,12 @@ void createfile( boost::filesystem::ofstream& strm,
  */
 class document {
 protected:
-    std::ostream *ostr;
-
     void open( boost::filesystem::ifstream& strm, 
 	       const boost::filesystem::path& pathname ) const;
     
 public:
-    explicit document( std::ostream& o ) : ostr(&o) {}
-
     virtual void fetch( session& s, 
-			const boost::filesystem::path& pathname ) = 0;
+			const boost::filesystem::path& pathname ) const = 0;
 
     /** Add meta information about the document to the session. It includes
 	modification date, file revision as well as tags read in the file.
@@ -62,7 +58,7 @@ public:
 	information needs to be propagated into different parts of the template
 	and not only in the placeholder for the document.
     */
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -74,7 +70,7 @@ public:
     typedef std::map<std::string,std::string> variables;
 
 protected:
-    typedef std::list<std::pair<boost::regex,document*> > aliasSet;
+    typedef std::list<std::pair<boost::regex,const document*> > aliasSet;
     typedef std::map<std::string,aliasSet> presentationSet;
 
     boost::filesystem::path root;
@@ -85,17 +81,19 @@ public:
 
     static dispatchDoc *instance;
 
+#if 0
     void add( const std::string& varname, const boost::regex& r, 
 	      std::ostream& d );
+#endif
 
     void add( const std::string& varname, const boost::regex& r, 
-	      document& d );
+	      const document& d );
 
     void fetch( session& s, const std::string& varname );
 
     /** \brief handler based on the type of document as filtered by dispatch.
      */
-    document* select( const std::string& name, const std::string& value ) const;
+    const document* select( const std::string& name, const std::string& value ) const;
 
 };
 
@@ -107,23 +105,22 @@ class dirwalker : public document {
 protected:
     boost::regex filematch;
 
-    virtual void first() {}
-    virtual void last() {}
+    virtual void first() const {}
+    virtual void last() const {}
 
 public:
-    explicit dirwalker( std::ostream& o ) 
-	: document(o), filematch(".*") {}
+    dirwalker() : filematch(".*") {}
 
-    dirwalker( std::ostream& o, const boost::regex& fm  ) 
-	: document(o), filematch(fm) {}
+    dirwalker( const boost::regex& fm  ) 
+	: filematch(fm) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
     /** *name* initialized with pathname for the todo filters to set the uuid
 	correctly on filters(). 
     */
     virtual void walk( session& s, std::istream& ins, 
-		       const std::string& name = "" ) {}
+		       const std::string& name = "" ) const {}
 };
 
 
@@ -136,17 +133,17 @@ protected:
     decorator *leftDec;
     decorator *rightDec;
 
-    void skipOverTags( std::istream& istr );
+    void skipOverTags( session& s, std::istream& istr ) const;
 
 public:
-    explicit text( std::ostream& o ) 
-	: document(o), leftDec(NULL), rightDec(NULL) {}
+    text() 
+	: leftDec(NULL), rightDec(NULL) {}
 
-    text( std::ostream& o, const std::string& h ) 
-	: document(o), header(h), leftDec(NULL), rightDec(NULL) {}
+    explicit text( const std::string& h ) 
+	: header(h), leftDec(NULL), rightDec(NULL) {}
 
-    text( std::ostream& o, decorator& l,  decorator& r ) 
-	: document(o), leftDec(&l), rightDec(&r) {}
+    text( decorator& l,  decorator& r ) 
+	: leftDec(&l), rightDec(&r) {}
 
     /** \brief show difference between two texts side by side 
 
@@ -155,12 +152,13 @@ public:
 	\param  diff             difference between left and right pane
 	\param  inputIsLeftSide  true when input stream is left side
     */
-    void showSideBySide( std::istream& input, std::istream& diff, 
-			 bool inputIsLeftSide= true );
+    void showSideBySide( session& s, 
+			 std::istream& input, std::istream& diff, 
+			 bool inputIsLeftSide= true ) const;
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void meta( session& s, const boost::filesystem::path& pathname );
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 
 };
 

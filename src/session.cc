@@ -38,15 +38,6 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-/* For security, we want to store the absolute path to the config
-   file into the executable binary. */
-#ifndef CONFIG_FILE
-#error CONFIG_FILE should be defined when compiling this file
-#endif
-#ifndef SESSION_DIR
-#error SESSION_DIR should be defined when compiling this file
-#endif
-
 
 undefVariableError::undefVariableError( const std::string& varname ) 
     : std::runtime_error(std::string("undefined variable in session ") 
@@ -84,11 +75,11 @@ void session::load( const boost::program_options::options_description& opts,
 }
 
 boost::filesystem::path session::stateDir() const {
-    std::string sessionDir = valueOf("sessionDir");
-    if( sessionDir.empty() ) {
-	sessionDir = SESSION_DIR;
+    std::string s = valueOf("sessionDir");
+    if( s.empty() ) {
+	s = sessionDir;
     }
-    return boost::filesystem::path(sessionDir);
+    return boost::filesystem::path(s);
 }
 
 
@@ -276,8 +267,8 @@ void session::restore( int argc, char *argv[],
 
     boost::program_options::options_description opts(o);
     opts.add_options()
-	("config",value<std::string>(),"path to the configuration file (defaults to "CONFIG_FILE")")
-	("sessionDir",value<std::string>(),"directory where session files are stored (defaults to "SESSION_DIR")")
+	("config",value<std::string>(),(std::string("path to the configuration file (defaults to ") + configFile + std::string(")")).c_str())
+	("sessionDir",value<std::string>(),(std::string("directory where session files are stored (defaults to ") + sessionDir + std::string(")")).c_str())
 	(sessionName.c_str(),value<std::string>(),"name of the session id variable (or cookie)")
 	("username",value<std::string>(),"username")
 	(posCmd,value<std::string>(),posCmd)
@@ -315,7 +306,7 @@ void session::restore( int argc, char *argv[],
 
     /* 2. If a "config" file name does not exist at this point, a (config,
        filename) pair compiled into the binary executable is added. */
-    std::string config(CONFIG_FILE);
+    std::string config(configFile);
     variables::const_iterator cfg = vars.find("config");
     if( cfg != vars.end() ) {
 	config = cfg->second.value;

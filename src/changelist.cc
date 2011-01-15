@@ -50,8 +50,8 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 }
 
 
-void cancel::fetch( session& s, const boost::filesystem::path& pathname ) {
-    *ostr << httpHeaders.location(url(s.doc())) << '\n';
+void cancel::fetch( session& s, const boost::filesystem::path& pathname ) const {
+    s.out() << httpHeaders.location(url(s.doc())) << '\n';
 }
 
 
@@ -85,7 +85,7 @@ change::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
+void change::fetch(  session& s, const boost::filesystem::path& pathname ) const {
     using namespace boost::system;
     using namespace boost::filesystem;
 
@@ -120,7 +120,7 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) {
 	file << docName;
 	file.close();
     }
-    *ostr << httpHeaders.location(url(s.doc() + std::string(".edits")));
+    s.out() << httpHeaders.location(url(s.doc() + std::string(".edits")));
 }
 
 
@@ -142,20 +142,20 @@ void changediff::embed( session& s, const std::string& varname ) {
 		gitrelname = relpath(docname,rev->rootpath);
 	    rev->diff(text,leftRevision,rightRevision,gitrelname);
 		
-	    cout << "<table style=\"text-align: left;\">" << endl;
-	    cout << html::tr();
-	    cout << html::th() << leftRevision << html::th::end;
-	    cout << html::th() << rightRevision << html::th::end;
-	    cout << html::tr::end;
+	    s.out() << "<table style=\"text-align: left;\">" << endl;
+	    s.out() << html::tr();
+	    s.out() << html::th() << leftRevision << html::th::end;
+	    s.out() << html::th() << rightRevision << html::th::end;
+	    s.out() << html::tr::end;
 
 	    boost::filesystem::ifstream input;
 	    open(input,docname);
 
 	    /* \todo the session is not a parameter to between files... */	
-	    document *doc = dispatchDoc::instance->select("document",docname.string());
-	    ((::text*)doc)->showSideBySide(input,text,false);
+	    const document *doc = dispatchDoc::instance->select("document",docname.string());
+	    ((::text*)doc)->showSideBySide(s,input,text,false);
 		
-	    cout << html::table::end;
+	    s.out() << html::table::end;
 	    input.close();
 	}
     }
@@ -163,22 +163,22 @@ void changediff::embed( session& s, const std::string& varname ) {
 
 
 void 
-changecheckin::fetch( session& s, const boost::filesystem::path& pathname ) 
+changecheckin::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	checkinref ref;
-	rev->history(*ostr,s,pathname,ref);
+	rev->history(s.out(),s,pathname,ref);
     }
 }
 
 void 
-changehistory::fetch( session& s, const boost::filesystem::path& pathname ) 
+changehistory::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	diffref ref;
-	rev->history(*ostr,s,pathname,ref);
+	rev->history(s.out(),s,pathname,ref);
     }
 }
 

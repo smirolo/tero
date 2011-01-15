@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -48,19 +48,19 @@ logview::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void logview::meta( session& s, const boost::filesystem::path& pathname ) {
+void logview::meta( session& s, const boost::filesystem::path& pathname ) const {
     s.insert("title","Build View");   
     document::meta(s,pathname);
 }
 
 
-void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
+void logview::fetch( session& s, const boost::filesystem::path& pathname ) const {
 
     using namespace rapidxml;
     using namespace boost::filesystem;
 
     /* Each log contains the results gathered on a build server. We prefer
-       to present one build results per column but need to write std::cout
+       to present one build results per column but need to write s.out()
        one table row at a time so we create the table entirely in memory 
        before we display it. 
        If we were to present build results per row, we would still need
@@ -169,15 +169,15 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 	}
     }
 
-    *ostr << html::p() << "This build view page shows the stability "
+    s.out() << html::p() << "This build view page shows the stability "
 	"of all projects at a glance. Each column represents a build log "
 	"obtained by running the following command on a local machine:" 
 	      << html::p::end;
-    *ostr << html::pre() << html::a().href("/resources/dws") 
+    s.out() << html::pre() << html::a().href("/resources/dws") 
 	      << "dws" << html::a::end << " build " 
 	      << s.valueOf("remoteIndexFile")
 	      << html::pre::end;
-    *ostr << html::p() << "dws, the inter-project dependency tool "
+    s.out() << html::p() << "dws, the inter-project dependency tool "
 	"generates a build log file with XML markups as part of building "
 	"projects. That build log is then stamped with the local machine "
 	"hostname and time before being uploaded onto the remote machine. "
@@ -186,64 +186,64 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) {
 
     /* Display the table column headers. */
     if( colHeaders.empty() ) {
-	*ostr << html::pre() << "There are no logs available"
+	s.out() << html::pre() << "There are no logs available"
 	      << html::pre::end;
     } else {
-	*ostr << html::table();
-	*ostr << html::tr();
-	*ostr << html::th() << html::th::end;
+	s.out() << html::table();
+	s.out() << html::tr();
+	s.out() << html::th() << html::th::end;
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
-	    *ostr << html::th() 
+	    s.out() << html::th() 
 		  << html::a().href(s.subdirpart(s.valueOf("siteTop"),
 					    dirname / col->string()).string())
 		  << *col << html::a::end << html::th::end;
 	}
-	*ostr << html::tr::end;
+	s.out() << html::tr::end;
 
 	/* Display one project per row, one build result per column. */
 	for( tableType::const_iterator row = table.begin();
 	     row != table.end(); ++row ) {
-	    *ostr << html::tr();
-	    *ostr << html::th() << projhref(row->first) << html::th::end;
+	    s.out() << html::tr();
+	    s.out() << html::th() << projhref(row->first) << html::th::end;
 	    for( colHeadersType::const_iterator col = colHeaders.begin();
 		 col != colHeaders.end(); ++col ) {
 		colType::const_iterator value = row->second.find(*col);
 		if( value != row->second.end() ) {
 		    if( value->second.second ) {
-			*ostr << html::td().classref("positiveErrorCode");
+			s.out() << html::td().classref("positiveErrorCode");
 		    } else {
-			*ostr << html::td();
+			s.out() << html::td();
 		    }
-		    *ostr << value->second.first;	
+		    s.out() << value->second.first;	
 		} else {
-		    *ostr << html::td();
+		    s.out() << html::td();
 		}
-		*ostr << html::td::end;
+		s.out() << html::td::end;
 	    }
-	    *ostr << html::tr::end;
+	    s.out() << html::tr::end;
 	}
-	*ostr << html::table::end;
+	s.out() << html::table::end;
     }
 
     /* footer */
-    *ostr << html::p() << "Each cell contains the time it took to make "
+    s.out() << html::p() << "Each cell contains the time it took to make "
 	  "a specific project. If make exited with an error code before "
 	"the completion of the last target, it is marked " 
 	      << html::span().classref("positiveErrorCode") 
 	      << "&nbsp;as such&nbsp;" << html::span::end << "." 
 	      << html::p::end;
-    *ostr << emptyParaHack;
+    s.out() << emptyParaHack;
 }
 
 
-void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
+void regressions::fetch( session& s, const boost::filesystem::path& pathname ) const {
 
     using namespace rapidxml;
     using namespace boost::filesystem;
 
     if( !boost::filesystem::exists(pathname) ) {
-	*ostr << html::p()
+	s.out() << html::p()
 		  << "There are no regression logs available for the unit tests."
 		  << html::p::end;
 	return;
@@ -265,45 +265,45 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 	size_t col = 1;
 	typedef std::map<std::string,size_t> colMap;
 	colMap colmap;	
-	*ostr << html::p();
-	*ostr << html::table() << std::endl;
-	*ostr << html::tr();
+	s.out() << html::p();
+	s.out() << html::table() << std::endl;
+	s.out() << html::tr();
 
-	*ostr << html::th();
+	s.out() << html::th();
 	xml_node<> *config = root->first_node("config");
 	if( config ) {
 	    xml_attribute<> *configName = config->first_attribute("name");
 	    if( configName ) {
-		*ostr << configName->value();
+		s.out() << configName->value();
 	    }
 	}       
-	*ostr << " vs." << html::th::end;
+	s.out() << " vs." << html::th::end;
 	
 	xml_node<> *ref = root->first_node("reference");
 	if( ref ) {
 	    for( ; ref != NULL; ref = ref->next_sibling() ) {
 		xml_attribute<> *id = ref->first_attribute("id");
 		if( id != NULL ) {		
-		    *ostr << html::th() << id->value() << html::th::end;
+		    s.out() << html::th() << id->value() << html::th::end;
 		    xml_attribute<> *name = ref->first_attribute("name");
 		    assert( name != NULL );
 		    colmap.insert(std::make_pair(name->value(),col++));
 		}
 	    }
 	} else {
-	    *ostr << html::th() << "No results to compare against."
+	    s.out() << html::th() << "No results to compare against."
 		      << html::th::end;
 	}
-	*ostr << html::tr::end;
+	s.out() << html::tr::end;
 
 	xml_node<>* cols[colmap.size() + 1];
 	for( xml_node<> *test = root->first_node("test");
 	     test != NULL; test = test->next_sibling() ) {
-	    *ostr << html::tr();
+	    s.out() << html::tr();
 	    memset(cols,0,sizeof(cols));
 	    xml_attribute<> *name = test->first_attribute("name");
 	    if( name != NULL ) {
-		*ostr << html::td() << name->value() << html::td::end;
+		s.out() << html::td() << name->value() << html::td::end;
 	    }
 	    for( xml_node<> *compare = test->first_node("compare");
 		 compare != NULL; compare = compare->next_sibling("compare") ) {
@@ -319,15 +319,15 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 	    }
 	    for( xml_node<> **c = &cols[1]; 
 		 c != &cols[colmap.size() + 1]; ++c ) {
-		*ostr << html::td();
+		s.out() << html::td();
 		if( *c != NULL )
-		    *ostr << (*c)->value();
-		*ostr << html::td::end;
+		    s.out() << (*c)->value();
+		s.out() << html::td::end;
       	    }
-	    *ostr << html::tr::end;
+	    s.out() << html::tr::end;
 #if 0
 	    /* display the actual ouput as an expandable row. */
-	    *ostr << html::tr();
+	    s.out() << html::tr();
 	    memset(cols,0,sizeof(cols));
 	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {
 		assert( *c == NULL );
@@ -349,15 +349,15 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) {
 		}
 	    }
 	    for( xml_node<> **c = cols; c != &cols[colmap.size() + 1]; ++c ) {
-		*ostr << html::td() << html::pre();
+		s.out() << html::td() << html::pre();
 		if( *c != NULL )
-		    *ostr << (*c)->value();
-		*ostr << html::pre::end << html::td::end;
+		    s.out() << (*c)->value();
+		s.out() << html::pre::end << html::td::end;
 	    }
-	    *ostr << html::tr::end;
+	    s.out() << html::tr::end;
 #endif
 	}	
 
-	*ostr << "</table>" << html::p::end;
+	s.out() << html::table::end << html::p::end;
     }   
 }

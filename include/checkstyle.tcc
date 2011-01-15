@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,22 +23,41 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardxslview
-#define guardxslview
+#include "markup.hh"
 
-#include "document.hh"
+template<typename checker>
+void checkfile<checker>::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    using namespace boost::filesystem; 
 
-/** Pages generated from XSL.
+    checker check;
+ 
+    ifstream file;
+    size_t fileSize = file_size(pathname);
+    char buffer[ fileSize + 1 ];
+    
+    open(file,pathname);
+    file.read(buffer,fileSize);
+    buffer[fileSize] = '\0';
+    file.close();
 
-    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
-*/
+    check.tokenize(buffer,fileSize);
 
+    url href;
+    std::string name;
+    path projdir = s.root(pathname,"dws.xml");
+    if( s.prefix(projdir,pathname) ) {
+	name = s.subdirpart(projdir,pathname).string();
+	href = s.asUrl(pathname);
+    } else {
+	name = pathname.string();
+    }
 
-class xslview : public document {
-public:
-
-    virtual void fetch( std::ostream& ostr,
-			session& s, const boost::filesystem::path& pathname );
-};
-
-#endif
+    s.out() << html::tr()
+	 << html::td() << html::a().href(href.string()) 
+	 << name << html::a::end << html::td::end
+	 << html::td() << check.license() << html::td::end
+	 << html::td() << check.nbCodeLines << html::td::end
+	 << html::td() << check.nbLines << html::td::end
+	 << html::tr::end;
+}

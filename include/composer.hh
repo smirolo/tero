@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -52,20 +52,20 @@ protected:
 
     /** Embed the content of a variable into a page. 
      */
-    virtual void embed( session& s, const std::string& value );
+    virtual void embed( session& s, const std::string& value ) const;
     
 public:
-    composer( std::ostream& o, fileNotFoundBehavior b ) 
-	: super(o), behavior(b) {}
+    explicit composer( fileNotFoundBehavior b ) 
+	: behavior(b) {}
 
-    composer( std::ostream& o, 
-	      const boost::filesystem::path& f, fileNotFoundBehavior b ) 
-	: super(o), behavior(b), fixed(f) {}
+    composer( const boost::filesystem::path& f, 
+	      fileNotFoundBehavior b ) 
+	: behavior(b), fixed(f) {}
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 

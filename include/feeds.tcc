@@ -31,22 +31,25 @@
 
 template<typename postFilter>
 void feedContent<postFilter>::fetch( session& s, 
-				    const boost::filesystem::path& pathname )
+				    const boost::filesystem::path& pathname ) const
 {
     using namespace boost::filesystem;
 
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
-    mailParser::fetch(s,dirname);
+    postFilter writer(s.out());
+    mailParser m(filePat,writer,true);
+    m.fetch(s,dirname);
 }
 
 
 template<typename postFilter>
 void feedNames<postFilter>::fetch( session& s, 
-				   const boost::filesystem::path& pathname )
+				   const boost::filesystem::path& pathname ) const
 {
     using namespace boost::filesystem;
 
+    postFilter writer(s.out());
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
 
@@ -96,8 +99,9 @@ void feedNames<postFilter>::fetch( session& s,
 
 template<typename postFilter>
 void feedRepository<postFilter>::fetch( session& s, 
-			    const boost::filesystem::path& pathname ) 
+			    const boost::filesystem::path& pathname ) const
 {
+    postFilter writer(s.out());
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	history hist;
@@ -109,48 +113,4 @@ void feedRepository<postFilter>::fetch( session& s,
 	}	
     }
 }
-
-#if 0
-/* deprecated - left here to check output of htmlwriter matches. */
-void 
-changedescr::fetch( session& s, const boost::filesystem::path& pathname )
-{
-    using namespace std;
-
-    revisionsys *rev = revisionsys::findRev(s,pathname);
-    if( rev ) {
-	history hist;
-	rev->checkins(hist,s,pathname);
-
-	htmlEscaper esc;
-
-#if 1
-	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    *ostr << html::h(2) << ci->title << html::h(2).end();
-	    *ostr << html::p();
-	    *ostr <<  ci->time << " - " << ci->authorEmail;
-	    *ostr << html::p::end;
-	    *ostr << html::p();
-	    esc.attach(*ostr);
-	    *ostr << ci->descr;
-	    esc.detach();
-	    *ostr << html::p::end;
-	    *ostr << html::p();
-	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
-		 file != ci->files.end(); ++file ) {
-		*ostr << html::a().href(file->string()) << *file << html::a::end << "<br />" << std::endl;
-	    }
-	    *ostr << html::p::end;
-	}
-#else
-	htmlwriter liner(*ostr);
-	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    liner.filters(*ci);
-	}	
-#endif	  
-    }
-}
-#endif
 

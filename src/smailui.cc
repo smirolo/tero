@@ -1,4 +1,4 @@
-/* Copyright (c) 2010, Fortylines LLC
+/* Copyright (c) 2010-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,17 @@
 
 #include "auth.hh"
 #include "todo.hh"
+
+#ifndef CONFIG_FILE
+#error "CONFIG_FILE should be defined when compiling this file"
+#endif
+#ifndef SESSION_DIR
+#error "SESSION_DIR should be defined when compiling this file"
+#endif
+
+const char* session::configFile = CONFIG_FILE;
+const char* session::sessionDir = SESSION_DIR;
+
 
 class todoModifFilter : public todoFilter {
 public:
@@ -54,7 +65,7 @@ int main( int argc, char *argv[] )
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
-    session s("view","semillaId");
+    session s("view","semillaId",std::cout);
     s.privileged(false);
 
     try {
@@ -72,7 +83,7 @@ int main( int argc, char *argv[] )
 
 	todoModifFilter modif(".");
 	if( !std::cin.eof() ) {
-	    mailParser parser(std::cout,modif);
+	    mailParser parser(modif);
 	    parser.walk(s,std::cin);
 	}
     } catch( exception& e ) {

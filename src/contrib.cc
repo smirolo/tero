@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
+void contribCreate::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     s.privileged(true);
 
@@ -42,7 +42,7 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
        Homepage http://www.thkukuk.de/pam/pwdutils/, 
        source ftp://ftp.kernel.org/pub/linux/utils/net/NIS/pwdutils-3.2.9.tar.gz
     */
-    *ostr << httpHeaders
+    s.out() << httpHeaders
 	  << "create contributor with " << s.valueOf("contribName")
 	  << ", " << s.valueOf("contribPasswd");
 
@@ -50,20 +50,20 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void contribIdx::meta( session& s, const boost::filesystem::path& pathname ) 
+void contribIdx::meta( session& s, const boost::filesystem::path& pathname ) const
 {
     s.insert("title","A last word");
     document::meta(s,pathname);
 }
 
 
-void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
+void contribIdx::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     using namespace std;
     using namespace boost::filesystem;
     
 #if 0
-    *ostr << html::table();    
+    s.out() << html::table();    
 #endif
     if( is_directory(pathname) ) {
 	for( directory_iterator entry = directory_iterator(pathname); 
@@ -73,17 +73,17 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 		    profilePathname = path(*entry) / "profile.blog";	
 		if( boost::filesystem::is_regular_file(profilePathname) ) {
 #if 0
-		    *ostr << html::tr() 
+		    s.out() << html::tr() 
 			 << html::td() 
 			 << "<img src=\"/resources/contrib/" 
 			 << entry->filename() << "/profile.jpg\">"
 			 << html::td::end
 			 << html::td();
 #endif		    
-		    text t(*ostr);
+		    text t;
 		    t.fetch(s,profilePathname);
 #if 0		    
-		    *ostr << html::td::end
+		    s.out() << html::td::end
 			 << html::tr::end;
 #endif
 		}
@@ -91,7 +91,7 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname )
 	}
     }
 #if 0
-    *ostr << html::table::end;
+    s.out() << html::table::end;
 #endif
 }
 

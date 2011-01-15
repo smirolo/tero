@@ -46,12 +46,10 @@ public:
 
 class auth : public document {
 public:
-    explicit auth( std::ostream& o ) : document(o) {}
-
     static void 
     addSessionVars( boost::program_options::options_description& opts );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 /** Web-based authentication checks the credentials passed to the CGI
@@ -61,9 +59,7 @@ public:
 */
 class login : public auth {
 public:
-    explicit login( std::ostream& o ) : auth(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -73,12 +69,10 @@ protected:
     boost::posix_time::time_duration aggregate( const session& s ) const;
 
     /* stop counter and return session time. */
-    boost::posix_time::time_duration stop( session& s );
+    boost::posix_time::time_duration stop( session& s ) const;
 
 public:
-    explicit deauth( std::ostream& o ) : document(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -87,9 +81,7 @@ public:
 */
 class logout : public deauth {
 public:
-    explicit logout( std::ostream& o ) : deauth(o) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 #endif
