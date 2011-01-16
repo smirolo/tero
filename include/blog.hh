@@ -27,7 +27,7 @@
 #define guardblog
 
 #include "post.hh"
-#include "document.hh"
+#include "feeds.hh"
 
 /** Pages related to blog posts.
 
@@ -35,49 +35,17 @@
 */
 
 
-/** Load an index of blog entries from a directory and provide them 
-    in different sort order. */
-class blogIndex : public document {
-protected:
-
-    typedef std::vector<shortPost> indexSet;
-
-    class addPostIndex : public postFilter {
-    protected:
-	indexSet* indices;
-	
-    public:
-	explicit addPostIndex( indexSet& v ) : indices(&v) {}
-
-	virtual void filters( const post& p ) {
-	    /* create one shortPost per post tag. */
-	    if( p.tags.empty() ) {
-		indices->push_back(shortPost(p,""));
-	    } else {
-		for( post::tagSet::const_iterator t = p.tags.begin();
-		     t != p.tags.end(); ++t ) {
-		    indices->push_back(shortPost(p,*t));
-		}
-	    }
-	}
-    };
-
-    static indexSet indices;
-
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
 /** Present blog entries ordered by *cmp*.
 */
 template<typename cmp>
-class blogByOrder : public blogIndex {
+class blogByOrder : public feedBase {
 protected:
     void provide() const;
 
     void write( session& s,
-		indexSet::const_iterator first,
-		indexSet::const_iterator last ) const;
+		feedIndex::indexSet::const_iterator first,
+		feedIndex::indexSet::const_iterator last ) const;
+
 };
 
 
@@ -117,7 +85,7 @@ typedef blogByBlock<orderByTag<shortPost> > blogByBlockTags;
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
 */
 template<typename cmp>
-class blogSetLinks : public blogIndex {
+class blogSetLinks : public document {
 protected:
     /* store the number blog entries with a specific key. */
     typedef std::map<typename cmp::keyType,uint32_t> linkSet;

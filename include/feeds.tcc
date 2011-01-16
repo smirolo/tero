@@ -29,27 +29,64 @@
 #include <pwd.h>
 #include "markup.hh"
 
+
 template<typename postFilter>
-void feedContent<postFilter>::fetch( session& s, 
+void feedAggregate<postFilter>::meta( session& s, 
+			   const boost::filesystem::path& pathname ) const
+{
+    using namespace boost::filesystem;
+
+    path p(s.abspath(pathname));   	
+    path dirname(pathname.parent_path());
+    path track(pathname.filename());
+
+    for( directory_iterator entry = directory_iterator(dirname); 
+	 entry != directory_iterator(); ++entry ) {
+	boost::smatch m;
+	if( is_directory(*entry) ) {	
+	    path trackname(dirname / entry->filename() / track);
+	    const document* doc 
+		= dispatchDoc::instance->select("document",trackname.string());
+	    if( doc != NULL ) {		
+		doc->fetch(s,trackname);
+	    } else {
+		fetch(s,trackname);
+	    }
+	}
+    }
+}
+
+
+template<typename postFilter>
+void feedContent<postFilter>::meta( session& s, 
 				    const boost::filesystem::path& pathname ) const
 {
     using namespace boost::filesystem;
 
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
-    postFilter writer(s.out());
-    mailParser m(filePat,writer,true);
+    mailParser m(filePat,feedIndex::instance,true);
     m.fetch(s,dirname);
 }
 
 
 template<typename postFilter>
-void feedNames<postFilter>::fetch( session& s, 
+void feedContent<postFilter>::fetch( session& s, 
+				    const boost::filesystem::path& pathname ) const
+{
+    postFilter writer(s.out());
+    write(feedIndex::instance.indices.begin(),
+	      feedIndex::instance.indices.end(),
+	      writer);
+}
+
+
+template<typename postFilter>
+void feedNames<postFilter>::meta( session& s, 
 				   const boost::filesystem::path& pathname ) const
 {
     using namespace boost::filesystem;
 
-    postFilter writer(s.out());
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
 
@@ -91,17 +128,27 @@ void feedNames<postFilter>::fetch( session& s,
 		p.authorEmail = "info@ocalhost.localdomain";
 #endif
 	    }
-	    writer.filters(p);
+	    feedIndex::instance.filters(p);
 	}
     }
 }
 
 
 template<typename postFilter>
-void feedRepository<postFilter>::fetch( session& s, 
-			    const boost::filesystem::path& pathname ) const
+void feedNames<postFilter>::fetch( session& s, 
+				    const boost::filesystem::path& pathname ) const
 {
     postFilter writer(s.out());
+    write(feedIndex::instance.indices.begin(),
+	      feedIndex::instance.indices.end(),
+	      writer);
+}
+
+
+template<typename postFilter>
+void feedRepository<postFilter>::meta( session& s, 
+			    const boost::filesystem::path& pathname ) const
+{
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	history hist;
@@ -109,8 +156,18 @@ void feedRepository<postFilter>::fetch( session& s,
 
 	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
-	    writer.filters(*ci);
+	    feedIndex::instance.filters(*ci);
 	}	
     }
 }
 
+
+template<typename postFilter>
+void feedRepository<postFilter>::fetch( session& s, 
+				    const boost::filesystem::path& pathname ) const
+{
+    postFilter writer(s.out());
+    write(feedIndex::instance.indices.begin(),
+	      feedIndex::instance.indices.end(),
+	      writer);
+}

@@ -25,28 +25,17 @@
 
 #include "feeds.hh"
 
-void feedAggregate::fetch( session& s, 
-			   const boost::filesystem::path& pathname ) const
+feedIndex feedIndex::instance;
+
+void feedBase::write( feedIndex::indexSet::const_iterator first,
+	    feedIndex::indexSet::const_iterator last,
+	    postFilter& writer ) const
 {
-    using namespace boost::filesystem;
-
-    path p(s.abspath(pathname));   	
-    path dirname(pathname.parent_path());
-    path track(pathname.filename());
-
-    for( directory_iterator entry = directory_iterator(dirname); 
-	 entry != directory_iterator(); ++entry ) {
-	boost::smatch m;
-	if( is_directory(*entry) ) {	
-	    path trackname(dirname / entry->filename() / track);
-	    const document* doc 
-		= dispatchDoc::instance->select("document",trackname.string());
-	    if( doc != NULL ) {		
-		doc->fetch(s,trackname);
-	    } else {
-		fetch(s,trackname);
-	    }
-	}
+#if 0
+    // \todo should be post, not shortPost 
+    for( ; first != last; ++first ) {
+	writer.filters(*first);
     }
+#endif
 }
 

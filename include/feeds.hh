@@ -36,24 +36,69 @@
 */
 
 
+/** Index of post entries
+ */
+class feedIndex : public postFilter {
+public:
+    typedef std::vector<shortPost> indexSet;
+    
+    indexSet indices;
+    
+public:
+    
+    virtual void filters( const post& p ) {
+	/* create one shortPost per post tag. */
+	if( p.tags.empty() ) {
+	    indices.push_back(shortPost(p,""));
+	} else {
+	    for( post::tagSet::const_iterator t = p.tags.begin();
+		 t != p.tags.end(); ++t ) {
+		indices.push_back(shortPost(p,*t));
+	    }
+	}
+    }
+
+    static feedIndex instance;
+
+};
+
+
+class feedBase : public document {
+public:
+    void write( feedIndex::indexSet::const_iterator first,
+		feedIndex::indexSet::const_iterator last,
+		postFilter& writer ) const;
+		
+};
+
+
 /** Aggregate feeds
  */
-class feedAggregate : public document {
+template<typename postFilter>
+class feedAggregate : public feedBase {
 public:
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+
+typedef feedAggregate<htmlwriter> htmlAggregate;
+typedef feedAggregate<rsswriter> rssAggregate;
 
 
 /** Feed of text file content from a directory
  */
 template<typename postFilter>
-class feedContent : public dirwalker {
+class feedContent : public feedBase {
 protected:
     boost::regex filePat;
 
 public:
-    explicit feedContent(const boost::regex& filePat = boost::regex(".*") )
-	: dirwalker(filePat) {}
+    explicit feedContent(const boost::regex& pat = boost::regex(".*") )
+	: filePat(pat) {}
+
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
@@ -66,9 +111,14 @@ typedef feedContent<rsswriter> rssContent;
  */
 template<typename postFilter>
 class feedNames : public dirwalker {
+protected:
+    boost::regex filePat;
+
 public:
-    feedNames( const boost::regex& filePat = boost::regex(".*") )
-	: dirwalker(filePat) {}
+    explicit feedNames( const boost::regex& pat = boost::regex(".*") )
+	: filePat(pat) {}
+
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
@@ -80,9 +130,11 @@ typedef feedNames<rsswriter> rssNames;
 /** Feed from a repository commits
  */
 template<typename postFilter>
-class feedRepository : public document {
+class feedRepository : public feedBase {
 public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;	
+    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;	
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 typedef feedRepository<htmlwriter> htmlRepository;

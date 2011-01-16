@@ -31,9 +31,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-
-blogIndex::indexSet blogIndex::indices;
-
+#if 0
 void blogIndex::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     if( indices.empty() ) {
@@ -45,3 +43,4 @@ void blogIndex::fetch( session& s, const boost::filesystem::path& pathname ) con
 	}
     }
 }
+#endif

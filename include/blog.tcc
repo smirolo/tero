@@ -5,7 +5,8 @@
 template<typename cmp>
 void blogByOrder<cmp>::provide() const
 {
-    std::sort(indices.begin(),indices.end(),cmp());
+    std::sort(feedIndex::instance.indices.begin(),
+	      feedIndex::instance.indices.end(),cmp());
 #if 0
     for( indexSet::const_iterator p = indices.begin();
 	 p != indices.end(); ++p ) {
@@ -18,8 +19,8 @@ void blogByOrder<cmp>::provide() const
 
 template<typename cmp>
 void blogByOrder<cmp>::write( session& s,
-			      indexSet::const_iterator first,
-			      indexSet::const_iterator last ) const
+			      feedIndex::indexSet::const_iterator first,
+			      feedIndex::indexSet::const_iterator last ) const
 {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
@@ -57,8 +58,6 @@ template<typename cmp>
 void blogByInterval<cmp>::fetch( session& s, 
 				 const boost::filesystem::path& pathname ) const
 {
-    blogIndex::fetch(s,pathname);
-
     blogByOrder<cmp>::provide();
 
     /* \todo need to specify bounds... 
@@ -75,14 +74,17 @@ void blogByInterval<cmp>::fetch( session& s,
     shortPost top = c.last(firstName);
 
     /* sorted from decreasing order most recent to oldest. */
-    blogIndex::indexSet::const_iterator first 
-	= std::lower_bound(super::indices.begin(),super::indices.end(),
+    feedIndex::indexSet::const_iterator first 
+	= std::lower_bound(feedIndex::instance.indices.begin(),
+			   feedIndex::instance.indices.end(),
 			   bottom,c);
-    if( first == super::indices.end() ) first = super::indices.begin();
+    if( first == feedIndex::instance.indices.end() ) {
+	first = feedIndex::instance.indices.begin();
+    }
 
-    blogIndex::indexSet::const_iterator last 
-	= std::upper_bound(super::indices.begin(),
-			   super::indices.end(),top,c);
+    feedIndex::indexSet::const_iterator last 
+	= std::upper_bound(feedIndex::instance.indices.begin(),
+			   feedIndex::instance.indices.end(),top,c);
 #if 0
    std::cerr << "!!! bottom: " << bottom.time
 	      << ", first: " << first->time
@@ -104,11 +106,10 @@ template<typename cmp>
 void blogByBlock<cmp>::fetch( session& s, 
 			      const boost::filesystem::path& pathname ) const
 {
-    blogIndex::fetch(s,pathname);
     blogByOrder<cmp>::provide();
 
-    blogIndex::indexSet::const_iterator first = super::indices.begin();
-    blogIndex::indexSet::const_iterator last = super::indices.end();
+    feedIndex::indexSet::const_iterator first = super::indices.begin();
+    feedIndex::indexSet::const_iterator last = super::indices.end();
     super::write(s,first,last);
 }
 
@@ -120,11 +121,9 @@ void blogSetLinks<cmp>::fetch( session& s,
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-    blogIndex::fetch(s,pathname);
-
     cmp c;
-    for( indexSet::const_iterator idx = indices.begin(); 
-	 idx != indices.end(); ++idx ) {
+    for( feedIndex::indexSet::const_iterator idx = feedIndex::instance.indices.begin(); 
+	 idx != feedIndex::instance.indices.end(); ++idx ) {
 	typename linkSet::iterator l = links.find(c.key(*idx));
 	if( l != links.end() ) {
 	    ++l->second;
