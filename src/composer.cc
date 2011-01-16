@@ -85,11 +85,13 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) cons
 	if( regex_search(line,m,tmplname) ) {
 	    std::string varname = m.str(1);
 	    session::variables::const_iterator v = s.vars.find(varname);
-	    if( v != s.vars.end() ) {
-		s.out() << m.prefix();
-		s.out() << v->second.value;
-		s.out() << m.suffix() << std::endl;
+	    s.out() << m.prefix();
+	    if( v != s.vars.end() ) {		
+		s.out() << v->second.value;		
+	    } else {
+		s.out() << varname << " not found!";
 	    }
+	    s.out() << m.suffix() << std::endl;
 	    found = true;
 	}
 

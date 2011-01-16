@@ -108,6 +108,9 @@ namespace detail {
 		}
 	    }
 	    ostr << '>';
+	    /* \todo newline formatting should only appear when two tags
+	     are following each other with no text in between. 
+	    The way to do it is with a decorator, not here. */
 	    if( v.newline ) ostr << std::endl;
 	    return ostr;
 	}
@@ -647,6 +650,10 @@ public:
     static const detail::nodeEnd end;
     boost::posix_time::ptime time;
 
+    /** format string used for printing date_time 
+     */
+    static const char *format;
+
     explicit pubDate( boost::posix_time::ptime t ) 
     : markup(name,NULL,NULL,0), time(t) {}
 
@@ -654,7 +661,7 @@ public:
     friend std::basic_ostream<ch, tr>&
     operator<<( std::basic_ostream<ch, tr>& ostr, const pubDate& v ) {
 	boost::posix_time::time_facet* 
-	  facet(new boost::posix_time::time_facet("%a, %e %b %Y %H:%M:%S UT"));
+	  facet(new boost::posix_time::time_facet(format));
 	ostr.imbue(std::locale(ostr.getloc(), facet));
 	ostr << static_cast<const detail::markup&>(v)
 	     << v.time

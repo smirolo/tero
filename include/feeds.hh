@@ -40,7 +40,7 @@
  */
 class feedIndex : public postFilter {
 public:
-    typedef std::vector<shortPost> indexSet;
+    typedef std::vector<post> indexSet;
     
     indexSet indices;
     
@@ -48,26 +48,31 @@ public:
     
     virtual void filters( const post& p ) {
 	/* create one shortPost per post tag. */
+	post clean = p;
+	clean.normalize();
 	if( p.tags.empty() ) {
-	    indices.push_back(shortPost(p,""));
+	    indices.push_back(clean);
 	} else {
 	    for( post::tagSet::const_iterator t = p.tags.begin();
 		 t != p.tags.end(); ++t ) {
-		indices.push_back(shortPost(p,*t));
+		indices.push_back(post(clean,*t));
 	    }
 	}
     }
 
     static feedIndex instance;
 
+    template<typename compareFunc>
+    void provide( const compareFunc& cmp );
+
 };
 
 
 class feedBase : public document {
 public:
-    void write( feedIndex::indexSet::const_iterator first,
-		feedIndex::indexSet::const_iterator last,
-		postFilter& writer ) const;
+    virtual void write( feedIndex::indexSet::const_iterator first,
+			feedIndex::indexSet::const_iterator last,
+			postFilter& writer ) const;
 		
 };
 
@@ -85,6 +90,30 @@ public:
 
 typedef feedAggregate<htmlwriter> htmlAggregate;
 typedef feedAggregate<rsswriter> rssAggregate;
+
+
+/** Present feed posts in a specific block [base,length[
+    where base is an index and length is a number of entries.
+*/
+template<typename postFilter>
+class feedBlock : public feedAggregate<postFilter> {
+protected:
+    typedef feedAggregate<postFilter> super;
+
+    static const size_t base;
+    static const int length;
+
+public:
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
+
+    virtual void write( feedIndex::indexSet::const_iterator first,
+			feedIndex::indexSet::const_iterator last,
+			postFilter& writer ) const;
+};
+
+
+typedef feedBlock<htmlwriter> htmlAggregateBlock;
+typedef feedBlock<rsswriter> rssAggregateBlock;
 
 
 /** Feed of text file content from a directory
@@ -110,7 +139,7 @@ typedef feedContent<rsswriter> rssContent;
 /** Feed of filenames from a directory 
  */
 template<typename postFilter>
-class feedNames : public dirwalker {
+class feedNames : public feedBase {
 protected:
     boost::regex filePat;
 

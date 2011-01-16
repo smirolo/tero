@@ -31,11 +31,8 @@ void feedBase::write( feedIndex::indexSet::const_iterator first,
 	    feedIndex::indexSet::const_iterator last,
 	    postFilter& writer ) const
 {
-#if 0
-    // \todo should be post, not shortPost 
     for( ; first != last; ++first ) {
 	writer.filters(*first);
     }
-#endif
 }
 

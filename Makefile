@@ -56,21 +56,18 @@ libpayproc.a: $(libpayprocObjs)
 # This is not the case on Ubuntu lucid.
 LDFLAGS		+=	-ldl
 
-semilla: CPPFLAGS += -DCONFIG_FILE=\"$(semillaConfFile)\" \
-		      -DSESSION_DIR=\"$(semillaSessionDir)\"
-
 semilla: semilla.cc libsemilla.a libpayproc.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system
+	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(semillaSessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
-smailui: CPPFLAGS += -DCONFIG_FILE=\"$(semillaConfFile)\" \
-		      -DSESSION_DIR=\"$(semillaSessionDir)\"
 
 smailui: smailui.cc libsemilla.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system
+	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(semillaSessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
 semilla.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@

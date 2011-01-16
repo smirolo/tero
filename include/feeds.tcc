@@ -29,6 +29,54 @@
 #include <pwd.h>
 #include "markup.hh"
 
+template<typename compareFunc>
+void feedIndex::provide( const compareFunc& cmp )
+{
+    std::sort(indices.begin(),indices.end(),cmp);
+#if 0
+    for( indexSet::const_iterator p = indices.begin();
+	 p != indices.end(); ++p ) {
+	std::cerr << p->time << " - "
+		  << p->tag << " - " << p->title << std::endl;
+    }
+#endif
+}
+
+
+template<typename postFilter>
+const size_t feedBlock<postFilter>::base = 0;
+
+template<typename postFilter>
+const int feedBlock<postFilter>::length = 10;
+
+
+template<typename postFilter>
+void feedBlock<postFilter>::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    postFilter writer(s.out());
+    feedIndex::instance.provide(orderByTime<post>());
+    write(feedIndex::instance.indices.begin(),
+	  feedIndex::instance.indices.end(),writer);
+}
+
+
+template<typename postFilter>
+void feedBlock<postFilter>::write( feedIndex::indexSet::const_iterator first,
+				   feedIndex::indexSet::const_iterator last,
+				   postFilter& writer ) const
+{
+    if( std::distance(first,last) >= base ) {
+	std::advance(first,base);
+    }
+    feedIndex::indexSet::const_iterator second = first;
+    if( std::distance(second,last) >= length ) {
+	std::advance(second,length);
+    } else {
+	second = last;
+    }
+    super::write(first,second,writer);
+}
+
 
 template<typename postFilter>
 void feedAggregate<postFilter>::meta( session& s, 
@@ -48,14 +96,22 @@ void feedAggregate<postFilter>::meta( session& s,
 	    const document* doc 
 		= dispatchDoc::instance->select("document",trackname.string());
 	    if( doc != NULL ) {		
-		doc->fetch(s,trackname);
+		doc->meta(s,trackname);
 	    } else {
-		fetch(s,trackname);
+		meta(s,trackname);
 	    }
 	}
     }
 }
 
+template<typename postFilter>
+void feedAggregate<postFilter>::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    postFilter writer(s.out());
+    write(feedIndex::instance.indices.begin(),
+	      feedIndex::instance.indices.end(),
+	      writer);
+}
 
 template<typename postFilter>
 void feedContent<postFilter>::meta( session& s, 
@@ -93,18 +149,20 @@ void feedNames<postFilter>::meta( session& s,
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	boost::smatch m;
+	
 	if( !is_directory(*entry) 
-	    && boost::regex_match(entry->string(),m,filematch) ) {	
-	    path filename(dirname / entry->filename());
+	    && boost::regex_match(entry->string(),m,filePat) ) {	
+	    path filename(dirname / entry->filename());	    
 	    std::string reluri = s.subdirpart(s.valueOf("siteTop"),
 					      filename).string();	
 	    post p;
 	    p.guid = reluri;
 	    p.title = reluri;
 	    
-	    std::stringstream s;
-	    writelink(s,reluri);
-	    p.descr = s.str();
+	    std::stringstream strm;
+	    strm << "updated file ";
+	    writelink(strm,reluri);
+	    p.descr = strm.str();
 	    std::time_t lwt = last_write_time(filename);
 	    p.time = boost::posix_time::from_time_t(lwt);
 	    
@@ -118,15 +176,13 @@ void feedNames<postFilter>::meta( session& s,
 		    struct passwd *pwd = getpwuid(statbuf.st_uid);
 		    if( pwd == NULL ) {
 			p.authorEmail = "info";
+			p.authorName = "anonymous";
 		    } else {
 			p.authorEmail = pwd->pw_name;
+			p.authorName = pwd->pw_gecos;
 		    }
 		}
-#if 1
-		/* \todo remove this code once we figure out how to get
-		         the domain name. */
-		p.authorEmail = "info@ocalhost.localdomain";
-#endif
+		p.authorEmail += std::string("@") + s.valueOf("domainName");
 	    }
 	    feedIndex::instance.filters(p);
 	}
@@ -140,8 +196,8 @@ void feedNames<postFilter>::fetch( session& s,
 {
     postFilter writer(s.out());
     write(feedIndex::instance.indices.begin(),
-	      feedIndex::instance.indices.end(),
-	      writer);
+	  feedIndex::instance.indices.end(),
+	  writer);
 }
 
 
@@ -152,11 +208,27 @@ void feedRepository<postFilter>::meta( session& s,
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	history hist;
+	s.vars["title"] = s.subdirpart(s.valueOf("srcTop"),rev->rootpath).string();
 	rev->checkins(hist,s,pathname);
-
-	for( history::checkinSet::const_iterator ci = hist.checkins.begin(); 
+	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
-	    feedIndex::instance.filters(*ci);
+	    ci->normalize();
+	    std::stringstream strm;
+	    strm << html::p();
+	    strm << ci->guid << " &nbsp;&mdash;&nbsp; ";
+	    strm << ci->descr;
+	    strm << html::p::end;
+	    strm << html::pre();
+	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
+		 file != ci->files.end(); ++file ) {
+		/* \todo link to diff with previous revision */
+		writelink(strm,*file);
+		strm << std::endl;
+	    }
+	    strm << html::pre::end;
+	    post p(*ci);
+	    p.descr = strm.str();
+	    feedIndex::instance.filters(p);
 	}	
     }
 }

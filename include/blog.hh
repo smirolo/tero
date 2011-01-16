@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2010, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -35,51 +35,21 @@
 */
 
 
-/** Present blog entries ordered by *cmp*.
-*/
-template<typename cmp>
-class blogByOrder : public feedBase {
-protected:
-    void provide() const;
-
-    void write( session& s,
-		feedIndex::indexSet::const_iterator first,
-		feedIndex::indexSet::const_iterator last ) const;
-
-};
-
-
 /** Present blog entries in a specific interval [first,last[
     where first and last are based on *cmp*.
 */
 template<typename cmp>
-class blogByInterval : public blogByOrder<cmp> {
+class blogByInterval : public feedBlock<htmlwriter> {
 protected:
-    typedef blogByOrder<cmp> super;
+    typedef feedBlock<htmlwriter> super;
 
 public:
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
-typedef blogByInterval<orderByTime<shortPost> > blogByIntervalDate;
-typedef blogByInterval<orderByTag<shortPost> > blogByIntervalTags;
-
-
-/** Present blog entries in a specific block [base,length[
-    where base is an index and length is a number of entries.
-*/
-template<typename cmp>
-class blogByBlock : public blogByOrder<cmp> {
-protected:
-    typedef blogByOrder<cmp> super;
-
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
-typedef blogByBlock<orderByTime<shortPost> > blogByBlockDate;
-typedef blogByBlock<orderByTag<shortPost> > blogByBlockTags;
+typedef blogByInterval<orderByTime<post> > blogByIntervalDate;
+typedef blogByInterval<orderByTag<post> > blogByIntervalTags;
 
  
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
@@ -96,8 +66,8 @@ public:
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
-typedef blogSetLinks<orderByTime<shortPost> > blogDateLinks;
-typedef blogSetLinks<orderByTag<shortPost> > blogTagLinks;
+typedef blogSetLinks<orderByTime<post> > blogDateLinks;
+typedef blogSetLinks<orderByTag<post> > blogTagLinks;
 
 #include "blog.tcc"
 

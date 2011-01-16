@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version='2.0' xmlns:lj='http://www.livejournal.org/rss/lj/1.0/' xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-	<title>RSS Title</title>
-	<description>semilla-test</description>
-        <link>http://localhost</link>
+	<title><!-- tmpl_name title --></title>
+	<description><!-- tmpl_name title --></description>
+        <link>http://<!-- tmpl_name 'domainName' --></link>
 	<atom:link href="index.rss" rel="self" type="application/rss+xml" />
 	<!-- tmpl_var name='document' -->
 </channel>

@@ -55,22 +55,6 @@ void cancel::fetch( session& s, const boost::filesystem::path& pathname ) const 
 }
 
 
-std::ostream& checkin::content( std::ostream& ostr ) const
-{
-    ostr << html::p();
-    post::content(ostr);
-    ostr << html::p::end;
-    ostr << html::pre();
-    for( checkin::fileSet::const_iterator file = files.begin(); 
-	 file != files.end(); ++file ) {
-	writelink(ostr,*file);
-	ostr << std::endl;
-    }
-    ostr << html::pre::end;
-    return ostr;
-}
-
-
 void 
 change::addSessionVars( boost::program_options::options_description& opts )
 {

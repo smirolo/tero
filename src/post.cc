@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,12 @@
 
 
 shortPost::shortPost( const post& p, const std::string& t ) 
-    : postBase(p), tag(t)
+  : postBase(p), tag(t)
+{
+}
+
+post::post( const post& p, const std::string& t ) 
+  : postBase(p), tag(t)
 {
 }
 
@@ -53,16 +58,12 @@ post::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-std::ostream& post::content( std::ostream& ostr ) const
-{
-    ostr << descr;
-    return ostr;
-}
-
-
 void post::normalize() {
     title = ::normalize(title);
+    authorName = ::normalize(authorName);
     authorEmail = ::normalize(authorEmail);
+    guid = ::strip(guid);
+    descr = ::strip(descr);
 }
 
 
@@ -88,34 +89,31 @@ void postFilter::flush() {
 
 
 void htmlwriter::filters( const post& p ) {
+    using namespace boost::gregorian;
+    using namespace boost::posix_time;
+
     htmlEscaper esc;
+    time_facet* facet(new time_facet(pubDate::format));
+    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
 
-    if( postNum > 0 ) {
-	*ostr << html::div().classref( (postNum % 2 == 0) ? 
-				       "postEven" : "postOdd");
-    }
+    *ostr << html::div().classref( (postNum % 2 == 0) ? 
+				   "postEven" : "postOdd");
 
-#if 0
-    if( !p.title.empty() ) {
-	*ostr << html::h(1);
-	esc.attach(*ostr);
-	*ostr << p.title;
-	esc.detach();
-	*ostr << html::h(1).end();
-    }
-#endif
-
-    *ostr << html::h(2);
+    /* caption for the post */
+    *ostr << html::div().classref("postCaption");    
     esc.attach(*ostr);
-    *ostr << p.time << " - " << p.authorEmail;
+    *ostr << "by " << html::a().href(std::string("mailto:") + p.authorEmail)
+	  << p.authorName << html::a::end
+	  << " on " << p.time;
     esc.detach();
-    *ostr << html::h(2).end();    
+    *ostr << html::div::end;    
 
-    *ostr << p.content(*ostr);
-
-    if( postNum > 0 ) {
-	*ostr << html::div::end;
-    }
+    /* body of the post */
+    *ostr << html::div().classref("postBody");    
+    *ostr << p.descr;
+    *ostr << html::div::end;
+    
+    *ostr << html::div::end;    
     ++postNum;
 }
 
@@ -124,26 +122,16 @@ void blogwriter::filters( const post& p ) {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-#if 0
-    date_facet* facet(new date_facet("%a, %e %b %d %Y"));
+    time_facet* facet(new time_facet(pubDate::format));
     (*ostr).imbue(std::locale((*ostr).getloc(), facet));
-#else
-    time_facet* facet(new time_facet("%a, %e %b %Y %H:%M:%S %F%Q"));
-    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
-#endif
 
-#if 0
-    *ostr << "Title: " << p.title << std::endl;
-    *ostr << "Date: " << p.time << std::endl;
-    *ostr << "Author: " << p.author << std::endl;
-#else
     *ostr << "From " << p.authorEmail << std::endl;
     if( !p.title.empty() ) {
 	*ostr << "Subject: " << p.title << std::endl;
     }
     *ostr << "Date: " << p.time << std::endl;
     *ostr << "From: " << p.authorEmail << std::endl;    
-#endif
+
     *ostr << "Score: " << p.score << std::endl;
     *ostr << std::endl << std::endl;
     /* \todo avoid description starting with "From " */
@@ -159,7 +147,8 @@ void rsswriter::filters( const post& p ) {
 
     *ostr << description();
     esc.attach(*ostr);
-    p.content(*ostr);
+    *ostr << html::p() << p.authorName << ":" << html::p::end;
+    *ostr << p.descr;
     ostr->flush();
     esc.detach();
     *ostr << description::end;

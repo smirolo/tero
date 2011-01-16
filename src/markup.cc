@@ -260,6 +260,7 @@ const detail::nodeEnd rsslink::end(rsslink::name);
 
 const char* pubDate::name = "pubDate";
 const detail::nodeEnd pubDate::end(pubDate::name);
+const char *pubDate::format = "%a, %e %b %Y %H:%M:%S UT";
 
 const char* rss::name = "rss";
 const detail::nodeEnd rss::end(rss::name);

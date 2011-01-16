@@ -201,9 +201,13 @@ int main( int argc, char *argv[] )
 	    /* Widget to generate a rss feed. Attention: it needs 
 	       to be declared before any of the todoFilter::viewPat 
 	       (i.e. todos/.+) since an rss feed exists for todo items
-	       as well. */
-	    rssRepository rss;
-	    docs.add("document",boost::regex(".*\\.git/index\\.rss"),rss);
+	       as well. */	    
+	    rssRepository reps;
+	    rssNames names;
+	    rssAggregateBlock agg;
+	    docs.add("document",boost::regex(".*/resources/index\\.rss"),names);
+	    docs.add("document",boost::regex(".*\\.git/index\\.rss"),reps);
+	    docs.add("document",boost::regex("^/index\\.rss"),agg);
 
 	    /* Composer and document for the todos index view */
 	    composer todos(s.valueOf("themeDir")
@@ -230,24 +234,6 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex("/todoVoteSuccess"),tvs);
 
 	    /* blog presentation */ 
-#if 0
-	    composer blogs(s.valueOf("themeDir")
-			   + std::string("/blog.template"),
-			     composer::error);
-	    docs.add("view",boost::regex(std::string(".*/blog/.*")),blogs);
-	    blogByDate blogtext;
-	    docs.add("document",
-		     boost::regex(std::string(".*/blog/.*")),
-		     blogtext);
-	    blogDateLinks dates;
-	    docs.add("dates",
-		     boost::regex(std::string(".*/blog/.*")),
-		     dates);
-	    blogTagLinks tags;
-	    docs.add("tags",
-		     boost::regex(std::string(".*/blog/.*")),
-		     tags);
-#else
 	    composer blogs(s.valueOf("themeDir")
 			   + std::string("/blog.template"),
 			     composer::error);
@@ -260,28 +246,16 @@ int main( int argc, char *argv[] )
 		boost::regex pat;
 		document& doc;
 	    } lines[] = {
-		{ "view", 
-		  boost::regex(std::string(".*/blog/.*")),
-		  blogs },
-		{ "document",
-		  boost::regex(std::string(".*/blog/tags/.*")),
-		  blogtags },
-		{ "document",
-		  boost::regex(std::string(".*/blog/.*")),
-		  blogtext },
-		{ "dates",
-		  boost::regex(std::string(".*/blog/.*")),
-		  dates },
-		{ "tags",
-		  boost::regex(std::string(".*/blog/.*")),
-		  tags }
+		{ "view", boost::regex(".*/blog/.*"), blogs },
+		{ "document", boost::regex(".*/blog/tags/.*"), blogtags },
+		{ "document", boost::regex(".*/blog/archive/.*"), blogtext },
+		{ "document", boost::regex(".*/blog/.*"), blogtext },
+		{ "dates", boost::regex(".*/blog/.*"), dates },
+		{ "tags", boost::regex(".*/blog/.*"), tags }
 	    };
-
 	    for( size_t i = 0; i < sizeof(lines) / sizeof(lines[0]); ++i ) {
 		docs.add(lines[i].name,lines[i].pat,lines[i].doc);
 	    }
-
-#endif
 	    s.vars["dates"] = s.valueOf("document");
 	    s.vars["tags"] = s.valueOf("document");
     

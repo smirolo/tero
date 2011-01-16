@@ -96,6 +96,11 @@ public:
     typedef std::set<std::string> tagSet;
 
 public:
+    std::string tag;
+
+    post() {}
+
+    post( const post& p, const std::string& t );
 
     /** The post unique identifier is used in many case to associate
 	a post to a specific file.
@@ -125,10 +130,6 @@ public:
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );
-
-    /** Write the content (i.e. *descr* for base posts) to an output stream.
-     */
-    virtual std::ostream& content( std::ostream& ostr ) const;
 
     /** remove non meaningful whitespaces from the *author* and *title* fields. 
      */
@@ -231,7 +232,8 @@ struct orderByTag : public std::binary_function<vT, vT, bool> {
     }
 
     bool operator()( const valueType& left, const valueType& right ) const {
-	return left.tag > right.tag;
+	return left.tag > right.tag 
+	    || (left.tag > right.tag && left.time > right.time);
     }
 };
 

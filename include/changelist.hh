@@ -70,8 +70,6 @@ public:
     void addFile( const boost::filesystem::path& pathname ) {
 	files.push_back(pathname);
     }
-
-    virtual std::ostream& content( std::ostream& ostr ) const;
 };
 
 

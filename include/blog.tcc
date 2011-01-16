@@ -2,63 +2,13 @@
 
 #include "markup.hh" 
 
-template<typename cmp>
-void blogByOrder<cmp>::provide() const
-{
-    std::sort(feedIndex::instance.indices.begin(),
-	      feedIndex::instance.indices.end(),cmp());
-#if 0
-    for( indexSet::const_iterator p = indices.begin();
-	 p != indices.end(); ++p ) {
-	std::cerr << p->time << " - "
-		  << p->tag << " - " << p->title << std::endl;
-    }
-#endif
-}
-
-
-template<typename cmp>
-void blogByOrder<cmp>::write( session& s,
-			      feedIndex::indexSet::const_iterator first,
-			      feedIndex::indexSet::const_iterator last ) const
-{
-    using namespace boost::gregorian;
-    using namespace boost::posix_time;
-
-    /** Read the actual blog post file and use an html filter 
-	to display it. */
-    shortPost prev;
-    std::stringstream header;
-    time_facet* facet(new time_facet("%d %b %Y"));
-    header.imbue(std::locale(header.getloc(), facet));
-    for( ; first != last; ++first ) {
-	if( first->filename != prev.filename ) { 
-	    header.str("");
-	    header << html::div()
-		   << html::div().classref("title") 
-		   << first->title << html::div::end
-		   << html::div().classref("date") 
-		   << first->time << html::div::end;
-	    if( !first->authorName.empty() || !first->authorEmail.empty() ) {
-		header << html::div().classref("author") 
-		       << first->authorName
-		       << " " << first->authorEmail
-		       << html::div::end;
-	    }
-	    header << html::div::end;
-	    text t(header.str());
-	    t.fetch(s,first->filename);
-	}
-	prev = *first;
-    }
-}
-
 
 template<typename cmp>
 void blogByInterval<cmp>::fetch( session& s, 
-				 const boost::filesystem::path& pathname ) const
+			       const boost::filesystem::path& pathname ) const
 {
-    blogByOrder<cmp>::provide();
+    cmp c;
+    feedIndex::instance.provide(c);
 
     /* \todo need to specify bounds... 
        [first,last[ range out of session or if does not exist
@@ -66,12 +16,10 @@ void blogByInterval<cmp>::fetch( session& s,
        \todo Need to be able to specify range or start + nbEntries 
        (+max page size?)
     */
-    cmp c;
-
     std::string firstName = boost::filesystem::basename(pathname);
 
-    shortPost bottom = c.first(firstName);
-    shortPost top = c.last(firstName);
+    typename cmp::valueType bottom = c.first(firstName);
+    typename cmp::valueType top = c.last(firstName);
 
     /* sorted from decreasing order most recent to oldest. */
     feedIndex::indexSet::const_iterator first 
@@ -98,19 +46,8 @@ void blogByInterval<cmp>::fetch( session& s,
 	      << ", last: " << (( last == indices.end() ) ? "end" : last->tag)
 	      << std::endl;
 #endif
-    super::write(s,first,last);
-}
-
-
-template<typename cmp>
-void blogByBlock<cmp>::fetch( session& s, 
-			      const boost::filesystem::path& pathname ) const
-{
-    blogByOrder<cmp>::provide();
-
-    feedIndex::indexSet::const_iterator first = super::indices.begin();
-    feedIndex::indexSet::const_iterator last = super::indices.end();
-    super::write(s,first,last);
+    htmlwriter writer(s.out());
+    super::write(first,last,writer);
 }
 
 
@@ -138,6 +75,8 @@ void blogSetLinks<cmp>::fetch( session& s,
 
     /* Display keys and the associated number of blog entries */
     std::stringstream strm;
+    /* We donot use pubDate::format here because the code logic relies
+       on special formatted links to create subsequent pages. */
     time_facet* facet(new time_facet("%b %Y"));
     time_facet* linkfacet(new time_facet("%Y-%m-01"));    
     strm.imbue(std::locale(strm.getloc(), linkfacet));
