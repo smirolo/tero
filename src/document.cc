@@ -398,7 +398,6 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) const {
     ifstream strm;
     open(strm,pathname);
 
-    s.out() << httpHeaders;
     if( !header.empty() ) s.out() << header;
 
     if( leftDec ) {

@@ -51,7 +51,7 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 
 
 void cancel::fetch( session& s, const boost::filesystem::path& pathname ) const {
-    s.out() << httpHeaders.location(url(s.doc())) << '\n';
+    httpHeaders.location(url(s.doc()));
 }
 
 
@@ -104,7 +104,7 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) const
 	file << docName;
 	file.close();
     }
-    s.out() << httpHeaders.location(url(s.doc() + std::string(".edits")));
+    httpHeaders.location(url(s.doc() + std::string(".edits")));
 }
 
 

@@ -55,13 +55,7 @@ typedef blogByInterval<orderByTag<post> > blogByIntervalTags;
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
 */
 template<typename cmp>
-class blogSetLinks : public document {
-protected:
-    /* store the number blog entries with a specific key. */
-    typedef std::map<typename cmp::keyType,uint32_t> linkSet;
-
-    mutable linkSet links;
-
+class blogSetLinks : public feedAggregate<htmlwriter> {
 public:
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };

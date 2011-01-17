@@ -166,7 +166,7 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) const {
     auth::fetch(s,pathname);
     
     /* Set a session cookie */
-    s.out() << httpHeaders.setCookie(s.sessionName,s.id()).location(url(s.doc()));
+    httpHeaders.setCookie(s.sessionName,s.id()).location(url(s.doc()));
 }
 
 
@@ -298,14 +298,12 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) const 
     using namespace boost::filesystem;
 
     if( !s.id().empty() ) {
-	s.out() << httpHeaders.setCookie(s.sessionName,s.id(),
+	httpHeaders.setCookie(s.sessionName,s.id(),
 			      boost::posix_time::ptime::date_duration_type(-1));
     }
     time_duration logged = stop(s);
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
-    
-    s.out() << httpHeaders;
     s.state("hours",logstr.str());
     path uiPath(s.valueOf("uiDir") + std::string("/logout.ui"));
     composer pres(uiPath,composer::error);

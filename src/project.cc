@@ -74,8 +74,7 @@ void projCreate::fetch( session& s, const boost::filesystem::path& pathname ) co
     rev->add(projectDir);
     rev->commit("initial index (template)");
 
-    s.out() << httpHeaders.refresh(0,url("/" + projectname.string() + "/dws.xml")) 
-	  << std::endl;   
+    httpHeaders.refresh(0,url("/" + projectname.string() + "/dws.xml"));
 }
 
 

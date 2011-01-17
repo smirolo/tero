@@ -74,7 +74,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) cons
     if( doc ) {
 	doc->meta(s,s.valueAsPath("document"));
     }
-    s.out() << httpHeaders.contentType();
 
     skipOverTags(s,strm);
     while( !strm.eof() ) {

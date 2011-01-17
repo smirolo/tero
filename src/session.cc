@@ -163,8 +163,8 @@ void session::privileged( bool v ) {
        sudo chown root semilla
 */
     uid_t realId = getuid();
-    uid_t effectiveId = geteuid();
 #if 0
+    uid_t effectiveId = geteuid();
     std::cerr << "!!! real_uid=" << realId << ", effective_uid="
 	      << effectiveId << std::endl;
 #endif

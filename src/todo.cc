@@ -197,7 +197,7 @@ void todocommentor::filters( const post& p ) {
 void todoCommentFeedback::filters( const post& p ) {
     /* \todo clean-up. We use this code such that the browser displays
        the correct url. If we use a redirect, it only works with static pages (index.html). */
-    *ostr << httpHeaders.refresh(0,url(posturl)) << std::endl;
+    httpHeaders.refresh(0,url(posturl));
 }
 
 

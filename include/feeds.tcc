@@ -53,6 +53,7 @@ const int feedBlock<postFilter>::length = 10;
 template<typename postFilter>
 void feedBlock<postFilter>::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
+    std::cerr << "!!! fetch block " << pathname << std::endl;
     postFilter writer(s.out());
     feedIndex::instance.provide(orderByTime<post>());
     write(feedIndex::instance.indices.begin(),
@@ -88,6 +89,8 @@ void feedAggregate<postFilter>::meta( session& s,
     path dirname(pathname.parent_path());
     path track(pathname.filename());
 
+    std::cerr << "!!! aggregate " << p << std::endl;
+
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	boost::smatch m;
@@ -121,6 +124,7 @@ void feedContent<postFilter>::meta( session& s,
 
     path dirname(s.abspath(is_directory(pathname) ?
 			   pathname : pathname.parent_path()));
+    std::cerr << "WTH? " << pathname << std::endl;
     mailParser m(filePat,feedIndex::instance,true);
     m.fetch(s,dirname);
 }

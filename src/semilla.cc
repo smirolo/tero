@@ -73,7 +73,8 @@ int main( int argc, char *argv[] )
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
-    session s("view","semillaId",std::cout);
+    std::stringstream mainout;
+    session s("view","semillaId",mainout);
     s.privileged(false);
 
     try {
@@ -117,7 +118,7 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( s.valueOf("view").empty()
 	    || s.valueOf("view") == "/" ) {
-	    cout << httpHeaders.location(url("index.html"));
+	    cout << httpHeaders.location(url("index.template"));
 	    
 	} else {	    		       
 	    dispatchDoc docs(s.valueOf("srcTop"));
@@ -385,6 +386,9 @@ int main( int argc, char *argv[] )
 	    s.vars["payproc"] = s.valueOf("document");
       	    
 	    docs.fetch(s,"view");
+
+	    std::cout << httpHeaders;
+	    std::cout << mainout.str();
 	}
 #if 0
 	/* find a way to get .template in main() top scope. */

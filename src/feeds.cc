@@ -32,6 +32,19 @@ void feedBase::write( feedIndex::indexSet::const_iterator first,
 	    postFilter& writer ) const
 {
     for( ; first != last; ++first ) {
+	if( first->descr.empty() ) {
+	    const document* doc 
+		= dispatchDoc::instance->select("document",first->guid);
+	    if( doc != NULL ) {
+#if 0		
+		// \todo fetch post content.
+		std::stringstream strm;
+		doc->fetch(strm,first->guid);
+#endif
+	    } else {
+		// \todo write "update of ..."		
+	    }	    
+	}
 	writer.filters(*first);
     }
 }

@@ -42,8 +42,7 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
        Homepage http://www.thkukuk.de/pam/pwdutils/, 
        source ftp://ftp.kernel.org/pub/linux/utils/net/NIS/pwdutils-3.2.9.tar.gz
     */
-    s.out() << httpHeaders
-	  << "create contributor with " << s.valueOf("contribName")
+    s.out() << "create contributor with " << s.valueOf("contribName")
 	  << ", " << s.valueOf("contribPasswd");
 
     s.privileged(false);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -144,6 +144,14 @@ namespace html {
 	"title"
     };
 
+    std::set<std::string> a::hrefs;
+
+    a& a::href( const std::string& v ) {
+	attrValues[hrefAttr] = v;
+	hrefs.insert(v);
+	return *this;
+    }
+
     const char* caption::name = "caption";
     const detail::nodeEnd caption::end(caption::name,true);
 
@@ -193,6 +201,8 @@ namespace html {
 
     const char* li::name = "li";
     const detail::nodeEnd li::end(li::name,true);
+
+    const char *linebreak = "<br />\n";
 
     const char* p::name = "p";
     const detail::nodeEnd p::end(p::name,true);
