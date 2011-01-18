@@ -39,7 +39,7 @@ shortPost::shortPost( const post& p, const std::string& t )
 }
 
 post::post( const post& p, const std::string& t ) 
-  : postBase(p), tag(t)
+    : postBase(p), tag(t), guid(p.guid), descr(p.descr), score(p.score)
 {
 }
 

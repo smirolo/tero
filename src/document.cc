@@ -152,12 +152,9 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname ) con
 	    }
 	}
     } else {
-
-	std::cerr << "!!! yep!" << std::endl;
-
 	boost::filesystem::ifstream infile;
 	open(infile,pathname);
-	walk(s,infile);
+	walk(s,infile,pathname.string());
 	infile.close();
     }
     last();

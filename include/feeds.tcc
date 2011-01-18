@@ -47,28 +47,60 @@ void feedWriter<feedReader,postWriter>::fetch( session& s,
 {
     postWriter writer(s.out());
     feedReader feeds(pathname,0,feedIndex::maxLength);
+
+    bool firstTime = true;
+    typename feedReader::iterator prev;
     for( typename feedReader::iterator first = feeds.begin();
 	 first != feeds.end(); ++first ) {
-	if( first->descr.empty() ) {
-	    std::stringstream strm;
-	    const document* doc 
-		= dispatchDoc::instance->select("document",first->guid);
-	    if( doc != NULL ) {		
-		session sout("view","semillaId",strm);
-		doc->fetch(sout,first->guid);
-		if( !sout.valueOf("title").empty() ) {
-		    first->title = sout.valueOf("title");
+	if( firstTime || first->guid != prev->guid ) {
+	    if( first->descr.empty() ) {
+		std::stringstream strm;
+		const document* doc 
+		    = dispatchDoc::instance->select("document",first->guid);
+		if( doc != NULL ) {		
+		    session sout("view","semillaId",strm);
+		    doc->fetch(sout,first->guid);
+		    if( !sout.valueOf("title").empty() ) {
+			first->title = sout.valueOf("title");
+		    }
+		} else {		
+		    strm << "updated file ";
+		    writelink(strm,first->guid);
+		    first->descr = strm.str();	 
 		}
-	    } else {		
-		strm << "updated file ";
-		writelink(strm,first->guid);
-		first->descr = strm.str();	 
+		first->descr = strm.str();
 	    }
-	    first->descr = strm.str();
-	}
-	writer.filters(*first);
-    }
 
+#if 0
+	    /* undefined time. */
+	    if( ) {
+		std::time_t lwt = last_write_time(first->guid);
+		first->time = boost::posix_time::from_time_t(lwt);
+	    }
+#endif	
+	    /* \todo authorName is set from filename but not in mail.cc, only authorEmail there. 
+	     What about commits? */
+	    if( first->authorEmail.empty() ) {
+		first->authorEmail = "info";
+		first->authorName = "anonymous";
+		/* \todo donot seem to find functionality to find
+		   owner through boost. */
+		struct stat statbuf;
+		if( stat(first->guid.c_str(),&statbuf) == 0 ) {
+		    struct passwd *pwd = getpwuid(statbuf.st_uid);
+		    if( pwd != NULL ) {
+			first->authorEmail = pwd->pw_name;
+			first->authorName = pwd->pw_gecos;
+		    }
+		}
+		first->authorEmail += std::string("@") + s.valueOf("domainName");
+	    }
+	    writer.filters(*first);
+	}
+	prev = first;
+	firstTime = false;
+	
+    }
 }
 
 
@@ -105,47 +137,33 @@ void feedContent<feedReader,postWriter>::meta( session& s,
 {
     using namespace boost::filesystem;
 
-    path dirname(s.abspath(is_directory(pathname) ?
-			   pathname : pathname.parent_path()));
-
-    for( directory_iterator entry = directory_iterator(dirname); 
-	 entry != directory_iterator(); ++entry ) {
-	boost::smatch m;
+    path base(pathname);
+    while( !base.empty() && !is_directory(s.abspath(base)) ) {
+	base = base.parent_path();
+    }
+    if( !base.empty() ) {
+	base = s.abspath(base);
+	for( directory_iterator entry = directory_iterator(base); 
+	     entry != directory_iterator(); ++entry ) {
+	    boost::smatch m;
 	
-	if( !is_directory(*entry) 
-	    && boost::regex_match(entry->string(),m,filePat) ) {
-	    path filename(dirname / entry->filename());	    
-	    std::string reluri = s.subdirpart(s.valueOf("siteTop"),
-					      filename).string();	    
-	    const document* doc 
-		= dispatchDoc::instance->select("document",reluri);
-	    if( doc != NULL ) {		
-		doc->meta(s,reluri);
-	    } else {
-		post p;
-		p.title = reluri;	    
-		p.guid = reluri;
-		std::time_t lwt = last_write_time(filename);
-		p.time = boost::posix_time::from_time_t(lwt);
-		{
-		    /* \todo donot seem to find functionality to find
-		       owner through boost. */
-		    struct stat statbuf;
-		    if( stat(filename.string().c_str(),&statbuf) ) {
-			p.authorEmail = "info";
-		    } else {
-			struct passwd *pwd = getpwuid(statbuf.st_uid);
-			if( pwd == NULL ) {
-			    p.authorEmail = "info";
-			    p.authorName = "anonymous";
-			} else {
-			    p.authorEmail = pwd->pw_name;
-			    p.authorName = pwd->pw_gecos;
-			}
-		    }
-		    p.authorEmail += std::string("@") + s.valueOf("domainName");
+	    if( !is_directory(*entry) 
+		&& boost::regex_match(entry->string(),m,filePat) ) {
+		path filename(base / entry->filename());	    
+		std::string reluri = s.subdirpart(s.valueOf("siteTop"),
+						  filename).string();	    
+		const document* doc 
+		    = dispatchDoc::instance->select("document",reluri);
+		if( doc != NULL ) {		
+		    doc->meta(s,reluri);
+		} else {
+		    post p;
+		    p.title = reluri;	    
+		    p.guid = reluri;
+		    std::time_t lwt = last_write_time(filename);
+		    p.time = boost::posix_time::from_time_t(lwt);
+		    feedIndex::instance.filters(p);
 		}
-		feedIndex::instance.filters(p);
 	    }
 	}
     }

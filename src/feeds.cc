@@ -27,7 +27,7 @@
 
 feedIndex::indexSet feedIndex::indices;
 
-const int feedIndex::maxLength = ~((int)1 << ((sizeof(int) << 3) - 1));
+const feedIndex::difference_type feedIndex::maxLength = ~((int)1 << ((sizeof(int) << 3) - 1));
 
 feedIndex::iterator feedIndex::first;
 feedIndex::iterator feedIndex::last;

@@ -68,7 +68,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) cons
     
     ifstream strm;
     open(strm,fixed.empty() ? pathname : fixed);
-
     const document* doc = dispatchDoc::instance->select("document",
 						  s.valueOf("document"));
     if( doc ) {

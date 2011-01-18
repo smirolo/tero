@@ -56,7 +56,7 @@ void blogSetLinks<cmp>::fetch( session& s,
 
     cmp c;
     boost::filesystem::path 
-	root = s.subdirpart(s.valueOf("srcTop"),
+	root = s.subdirpart(s.valueOf("siteTop"),
 			    s.root(pathname,"blog"));
 
     /* We donot use pubDate::format here because the code logic relies

@@ -47,9 +47,11 @@ public:
     typedef indexSet::const_iterator const_iterator;
     typedef indexSet::iterator iterator;
 
+    typedef std::iterator_traits<iterator>::difference_type difference_type;
+
     static indexSet indices;
 
-    static const int maxLength;
+    static const difference_type maxLength;
 
 protected:
 
@@ -57,11 +59,11 @@ protected:
 
     /** index in [first,last[ of the first post displayed
      */
-    const size_t base;
+    const difference_type base;
 
     /** numer of posts displayed from base.
      */
-    const int length;
+    const difference_type length;
 
     static iterator first;
     static iterator last;

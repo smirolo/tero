@@ -203,6 +203,7 @@ boost::filesystem::path session::contributorLog() const {
 
 boost::filesystem::path 
 session::abspath( const boost::filesystem::path& relpath ) const {
+    using namespace boost::filesystem;
 
     /* This is an absolute path so it is safe to return it as such. */
     if( relpath.string()[0] == '/' && boost::filesystem::exists(relpath) ) {
@@ -210,23 +211,29 @@ session::abspath( const boost::filesystem::path& relpath ) const {
     }
 
     /* First we try to access the file from cwd. */
-    boost::filesystem::path fromCwd 
-	= boost::filesystem::current_path() / relpath;
-    if( !relpath.is_complete() && boost::filesystem::exists(fromCwd) ) { 	
+    path fromCwd 
+	= current_path() / relpath;
+    if( !relpath.is_complete() && boost::filesystem::exists(fromCwd) ) { 
 	return fromCwd;
     }	
 
     /* Second we try to access the file as a relative pathname 
        from siteTop. */
-    boost::filesystem::path fromSiteTop(valueOf("siteTop"));
+    path fromSiteTop(valueOf("siteTop"));
+    if( fromSiteTop.empty() ) {
+	boost::throw_exception(
+        basic_filesystem_error<path>(std::string("siteTop not found"),
+				     fromSiteTop, 
+				     boost::system::error_code()));
+    }
     fromSiteTop /= relpath;
-    if( boost::filesystem::exists(fromSiteTop) ) {        
+    if( boost::filesystem::exists(fromSiteTop) ) {
 	return fromSiteTop;
     }
 
     /* Third we try to access the file as a relative pathname 
        from srcTop. */	
-    boost::filesystem::path fromSrcTop(valueOf("srcTop"));
+    path fromSrcTop(valueOf("srcTop"));
     fromSrcTop /= relpath;
     if( boost::filesystem::exists(fromSrcTop) ) {        
 	return fromSrcTop;

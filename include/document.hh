@@ -120,7 +120,7 @@ public:
 	correctly on filters(). 
     */
     virtual void walk( session& s, std::istream& ins, 
-		       const std::string& name = "" ) const {}
+		       const std::string& name ) const {}
 };
 
 

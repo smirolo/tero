@@ -82,7 +82,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 
     p.score = 0;
     p.filename = boost::filesystem::path(name);
-    p.guid = boost::filesystem::path(p.filename.filename()).stem();
+    p.guid = std::string("/") + s.subdirpart(s.valueOf("siteTop"),name).string();	   
 
     while( !ins.eof() ) {
 	boost::smatch m;
@@ -102,7 +102,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	    }
 	    p = post();
 	    p.filename = boost::filesystem::path(name);
-	    p.guid = boost::filesystem::path(p.filename.filename()).stem();
+	    p.guid = s.subdirpart(s.valueOf("siteTop"),name).string();
 	    p.score = 0;
 	    first = false;
 	    state = startParse;

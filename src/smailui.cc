@@ -84,7 +84,7 @@ int main( int argc, char *argv[] )
 	todoModifFilter modif(".");
 	if( !std::cin.eof() ) {
 	    mailParser parser(modif);
-	    parser.walk(s,std::cin);
+	    parser.walk(s,std::cin,"cin");
 	}
     } catch( exception& e ) {
 	std::cerr << "!!! exception: " << e.what() << std::endl;

@@ -82,7 +82,7 @@ public:
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void walk( session& s, std::istream& ins, const std::string& name = "" ) const;
+    virtual void walk( session& s, std::istream& ins, const std::string& name ) const;
 };
 
 
