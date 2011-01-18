@@ -25,27 +25,42 @@
 
 #include "feeds.hh"
 
-feedIndex feedIndex::instance;
+feedIndex::indexSet feedIndex::indices;
 
-void feedBase::write( feedIndex::indexSet::const_iterator first,
-	    feedIndex::indexSet::const_iterator last,
-	    postFilter& writer ) const
-{
-    for( ; first != last; ++first ) {
-	if( first->descr.empty() ) {
-	    const document* doc 
-		= dispatchDoc::instance->select("document",first->guid);
-	    if( doc != NULL ) {
-#if 0		
-		// \todo fetch post content.
-		std::stringstream strm;
-		doc->fetch(strm,first->guid);
-#endif
-	    } else {
-		// \todo write "update of ..."		
-	    }	    
+const int feedIndex::maxLength = ~((int)1 << ((sizeof(int) << 3) - 1));
+
+feedIndex::iterator feedIndex::first;
+feedIndex::iterator feedIndex::last;
+
+feedIndex feedIndex::instance("",0,feedIndex::maxLength);
+
+void feedIndex::filters( const post& p ) {
+    /* create one shortPost per post tag. */
+    post clean = p;
+    clean.normalize();
+    if( p.tags.empty() ) {
+	indices.push_back(clean);
+    } else {
+	for( post::tagSet::const_iterator t = p.tags.begin();
+	     t != p.tags.end(); ++t ) {
+	    indices.push_back(post(clean,*t));
 	}
-	writer.filters(*first);
     }
+    first = indices.begin();
+    last = indices.end();
+}
+
+
+void feedIndex::provide() {
+    if( std::distance(first,last) >= base ) {
+	std::advance(first,base);
+    }
+    indexSet::iterator second = second;
+    if( std::distance(second,last) >= length ) {
+	std::advance(second,length);
+    } else {
+	second = last;
+    }
+    last = second;
 }
 

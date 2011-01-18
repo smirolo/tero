@@ -31,16 +31,16 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-#if 0
-void blogIndex::fetch( session& s, const boost::filesystem::path& pathname ) const
+void blogEntry::meta( session& s, const boost::filesystem::path& pathname ) const
 {
-    if( indices.empty() ) {
-	boost::filesystem::path root = s.root(pathname,"blog");
-	if( !root.empty() ) {
-	    addPostIndex filler(this->indices);
-	    mailParser parser(boost::regex(".*\\.blog"),filler,true);
-	    parser.fetch(s,root / "blog");
-	}
-    }
+    mailParser parser(boost::regex(".*\\.blog"),feedIndex::instance,true);
+    parser.fetch(s,s.abspath(pathname));
 }
-#endif
+
+
+void blogEntry::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    htmlwriter writer(s.out());
+    mailParser parser(boost::regex(".*\\.blog"),writer,true);
+    parser.fetch(s,s.abspath(pathname));
+}

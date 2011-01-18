@@ -111,7 +111,7 @@ protected:
 public:
     dirwalker() : filematch(".*") {}
 
-    dirwalker( const boost::regex& fm  ) 
+    explicit dirwalker( const boost::regex& fm  ) 
 	: filematch(fm) {}
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;

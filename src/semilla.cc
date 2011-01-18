@@ -204,8 +204,8 @@ int main( int argc, char *argv[] )
 	       (i.e. todos/.+) since an rss feed exists for todo items
 	       as well. */	    
 	    rssRepository reps;
-	    rssNames names;
-	    rssAggregateBlock agg;
+	    rssSummary names;
+	    rssSiteAggregate agg;
 	    docs.add("document",boost::regex(".*/resources/index\\.rss"),names);
 	    docs.add("document",boost::regex(".*\\.git/index\\.rss"),reps);
 	    docs.add("document",boost::regex("^/index\\.rss"),agg);

@@ -39,12 +39,20 @@
     where first and last are based on *cmp*.
 */
 template<typename cmp>
-class blogByInterval : public feedBlock<htmlwriter> {
-protected:
-    typedef feedBlock<htmlwriter> super;
+class blogInterval : public feedIndex {
+public:
+    typedef feedIndex super;
 
 public:
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
+    blogInterval( const boost::filesystem::path& p, size_t b, int l ) 
+	: feedIndex(p,b,l) {}
+
+    void provide();
+};
+
+
+template<typename cmp>
+class blogByInterval : public feedContent<blogInterval<cmp>,htmlwriter> {
 };
 
 
@@ -55,13 +63,22 @@ typedef blogByInterval<orderByTag<post> > blogByIntervalTags;
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
 */
 template<typename cmp>
-class blogSetLinks : public feedAggregate<htmlwriter> {
+class blogSetLinks : public feedContent<feedIndex,htmlwriter> {
 public:
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 typedef blogSetLinks<orderByTime<post> > blogDateLinks;
 typedef blogSetLinks<orderByTag<post> > blogTagLinks;
+
+
+class blogEntry : public document {
+public:
+    void meta( session& s, const boost::filesystem::path& pathname ) const;
+
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
+};
+
 
 #include "blog.tcc"
 

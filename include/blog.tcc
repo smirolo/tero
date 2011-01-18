@@ -28,50 +28,22 @@
 
 
 template<typename cmp>
-void blogByInterval<cmp>::fetch( session& s, 
-			       const boost::filesystem::path& pathname ) const
+void blogInterval<cmp>::provide()
 {
     cmp c;
-    feedIndex::instance.provide(c);
-
-    /* \todo need to specify bounds... 
-       [first,last[ range out of session or if does not exist
-       get default from cmp operator.
-       \todo Need to be able to specify range or start + nbEntries 
-       (+max page size?)
-    */
     std::string firstName = boost::filesystem::basename(pathname);
-
+    std::sort(indices.begin(),indices.end(),c);
     typename cmp::valueType bottom = c.first(firstName);
     typename cmp::valueType top = c.last(firstName);
 
     /* sorted from decreasing order most recent to oldest. */
-    feedIndex::indexSet::const_iterator first 
-	= std::lower_bound(feedIndex::instance.indices.begin(),
-			   feedIndex::instance.indices.end(),
-			   bottom,c);
-    if( first == feedIndex::instance.indices.end() ) {
-	first = feedIndex::instance.indices.begin();
+    first = std::lower_bound(indices.begin(),indices.end(),bottom,c);
+    if( first == indices.end() ) {
+	first = indices.begin();
     }
+    last = std::upper_bound(indices.begin(),indices.end(),top,c);
 
-    feedIndex::indexSet::const_iterator last 
-	= std::upper_bound(feedIndex::instance.indices.begin(),
-			   feedIndex::instance.indices.end(),top,c);
-#if 0
-   std::cerr << "!!! bottom: " << bottom.time
-	      << ", first: " << first->time
-	      << ", top: " << top.time
-	     << ", last: " << (( last == indices.end() ) ? boost::posix_time::ptime() : last->time)
-	      << std::endl;
-
-    std::cerr << "!!! 2. bottom: " << bottom.tag
-	      << ", first: " << first->tag
-	      << ", top: " << top.tag
-	      << ", last: " << (( last == indices.end() ) ? "end" : last->tag)
-	      << std::endl;
-#endif
-    htmlwriter writer(s.out());
-    super::write(first,last,writer);
+    super::provide();
 }
 
 

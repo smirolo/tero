@@ -65,7 +65,7 @@ void mailParser::fetch( session& s, const boost::filesystem::path& pathname ) co
 }
 
 
-void mailParser::walk( session& s, std::istream& ins, const std::string& name )
+void mailParser::walk( session& s, std::istream& ins, const std::string& name ) const
 {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
