@@ -65,6 +65,9 @@ typedef blogByInterval<orderByTag<post> > blogByIntervalTags;
 template<typename cmp>
 class blogSetLinks : public feedContent<feedIndex,htmlwriter> {
 public:
+   typedef feedContent<feedIndex,htmlwriter> super;
+
+public:
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
@@ -74,8 +77,6 @@ typedef blogSetLinks<orderByTag<post> > blogTagLinks;
 
 class blogEntry : public document {
 public:
-    void meta( session& s, const boost::filesystem::path& pathname ) const;
-
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 

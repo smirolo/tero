@@ -70,7 +70,10 @@ protected:
 
 public:
     feedIndex( const boost::filesystem::path& p, size_t b, int l ) 
-	: pathname(p), base(b), length(l) {}
+	: pathname(p), base(b), length(l) {
+	first = indices.begin();
+	last = indices.end();
+    }
 
     const_iterator begin() const { return first; }
 
@@ -127,7 +130,17 @@ public:
 template<typename feedReader, typename postWriter>
 class feedAggregate : public feedWriter<feedReader,postWriter> {
 public:
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
+   typedef feedWriter<feedReader,postWriter> super;
+
+protected:
+    /* variable used to match pattern. We cannot use document
+     else the catch-all forbids recursive descent through directories. */
+    const std::string varname;
+
+public:
+    explicit feedAggregate( const std::string& v ) : varname(v) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 /** Complete aggregate, does not discard posts. */
@@ -146,13 +159,15 @@ typedef feedAggregate<feedOrdered<orderByTime<post> >,
 template<typename feedReader, typename postWriter>
 class feedContent : public feedWriter<feedReader,postWriter> {
 protected:
+    typedef feedWriter<feedReader,postWriter> super;
+
     boost::regex filePat;
 
 public:
     explicit feedContent(const boost::regex& pat = boost::regex(".*") )
 	: filePat(pat) {}
 
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 typedef feedContent<feedIndex,htmlwriter> htmlContent;
@@ -183,7 +198,10 @@ typedef feedSummary<feedIndex,rsswriter> rssSummary;
 template<typename postWriter>
 class feedRepository : public feedWriter<feedIndex,postWriter> {
 public:
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;	
+   typedef feedWriter<feedIndex,postWriter> super;
+
+public:
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;	
 };
 
 typedef feedRepository<htmlwriter> htmlRepository;

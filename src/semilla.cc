@@ -45,6 +45,12 @@
 #include "webserve.hh"
 #include "payment.hh"
 
+/** Main executable
+
+    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+*/
+
+
 #ifndef CONFIG_FILE
 #error "CONFIG_FILE should be defined when compiling this file"
 #endif
@@ -54,17 +60,6 @@
 
 const char* session::configFile = CONFIG_FILE;
 const char* session::sessionDir = SESSION_DIR;
-
-
-#if 1
-/* We use this flag to trigger features that are currently in development. */
-#define devsite
-#endif
-
-/** Main executable
-
-    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
-*/
 
 
 int main( int argc, char *argv[] )
@@ -99,6 +94,8 @@ int main( int argc, char *argv[] )
 	/* If no document is present, set document 
 	   as view in order to catch default dispatch 
 	   clause. */
+	boost::filesystem::path index(s.valueOf("themeDir") 
+				      + std::string("/homepage.template"));
 	session::variables::const_iterator doc = s.vars.find("document");
 	if( doc == s.vars.end() ) {
 	    s.insert("document",s.valueOf("view"));
@@ -116,12 +113,12 @@ int main( int argc, char *argv[] )
 #endif	
 
 	/* by default bring the index page */
-	if( s.valueOf("view").empty()
-	    || s.valueOf("view") == "/" ) {
-	    cout << httpHeaders.location(url("index.template"));
+	if( (s.valueOf("view").empty() || s.valueOf("view") == "/") 
+	    && !boost::filesystem::exists(index) ) {
+	    cout << httpHeaders.location(url("index.html"));		       
 	    
 	} else {	    		       
-	    dispatchDoc docs(s.valueOf("srcTop"));
+	    dispatchDoc docs;
 
 	    /* The pattern need to be inserted in more specific to more 
 	       generic order since the matcher will apply each the first
@@ -131,8 +128,7 @@ int main( int argc, char *argv[] )
 	    cancel cel;        
 	    change chg           ;
 	    docs.add("view",boost::regex("/cancel"),cel);
-	    composer edit(s.valueOf("themeDir") + std::string("/edit.ui"),
-			  composer::create);
+	    composer edit(s.valueOf("themeDir") + std::string("/edit.ui"));
 	    docs.add("view",boost::regex("/edit"),edit);
 	    login li;
 	    docs.add("view",boost::regex("/login"),li);
@@ -160,7 +156,7 @@ int main( int argc, char *argv[] )
 	    if( ext.empty() ) ext = ".";	    
 	    path extTemplate(path(s.valueOf("themeDir")) /
 			     (ext.substr(1) + ".template"));
-	    composer entry(extTemplate,composer::error);
+	    composer entry(extTemplate);
 	    if( boost::filesystem::exists(extTemplate) ) {
 		docs.add("view",boost::regex(std::string(".*\\") + ext),
 			 entry);		
@@ -195,8 +191,7 @@ int main( int argc, char *argv[] )
 
 	    /* Composer for a project view */
 	    composer project(s.valueOf("themeDir")
-			     + std::string("/project.template"),
-			     composer::error);
+			     + std::string("/project.template"));
 	    docs.add("view",boost::regex(".*dws\\.xml"),project);	    
 
 	    /* Widget to generate a rss feed. Attention: it needs 
@@ -205,15 +200,14 @@ int main( int argc, char *argv[] )
 	       as well. */	    
 	    rssRepository reps;
 	    rssSummary names;
-	    rssSiteAggregate agg;
+	    rssSiteAggregate agg("document"); // \todo?
 	    docs.add("document",boost::regex(".*/resources/index\\.rss"),names);
 	    docs.add("document",boost::regex(".*\\.git/index\\.rss"),reps);
 	    docs.add("document",boost::regex("^/index\\.rss"),agg);
 
 	    /* Composer and document for the todos index view */
 	    composer todos(s.valueOf("themeDir")
-			     + std::string("/todos.template"),
-			     composer::error);
+			     + std::string("/todos.template"));
 	    docs.add("view",todoFilter::viewPat,todos);
 	    todoIndexWriteHtml todoIdxDoc;
 
@@ -236,8 +230,7 @@ int main( int argc, char *argv[] )
 
 	    /* blog presentation */ 
 	    composer blogs(s.valueOf("themeDir")
-			   + std::string("/blog.template"),
-			     composer::error);
+			   + std::string("/blog.template"));
 	    blogByIntervalDate blogtext;
 	    blogByIntervalTags blogtags;
 	    blogDateLinks dates;
@@ -284,7 +277,7 @@ int main( int argc, char *argv[] )
 	    todoWriteHtml todoItemWriteHtml;
 	    docs.add("document",boost::regex(".*\\.todo"),todoItemWriteHtml);
 
-	    composer source(sourceTmpl,composer::error);
+	    composer source(sourceTmpl);
 	    linkLight leftLinkStrm(s);
 	    linkLight rightLinkStrm(s);
 	    cppLight leftCppStrm;
@@ -334,8 +327,7 @@ int main( int argc, char *argv[] )
 	       extension files as raw text. In all cases we use a default
 	       document.template interface "view" to present those files. */ 
 	    composer doc(s.valueOf("themeDir") 
-			   + std::string("/document.template"),
-			   composer::error);
+			   + std::string("/document.template"));
 	    linkLight leftFormatedText(s);
 	    linkLight rightFormatedText(s);
 	    docbook formatedDoc(leftFormatedText,rightFormatedText);
@@ -348,15 +340,24 @@ int main( int argc, char *argv[] )
 
 	    docs.add("document",boost::regex(".*"),rawtext);
 
-#ifdef devsite
-	    /* We insert advertisement in non corporate pages so we need
-	       to use a different template composer for corporate pages. */
-	    composer corporate(s.valueOf("themeDir")
-			       + std::string("/corporate.template"),
-			       composer::error);
-	    docs.add("view",boost::regex(".*\\.corp"),corporate);
-#endif
+	    /* Load title from the meta tags in a text file. */
+	    textMeta title("title");
+	    docbookMeta titleBook;
+	    consMeta titleBuildLog("title","Build View");
+	    docs.add("title",boost::regex(".*/log/"),titleBuildLog);
+	    docs.add("title",boost::regex(".book"),titleBook);
+	    docs.add("title",boost::regex(".*"),title);
 
+	    /* homepage */
+	    composer homepage(index);
+	    htmlRepository siteReps;
+	    htmlSiteAggregate siteAgg("feed");
+	    s.vars["feed"] = session::valT("/index.feed");
+	    docs.add("feed",boost::regex(".*\\.git/index\\.feed"),siteReps);
+	    docs.add("feed",boost::regex("^/index\\.feed"),siteAgg);
+	    docs.add("view",boost::regex("/"),homepage);
+
+	    /* default catch-all */
 	    docs.add("view",boost::regex(".*"),doc);
 
 	    /* Widget to display status of static analysis of a project 
@@ -386,8 +387,7 @@ int main( int argc, char *argv[] )
 	    s.vars["payproc"] = s.valueOf("document");
       	    
 	    docs.fetch(s,"view");
-
-	    std::cout << httpHeaders;
+	    std::cout << httpHeaders.contentType();
 	    std::cout << mainout.str();
 	}
 #if 0
@@ -398,8 +398,7 @@ int main( int argc, char *argv[] )
 	    std::cerr << "caught exception: " << e.what() << std::endl;
 	    s.vars["exception"] = e.what();
 	    composer except(s.valueOf("themeDir") 
-			    + std::string("/exception.template"),
-			    composer::error);
+			    + std::string("/exception.template"));
 	    except.fetch(s,s.valueOf("document"));
 #endif
 	} catch( exception& e ) {

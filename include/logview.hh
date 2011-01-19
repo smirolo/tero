@@ -34,9 +34,6 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 class logview : public document {
-protected:
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
-
 public:
     static void 
     addSessionVars( boost::program_options::options_description& opts );

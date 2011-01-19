@@ -131,7 +131,7 @@ protected:
 	    if( !h.contentTypeCharset.empty() ) {
 		ostr << ";charset=" << h.contentTypeCharset;
 	    }
-	    ostr << "\r\n";
+	    ostr << "\r\n";	
 	}
 	if( h.contentLengthValue > 0 ) {
 	    ostr << "Content-Length:" << h.contentLengthValue << "\r\n";

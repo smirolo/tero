@@ -31,15 +31,13 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-void blogEntry::meta( session& s, const boost::filesystem::path& pathname ) const
-{
-    mailParser parser(boost::regex(".*\\.blog"),feedIndex::instance,true);
-    parser.fetch(s,s.abspath(pathname));
-}
-
-
 void blogEntry::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
+    {
+    mailParser parser(boost::regex(".*\\.blog"),feedIndex::instance,true);
+    parser.fetch(s,s.abspath(pathname));
+    }
+
     htmlwriter writer(s.out());
     mailParser parser(boost::regex(".*\\.blog"),writer,true);
     parser.fetch(s,s.abspath(pathname));

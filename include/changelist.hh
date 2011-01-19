@@ -179,8 +179,8 @@ protected:
     virtual void embed( session& s, const std::string& value );
 
 public:
-    changediff( const boost::filesystem::path& f ) 
-	: composer(f,error) {}
+    explicit changediff( const boost::filesystem::path& f ) 
+	: composer(f) {}
 
 };
 

@@ -90,16 +90,6 @@ projindex::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void projindex::meta( session& s, const boost::filesystem::path& pathname ) const {
-#if 0
-    name = pathname.parent_path().filename();
-#endif
-    s.insert("title",pathname.parent_path().filename());
-    document::meta(s,pathname);
-}
-
-
-
 void projindex::fetch( session& s, const boost::filesystem::path& pathname ) const {
     using namespace rapidxml;
     using namespace boost::filesystem;

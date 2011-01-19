@@ -49,13 +49,6 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void contribIdx::meta( session& s, const boost::filesystem::path& pathname ) const
-{
-    s.insert("title","A last word");
-    document::meta(s,pathname);
-}
-
-
 void contribIdx::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     using namespace std;

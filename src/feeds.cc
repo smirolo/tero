@@ -55,12 +55,10 @@ void feedIndex::provide() {
     if( std::distance(first,last) >= base ) {
 	std::advance(first,base);
     }
-    indexSet::iterator second = second;
+    indexSet::iterator second = first;
     if( std::distance(second,last) >= length ) {
 	std::advance(second,length);
-    } else {
-	second = last;
+	last = second;
     }
-    last = second;
 }
 

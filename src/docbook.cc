@@ -755,13 +755,13 @@ void docbook::walk( session& s, const rapidxml::xml_node<>& node ) const {
 }
 
 
-void docbook::meta( session& s, const boost::filesystem::path& pathname ) const {
+void docbookMeta::fetch( session& s, const boost::filesystem::path& pathname ) const {
     using namespace rapidxml;
 
-    /* We need the meta information at this point but will only print 
-       the formatted text when fetch() is called later on.
-       We load the text *buffer* and keep it around in order to parse 
-       the XML only once. */
+    char *buffer;
+    size_t length;
+    rapidxml::xml_document<> doc;
+
     size_t fileSize = file_size(pathname);
     length = fileSize + 1;
     buffer = new char [ length ];
@@ -792,12 +792,23 @@ void docbook::meta( session& s, const boost::filesystem::path& pathname ) const 
 
 void docbook::fetch( session& s, const boost::filesystem::path& pathname ) const
 {    
-    leftDec->attach(s.out());
 
+    size_t fileSize = file_size(pathname);
+    length = fileSize + 1;
+    buffer = new char [ length ];
+    boost::filesystem::ifstream file;
+
+    open(file,pathname);
+    file.read(buffer,fileSize);
+    buffer[fileSize] = '\0';
+    file.close();
+
+    doc.parse<0>(buffer);
+
+    leftDec->attach(s.out());
     rapidxml::xml_node<> *root = doc.first_node();
     if( root != NULL ) {
 	walk(s,*root);
     }
-
     leftDec->detach();
 }

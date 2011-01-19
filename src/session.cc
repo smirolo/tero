@@ -226,18 +226,13 @@ session::abspath( const boost::filesystem::path& relpath ) const {
 				     fromSiteTop, 
 				     boost::system::error_code()));
     }
-    fromSiteTop /= relpath;
-    if( boost::filesystem::exists(fromSiteTop) ) {
-	return fromSiteTop;
+    if( relpath.string().compare(0,fromSiteTop.string().size(),fromSiteTop.string()) == 0 ) {
+	fromSiteTop = relpath;
+    } else {
+	/* avoid to keep prepending siteTop in case the file does not exist.
+	 */
+	fromSiteTop /= relpath;
     }
-
-    /* Third we try to access the file as a relative pathname 
-       from srcTop. */	
-    path fromSrcTop(valueOf("srcTop"));
-    fromSrcTop /= relpath;
-    if( boost::filesystem::exists(fromSrcTop) ) {        
-	return fromSrcTop;
-    }	
     
     /* We used to throw an exception at this point. That does
        not sit very well with dispatch::fetch() because
@@ -246,7 +241,7 @@ session::abspath( const boost::filesystem::path& relpath ) const {
        be derived from the web server request uri, it is 
        the most appropriate to return the path from siteTop
        in case the document could not be found.
-       !!! We have to return from srcTop because that is how
+       \todo We have to return from srcTop because that is how
        the website is configured for rss feeds. */
     return fromSiteTop;
 }

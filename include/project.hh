@@ -87,8 +87,6 @@ public:
     addSessionVars( boost::program_options::options_description& opts );
     
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 };
 
  

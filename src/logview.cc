@@ -48,12 +48,6 @@ logview::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void logview::meta( session& s, const boost::filesystem::path& pathname ) const {
-    s.insert("title","Build View");   
-    document::meta(s,pathname);
-}
-
-
 void logview::fetch( session& s, const boost::filesystem::path& pathname ) const {
 
     using namespace rapidxml;

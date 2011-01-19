@@ -33,7 +33,7 @@ template<typename cmp>
 void feedOrdered<cmp>::provide()
 {
     cmp c;
-    std::sort(indices.begin(),indices.end(),c);
+    std::sort(indices.begin(),indices.end(),c);   
     first = indices.begin();
     last = indices.end();
     super::provide();
@@ -47,23 +47,23 @@ void feedWriter<feedReader,postWriter>::fetch( session& s,
 {
     postWriter writer(s.out());
     feedReader feeds(pathname,0,feedIndex::maxLength);
+    feeds.provide();
 
     bool firstTime = true;
     typename feedReader::iterator prev;
+    std::stringstream strm;
+    std::ostream* prevDisp = s.out(&strm);
+
     for( typename feedReader::iterator first = feeds.begin();
 	 first != feeds.end(); ++first ) {
 	if( firstTime || first->guid != prev->guid ) {
 	    if( first->descr.empty() ) {
-		std::stringstream strm;
-		const document* doc 
-		    = dispatchDoc::instance->select("document",first->guid);
-		if( doc != NULL ) {		
-		    session sout("view","semillaId",strm);
-		    doc->fetch(sout,first->guid);
-		    if( !sout.valueOf("title").empty() ) {
-			first->title = sout.valueOf("title");
+		strm.str("");		
+		if( dispatchDoc::instance->fetch(s,"document",first->guid)) {
+		    if( !s.valueOf("title").empty() ) {
+			first->title = s.valueOf("title");
 		    }
-		} else {		
+		} else {
 		    strm << "updated file ";
 		    writelink(strm,first->guid);
 		    first->descr = strm.str();	 
@@ -98,65 +98,63 @@ void feedWriter<feedReader,postWriter>::fetch( session& s,
 	    writer.filters(*first);
 	}
 	prev = first;
-	firstTime = false;
-	
+	firstTime = false;	
     }
+    s.out(prevDisp);
 }
 
 
 template<typename feedReader, typename postWriter>
-void feedAggregate<feedReader,postWriter>::meta( session& s, 
+void feedAggregate<feedReader,postWriter>::fetch( session& s, 
 			   const boost::filesystem::path& pathname ) const
 {
     using namespace boost::filesystem;
 
-    path p(s.abspath(pathname));   	
     path dirname(pathname.parent_path());
     path track(pathname.filename());
 
+    std::stringstream nodisplay;
+    std::ostream* prevDisp = s.out(&nodisplay);
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	boost::smatch m;
 	if( is_directory(*entry) ) {	
 	    path trackname(dirname / entry->filename() / track);
-	    const document* doc 
-		= dispatchDoc::instance->select("document",trackname.string());
-	    if( doc != NULL ) {		
-		doc->meta(s,trackname);
-	    } else {
-		meta(s,trackname);
+	    if( !dispatchDoc::instance->fetch(s,varname,trackname)) {
+		fetch(s,trackname);
 	    }
 	}
     }
+    s.out(prevDisp);
+    super::fetch(s,pathname);
 }
 
 
 template<typename feedReader, typename postWriter>
-void feedContent<feedReader,postWriter>::meta( session& s, 
+void feedContent<feedReader,postWriter>::fetch( session& s, 
 		     const boost::filesystem::path& pathname ) const
 {
     using namespace boost::filesystem;
 
     path base(pathname);
-    while( !base.empty() && !is_directory(s.abspath(base)) ) {
+    while( base.string().size() > s.valueOf("siteTop").size()
+	   && !is_directory(base) ) {
 	base = base.parent_path();
     }
     if( !base.empty() ) {
-	base = s.abspath(base);
+	std::stringstream nodisplay;
+	std::ostream* prevDisp = s.out(&nodisplay);
 	for( directory_iterator entry = directory_iterator(base); 
 	     entry != directory_iterator(); ++entry ) {
 	    boost::smatch m;
-	
 	    if( !is_directory(*entry) 
 		&& boost::regex_match(entry->string(),m,filePat) ) {
 		path filename(base / entry->filename());	    
 		std::string reluri = s.subdirpart(s.valueOf("siteTop"),
 						  filename).string();	    
-		const document* doc 
-		    = dispatchDoc::instance->select("document",reluri);
-		if( doc != NULL ) {		
-		    doc->meta(s,reluri);
-		} else {
+		/* We should pop out a post for those docs that don't
+		   even when they fetch (book vs. mail/blogentry). */
+		if( !dispatchDoc::instance->fetch(s,"document",reluri)) {
 		    post p;
 		    p.title = reluri;	    
 		    p.guid = reluri;
@@ -166,12 +164,14 @@ void feedContent<feedReader,postWriter>::meta( session& s,
 		}
 	    }
 	}
+	s.out(prevDisp);
     }
+    super::fetch(s,pathname);
 }
 
 
 template<typename postWriter>
-void feedRepository<postWriter>::meta( session& s, 
+void feedRepository<postWriter>::fetch( session& s, 
 			    const boost::filesystem::path& pathname ) const
 {
     revisionsys *rev = revisionsys::findRev(s,pathname);
@@ -200,6 +200,7 @@ void feedRepository<postWriter>::meta( session& s,
 	    feedIndex::instance.filters(p);
 	}	
     }
+    super::fetch(s,pathname);
 }
 
 

@@ -43,22 +43,36 @@ void createfile( boost::filesystem::ofstream& strm,
 /* Base class to generate HTML presentation of documents.
  */
 class document {
+public:
+    /* When the dispatcher has found a matching pattern (and associated 
+       document) for a pathname, before it goes on to call the fetch method,
+       it will check the behavior of that document.
+
+       *always*          call fetch regardless of pathname
+       *whenFileExist*   call fetch only if *pathname* exists in siteTop.
+       *whenNotCached*   call fetch only if there are no cached version
+                         of *pathname*.
+    */
+    enum callFetchType {
+	always,	
+	whenFileExist,
+	whenNotCached
+    };
+
+    callFetchType behavior;
+
 protected:
     void open( boost::filesystem::ifstream& strm, 
 	       const boost::filesystem::path& pathname ) const;
     
 public:
+    document() : behavior(always) {}
+
+    explicit document( callFetchType b ) : behavior(b) {}
+
     virtual void fetch( session& s, 
 			const boost::filesystem::path& pathname ) const = 0;
 
-    /** Add meta information about the document to the session. It includes
-	modification date, file revision as well as tags read in the file.
-
-	This method is called before the template is processed because meta
-	information needs to be propagated into different parts of the template
-	and not only in the placeholder for the document.
-    */
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 
@@ -73,23 +87,21 @@ protected:
     typedef std::list<std::pair<boost::regex,const document*> > aliasSet;
     typedef std::map<std::string,aliasSet> presentationSet;
 
-    boost::filesystem::path root;
     presentationSet views;
 
 public:
-    explicit dispatchDoc( const boost::filesystem::path& root );
+    dispatchDoc();
 
     static dispatchDoc *instance;
-
-#if 0
-    void add( const std::string& varname, const boost::regex& r, 
-	      std::ostream& d );
-#endif
 
     void add( const std::string& varname, const boost::regex& r, 
 	      const document& d );
 
-    void fetch( session& s, const std::string& varname );
+    bool fetch( session& s, const std::string& varname );
+
+    /** returns true if a pattern has matched. */
+    bool fetch( session& s, const std::string& varname,
+		const boost::filesystem::path& pathname );
 
     /** \brief handler based on the type of document as filtered by dispatch.
      */
@@ -123,6 +135,42 @@ public:
 		       const std::string& name ) const {}
 };
 
+/** Add meta information about the document to the session. It includes
+    modification date, file revision as well as tags read in the file.
+    
+    This method is called before the template is processed because meta
+    information needs to be propagated into different parts of the template
+    and not only in the placeholder for the document.
+*/
+
+/** associate a constant to a meta.
+*/
+class consMeta : public document {
+protected:
+    const std::string& varname;
+    const std::string& value;
+
+public:
+    consMeta( const std::string& n, const std::string& v ) 
+	: varname(n), value(v) {}
+    
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+};
+
+
+/** fetch meta information from *pathname* into session *s* 
+    and display the one associated to *varname*. 
+*/
+class textMeta : public document {
+protected:
+    const std::string& varname;
+
+public:
+    explicit textMeta( const std::string& v ) 
+	: document(whenFileExist), varname(v) {}
+    
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+};
 
 class text : public document {
 protected:
@@ -137,13 +185,13 @@ protected:
 
 public:
     text() 
-	: leftDec(NULL), rightDec(NULL) {}
+	: document(whenFileExist), leftDec(NULL), rightDec(NULL) {}
 
     explicit text( const std::string& h ) 
-	: header(h), leftDec(NULL), rightDec(NULL) {}
+	: document(whenFileExist), header(h), leftDec(NULL), rightDec(NULL) {}
 
     text( decorator& l,  decorator& r ) 
-	: leftDec(&l), rightDec(&r) {}
+	: document(whenFileExist), leftDec(&l), rightDec(&r) {}
 
     /** \brief show difference between two texts side by side 
 
@@ -157,9 +205,6 @@ public:
 			 bool inputIsLeftSide= true ) const;
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
-
 };
 
 

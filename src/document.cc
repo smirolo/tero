@@ -67,21 +67,10 @@ void createfile( boost::filesystem::ofstream& strm,
 }
 
 
-void document::meta( session& s, const boost::filesystem::path& pathname ) const {
-    if( s.vars.find("title") == s.vars.end() ) {
-	if( s.vars.find("Subject") != s.vars.end() ) {
-	    s.insert("title",s.valueOf("Subject"));
-	} else {
-	    s.insert("title",s.valueOf("document"));
-	}
-    }
-}
-
-
 dispatchDoc *dispatchDoc::instance = NULL;
 
 
-dispatchDoc::dispatchDoc( const boost::filesystem::path& t ) : root(t) {
+dispatchDoc::dispatchDoc() {
     instance = this;
 }
 
@@ -98,33 +87,61 @@ void dispatchDoc::add( const std::string& varname,
 }
 
 
-void dispatchDoc::fetch( session& s, const std::string& varname ) {
-    const document* doc = select(varname,s.valueOf(varname));
-    if( doc != NULL ) {
-	doc->fetch(s,s.valueAsPath(varname));
+bool dispatchDoc::fetch( session& s, const std::string& varname ) {
+    /* By default if a variable does not have a value, use the value
+       of "document". */
+    session::variables::const_iterator found = s.vars.find(varname);
+    if( found == s.vars.end() ) {    
+	s.vars[varname] = s.valueOf("document");
     }
+    return fetch(s,varname,boost::filesystem::path(s.valueOf(varname)));
 }
+
+
+bool dispatchDoc::fetch( session& s, 
+			 const std::string& varname,
+			 const boost::filesystem::path& pathname ) {
+    const document* doc = select(varname,pathname.string());
+    if( doc != NULL ) {
+	boost::filesystem::path p(s.abspath(pathname));
+	switch( doc->behavior ) {
+	case document::always:
+	    doc->fetch(s,p);
+	    break;
+	case document::whenFileExist: {	    
+	    if( boost::filesystem::exists(p) ) {
+		doc->fetch(s,p);	
+	    }
+	} break;
+	case document::whenNotCached:
+	    /* Not yet implemented. */
+	    break;
+	}	
+    }
+    return ( doc != NULL );
+}
+
+
 
 
 const document* 
 dispatchDoc::select( const std::string& name, const std::string& value ) const {
     presentationSet::const_iterator view = views.find(name);
+#if 0
+    std::cerr << "select(" << name << "," << value << ")" << std::endl;
+#endif
     if( view != views.end() ) {
 	const aliasSet& aliases = view->second;
 	for( aliasSet::const_iterator alias = aliases.begin(); 
 	     alias != aliases.end(); ++alias ) {
 	    boost::smatch m;
 #if 0
-	    std::cerr << "match(" << value << ", " << alias->first << ")?" << std::endl;
+	    std::cerr << "- match(" << value << "," << alias->first << ")?" << std::endl;
 #endif
 	    if( regex_match(value,m,alias->first) ) {
 #if 0
-		std::cerr << "select(" << value << ") = ";
-		for( boost::smatch::const_iterator p = m.begin();
-		     p != m.end(); ++p ) {
-		    std::cerr << ", " << *p;
-		}
-		std::cerr << std::endl;
+		std::cerr << "found " << alias->first << " for "
+			  << value << std::endl;
 #endif		
 		return alias->second;
 	    }
@@ -158,6 +175,50 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname ) con
 	infile.close();
     }
     last();
+}
+
+
+void consMeta::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    s.out() << value;
+}
+
+
+void textMeta::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    using namespace boost::filesystem; 
+    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
+
+    ifstream strm;
+    open(strm,pathname);
+    while( !strm.eof() ) {
+	boost::smatch m;
+	std::string line;
+	std::getline(strm,line);
+	if( boost::regex_search(line,m,valueEx) ) {
+	    s.insert(m.str(1),m.str(2));
+	} else break;
+    }
+    strm.close();
+    /* 
+    std::time_t last_write_time( const path & ph );
+    To convert the returned value to UTC or local time, 
+    use std::gmtime() or std::localtime() respectively. */
+
+    if( s.vars.find("title") == s.vars.end() ) {
+	if( s.vars.find("Subject") != s.vars.end() ) {
+	    s.insert("title",s.valueOf("Subject"));
+	} else {
+	    s.insert("title",s.valueOf("document"));
+	}
+    }
+
+    session::variables::const_iterator found = s.vars.find(varname);
+    if( found != s.vars.end() ) {    
+	s.out() << found->second.value;
+    } else {
+	s.out() << pathname;
+    }
 }
 
 
@@ -363,30 +424,6 @@ void text::showSideBySide( session& s,
 
     leftDec->detach();
     rightDec->detach();
-}
-
-
-void text::meta( session& s, const boost::filesystem::path& pathname ) const {
-    using namespace boost::filesystem; 
-    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
-
-    ifstream strm;
-    open(strm,pathname);
-    while( !strm.eof() ) {
-	boost::smatch m;
-	std::string line;
-	std::getline(strm,line);
-	if( boost::regex_search(line,m,valueEx) ) {
-	    s.insert(m.str(1),m.str(2));
-	} else break;
-    }
-    strm.close();
-    document::meta(s,pathname);
-
-    /* 
-    std::time_t last_write_time( const path & ph );
-    To convert the returned value to UTC or local time, 
-    use std::gmtime() or std::localtime() respectively. */
 }
 
 

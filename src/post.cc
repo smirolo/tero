@@ -92,7 +92,6 @@ void htmlwriter::filters( const post& p ) {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-    htmlEscaper esc;
     time_facet* facet(new time_facet(pubDate::format));
     (*ostr).imbue(std::locale((*ostr).getloc(), facet));
 
@@ -101,11 +100,9 @@ void htmlwriter::filters( const post& p ) {
 
     /* caption for the post */
     *ostr << html::div().classref("postCaption");    
-    esc.attach(*ostr);
     *ostr << "by " << html::a().href(std::string("mailto:") + p.authorEmail)
 	  << p.authorName << html::a::end
 	  << " on " << p.time;
-    esc.detach();
     *ostr << html::div::end;    
 
     /* body of the post */

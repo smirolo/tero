@@ -42,6 +42,14 @@
     XSLT processors, etc.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+
+    \todo the buffering of the input document was removed 
+    in order to split docbook from docbookMeta. This was necessary
+    to simplify generation of feeds.
+    (We need the meta information at this point but will only print 
+    the formatted text when fetch() is called later on.
+    We load the text *buffer* and keep it around in order to parse 
+    the XML only once.)
 */
 class docbook : public text {
 protected:
@@ -116,7 +124,12 @@ public:
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
+};
+
+/** Load meta information associated to a docbook file. */
+class docbookMeta : public text {
+public:
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 #endif

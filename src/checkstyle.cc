@@ -202,8 +202,7 @@ void checkstyle::addFile( session& s,
 		  << html::tr::end;
 	state = toplevelFiles;
     }
-    const document *doc = dispatchDoc::instance->select("check",pathname.string());
-    doc->fetch(s,pathname);
+    dispatchDoc::instance->fetch(s,"check",pathname);
 }
 
 void checkstyle::flush( session& s ) const 

@@ -51,7 +51,13 @@ void composer::embed( session& s, const std::string& value ) const {
     try {
 	dispatchDoc::instance->fetch(s,value);
     } catch( const basic_filesystem_error<path>& e ) {
+#if 0
+	/* \todo s.out not restored correctly. */
 	s.out() << "<p>" << e.what() << "</p>" << std::endl;
+#else
+	std::cerr << "[embed of '" << value << "']: " 
+		  << e.what() << std::endl;	
+#endif	
     }
 }
 
@@ -68,11 +74,6 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) cons
     
     ifstream strm;
     open(strm,fixed.empty() ? pathname : fixed);
-    const document* doc = dispatchDoc::instance->select("document",
-						  s.valueOf("document"));
-    if( doc ) {
-	doc->meta(s,s.valueAsPath("document"));
-    }
 
     skipOverTags(s,strm);
     while( !strm.eof() ) {
@@ -94,34 +95,27 @@ void composer::fetch( session& s, const boost::filesystem::path& pathname ) cons
 	}
 
 	if( regex_search(line,m,tmplvar) ) {
-	
+	    found = true;
+	    s.out() << m.prefix();
 	    std::string varname = m.str(1);
+	    /* Hack! duplicate code from dispatchDoc::fetch() - see below. */
 	    session::variables::const_iterator v = s.vars.find(varname);
-	    if( v == s.vars.end() ) {
-		/* hmmm ... variable wasn't set in meta? */
+	    if( v == s.vars.end() ) {    
+		s.vars[varname] = s.valueOf("document");
 	    }
 	    const document* doc 
 		= dispatchDoc::instance->select(varname,s.valueOf(varname));
 	    if( doc != NULL ) {
 		boost::filesystem::path docname = s.valueAsPath(varname);
-		s.out() << m.prefix();
 		/* \todo code could be:
 		           doc->fetch(s,docname);  
 			 but that would skip over the override 
 			 of changediff::embed(). */
-		embed(s,varname);
-		s.out() << m.suffix() << std::endl;
-		found = true;
-	    
+		embed(s,varname);					    
 	    } else {
-		v = s.vars.find(varname);
-		if( v != s.vars.end() ) {
-		    s.out() << m.prefix();
-		    s.out() << s.valueOf(varname);
-		    s.out() << m.suffix() << std::endl;
-		    found = true;
-		}
+		s.out() << s.valueOf(varname);
 	    }
+	    s.out() << m.suffix() << std::endl;
 	} else if( regex_search(line,m,tmplinc) ) {
 	    /* \todo fetch another template. This code should
 	     really call to the dispatcher once we can sort

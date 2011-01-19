@@ -192,6 +192,12 @@ public:
 
     std::ostream& out() { return *ostr; }
 
+    std::ostream* out( std::ostream* o ) { 
+	std::ostream* prev = ostr;
+	ostr = o;
+	return prev;
+    }    
+
     /** (name,value) will be stored into the session file and thus 
 	persistent accross execution. */
     void state( const std::string& name, const std::string& value );

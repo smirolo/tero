@@ -169,8 +169,6 @@ public:
  */
 class todoWriteHtml : public document {
 public:
-    void meta( session& s, const boost::filesystem::path& pathname ) const;
-
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 

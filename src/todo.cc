@@ -403,6 +403,7 @@ void todoVoteSuccess::fetch( session& s,
 }
 
 
+#if 0
 void todoWriteHtml::meta( session& s, 
 			  const boost::filesystem::path& pathname ) const {
     using namespace boost::filesystem; 
@@ -423,8 +424,8 @@ void todoWriteHtml::meta( session& s,
     }
     strm.close();
     s.insert("Subject",title.str());
-    document::meta(s,pathname);
 }
+#endif
 
 void 
 todoWriteHtml::fetch( session& s, const boost::filesystem::path& pathname ) const 

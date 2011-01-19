@@ -54,6 +54,8 @@ void blogSetLinks<cmp>::fetch( session& s,
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
+    super::fetch(s,pathname);
+
     cmp c;
     boost::filesystem::path 
 	root = s.subdirpart(s.valueOf("siteTop"),

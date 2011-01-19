@@ -36,18 +36,6 @@ class composer : public text {
 protected:
     typedef text super;
 
-public:
-
-    /* When the composer resolves a filename that is not present
-       on disk, it will either "create" the file or throw an "error"
-       exception. */
-    enum fileNotFoundBehavior {
-	create,
-	error
-    };
-
-protected:
-    fileNotFoundBehavior behavior;
     boost::filesystem::path fixed;
 
     /** Embed the content of a variable into a page. 
@@ -55,12 +43,8 @@ protected:
     virtual void embed( session& s, const std::string& value ) const;
     
 public:
-    explicit composer( fileNotFoundBehavior b ) 
-	: behavior(b) {}
-
-    composer( const boost::filesystem::path& f, 
-	      fileNotFoundBehavior b ) 
-	: behavior(b), fixed(f) {}
+    explicit composer( const boost::filesystem::path& f ) 
+	: fixed(f) {}
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );

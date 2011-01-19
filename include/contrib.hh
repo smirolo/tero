@@ -45,7 +45,6 @@ public:
 class contribIdx : public document {
 public:
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-    virtual void meta( session& s, const boost::filesystem::path& pathname ) const;
 };
 
 

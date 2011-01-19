@@ -305,8 +305,7 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) const 
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
     s.state("hours",logstr.str());
-    path uiPath(s.valueOf("uiDir") + std::string("/logout.ui"));
-    composer pres(uiPath,composer::error);
+    composer pres(s.valueOf("themeDir") + std::string("/logout.ui"));
     pres.fetch(s,"document");
 }
 
