@@ -95,7 +95,7 @@ int main( int argc, char *argv[] )
 	   as view in order to catch default dispatch 
 	   clause. */
 	boost::filesystem::path index(s.valueOf("themeDir") 
-				      + std::string("/homepage.template"));
+				      + std::string("/index.template"));
 	session::variables::const_iterator doc = s.vars.find("document");
 	if( doc == s.vars.end() ) {
 	    s.insert("document",s.valueOf("view"));
@@ -112,6 +112,8 @@ int main( int argc, char *argv[] )
 	}
 #endif	
 
+	std::cerr << "index=" << index << std::endl;
+ 
 	/* by default bring the index page */
 	if( (s.valueOf("view").empty() || s.valueOf("view") == "/") 
 	    && !boost::filesystem::exists(index) ) {
@@ -387,7 +389,9 @@ int main( int argc, char *argv[] )
 	    s.vars["payproc"] = s.valueOf("document");
       	    
 	    docs.fetch(s,"view");
-	    std::cout << httpHeaders.contentType();
+	    if( s.runAsCGI() ) {
+		std::cout << httpHeaders.contentType();
+	    }
 	    std::cout << mainout.str();
 	}
 #if 0

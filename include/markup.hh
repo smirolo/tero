@@ -713,13 +713,14 @@ public:
 };
 
 
-/** Write a pathname *p* as an html href link in an output stream *ostr*. 
+/** Write a pathname *base* / *leaf* as an html href link in an output stream *ostr*. 
  */
 template<typename charT, typename traitsT>
 std::basic_ostream<charT,traitsT>& 
-writelink( std::basic_ostream<charT,traitsT>& ostr, 
-	   const boost::filesystem::path& p ) {
-    ostr << html::a().href(p.string()) << p << html::a::end;
+writelink( std::basic_ostream<charT,traitsT>& ostr,
+	   const boost::filesystem::path& base,
+	   const boost::filesystem::path& leaf ) {
+    ostr << html::a().href((base / leaf).string()) << leaf << html::a::end;
     return ostr;
 }
 

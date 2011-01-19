@@ -126,6 +126,17 @@ html, body {
     text-align: right;
 }
 
+.postCaption {
+    text-align: left;
+    font-size: 100%;
+}
+
+.postBody {
+    text-align: left;
+    font-size: 95%;
+}
+
+
 /* 3. Styles used for generic elements in the document body. */
 table {
     border-width: thin;

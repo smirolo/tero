@@ -52,7 +52,7 @@ void feedWriter<feedReader,postWriter>::fetch( session& s,
     bool firstTime = true;
     typename feedReader::iterator prev;
     std::stringstream strm;
-    std::ostream* prevDisp = s.out(&strm);
+    std::ostream& prevDisp = s.out(strm);
 
     for( typename feedReader::iterator first = feeds.begin();
 	 first != feeds.end(); ++first ) {
@@ -65,7 +65,7 @@ void feedWriter<feedReader,postWriter>::fetch( session& s,
 		    }
 		} else {
 		    strm << "updated file ";
-		    writelink(strm,first->guid);
+		    writelink(strm,"",first->guid);
 		    first->descr = strm.str();	 
 		}
 		first->descr = strm.str();
@@ -114,7 +114,7 @@ void feedAggregate<feedReader,postWriter>::fetch( session& s,
     path track(pathname.filename());
 
     std::stringstream nodisplay;
-    std::ostream* prevDisp = s.out(&nodisplay);
+    std::ostream& prevDisp = s.out(nodisplay);
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	boost::smatch m;
@@ -143,7 +143,7 @@ void feedContent<feedReader,postWriter>::fetch( session& s,
     }
     if( !base.empty() ) {
 	std::stringstream nodisplay;
-	std::ostream* prevDisp = s.out(&nodisplay);
+	std::ostream& prevDisp = s.out(nodisplay);
 	for( directory_iterator entry = directory_iterator(base); 
 	     entry != directory_iterator(); ++entry ) {
 	    boost::smatch m;
@@ -177,21 +177,27 @@ void feedRepository<postWriter>::fetch( session& s,
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	history hist;
-	s.vars["title"] = s.subdirpart(s.valueOf("srcTop"),rev->rootpath).string();
+	boost::filesystem::path base =  boost::filesystem::path("/") 
+	    / s.subdirpart(s.valueOf("siteTop"),rev->rootpath);
+	std::string projname = s.subdirpart(s.valueOf("srcTop"),rev->rootpath).string();
+	if( projname[projname.size() - 1] == '/' ) {
+	    projname = projname.substr(0,projname.size() - 1);
+	}
+	s.vars["title"] = projname;
 	rev->checkins(hist,s,pathname);
 	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
 	    ci->normalize();
 	    std::stringstream strm;
 	    strm << html::p();
-	    strm << ci->guid << " &nbsp;&mdash;&nbsp; ";
+	    strm << projname << " / " << ci->guid << " &nbsp;&mdash;&nbsp; ";
 	    strm << ci->descr;
 	    strm << html::p::end;
 	    strm << html::pre();
 	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
 		 file != ci->files.end(); ++file ) {
 		/* \todo link to diff with previous revision */
-		writelink(strm,*file);
+		writelink(strm,base,*file);
 		strm << std::endl;
 	    }
 	    strm << html::pre::end;

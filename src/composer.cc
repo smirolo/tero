@@ -48,9 +48,11 @@ composer::addSessionVars( boost::program_options::options_description& opts )
 
 void composer::embed( session& s, const std::string& value ) const {
     using namespace boost::filesystem;
+    std::ostream& prevDisp = s.out();
     try {
 	dispatchDoc::instance->fetch(s,value);
     } catch( const basic_filesystem_error<path>& e ) {
+	s.out(prevDisp);
 #if 0
 	/* \todo s.out not restored correctly. */
 	s.out() << "<p>" << e.what() << "</p>" << std::endl;

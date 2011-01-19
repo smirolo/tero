@@ -103,6 +103,8 @@ public:
     typedef std::map<std::string,valT> variables;
 
 protected:
+
+    bool ascgi;
     
     /** Unique identifier for the session */
     std::string sessionId;
@@ -192,10 +194,10 @@ public:
 
     std::ostream& out() { return *ostr; }
 
-    std::ostream* out( std::ostream* o ) { 
+    std::ostream& out( std::ostream& o ) { 
 	std::ostream* prev = ostr;
-	ostr = o;
-	return prev;
+	ostr = &o;
+	return *prev;
     }    
 
     /** (name,value) will be stored into the session file and thus 
@@ -236,7 +238,9 @@ public:
     std::string root() const {
 	return std::string("");
     }
-    
+
+    bool runAsCGI() const { return ascgi; }
+
     /** \brief Display debug information for the session
      */
     void show( std::ostream& ostr );

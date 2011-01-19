@@ -354,6 +354,9 @@ void session::restore( int argc, char *argv[],
 	}
     }
 
+    /* We assume that if SCRIPT_FILENAME is defined
+       we are running as a cgi. */
+    ascgi = ( getenv("SCRIPT_FILENAME") != NULL );
 
     /* Append a trailing '/' if the document is a directory
        to match Apache's rewrite rules. */    

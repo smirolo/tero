@@ -11,11 +11,13 @@
 <body>
   <div id="wrap">
     <!-- tmpl_include name='header.template' -->
-
-  <div id="document">
+    
+    <div id="document">
+      <!-- tmpl_var name='feed' -->
+    </div>
+    
   </div>
-  </div>
-
+  
   <!-- tmpl_include name='footer.template' -->
 
 </body>
