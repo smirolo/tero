@@ -194,7 +194,7 @@ void feedRepository<postWriter>::fetch( session& s,
 	    ci->normalize();
 	    std::stringstream strm;
 	    strm << html::p();
-	    strm << projname << " / " << ci->guid << " &nbsp;&mdash;&nbsp; ";
+	    strm << projname << " &nbsp;&mdash;&nbsp; " << ci->guid << "<br />";
 	    strm << ci->descr;
 	    strm << html::p::end;
 	    strm << html::pre();
