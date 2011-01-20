@@ -43,8 +43,8 @@ namespace {
 	     n != NULL; n = n->next_sibling() ) {
 	    switch( n->type() ) {
 	    case node_element:
-		/* author, title, date. */
-		s.insert(n->name(),n->value());
+		/* author, title, date. */		
+		s.vars[n->name()] = session::valT(n->value());
 	    default:
 		/* Nothing to do except prevent gcc from complaining. */
 		break;
@@ -758,6 +758,9 @@ void docbook::walk( session& s, const rapidxml::xml_node<>& node ) const {
 void docbookMeta::fetch( session& s, const boost::filesystem::path& pathname ) const {
     using namespace rapidxml;
 
+    /* \todo should only load one but how does it sits with dispatchDoc
+     that initializes s[varname] by default to "document"? */
+
     char *buffer;
     size_t length;
     rapidxml::xml_document<> doc;
@@ -784,9 +787,11 @@ void docbookMeta::fetch( session& s, const boost::filesystem::path& pathname ) c
 	    parseInfo(s,*info);
 	}
     }
+    session::variables::const_iterator found = s.vars.find("title");
     if( s.vars.find("title") == s.vars.end() ) {
 	s.insert("title",s.valueOf("document"));
     }
+    meta::fetch(s,pathname);
 }
 
 

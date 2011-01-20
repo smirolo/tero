@@ -35,7 +35,7 @@
 	    <!-- tmpl_var name='history' -->	      
 	  </table>
 	  <h1>Quality Results</h1>
-	  <p>The following sections present the up-to-date results for <a href="/drop/doc/quality.book">runtime tests and static code analyses</a>.</p>
+	  <p>The following sections present the up-to-date results for <a href="/reps/whitepapers/doc/quality.book">runtime tests and static code analyses</a>.</p>
 	  <h2>Regressions for runtime tests</h2>
 	  <p>Regression views tie a change in behavior to a specific source revision and or system. Regression views will thus be most useful to contributors investigating why a previously passing test started to fail.</p>
 	  <!-- tmpl_var name='regressions' -->

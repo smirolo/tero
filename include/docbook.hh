@@ -127,8 +127,11 @@ public:
 };
 
 /** Load meta information associated to a docbook file. */
-class docbookMeta : public text {
+class docbookMeta : public meta {
 public:
+    explicit docbookMeta( const std::string& v ) 
+	: meta(v,whenFileExist) {}
+
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 

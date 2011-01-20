@@ -171,16 +171,12 @@ public:
 
 /** Diff between two revisions of a file under revision control
  */
-class changediff : public composer {
-protected:
-	
-    /** Embed the content of a variable into a page. 
-     */
-    virtual void embed( session& s, const std::string& value );
-
+class changediff : public document {
 public:
-    explicit changediff( const boost::filesystem::path& f ) 
-	: composer(f) {}
+    changediff() 
+	: document(always) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 
 };
 

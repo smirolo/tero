@@ -83,12 +83,7 @@ projfiles::addFile( session& s, const boost::filesystem::path& file ) const {
 	s.out() << html::p();
 	state = toplevelFiles;
     }
-    std::string href = file.string();
-    std::string srcTop = s.valueOf("srcTop");
-    if( href.compare(0,srcTop.size(),srcTop) == 0 ) {
-	href = s.root() + file.string().substr(srcTop.size());
-    }
-    s.out() << html::a().href(href) 
+    s.out() << html::a().href(s.asUrl(file).string()) 
 	      << file.leaf() 
 	      << html::a::end << "<br />" << std::endl;
 }

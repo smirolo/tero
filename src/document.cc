@@ -104,11 +104,14 @@ bool dispatchDoc::fetch( session& s,
     const document* doc = select(varname,pathname.string());
     if( doc != NULL ) {
 	boost::filesystem::path p(s.abspath(pathname));
+#if 0
+	std::cerr << "behavior: " << doc->behavior << " " << p << std::endl;
+#endif
 	switch( doc->behavior ) {
 	case document::always:
 	    doc->fetch(s,p);
 	    break;
-	case document::whenFileExist: {	    
+	case document::whenFileExist: {	   
 	    if( boost::filesystem::exists(p) ) {
 		doc->fetch(s,p);	
 	    }
@@ -177,6 +180,16 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname ) con
     last();
 }
 
+void meta::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    session::variables::const_iterator found = s.vars.find(varname);
+    if( found != s.vars.end() ) {    
+	s.out() << found->second.value;
+    } else {
+	s.out() << pathname;
+    }
+}
+
 
 void consMeta::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
@@ -189,6 +202,8 @@ void textMeta::fetch( session& s, const boost::filesystem::path& pathname ) cons
     using namespace boost::filesystem; 
     static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
+    /* \todo should only load one but how does it sits with dispatchDoc
+     that initializes s[varname] by default to "document"? */
     ifstream strm;
     open(strm,pathname);
     while( !strm.eof() ) {
@@ -196,29 +211,19 @@ void textMeta::fetch( session& s, const boost::filesystem::path& pathname ) cons
 	std::string line;
 	std::getline(strm,line);
 	if( boost::regex_search(line,m,valueEx) ) {
-	    s.insert(m.str(1),m.str(2));
+	    if( m.str(1) == std::string("Subject") ) {
+		s.vars["title"] = session::valT(m.str(2));
+	    } else {
+		s.vars[m.str(1)] = session::valT(m.str(2));
+	    }
 	} else break;
     }
     strm.close();
     /* 
-    std::time_t last_write_time( const path & ph );
-    To convert the returned value to UTC or local time, 
-    use std::gmtime() or std::localtime() respectively. */
-
-    if( s.vars.find("title") == s.vars.end() ) {
-	if( s.vars.find("Subject") != s.vars.end() ) {
-	    s.insert("title",s.valueOf("Subject"));
-	} else {
-	    s.insert("title",s.valueOf("document"));
-	}
-    }
-
-    session::variables::const_iterator found = s.vars.find(varname);
-    if( found != s.vars.end() ) {    
-	s.out() << found->second.value;
-    } else {
-	s.out() << pathname;
-    }
+       std::time_t last_write_time( const path & ph );
+       To convert the returned value to UTC or local time, 
+       use std::gmtime() or std::localtime() respectively. */
+    meta::fetch(s,pathname);
 }
 
 

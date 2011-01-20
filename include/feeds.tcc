@@ -1,4 +1,3 @@
-// -*- C++ -*-
 /* Copyright (c) 2011, Fortylines LLC
    All rights reserved.
 
@@ -46,7 +45,12 @@ void feedWriter<feedReader,postWriter>::fetch( session& s,
 			   const boost::filesystem::path& pathname ) const
 {
     postWriter writer(s.out());
+#if 0
+    /* Get the page (instead of base) and postPerPage differently. */
     feedReader feeds(pathname,0,feedIndex::maxLength);
+#else
+    feedReader feeds(pathname,0,5);
+#endif
     feeds.provide();
 
     bool firstTime = true;

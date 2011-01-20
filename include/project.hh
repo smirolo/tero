@@ -40,19 +40,20 @@
 */
 class projhref {    
 protected:  
+    boost::filesystem::path base;
     std::string name;
 
     template<typename ch, typename tr>
     friend inline std::basic_ostream<ch, tr>&
     operator<<( std::basic_ostream<ch, tr>& ostr, const projhref& v ) {
-	ostr << html::a().href((boost::filesystem::path("/") 
-				/ v.name / "dws.xml").string())
+	ostr << html::a().href((v.base / v.name / "dws.xml").string())
 	     << v.name << html::a::end;
 	return ostr;
     }
     
 public:  
-    explicit projhref( const std::string& n ) : name(n) {}
+    projhref( const boost::filesystem::path& b, const std::string& n ) 
+	: base(b), name(n) {}
 
 };
 

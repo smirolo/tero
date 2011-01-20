@@ -234,11 +234,11 @@ void gitcmd::create( const boost::filesystem::path& pathname,
 	}
 	config.close();
     }
-
+#if 0
     std::cerr << "!!! foundReceive at line " << foundReceiveIdx 
 	      << "and foundDenyCurrentBranch at line " 
 	      << foundDenyCurrentBranchIdx << std::endl;
-
+#endif
     {
 	/* Add "denyCurrentBranch = ignore" into the git config file
 	   such that it is possible to push commits into the repository

@@ -44,7 +44,7 @@ protected:
     
 public:
     explicit composer( const boost::filesystem::path& f ) 
-	: fixed(f) {}
+	: text(always), fixed(f) {}
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );

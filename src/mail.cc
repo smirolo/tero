@@ -83,6 +83,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
     p.score = 0;
     p.filename = boost::filesystem::path(name);
     p.guid = std::string("/") + s.subdirpart(s.valueOf("siteTop"),name).string();	   
+    descr << html::pre();
 
     while( !ins.eof() ) {
 	boost::smatch m;
@@ -95,14 +96,16 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	       http://en.wikipedia.org/wiki/Mbox */	    
 	    if( !first ) {
 		if( stopOnFirst ) break;
+		descr << html::pre::end;
 		p.descr = descr.str();
 		descr.str("");
+		descr << html::pre();
 		p.normalize();
 		filter->filters(p);
 	    }
 	    p = post();
 	    p.filename = boost::filesystem::path(name);
-	    p.guid = s.subdirpart(s.valueOf("siteTop"),name).string();
+	    p.guid = std::string("/") + s.subdirpart(s.valueOf("siteTop"),name).string();
 	    p.score = 0;
 	    first = false;
 	    state = startParse;
@@ -115,6 +118,8 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	    state = dateParse;
 	} else if( line.compare(0,5,"From:") == 0 ) {
 	    p.authorEmail = line.substr(5);
+	    /* \todo As long as we donot parse name separately. */
+	    p.authorName = line.substr(5);
 	    state = authorParse;
 	} else if( line.compare(0,9,"Subject: ") == 0 ) {
 	    p.title = line.substr(9);
@@ -158,6 +163,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	    state = startParse;
 	}
     }
+    descr << html::pre::end;
     p.descr = descr.str();
     descr.str("");
     p.normalize();

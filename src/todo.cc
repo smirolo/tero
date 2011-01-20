@@ -28,9 +28,6 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "todo.hh"
-#if 0
-#include "payment.hh"
-#endif
 #include "markup.hh"
 
 /** Pages related to todo items.
@@ -206,7 +203,7 @@ void todoliner::filters( const post& p ) {
 	      << "<!-- " << p.score << " -->" << std::endl
 	      << html::td() << p.time.date() << html::td::end
 	      << html::td() << p.authorEmail << html::td::end
-	  << html::td() << html::a().href(p.guid + ".todo") 
+	  << html::td() << html::a().href(p.guid) 
 	      << p.title 
 	      << html::a::end << html::td::end;
     *ostr << html::td()
@@ -403,29 +400,41 @@ void todoVoteSuccess::fetch( session& s,
 }
 
 
-#if 0
-void todoWriteHtml::meta( session& s, 
-			  const boost::filesystem::path& pathname ) const {
+void todoMeta::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
     using namespace boost::filesystem; 
-    static const boost::regex valueEx("^(Subject):\\s+(.*)");
+    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
     std::stringstream title;
-    title << '[' << todoAdapter().fetch(s,pathname).guid << ']';
+    title << '[' << basename(pathname.filename()) << ']';
+
+    /* \todo should only load one but how does it sits with dispatchDoc
+     that initializes s[varname] by default to "document"? */
     ifstream strm;
+    std::string line;
     open(strm,pathname);
+    std::getline(strm,line);  // skip first line "From  ..." (see mbox)
     while( !strm.eof() ) {
 	boost::smatch m;
-	std::string line;
 	std::getline(strm,line);
 	if( boost::regex_search(line,m,valueEx) ) {
-	    title << ' ' << m.str(2);
-	    break;
-	}
+	    if( m.str(1) == std::string("Subject") ) {
+		title << " - " << m.str(2);
+		s.vars["title"] = session::valT(title.str());
+	    } else {
+		s.vars[m.str(1)] = session::valT(m.str(2));
+	    }
+	} else break;
     }
-    strm.close();
-    s.insert("Subject",title.str());
+    strm.close();    
+
+    /* 
+       std::time_t last_write_time( const path & ph );
+       To convert the returned value to UTC or local time, 
+       use std::gmtime() or std::localtime() respectively. */
+    meta::fetch(s,pathname);
 }
-#endif
+
 
 void 
 todoWriteHtml::fetch( session& s, const boost::filesystem::path& pathname ) const 

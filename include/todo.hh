@@ -87,11 +87,11 @@ protected:
 
 public:
     explicit todoModifPost( const boost::filesystem::path& m ) 
-	: modifs(m), istr(NULL) {}
+	: document(always), modifs(m), istr(NULL) {}
 
     todoModifPost( const boost::filesystem::path& m,		    
 		    std::istream& is ) 
-	: modifs(m), istr(&is) {}
+	: document(always), modifs(m), istr(&is) {}
 
 };
 
@@ -133,6 +133,8 @@ public:
  */
 class todoIndexWriteHtml : public document {
 public:
+    todoIndexWriteHtml() : document(always) {}
+
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
@@ -141,6 +143,8 @@ public:
  */
 class todoVoteAbandon : public document {
 public:
+    todoVoteAbandon() : document(always) {}
+
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
@@ -160,6 +164,15 @@ public:
     todoVoteSuccess( const boost::filesystem::path& m, 
 		     const char *retPath ) 
 	: todoModifPost(m), returnPath(retPath) {}
+
+    void fetch( session& s, const boost::filesystem::path& pathname ) const;
+};
+
+
+class todoMeta : public textMeta {
+public:
+    explicit todoMeta( const std::string& v ) 
+	: textMeta(v) {}
 
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };

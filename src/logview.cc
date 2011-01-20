@@ -72,6 +72,10 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) const
     tableType table;
 
     path srcTop(s.valueOf("srcTop"));
+    boost::filesystem::path srcBase(boost::filesystem::path("/") 
+				    / s.subdirpart(s.valueOf("siteTop"),
+						   s.valueOf("srcTop")));
+
 #if 0
     /* Populate the project names based on the directories in *srcTop*
        which hold a repository control subdirectory (.git, .svn, etc.). */
@@ -185,13 +189,12 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) const
     } else {
 	s.out() << html::table();
 	s.out() << html::tr();
-	s.out() << html::th() << html::th::end;
+	s.out() << html::th() << html::th::end;	
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
 	    s.out() << html::th() 
-		  << html::a().href(s.subdirpart(s.valueOf("siteTop"),
-					    dirname / col->string()).string())
-		  << *col << html::a::end << html::th::end;
+		    << html::a().href(col->string())
+		    << *col << html::a::end << html::th::end;
 	}
 	s.out() << html::tr::end;
 
@@ -199,7 +202,8 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) const
 	for( tableType::const_iterator row = table.begin();
 	     row != table.end(); ++row ) {
 	    s.out() << html::tr();
-	    s.out() << html::th() << projhref(row->first) << html::th::end;
+	    s.out() << html::th() << projhref(srcBase,row->first) 
+		    << html::th::end;
 	    for( colHeadersType::const_iterator col = colHeaders.begin();
 		 col != colHeaders.end(); ++col ) {
 		colType::const_iterator value = row->second.find(*col);

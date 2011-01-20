@@ -54,7 +54,7 @@ public:
                          of *pathname*.
     */
     enum callFetchType {
-	always,	
+	always = 0,	
 	whenFileExist,
 	whenNotCached
     };
@@ -143,16 +143,31 @@ public:
     and not only in the placeholder for the document.
 */
 
+class meta : public document {
+protected:
+    const std::string varname;
+
+public:
+    explicit meta( const std::string& n )
+	: document(always), varname(n) {}
+
+    meta( const std::string& n, callFetchType b )
+	: document(b), varname(n) {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+};
+
+
+
 /** associate a constant to a meta.
 */
-class consMeta : public document {
+class consMeta : public meta {
 protected:
-    const std::string& varname;
-    const std::string& value;
+    const std::string value;
 
 public:
     consMeta( const std::string& n, const std::string& v ) 
-	: varname(n), value(v) {}
+	: meta(n,always), value(v) {}
     
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
@@ -161,13 +176,10 @@ public:
 /** fetch meta information from *pathname* into session *s* 
     and display the one associated to *varname*. 
 */
-class textMeta : public document {
-protected:
-    const std::string& varname;
-
+class textMeta : public meta {
 public:
     explicit textMeta( const std::string& v ) 
-	: document(whenFileExist), varname(v) {}
+	: meta(v,whenFileExist) {}
     
     virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
@@ -189,6 +201,11 @@ public:
 
     explicit text( const std::string& h ) 
 	: document(whenFileExist), header(h), leftDec(NULL), rightDec(NULL) {}
+
+    /* composer derives from text even though it can be used for non-text
+       documents. */
+    explicit text( callFetchType b ) 
+	: document(b), leftDec(NULL), rightDec(NULL) {}
 
     text( decorator& l,  decorator& r ) 
 	: document(whenFileExist), leftDec(&l), rightDec(&r) {}

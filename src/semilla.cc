@@ -111,12 +111,11 @@ int main( int argc, char *argv[] )
 	    return 0;
 	}
 #endif	
-
-	std::cerr << "index=" << index << std::endl;
  
 	/* by default bring the index page */
 	if( (s.valueOf("view").empty() || s.valueOf("view") == "/") 
-	    && !boost::filesystem::exists(index) ) {
+	    && boost::filesystem::exists(s.valueOf("siteTop") 
+					 + std::string("index.html")) ) {
 	    cout << httpHeaders.location(url("index.html"));		       
 	    
 	} else {	    		       
@@ -268,9 +267,11 @@ int main( int argc, char *argv[] )
 	       and presented inside a source.template "view" */
 	    path sourceTmpl(s.valueOf("themeDir") 
 			    + std::string("/source.template"));
+	    composer source(sourceTmpl);
 
-	    changediff diff(sourceTmpl);
-	    docs.add("view",boost::regex("/diff"),diff);
+	    changediff diff;
+	    docs.add("view",boost::regex(".*/diff"),source);
+	    docs.add("document",boost::regex(".*/diff"),diff);
 
 	    mailthread mt(s.out());
 	    mailParser mp(mt);
@@ -279,7 +280,6 @@ int main( int argc, char *argv[] )
 	    todoWriteHtml todoItemWriteHtml;
 	    docs.add("document",boost::regex(".*\\.todo"),todoItemWriteHtml);
 
-	    composer source(sourceTmpl);
 	    linkLight leftLinkStrm(s);
 	    linkLight rightLinkStrm(s);
 	    cppLight leftCppStrm;
@@ -343,11 +343,13 @@ int main( int argc, char *argv[] )
 	    docs.add("document",boost::regex(".*"),rawtext);
 
 	    /* Load title from the meta tags in a text file. */
-	    textMeta title("title");
-	    docbookMeta titleBook;
+	    meta title("title");
+	    todoMeta titleTodo("title");
+	    docbookMeta titleBook("title");
 	    consMeta titleBuildLog("title","Build View");
 	    docs.add("title",boost::regex(".*/log/"),titleBuildLog);
-	    docs.add("title",boost::regex(".book"),titleBook);
+	    docs.add("title",boost::regex(".*\\.book"),titleBook);
+	    docs.add("title",boost::regex(".*\\.todo"),titleTodo);
 	    docs.add("title",boost::regex(".*"),title);
 
 	    /* homepage */

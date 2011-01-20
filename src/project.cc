@@ -94,7 +94,7 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) con
     using namespace rapidxml;
     using namespace boost::filesystem;
 
-    std::string projname = pathname.parent_path().filename();
+    std::string projdir = pathname.parent_path().filename();
     size_t fileSize = file_size(pathname);
     char text[ fileSize + 1 ];
     ifstream file;
@@ -186,7 +186,12 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) con
 		}
 	    }
 	    s.out() << html::p::end;
+
+	    boost::filesystem::path srcBase(boost::filesystem::path("/") 
+					    / s.subdirpart(s.valueOf("siteTop"),
+						       s.valueOf("srcTop")));
 	   
+
 	    /* Dependencies to install the project from a source compilation. */
 	    xml_node<> *repository = project->first_node("repository");
 	    if( repository == NULL ) repository = project->first_node("patch");
@@ -196,7 +201,7 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) con
 			  << html::p::end;
 		s.out() << html::pre()
 			  << s.valueOf("remoteSrcTop") 
-			  << "/" << projname << "/.git"
+			  << "/" << projdir << "/.git"
 			  << html::pre::end;
 		s.out() << html::p() << "The following prerequisites are "
 		    "necessary to build the project from source: ";
@@ -206,7 +211,7 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) con
 		    if( name != NULL ) {
 			if( boost::filesystem::exists(s.srcDir(name->value())) ) {			
 			    s.out() << sep 
-				  << projhref(name->value());
+				    << projhref(srcBase,name->value());
 			} else {
 			    s.out() << sep << name->value();
 			}
@@ -226,7 +231,7 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) con
 		    " and re-install the binaries with the following commands:";
 		s.out() << html::p::end;
 		s.out() << html::pre();
-		s.out() << "cd *buildTop*/" << projname << std::endl;		
+		s.out() << "cd *buildTop*/" << projname->value() << std::endl;
 		s.out() << html::a().href("/resources/dws") 
 			  << "dws" << html::a::end 
 			  << " make recurse" << std::endl;

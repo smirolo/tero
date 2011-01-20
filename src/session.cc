@@ -93,10 +93,7 @@ url session::asUrl( const boost::filesystem::path& p ) const
 {
     boost::filesystem::path name = p;
     boost::filesystem::path siteTop = valueOf("siteTop");
-    boost::filesystem::path srcTop = valueOf("srcTop");
-    if( prefix(srcTop,p) ) {
-	name = boost::filesystem::path("/") / subdirpart(srcTop,p);
-    } else if( prefix(siteTop,p) ) {
+    if( prefix(siteTop,p) ) {
 	name = boost::filesystem::path("/") / subdirpart(siteTop,p);
     }
     return url("","",name);

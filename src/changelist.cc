@@ -36,16 +36,16 @@
 url diffref::asUrl( const boost::filesystem::path& doc, 
 		       const std::string& rev ) const {
     std::stringstream hrefs;
-    hrefs << "/diff?document=" << doc
-	  << "&right=" << rev; 
+    hrefs << doc
+	  << "/diff?right=" << rev; 
     return url(hrefs.str());
 }
 
 url checkinref::asUrl( const boost::filesystem::path& doc, 
 		       const std::string& rev ) const {
     std::stringstream hrefs;
-    hrefs << "/checkin?document=" << doc
-	  << "&revision=" << rev; 
+    hrefs << doc
+	  << "/checkin?revision=" << rev; 
     return  url(hrefs.str());
 }
 
@@ -107,42 +107,38 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) const
     httpHeaders.location(url(s.doc() + std::string(".edits")));
 }
 
-
-void changediff::embed( session& s, const std::string& varname ) {
+void changediff::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
     using namespace std;
 
-    if( varname != "document" ) {
-	composer::embed(s,varname);
-    } else {
-	std::stringstream text;
-	std::string leftRevision = s.valueOf("left");
-	std::string rightRevision = s.valueOf("right");
-	boost::filesystem::path docname(s.valueOf("srcTop") 
-					+ s.valueOf(varname));
+    std::stringstream text;
+    std::string leftRevision = s.valueOf("left");
+    std::string rightRevision = s.valueOf("right");
+    boost::filesystem::path docname(pathname.parent_path());
 
-	revisionsys *rev = revisionsys::findRev(s,docname);
-	if( rev != NULL ) {
-	    boost::filesystem::path 
-		gitrelname = relpath(docname,rev->rootpath);
-	    rev->diff(text,leftRevision,rightRevision,gitrelname);
+    revisionsys *rev = revisionsys::findRev(s,docname);
+    if( rev != NULL ) {
+	boost::filesystem::path 
+	    gitrelname = relpath(docname,rev->rootpath);
+	rev->diff(text,leftRevision,rightRevision,gitrelname);
 		
-	    s.out() << "<table style=\"text-align: left;\">" << endl;
-	    s.out() << html::tr();
-	    s.out() << html::th() << leftRevision << html::th::end;
-	    s.out() << html::th() << rightRevision << html::th::end;
-	    s.out() << html::tr::end;
+	s.out() << "<table style=\"text-align: left;\">" << endl;
+	s.out() << html::tr();
+	s.out() << html::th() << leftRevision << html::th::end;
+	s.out() << html::th() << rightRevision << html::th::end;
+	s.out() << html::tr::end;
 
-	    boost::filesystem::ifstream input;
-	    open(input,docname);
+	boost::filesystem::ifstream input;
+	open(input,docname);
 
-	    /* \todo the session is not a parameter to between files... */	
-	    const document *doc = dispatchDoc::instance->select("document",docname.string());
-	    ((::text*)doc)->showSideBySide(s,input,text,false);
+	/* \todo the session is not a parameter to between files... */	
+	const document *doc = dispatchDoc::instance->select("document",docname.string());
+	((::text*)doc)->showSideBySide(s,input,text,false);
 		
-	    s.out() << html::table::end;
-	    input.close();
-	}
+	s.out() << html::table::end;
+	input.close();
     }
+    
 }
 
 
