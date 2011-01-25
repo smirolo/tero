@@ -202,7 +202,7 @@ int main( int argc, char *argv[] )
 	    rssRepository reps;
 	    rssSiteAggregate agg("document"); // \todo?
 	    docs.add("document",boost::regex(".*\\.git/index\\.rss"),reps);
-	    docs.add("document",boost::regex("^/index\\.rss"),agg);
+	    docs.add("document",boost::regex(".*/index\\.rss"),agg);
 
 	    /* Composer and document for the todos index view */
 	    composer todos(s.valueOf("themeDir")
