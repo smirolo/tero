@@ -115,7 +115,7 @@ int main( int argc, char *argv[] )
 	/* by default bring the index page */
 	if( (s.valueOf("view").empty() || s.valueOf("view") == "/") 
 	    && boost::filesystem::exists(s.valueOf("siteTop") 
-					 + std::string("index.html")) ) {
+					 + std::string("/index.html")) ) {
 	    cout << httpHeaders.location(url("index.html"));		       
 	    
 	} else {	    		       
@@ -345,11 +345,14 @@ int main( int argc, char *argv[] )
 	    /* Load title from the meta tags in a text file. */
 	    meta title("title");
 	    todoMeta titleTodo("title");
+	    textMeta titleText("title");
 	    docbookMeta titleBook("title");
 	    consMeta titleBuildLog("title","Build View");
 	    docs.add("title",boost::regex(".*/log/"),titleBuildLog);
 	    docs.add("title",boost::regex(".*\\.book"),titleBook);
+	    docs.add("title",boost::regex(".*\\.corp"),titleBook);
 	    docs.add("title",boost::regex(".*\\.todo"),titleTodo);
+	    docs.add("title",boost::regex(".*\\.template"),titleText);
 	    docs.add("title",boost::regex(".*"),title);
 
 	    /* homepage */
