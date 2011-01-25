@@ -13,6 +13,8 @@
     <!-- tmpl_include name='header.template' -->
     
     <div id="document">
+      <!-- live news feed -->	 
+      <h2 class="whatTitle"><a href="/resources/index.rss"><img src="/resources/feed-icon-14x14.png" alt="RSS feed" title="RSS feed"/></a>&nbsp;What's new?</h2>      
       <!-- tmpl_var name='feed' -->
     </div>
     
