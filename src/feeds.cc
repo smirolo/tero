@@ -27,38 +27,172 @@
 
 feedIndex::indexSet feedIndex::indices;
 
-const feedIndex::difference_type feedIndex::maxLength = ~((int)1 << ((sizeof(int) << 3) - 1));
-
 feedIndex::iterator feedIndex::first;
 feedIndex::iterator feedIndex::last;
 
-feedIndex feedIndex::instance("",0,feedIndex::maxLength);
-
 void feedIndex::filters( const post& p ) {
-    /* create one shortPost per post tag. */
-    post clean = p;
-    clean.normalize();
-    if( p.tags.empty() ) {
-	indices.push_back(clean);
-    } else {
-	for( post::tagSet::const_iterator t = p.tags.begin();
-	     t != p.tags.end(); ++t ) {
-	    indices.push_back(post(clean,*t));
-	}
-    }
+    indices.push_back(p);
+}
+
+
+void feedIndex::provide() {
     first = indices.begin();
     last = indices.end();
 }
 
 
-void feedIndex::provide() {
-    if( std::distance(first,last) >= base ) {
-	std::advance(first,base);
+void feedIndex::flush()
+{
+    provide();
+    if( next ) {
+	bool firstTime = true;
+	const_iterator prev;
+	for( const_iterator p = first; p != last  ; ++p ) {
+	    if( firstTime || prev->guid != p->guid ) { 
+		next->filters(*p);
+		firstTime = false;
+		prev = p;
+	    }
+	}
+	next->flush();
     }
-    indexSet::iterator second = first;
-    if( std::distance(second,last) >= length ) {
-	std::advance(second,length);
-	last = second;
+}
+
+
+postFilter *feedWriter::feeds = NULL;
+
+
+void feedWriter::fetch( session& s, 
+			   const boost::filesystem::path& pathname ) const
+{
+#if 0
+    postWriter writer(s.out());
+
+    bool firstTime = true;
+    typename feedReader::iterator prev;
+    std::stringstream strm;
+    std::ostream& prevDisp = s.out(strm);
+
+    for( typename feedReader::iterator first = feeds.begin();
+	 first != feeds.end(); ++first ) {
+	if( firstTime || first->guid != prev->guid ) {
+	    if( first->descr.empty() ) {
+		strm.str("");		
+		if( dispatchDoc::instance->fetch(s,"document",first->guid)) {
+		    if( !s.valueOf("title").empty() ) {
+			first->title = s.valueOf("title");
+		    }
+		} else {
+		    strm << "updated file ";
+		    writelink(strm,"",first->guid);
+		    first->descr = strm.str();	 
+		}
+		first->descr = strm.str();
+	    }
+
+#if 0
+	    /* undefined time. */
+	    if( ) {
+		std::time_t lwt = last_write_time(first->guid);
+		first->time = boost::posix_time::from_time_t(lwt);
+	    }
+#endif	
+	    /* \todo authorName is set from filename but not in mail.cc, only authorEmail there. 
+	     What about commits? */
+	    if( first->authorEmail.empty() ) {
+		first->authorEmail = "info";
+		first->authorName = "anonymous";
+		/* \todo donot seem to find functionality to find
+		   owner through boost. */
+		struct stat statbuf;
+		if( stat(first->guid.c_str(),&statbuf) == 0 ) {
+		    struct passwd *pwd = getpwuid(statbuf.st_uid);
+		    if( pwd != NULL ) {
+			first->authorEmail = pwd->pw_name;
+			first->authorName = pwd->pw_gecos;
+		    }
+		}
+		first->authorEmail += std::string("@") + s.valueOf("domainName");
+	    }
+	    writer.filters(*first);
+	}
+	prev = first;
+	firstTime = false;	
+    }
+    s.out(prevDisp);
+#endif
+}
+
+
+void feedContent::fetch( session& s, 
+		     const boost::filesystem::path& pathname ) const
+{
+    using namespace boost::filesystem;
+
+    /* Always generate the feed from a content directory even
+       when a file is passed as *pathname* */
+    path base(pathname);
+    while( base.string().size() > s.valueOf("siteTop").size()
+	   && !is_directory(base) ) {
+	base = base.parent_path();
+    }
+    if( !base.empty() ) {
+	for( directory_iterator entry = directory_iterator(base); 
+	     entry != directory_iterator(); ++entry ) {
+	    boost::smatch m;
+	    if( !is_directory(*entry) 
+		&& boost::regex_match(entry->string(),m,filePat) ) {
+		path filename(base / entry->filename());	    
+		std::string reluri = s.subdirpart(s.valueOf("siteTop"),
+						  filename).string();	    
+		/* We should pop out a post for those docs that don't
+		   even when they fetch (book vs. mail/blogentry). */
+		if( !dispatchDoc::instance->fetch(s,"document",reluri)) {
+		    post p;
+		    p.title = reluri;	    
+		    p.guid = reluri;
+		    std::time_t lwt = last_write_time(filename);
+		    p.time = boost::posix_time::from_time_t(lwt);
+		    super::feeds->filters(p);
+		}
+	    }
+	}
+   }
+}
+
+
+void htmlContent::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    htmlwriter writer(s.out());
+    feedOrdered<orderByTime<post> > latests(&writer);
+    feedPage<feedOrdered<orderByTime<post> > > feeds(latests,0,5); 
+
+    postFilter *prev = super::feeds;
+    if( !super::feeds ) {
+	super::feeds = &feeds;
+    } 
+    super::fetch(s,pathname);
+    super::feeds = prev;
+    if( !super::feeds ) {
+	feeds.flush();
+    }
+}
+
+
+void rssContent::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    rsswriter writer(s.out());
+    feedOrdered<orderByTime<post> > latests(&writer);
+    feedPage<feedOrdered<orderByTime<post> > > feeds(latests,0,5); 
+
+    postFilter *prev = super::feeds;
+    if( !super::feeds ) {
+	super::feeds = &feeds;
+    }
+    super::fetch(s,pathname);
+    super::feeds = prev;
+    if( !super::feeds ) {
+	feeds.flush();
     }
 }
 

@@ -232,8 +232,8 @@ int main( int argc, char *argv[] )
 			   + std::string("/blog.template"));
 	    blogByIntervalDate blogtext;
 	    blogByIntervalTags blogtags;
-	    blogDateLinks dates;
-	    blogTagLinks tags;
+	    blogDateLinks dates(boost::regex(".*\\.blog"));
+	    blogTagLinks tags(boost::regex(".*\\.blog"));
 	    struct {
 		const char *name;
 		boost::regex pat;

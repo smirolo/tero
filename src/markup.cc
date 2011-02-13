@@ -144,11 +144,17 @@ namespace html {
 	"title"
     };
 
-    std::set<std::string> a::hrefs;
+    std::set<url> a::cached;
+    std::set<url> a::uncached;
 
-    a& a::href( const std::string& v ) {
-	attrValues[hrefAttr] = v;
-	hrefs.insert(v);
+    a& a::href( const url& v ) {
+	attrValues[hrefAttr] = v.string();
+	if( v.protocol.empty() ) {
+	    std::set<url>::const_iterator found = cached.find(v);
+	    if( found == cached.end() ) {
+		uncached.insert(v);
+	    }
+	}
 	return *this;
     }
 

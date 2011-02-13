@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2010, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,14 @@
 
 void blogEntry::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
-    {
-    mailParser parser(boost::regex(".*\\.blog"),feedIndex::instance,true);
-    parser.fetch(s,s.abspath(pathname));
-    }
+    postFilter *prev = super::feeds;
 
     htmlwriter writer(s.out());
-    mailParser parser(boost::regex(".*\\.blog"),writer,true);
+    if( !super::feeds ) {
+	super::feeds = &writer;
+    }
+    mailParser parser(boost::regex(".*\\.blog"),*super::feeds,true);
     parser.fetch(s,s.abspath(pathname));
+
+    super::feeds = prev;
 }

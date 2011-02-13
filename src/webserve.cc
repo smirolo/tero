@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -133,17 +133,18 @@ httpHeaderSet httpHeaders;
 emptyParaHackType emptyParaHack;
 
 url::url( const std::string& name ) {
-	boost::smatch m;
-	boost::regex e("(\\S+:)?(//[^/]+)?(:[0-9]+)?(\\S+)?",
-		       boost::regex::normal | boost::regbase::icase);
-	port = 0;
-	if( regex_search(name,m,e) ) {
-		if( !m.str(1).empty() ) 
-			protocol = m.str(1).substr(0, m.str(1).size() - 1);
-		if( !m.str(2).empty() ) host = m.str(2).substr(2);
-		port = atoi(m.str(3).c_str());
-		pathname = m.str(4);
+    boost::smatch m;
+    boost::regex e("(\\S+:)?(//[^/]+)?(:[0-9]+)?(\\S+)?",
+		   boost::regex::normal | boost::regbase::icase);
+    port = 0;
+    if( regex_search(name,m,e) ) {
+	if( !m.str(1).empty() ) { 
+	    protocol = m.str(1).substr(0, m.str(1).size() - 1);
 	}
+	if( !m.str(2).empty() ) host = m.str(2).substr(2);
+	port = atoi(m.str(3).c_str());
+	pathname = m.str(4);
+    }
 }
 
 

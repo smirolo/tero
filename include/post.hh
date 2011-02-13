@@ -44,8 +44,10 @@
 
 
 /** Base class with common information present in every post
-    such as date, title and author. */
-class postBase {
+    such as date, title and author.
+    Full-length post with textual content. 
+*/
+class post {
 public:
     /** File this short post is derived from. 
      */
@@ -59,6 +61,8 @@ public:
      */
     std::string authorEmail;    
 
+    std::string tag;
+
     /** Time at which the post was published.
      */
     boost::posix_time::ptime time;    
@@ -67,40 +71,6 @@ public:
        and subject of e-mails. 
     */
     std::string title;   
-};
-
-
-class post;   // forward declaration
-
-
-/** Short posts are used to construct sets of links to actual post content.
-    Outside the common information (author, time), tags are usually used 
-    to filter posts and thus every tag associated to a post ends up generating
-    as many shortPosts.
- */
-class shortPost : public postBase {
-public:
-    std::string tag;
-
-    shortPost() {}
-
-    shortPost( const post& p, const std::string& t );
-
-};
-
-
-/** Full-length post with textual content. 
-*/
-class post : public postBase {
-public:
-    typedef std::set<std::string> tagSet;
-
-public:
-    std::string tag;
-
-    post() {}
-
-    post( const post& p, const std::string& t );
 
     /** The post unique identifier is used in many case to associate
 	a post to a specific file.
@@ -124,9 +94,9 @@ public:
      */
     uint32_t score;
 
-    /** tags associated to a post. 
-     */
-    tagSet tags;
+    post() {} 
+
+    post( const post& p );
 
     static void 
     addSessionVars( boost::program_options::options_description& opts );

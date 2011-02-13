@@ -377,7 +377,7 @@ session::root( const boost::filesystem::path& leaf,
 	dirname = dirname.parent_path();
     }
 #if 0
-    std::cerr << "root(" << leaf << "," << trigger << "), start=" << dirname;
+    std::cerr << "root(" << leaf << "," << trigger << "), start=" << dirname << std::endl;
 #endif
     bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
     while( !foundProject && (dirname.string() != srcTop) ) {
