@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -155,6 +155,10 @@ public:
 
     void filters( variables& results, sourceType source ) const;
     
+    void loadsession( const boost::program_options::options_description& opts ) {
+	load(opts,stateFilePath(),sessionfile);
+    }
+
     /** \brief Value of a variable as an absolute pathname
 	
 	If the variable exists in the session and its value can
