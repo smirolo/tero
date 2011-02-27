@@ -135,11 +135,13 @@ public:
     std::ostream *ostr;
 
 public:
+    /** number of errors encountered while generating a page. */
+    unsigned int nErrs;
     
     session( const char* p,
 	     const std::string& sn,
 	     std::ostream& o ) 
-	: sessionId(""), posCmd(p), sessionName(sn), ostr(&o) {}
+	: sessionId(""), posCmd(p), sessionName(sn), ostr(&o), nErrs(0) {}
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */
@@ -150,6 +152,8 @@ public:
     /** absolute name to the user personal directory
      */
     boost::filesystem::path userPath() const;
+
+    bool errors() const { return nErrs > 0; }
     
     bool exists() const { return !sessionId.empty(); }
 

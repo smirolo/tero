@@ -129,6 +129,7 @@ protected:
     url locationValue;
     size_t refreshDelay;
     url refreshUrl;
+    unsigned int statusCode;
 
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
@@ -185,6 +186,15 @@ protected:
 	    ostr << "Refresh:" << h.refreshDelay 
 		 << ";URL=" << h.refreshUrl << "\r\n";
 	}
+	if( h.statusCode > 0 ) {
+	    switch( h.statusCode ) {
+	    case 404:
+		ostr << "Status: " << h.statusCode << "Not Found\r\n";
+		break;
+	    default:
+		ostr << "Status: " << h.statusCode << "\r\n";
+	    }
+	}
 	ostr << "\r\n";
 	h.firstTime = false;
 	return ostr;
@@ -210,6 +220,8 @@ public:
 	       const std::string& value, 
 	       boost::posix_time::ptime::date_duration_type expires 
 	       = boost::posix_time::ptime::date_duration_type(0) );
+
+    httpHeaderSet& status( unsigned int s );
 };
 
 extern httpHeaderSet httpHeaders;

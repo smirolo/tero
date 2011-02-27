@@ -227,6 +227,13 @@ int main( int argc, char *argv[] )
 	    todoVoteSuccess tvs(todoModifs,"/todoVoteSuccess");
 	    docs.add("document",boost::regex("/todoVoteSuccess"),tvs);
 
+	    composer treatments(s.valueOf("themeDir")
+			   + std::string("/treatments.template"));
+	    docs.add("view",
+		     boost::regex(std::string("/treatments/.*")),
+		     treatments);
+
+
 	    /* blog presentation */ 
 	    composer blogs(s.valueOf("themeDir")
 			   + std::string("/blog.template"));
@@ -393,7 +400,9 @@ int main( int argc, char *argv[] )
       	    
 	    docs.fetch(s,"view");
 	    if( s.runAsCGI() ) {
-		std::cout << httpHeaders.contentType();
+		std::cout << httpHeaders
+		    .contentType()
+		    .status(s.errors() ? 404 : 0);
 	    }
 	    std::cout << mainout.str();
 	}
@@ -410,7 +419,7 @@ int main( int argc, char *argv[] )
 #endif
 	} catch( exception& e ) {
 	    /* Something went really wrong if we either get here. */
-	    cout << httpHeaders;
+	    cout << httpHeaders.status(404);
 	    cout << "<html>" << endl;
 	    cout << "<head>" << endl;
 	    cout << "<TITLE>It is really bad news...</TITLE>" << endl;
@@ -424,8 +433,8 @@ int main( int argc, char *argv[] )
 #if 0
 	}
 #endif
-	return 1;
+	++s.nErrs;
     }
 
-    return 0;
+    return s.errors();
 }

@@ -38,7 +38,7 @@
 
 void document::open( boost::filesystem::ifstream& strm, 
 		     const boost::filesystem::path& pathname ) const {
-    using namespace boost::system;
+    using namespace boost::system::errc;
     using namespace boost::filesystem;
     if( is_regular_file(pathname) ) {
 	strm.open(pathname);
@@ -47,8 +47,8 @@ void document::open( boost::filesystem::ifstream& strm,
     /* \todo figure out how to pass iostream error code in exception. */
     boost::throw_exception(
         basic_filesystem_error<path>(std::string("file not found"),
-				     pathname, 
-				     error_code()));
+			        pathname, 
+			       	make_error_code(no_such_file_or_directory)));
 }
 
 
@@ -114,6 +114,13 @@ bool dispatchDoc::fetch( session& s,
 	case document::whenFileExist: {	   
 	    if( boost::filesystem::exists(p) ) {
 		doc->fetch(s,p);	
+	    } else {
+		using namespace boost::system::errc;
+		using namespace boost::filesystem;
+		boost::throw_exception(
+		   basic_filesystem_error<path>(std::string("file not found"),
+			        pathname, 
+			       	make_error_code(no_such_file_or_directory)));
 	    }
 	} break;
 	case document::whenNotCached:

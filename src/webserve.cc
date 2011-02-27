@@ -76,7 +76,7 @@ std::string uriEncode( const std::string& s ) {
 
 
 httpHeaderSet::httpHeaderSet()
-    : firstTime(true), contentLengthValue(0)
+    : firstTime(true), contentLengthValue(0), statusCode(0)
 {
 }
 
@@ -127,6 +127,14 @@ httpHeaderSet::setCookie( const std::string& name,
     setCookieLifetime = exp;
     return *this;
 }
+
+
+httpHeaderSet& httpHeaderSet::status( unsigned int s )
+{
+    statusCode = s;
+    return *this;
+}
+
 
 httpHeaderSet httpHeaders;
 
