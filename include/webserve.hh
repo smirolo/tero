@@ -73,7 +73,16 @@ public:
 	ostr << u.pathname;
 	return ostr;
     }	
-	
+
+    friend bool operator<( const url& left, const url& right ) {
+	return left.string() < right.string();
+    }
+
+    friend bool operator!=( const url& left, const url& right ) {
+	return left.string() != right.string();
+    }
+
+
 public:
 
     int port;

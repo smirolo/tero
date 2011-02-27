@@ -39,35 +39,68 @@
     where first and last are based on *cmp*.
 */
 template<typename cmp>
-class blogInterval : public feedIndex {
-public:
-    typedef feedIndex super;
+class blogInterval : public feedOrdered<cmp> {
+protected:
+    const boost::filesystem::path pathname;
 
 public:
-    blogInterval( const boost::filesystem::path& p, size_t b, int l ) 
-	: feedIndex(p,b,l) {}
+    typedef feedOrdered<cmp> super;
+
+public:
+    explicit blogInterval( postFilter* n, const boost::filesystem::path& p ) 
+	: super(n), pathname(p) {}
 
     void provide();
 };
 
 
 template<typename cmp>
-class blogByInterval : public feedContent<blogInterval<cmp>,htmlwriter> {
+class blogByInterval : public feedContent {
+protected:
+    typedef feedContent super;
+
+public:
+    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+
 };
 
 
 typedef blogByInterval<orderByTime<post> > blogByIntervalDate;
 typedef blogByInterval<orderByTag<post> > blogByIntervalTags;
 
+
+template<typename cmp>
+class bySet : public feedIndex {
+protected:
+    /* store the number blog entries with a specific key. */
+    typedef std::map<typename cmp::keyType,uint32_t> linkSet;
+
+    linkSet links;
+    std::ostream *ostr;
+    boost::filesystem::path root;
+
+public:
+    bySet( std::ostream& o, const boost::filesystem::path& r ) 
+	: ostr(&o), root(r) {}
+
+    virtual void filters( const post& p );
+    
+    virtual void flush(); 
+};
  
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
 */
 template<typename cmp>
-class blogSetLinks : public feedContent<feedIndex,htmlwriter> {
-public:
-   typedef feedContent<feedIndex,htmlwriter> super;
+class blogSetLinks : public feedWriter {
+protected:
+    typedef feedWriter super;
+ 
+    boost::regex filematch;
 
 public:
+    explicit blogSetLinks( const boost::regex& fm ) 
+	: filematch(fm) {}
+
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
@@ -75,7 +108,9 @@ typedef blogSetLinks<orderByTime<post> > blogDateLinks;
 typedef blogSetLinks<orderByTag<post> > blogTagLinks;
 
 
-class blogEntry : public document {
+class blogEntry : public feedWriter {
+protected:
+    typedef feedWriter super;
 public:
     void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };

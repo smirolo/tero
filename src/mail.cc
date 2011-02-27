@@ -61,7 +61,13 @@ void mailthread::flush() {
 void mailParser::fetch( session& s, const boost::filesystem::path& pathname ) const
 {
     dirwalker::fetch(s,pathname);
+#if 0
+    /* \todo Cannot flush here if we want to support feedContent calls blogEntry.
+       This call will generate non-intended intermediate flushes. It might be
+       useful for other parts of the system though...
+     */
     filter->flush();
+#endif
 }
 
 
@@ -71,6 +77,12 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
     using namespace boost::posix_time;
     using namespace boost::local_time;
     using namespace std;
+
+    typedef std::set<std::string> tagSet;
+
+    /** tags associated to a post. 
+     */
+    tagSet tags;
 
     static const boost::regex metainfo("^(\\S+):(.+)");
 
@@ -101,7 +113,15 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 		descr.str("");
 		descr << html::pre();
 		p.normalize();
-		filter->filters(p);
+		if( tags.empty() ) {
+		    filter->filters(p);
+		} else {
+		    for( tagSet::const_iterator t = tags.begin(); t != tags.end(); ++t ) {
+			p.tag = *t;
+			filter->filters(p);
+		    }
+		}
+		tags.clear();
 	    }
 	    p = post();
 	    p.filename = boost::filesystem::path(name);
@@ -132,13 +152,13 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	    while( last != line.size() ) {
 		if( line[last] == ',' ) {
 		    std::string s = strip(line.substr(first,last-first));
-		    if( ! s.empty() ) p.tags.insert(s);
+		    if( ! s.empty() ) tags.insert(s);
 		    first = last + 1;
 		}
 		++last;
 	    }
 	    std::string s = strip(line.substr(first,last-first));
-	    if( ! s.empty() ) p.tags.insert(s);
+	    if( ! s.empty() ) tags.insert(s);
 
 	} else if( regex_match(line,m,metainfo) ) {
 	    /* This is more meta information we donot interpret */
@@ -167,6 +187,14 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
     p.descr = descr.str();
     descr.str("");
     p.normalize();
-    filter->filters(p);
+    if( tags.empty() ) {
+	filter->filters(p);
+    } else {
+	for( tagSet::const_iterator t = tags.begin(); t != tags.end(); ++t ) {
+	    p.tag = *t;
+	    filter->filters(p);
+	}
+    }
+    tags.clear();
 }
 

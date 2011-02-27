@@ -33,15 +33,20 @@
 */
 
 
-shortPost::shortPost( const post& p, const std::string& t ) 
-  : postBase(p), tag(t)
+#if 1
+post::post( const post& p ) 
+    : filename(p.filename),
+      authorName(p.authorName),
+      authorEmail(p.authorEmail),
+      tag(p.tag),
+      time(p.time),
+      title(p.title),
+      guid(p.guid), 
+      descr(p.descr), 
+      score(p.score)
 {
 }
-
-post::post( const post& p, const std::string& t ) 
-    : postBase(p), tag(t), guid(p.guid), descr(p.descr), score(p.score)
-{
-}
+#endif
 
 
 void 

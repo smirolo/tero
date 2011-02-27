@@ -25,73 +25,93 @@
 
 #include "markup.hh" 
 
-
 template<typename cmp>
 void blogInterval<cmp>::provide()
 {
+    super::provide();
+ 
     cmp c;
     std::string firstName = boost::filesystem::basename(pathname);
-    std::sort(indices.begin(),indices.end(),c);
+
     typename cmp::valueType bottom = c.first(firstName);
     typename cmp::valueType top = c.last(firstName);
 
     /* sorted from decreasing order most recent to oldest. */
-    first = std::lower_bound(indices.begin(),indices.end(),bottom,c);
-    if( first == indices.end() ) {
-	first = indices.begin();
+    super::first = std::lower_bound(super::first,super::last,bottom,c);
+    if( super::first == super::indices.end() ) {
+	super::first = super::indices.begin();
     }
-    last = std::upper_bound(indices.begin(),indices.end(),top,c);
-
-    super::provide();
+    super::last = std::upper_bound(super::first,super::last,top,c);
 }
 
 
 template<typename cmp>
-void blogSetLinks<cmp>::fetch( session& s, 
-			       const boost::filesystem::path& pathname ) const
+void blogByInterval<cmp>::fetch( session& s, const boost::filesystem::path& pathname ) const {
+    htmlwriter writer(s.out());
+    blogInterval<cmp> feeds(&writer,pathname);
+    postFilter *prev = super::feeds;
+    super::feeds = &feeds;
+    super::fetch(s,pathname);
+    super::feeds->flush();
+    super::feeds = prev;
+}
+
+
+template<typename cmp>
+void bySet<cmp>::filters( const post& p ) 
+{
+    cmp c;
+    typename cmp::keyType k = c.key(p);
+    typename linkSet::iterator l = links.find(k);
+    if( l != links.end() ) {
+	++l->second;
+    } else {
+	links[k] = 1;
+    }
+}
+   
+
+template<typename cmp>
+void bySet<cmp>::flush()
 {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
-
-    super::fetch(s,pathname);
-
-    cmp c;
-    boost::filesystem::path 
-	root = s.subdirpart(s.valueOf("siteTop"),
-			    s.root(pathname,"blog"));
 
     /* We donot use pubDate::format here because the code logic relies
        on special formatted links to create subsequent pages. */
     time_facet* facet(new time_facet("%b %Y"));
     time_facet* linkfacet(new time_facet("%Y-%m-01"));    
 
+    cmp c;
     std::stringstream strm;
     strm.imbue(std::locale(strm.getloc(), linkfacet));
-    s.out().imbue(std::locale(s.out().getloc(), facet));
-
-    /* store the number blog entries with a specific key. */
-    typedef std::map<typename cmp::keyType,uint32_t> linkSet;
-
-    linkSet links;
-    for( feedIndex::indexSet::const_iterator idx = feedIndex::instance.indices.begin(); 
-	 idx != feedIndex::instance.indices.end(); ++idx ) {
-	typename linkSet::iterator l = links.find(c.key(*idx));
-	if( l != links.end() ) {
-	    ++l->second;
-	} else {
-	    links[c.key(*idx)] = 1;
-	}
-    }
+    ostr->imbue(std::locale(ostr->getloc(), facet));
 
     /* Display keys and the associated number of blog entries */
     for( typename linkSet::const_iterator link = links.begin();
 	 link != links.end(); ++link ) {
 	strm.str("");
-	strm << "/" << root << "blog/" << c.name << "/" << link->first;       
-	s.out() << html::a().href(strm.str()) 
+	strm << "/" << root << "/" << c.name << "/" << link->first;       
+	*ostr << html::a().href(strm.str()) 
 		<< link->first << " (" << link->second << ")"
 		<< html::a::end << html::linebreak;
     }
+}
+
+template<typename cmp>
+void blogSetLinks<cmp>::fetch( session& s, const boost::filesystem::path& pathname ) const
+{
+    boost::filesystem::path blogroot = s.root(s.abspath(pathname),"blog") / "blog";
+    bySet<cmp> filter(s.out(),s.subdirpart(s.valueOf("siteTop"),blogroot));
+
+    postFilter *prev = super::feeds;
+    super::feeds = &filter;
+
+    mailParser parser(filematch,*super::feeds,false);
+    parser.fetch(s,blogroot);
+    super::feeds->flush();
+
+    super::feeds = prev; 
 }
 
 

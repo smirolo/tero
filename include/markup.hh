@@ -145,11 +145,17 @@ namespace html {
     public:  
 	static const char* name;
 	static const detail::nodeEnd end;
-	static std::set<std::string> hrefs;
+	static std::set<url> cached;
+	static std::set<url> uncached;
+
     
 	a() : markup(name,attrNames,attrValues,attrLength) {}
 
-	a& href( const std::string& v );
+	a& href( const url& v );
+
+	a& href( const std::string& v ) {
+	    return href(url(v));
+	}
 
 	a& title( const std::string& v ) {
 	    attrValues[titleAttr] = v;
