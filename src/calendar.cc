@@ -136,15 +136,16 @@ void calendar::parse( session& s, std::istream& ins ) const {
 }
 
 
-void calendar::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void calendarFetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace std;
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
     if( boost::filesystem::exists(pathname) ) {
 	boost::filesystem::ifstream input;
-	open(input,pathname);
-	parse(s,input);
+	openfile(input,pathname);
+	calendar c;
+	c.parse(s,input);
 	input.close();
     }
 

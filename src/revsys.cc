@@ -362,8 +362,10 @@ void gitcmd::history( std::ostream& ostr,
     boost::filesystem::current_path(rootpath);
     
     std::stringstream sstm;
+    boost::filesystem::path relative = relpath(pathname,rootpath);
+    boost::filesystem::path srcname = rootpath / relative;
     sstm << executable << " log --date=rfc --pretty=oneline " 
-	 << relpath(pathname,rootpath);    
+	 << relative;    
     
     char lcstr[256];
     FILE *summary = popen(sstm.str().c_str(),"r");
@@ -381,7 +383,7 @@ void gitcmd::history( std::ostream& ostr,
 	    std::string title = line.substr(splitPos);
 
 	    /* \todo '\n' at end of line? */
-	    ostr << html::a().href(ref.asUrl(s.asUrl(pathname).string(),
+	    ostr << html::a().href(ref.asUrl(s.asUrl(srcname).string(),
 					     rightRevision).string()).title(title)
 		 << rightRevision.substr(0,10) << "..." 
 		 << html::a::end << "<br />";

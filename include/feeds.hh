@@ -35,6 +35,10 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+/** regular expression pattern that matches all files.
+ */
+extern char allFilesPat[];
+
 
 /** Index of post entries
 
@@ -136,76 +140,51 @@ public:
 };
 
 
-class feedWriter : public document {
-protected:
-    static postFilter *feeds;
+extern postFilter *globalFeeds;
 
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void feedWriterFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** Aggregate feeds
- */
-template<typename postWriter>
-class feedAggregate : public feedWriter {
-public:
-   typedef feedWriter super;
 
-protected:
-
-    /* variable used to match pattern. We cannot use document
-     else the catch-all forbids recursive descent through directories. */
-    const std::string varname;
-
-    void aggregate( session& s, const boost::filesystem::path& pathname ) const;
+ *varname* variable used to match pattern. We cannot use document
+ else the catch-all forbids recursive descent through directories.
 
 
-public:
-    explicit feedAggregate( const std::string& v ) 
-	: varname(v) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
-/** Complete aggregate, does not discard posts. */
+#if 0
+Complete aggregate, does not discard posts. 
 typedef feedAggregate<rsswriter> rssAggregate;
+#endif
+
+*/
+template<typename postWriter,const char*varname>
+void feedAggregateFetch( session& s, const boost::filesystem::path& pathname );
+
 
 /** Feed of text file content from a directory
  */
-class feedContent : public feedWriter {
-protected:
-    typedef feedWriter super;
-    boost::regex filePat;
-
-public:
-    explicit feedContent(const boost::regex& pat = boost::regex(".*") )
-	: filePat(pat) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+class feedContent {
 };
+
+/** *filePat* we cannot use boost::regex because it is not a valid type for a template constant parameter. */
+template<typename postWriter, const char* filePat >
+void feedContentFetch( session& s, const boost::filesystem::path& pathname );
 
 
 class htmlContent : public feedContent {
 protected:
     typedef feedContent super;
-
-public:
-    explicit htmlContent( const boost::regex& pat = boost::regex(".*") ) : feedContent(pat) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+void htmlContentFetch( session& s, const boost::filesystem::path& pathname );
 
 
 class rssContent : public feedContent {
 protected:
     typedef feedContent super;
-
-public:
-    explicit rssContent( const boost::regex& pat = boost::regex(".*") ) : feedContent(pat) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+void rssContentFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** Feed of summaries for files in a directory.
@@ -220,46 +199,38 @@ protected:
 public:
     explicit feedSummary( const boost::regex& pat = boost::regex(".*") )
 	: super(pat) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+void feedSummaryFetch( session& s, const boost::filesystem::path& pathname );
+
 
 typedef feedSummary<htmlwriter> htmlSummary;
 typedef feedSummary<rsswriter> rssSummary;
 
 
 /** Feed from a repository commits
- */
-template<typename postWriter>
-class feedRepository : public feedWriter {
-public:
-    typedef feedWriter super;
-
-public:
-    feedRepository() {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;	
-};
-
-typedef feedRepository<htmlwriter> htmlRepository;
-typedef feedRepository<rsswriter> rssRepository;
-
+    
+    class feedRepository : public feedWriter 
+*/
+void feedRepositoryPopulate( session& s, 
+			     const boost::filesystem::path& pathname );
 
 template<typename postWriter>
-class feedLatestPosts : public feedAggregate<postWriter> {
-public:
-   typedef feedAggregate<postWriter> super;
+void feedRepository( session& s, const boost::filesystem::path& pathname );
 
-public:
-    explicit feedLatestPosts( const std::string& v );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;	
-};
+/* class feedLatestPosts : public feedAggregate<postWriter> */
+template<typename postWriter, const char*varname>
+void feedLatestPostsFetch( session& s, const boost::filesystem::path& pathname );
+
 
 /** Aggregate over time with a fixed number of posts. 
     Most suitable for site feeds. */
-typedef feedLatestPosts<htmlwriter> htmlSiteAggregate;
-typedef feedLatestPosts<rsswriter> rssSiteAggregate;
+template<const char*varname>
+void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname );
+
+template<const char*varname>
+void rssSiteAggregate( session& s, const boost::filesystem::path& pathname );
 
 
 #include "feeds.tcc"

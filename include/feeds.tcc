@@ -54,10 +54,9 @@ void feedPage<feedBase>::provide() {
     }
 }
 
-
-template<typename postWriter>
-void feedAggregate<postWriter>::aggregate( session& s, 
-			   const boost::filesystem::path& pathname ) const
+template<typename postWriter, const char*varname>
+void feedAggregateRecursive( session& s, 
+			      const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem;
 
@@ -72,92 +71,112 @@ void feedAggregate<postWriter>::aggregate( session& s,
 	if( is_directory(*entry) ) {	
 	    path trackname(dirname / entry->filename() / track);
 	    if( !dispatchDoc::instance->fetch(s,varname,trackname)) {
-		aggregate(s,trackname);
+		feedAggregateRecursive<postWriter,varname>(s,trackname);
 	    }
 	}
     }
     s.out(prevDisp);
 }
 
-template<typename postWriter>
-void feedAggregate<postWriter>::fetch( session& s, 
-			   const boost::filesystem::path& pathname ) const
+template<typename postWriter, const char*varname>
+void feedAggregateFetch( session& s, 
+			   const boost::filesystem::path& pathname )
 {
-    aggregate(s,pathname);
-    super::feeds->flush();
+    feedAggregateRecursive<postWriter,varname>(s,pathname);
+    globalFeeds->flush();
 }
 
 
 template<typename postWriter>
-void feedRepository<postWriter>::fetch( session& s, 
-			    const boost::filesystem::path& pathname ) const
+void feedRepository( session& s, 
+			    const boost::filesystem::path& pathname )
 {
-    revisionsys *rev = revisionsys::findRev(s,pathname);
-    if( rev ) {
-	history hist;
-	boost::filesystem::path base =  boost::filesystem::path("/") 
-	    / s.subdirpart(s.valueOf("siteTop"),rev->rootpath);
-	std::string projname = s.subdirpart(s.valueOf("srcTop"),rev->rootpath).string();
-	if( projname[projname.size() - 1] == '/' ) {
-	    projname = projname.substr(0,projname.size() - 1);
-	}
-	s.vars["title"] = projname;
-	rev->checkins(hist,s,pathname);
-	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    ci->normalize();
-	    std::stringstream strm;
-	    strm << html::p();
-	    strm << projname << " &nbsp;&mdash;&nbsp; " << ci->guid << "<br />";
-	    strm << ci->descr;
-	    strm << html::p::end;
-	    strm << html::pre();
-	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
-		 file != ci->files.end(); ++file ) {
-		/* \todo link to diff with previous revision */
-		writelink(strm,base,*file);
-		strm << std::endl;
-	    }
-	    strm << html::pre::end;
-	    post p(*ci);
-	    p.descr = strm.str();
-	    super::feeds->filters(p);
-	}	
-    }
+    postFilter *prev = globalFeeds;
+    postWriter feeds(s.out());    
+    globalFeeds = &feeds;
+    feedRepositoryPopulate(s,pathname);
+    globalFeeds = prev;
 }
 
 
-template<typename postWriter>
-feedLatestPosts<postWriter>::feedLatestPosts( const std::string& v ) 
-    : feedAggregate<postWriter>(v)
+template<typename postWriter, const char*varname>
+void feedLatestPostsFetch( session& s, 
+			 const boost::filesystem::path& pathname )
 {
-}
-
-template<typename postWriter>
-void feedLatestPosts<postWriter>::fetch( session& s, 
-			 const boost::filesystem::path& pathname ) const
-{
-    postFilter *prev = super::feeds;
+    postFilter *prev = globalFeeds;
 
     postWriter writer(s.out());
     /* \todo get a feedPage in-between */
     feedOrdered<orderByTime<post> > latests(&writer);
     feedPage<feedOrdered<orderByTime<post> > > feeds(latests,0,5); 
-    super::feeds = &feeds;
-    super::fetch(s,pathname);
+    globalFeeds = &feeds;
+    feedAggregateFetch<postWriter,varname>(s,pathname);
 
-    super::feeds = prev;
+    globalFeeds = prev;
 }
 
+
+template<const char*varname>
+void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname ) 
+{
+    feedLatestPostsFetch<htmlwriter,varname>(s,pathname);
+}
+
+template<const char*varname>
+void rssSiteAggregate( session& s, const boost::filesystem::path& pathname )
+{
+    feedLatestPostsFetch<rsswriter,varname>(s,pathname);    
+}
+
+
 template<typename postWriter>
-void  feedSummary<postWriter>::fetch( session& s, 
-			    const boost::filesystem::path& pathname ) const
+void feedSummaryFetch( session& s, 
+			    const boost::filesystem::path& pathname )
 {
     summarize<postWriter> feeds(s.out());
-    postFilter *prev = super::feeds;
-    if( !super::feeds ) {
-	super::feeds = &feeds;
+    postFilter *prev = globalFeeds;
+    if( !globalFeeds ) {
+	globalFeeds = &feeds;
     }
-    super::fetch(s,pathname);
-    super::feeds = prev;
+    feedContentFetch<postWriter>(s,pathname);
+    globalFeeds = prev;
+}
+
+
+template<typename postWriter, const char* filePat >
+void feedContentFetch( session& s, 
+		       const boost::filesystem::path& pathname )
+{
+    using namespace boost::filesystem;
+
+    /* Always generate the feed from a content directory even
+       when a file is passed as *pathname* */
+    path base(pathname);
+    while( base.string().size() > s.valueOf("siteTop").size()
+	   && !is_directory(base) ) {
+	base = base.parent_path();
+    }
+    if( !base.empty() ) {
+	for( directory_iterator entry = directory_iterator(base); 
+	     entry != directory_iterator(); ++entry ) {
+	    boost::smatch m;
+	    if( !is_directory(*entry) 
+		&& boost::regex_match(entry->string(),m,
+				      boost::regex(filePat)) ) {
+		path filename(base / entry->filename());	    
+		std::string reluri = s.subdirpart(s.valueOf("siteTop"),
+						  filename).string();	    
+		/* We should pop out a post for those docs that don't
+		   even when they fetch (book vs. mail/blogentry). */
+		if( !dispatchDoc::instance->fetch(s,"document",reluri)) {
+		    post p;
+		    p.title = reluri;	    
+		    p.guid = reluri;
+		    std::time_t lwt = last_write_time(filename);
+		    p.time = boost::posix_time::from_time_t(lwt);
+		    globalFeeds->filters(p);
+		}
+	    }
+	}
+   }
 }

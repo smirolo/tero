@@ -754,8 +754,13 @@ void docbook::walk( session& s, const rapidxml::xml_node<>& node ) const {
     }
 }
 
+namespace {
+char titleMeta[] = "title";
+} // anonymous
 
-void docbookMeta::fetch( session& s, const boost::filesystem::path& pathname ) const {
+
+void docbookMeta( session& s, const boost::filesystem::path& pathname )
+{
     using namespace rapidxml;
 
     /* \todo should only load one but how does it sits with dispatchDoc
@@ -770,7 +775,7 @@ void docbookMeta::fetch( session& s, const boost::filesystem::path& pathname ) c
     buffer = new char [ length ];
     boost::filesystem::ifstream file;
 
-    open(file,pathname);
+    openfile(file,pathname);
     file.read(buffer,fileSize);
     buffer[fileSize] = '\0';
     file.close();
@@ -790,30 +795,33 @@ void docbookMeta::fetch( session& s, const boost::filesystem::path& pathname ) c
     session::variables::const_iterator found = s.vars.find("title");
     if( s.vars.find("title") == s.vars.end() ) {
 	s.insert("title",s.valueOf("document"));
-    }
-    meta::fetch(s,pathname);
+    }    
+    metaFetch<titleMeta>(s,pathname);
 }
 
 
-void docbook::fetch( session& s, const boost::filesystem::path& pathname ) const
+void docbookFetch( session& s, const boost::filesystem::path& pathname )
 {    
+    linkLight leftFormatedText(s);
+    linkLight rightFormatedText(s);
+    docbook d(leftFormatedText,rightFormatedText);
 
     size_t fileSize = file_size(pathname);
-    length = fileSize + 1;
-    buffer = new char [ length ];
+    d.length = fileSize + 1;
+    d.buffer = new char [ d.length ];
     boost::filesystem::ifstream file;
 
-    open(file,pathname);
-    file.read(buffer,fileSize);
-    buffer[fileSize] = '\0';
+    openfile(file,pathname);
+    file.read(d.buffer,fileSize);
+    d.buffer[fileSize] = '\0';
     file.close();
 
-    doc.parse<0>(buffer);
+    d.doc.parse<0>(d.buffer);
 
-    leftDec->attach(s.out());
-    rapidxml::xml_node<> *root = doc.first_node();
+    d.leftDec->attach(s.out());
+    rapidxml::xml_node<> *root = d.doc.first_node();
     if( root != NULL ) {
-	walk(s,*root);
+	d.walk(s,*root);
     }
-    leftDec->detach();
+    d.leftDec->detach();
 }

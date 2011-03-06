@@ -50,7 +50,7 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 }
 
 
-void cancel::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void cancelFetch( session& s, const boost::filesystem::path& pathname ) {
     httpHeaders.location(url(s.doc()));
 }
 
@@ -69,7 +69,8 @@ change::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void change::fetch(  session& s, const boost::filesystem::path& pathname ) const {
+void changeFetch(  session& s, const boost::filesystem::path& pathname )
+{
     using namespace boost::system;
     using namespace boost::filesystem;
 
@@ -107,7 +108,8 @@ void change::fetch(  session& s, const boost::filesystem::path& pathname ) const
     httpHeaders.location(url(s.doc() + std::string(".edits")));
 }
 
-void changediff::fetch( session& s, const boost::filesystem::path& pathname ) const
+void changediff( session& s, const boost::filesystem::path& pathname,
+		 decorator *primary, decorator *secondary )
 {
     using namespace std;
 
@@ -129,21 +131,19 @@ void changediff::fetch( session& s, const boost::filesystem::path& pathname ) co
 	s.out() << html::tr::end;
 
 	boost::filesystem::ifstream input;
-	open(input,docname);
+	openfile(input,docname);
 
 	/* \todo the session is not a parameter to between files... */	
-	const document *doc = dispatchDoc::instance->select("document",docname.string());
-	((::text*)doc)->showSideBySide(s,input,text,false);
-		
+	::text doc(*primary,*secondary);
+	doc.showSideBySide(s,input,text,false);
 	s.out() << html::table::end;
 	input.close();
     }
     
 }
 
-
 void 
-changecheckin::fetch( session& s, const boost::filesystem::path& pathname ) const
+changecheckinFetch( session& s, const boost::filesystem::path& pathname )
 {
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
@@ -153,7 +153,7 @@ changecheckin::fetch( session& s, const boost::filesystem::path& pathname ) cons
 }
 
 void 
-changehistory::fetch( session& s, const boost::filesystem::path& pathname ) const
+changehistoryFetch( session& s, const boost::filesystem::path& pathname )
 {
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {

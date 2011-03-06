@@ -60,11 +60,7 @@ public:
 
 /** Create a new directory and initialize it as a project repository.
 */
-class projCreate : public document {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
-};
+void projCreateFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** Show a top-level page index of project.
@@ -75,20 +71,14 @@ public:
     to download <!-- through e-commerce transaction? --> the project as 
     a package, browse the source code and sign-on to the rss feed.
 */
-class projindex : public document {
-protected:
-#if 0
-    /** name of the project 
-     */
-    std::string name;
-#endif
-
+class projindex {
 public:
     static void 
     addSessionVars( boost::program_options::options_description& opts );
-    
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+void projindexFetch( session& s, const boost::filesystem::path& pathname );
+
 
  
 #endif

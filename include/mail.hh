@@ -80,10 +80,10 @@ public:
 		postFilter& f, bool sof = false )
 	: dirwalker(fm), filter(&f), stopOnFirst(sof) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
     virtual void walk( session& s, std::istream& ins, const std::string& name ) const;
+
 };
 
+void mailParserFetch( session&s, const boost::filesystem::path& pathname );
 
 #endif

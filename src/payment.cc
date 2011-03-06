@@ -127,8 +127,10 @@ void payment::checkReturn( session& s, const char* page ) {
 }
 
 
-void payment::fetch( session& s, const boost::filesystem::path& pathname ) const {
-    for( entrySeq::const_iterator e = entries.begin(); 
+void paymentFetch( session& s, const boost::filesystem::path& pathname ) {
+#if 0
+    /* \todo !!! re-enable payment feature !!! */
+    for( payment::entrySeq::const_iterator e = entries.begin(); 
 	 e != entries.end(); ++e ) {
 	boost::smatch m;
 	if( boost::regex_search(pathname.string(),m,*e->regexp) ) {
@@ -149,6 +151,7 @@ void payment::fetch( session& s, const boost::filesystem::path& pathname ) const
 	    break;
 	}
     }
+#endif
 }
 
 
@@ -171,7 +174,7 @@ void payment::show( std::ostream& ostr,
 }
 
 
-void payPipeline::fetch( session& s, const boost::filesystem::path& pathname ) const
+void payPipelineFetch( session& s, const boost::filesystem::path& pathname )
 {
     std::stringstream r;
     r << s.valueOf("returnUrl") << "?referenceId=" << s.valueOf("referenceId");

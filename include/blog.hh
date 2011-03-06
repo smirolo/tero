@@ -55,18 +55,11 @@ public:
 
 
 template<typename cmp>
-class blogByInterval : public feedContent {
-protected:
-    typedef feedContent super;
+void 
+blogByIntervalFetch( session& s, const boost::filesystem::path& pathname );
 
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
-};
-
-
-typedef blogByInterval<orderByTime<post> > blogByIntervalDate;
-typedef blogByInterval<orderByTag<post> > blogByIntervalTags;
+void blogByIntervalDate( session& s, const boost::filesystem::path& pathname );
+void blogByIntervalTags( session& s, const boost::filesystem::path& pathname );
 
 
 template<typename cmp>
@@ -89,32 +82,23 @@ public:
 };
  
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
+class blogSetLinks : public feedWriter 
+filePat is a regex.
 */
-template<typename cmp>
-class blogSetLinks : public feedWriter {
-protected:
-    typedef feedWriter super;
- 
-    boost::regex filematch;
+template<typename cmp, const char *filePat>
+void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname );
 
-public:
-    explicit blogSetLinks( const boost::regex& fm ) 
-	: filematch(fm) {}
+template<const char *filePat>
+void blogDateLinks( session& s, const boost::filesystem::path& pathname );
 
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
-typedef blogSetLinks<orderByTime<post> > blogDateLinks;
-typedef blogSetLinks<orderByTag<post> > blogTagLinks;
+template<const char *filePat>
+void blogTagLinks( session& s, const boost::filesystem::path& pathname );
 
 
+/**
 class blogEntry : public feedWriter {
-protected:
-    typedef feedWriter super;
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
+*/
+void blogEntryFetch( session& s, const boost::filesystem::path& pathname );
 
 #include "blog.tcc"
 

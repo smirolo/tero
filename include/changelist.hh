@@ -152,39 +152,27 @@ public:
 
 /** Command to cancel web edits
 */
-class cancel : public document {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void cancelFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /* Add a changed file to the default change list 
 */
-class change : public document {
+class change {
 public:
     static void 
     addSessionVars( boost::program_options::options_description& opts );
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
+void changeFetch( session& s, const boost::filesystem::path& pathname );
 
-/** Diff between two revisions of a file under revision control
+
+/** Diff between two revisions of a file under revision control (*always*)
+
+ *primary* decorator to pass character output through.
+ *secondary* decorator to pass character output through.
  */
-class changediff : public document {
-public:
-    changediff() 
-	: document(always) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
-};
-
-
-/** Base class for commands displaying changelists.
- */
-class changelist : public document {
-};
+void changediff( session& s, const boost::filesystem::path& pathname,
+		 decorator *primary, decorator *secondary );
 
 
 /** Short history of changes to a project under revision control. 
@@ -193,18 +181,11 @@ class changelist : public document {
     to an expended description of the checkin instead of a difference between
     the current file and the revision.
  */
-class changecheckin : public changelist {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;	
-};
+void changecheckinFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** History of changes to a file under revision control
  */
-class changehistory : public changelist {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;	
-};
-
+void changehistoryFetch( session& s, const boost::filesystem::path& pathname );
 
 #endif

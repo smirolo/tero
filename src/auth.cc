@@ -41,6 +41,93 @@
 
 #include <security/pam_appl.h>
 
+
+namespace {
+
+boost::posix_time::time_duration
+aggregate( const session& s ) {
+    using namespace boost::system;
+    using namespace boost::posix_time;
+    using namespace boost::filesystem;
+
+    ifstream file;
+    openfile(file,s.contributorLog());
+    
+    time_duration aggr;
+    ptime start, stop, prev;
+    while( !file.eof() ) {
+	std::string line;
+	getline(file,line);
+	try {
+	    size_t first = 0;
+	    size_t last = line.find_first_of(' ',first);
+	    last = line.find_first_of(' ',last + 1);
+	    start = time_from_string(line.substr(first,last));
+
+	    first = last + 1;
+	    last = line.find_first_of(' ',first);
+	    last = line.find_first_of(' ',last + 1);
+	    stop = time_from_string(line.substr(first,last-first));
+
+	    aggr += stop - start;
+	    if( !prev.date().is_not_a_date() 
+		&& start.date().month() != prev.date().month() ) {
+		aggr = hours(aggr.hours()) 
+		    + (( aggr.minutes() > 0 ) ? hours(1) : hours(0));
+		std::cout << prev.date().year() << ' ' 
+			  << prev.date().month() << ": " 
+			  << aggr.hours() << " hours"  << std::endl;
+		aggr = time_duration();
+	    }
+	    prev = start;
+	} catch(...) {
+	    /* It is ok if we cannot interpret some lines in the log;
+	       most notably the last empty line. */
+	}
+    }
+    file.close();
+    aggr = hours(aggr.hours())
+	+ (( aggr.minutes() > 0 ) ? hours(1) : hours(0));
+    std::cout << prev.date().year() << ' ' 
+	      << prev.date().month() << ": " 
+	      << aggr.hours() << " hours" << std::endl;
+
+    return aggr;
+}
+
+
+boost::posix_time::time_duration stop( session& s ) {
+    using namespace boost::system;
+    using namespace boost::posix_time;
+    using namespace boost::filesystem;
+
+    ptime start;
+    std::stringstream is(s.valueOf("startTime"));
+    is >> start;
+    ptime stop = second_clock::local_time();
+
+    ofstream file(s.contributorLog(),std::ios_base::app);
+    if( file.fail() ) {
+	boost::throw_exception(basic_filesystem_error<path>(
+				 std::string("error opening file"),
+				 s.contributorLog(), 
+				 error_code()));
+    }
+    std::string msg = s.valueOf("message");
+    if( !msg.empty() ) {
+	file << msg << ':' << std::endl;
+    }
+    time_duration aggregate = stop - start;
+    file << start << ' ' << stop << std::endl;
+    file.close();
+    s.remove();
+
+    return aggregate;
+}
+
+} // anonymous namespace
+
+
 int su_conv( int num_msg,
 	     const struct pam_message **msgm,
 	     struct pam_response **resp,
@@ -94,7 +181,7 @@ void auth::addSessionVars( boost::program_options::options_description& opts )
     opts.add(authOptions);
 }
 
-void auth::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void authFetch( session& s, const boost::filesystem::path& pathname ) {
 
     /* This code is used to debug initial permission problems. */
     struct passwd *pw;
@@ -119,7 +206,7 @@ void auth::fetch( session& s, const boost::filesystem::path& pathname ) const {
 }
 
 
-void login::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void loginFetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
@@ -163,102 +250,14 @@ void login::fetch( session& s, const boost::filesystem::path& pathname ) const {
 
     /* The authentication will create a persistent ("username",value)
        pair that, in turn, will create a sessionId and a startTime. */
-    auth::fetch(s,pathname);
+    authFetch(s,pathname);
     
     /* Set a session cookie */
     httpHeaders.setCookie(s.sessionName,s.id()).location(url(s.doc()));
 }
 
 
-boost::posix_time::time_duration
-deauth::aggregate( const session& s ) const {
-    using namespace boost::system;
-    using namespace boost::posix_time;
-    using namespace boost::filesystem;
-
-    ifstream file(s.contributorLog());
-    if( file.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-				 std::string("error opening file"),
-				 s.contributorLog(), 
-				 error_code()));
-    }
-
-    time_duration aggr;
-    ptime start, stop, prev;
-    while( !file.eof() ) {
-	std::string line;
-	getline(file,line);
-	try {
-	    size_t first = 0;
-	    size_t last = line.find_first_of(' ',first);
-	    last = line.find_first_of(' ',last + 1);
-	    start = time_from_string(line.substr(first,last));
-
-	    first = last + 1;
-	    last = line.find_first_of(' ',first);
-	    last = line.find_first_of(' ',last + 1);
-	    stop = time_from_string(line.substr(first,last-first));
-
-	    aggr += stop - start;
-	    if( !prev.date().is_not_a_date() 
-		&& start.date().month() != prev.date().month() ) {
-		aggr = hours(aggr.hours()) 
-		    + (( aggr.minutes() > 0 ) ? hours(1) : hours(0));
-		std::cout << prev.date().year() << ' ' 
-			  << prev.date().month() << ": " 
-			  << aggr.hours() << " hours"  << std::endl;
-		aggr = time_duration();
-	    }
-	    prev = start;
-	} catch(...) {
-	    /* It is ok if we cannot interpret some lines in the log;
-	       most notably the last empty line. */
-	}
-    }
-    file.close();
-    aggr = hours(aggr.hours())
-	+ (( aggr.minutes() > 0 ) ? hours(1) : hours(0));
-    std::cout << prev.date().year() << ' ' 
-	      << prev.date().month() << ": " 
-	      << aggr.hours() << " hours" << std::endl;
-
-    return aggr;
-}
-
-
-
-boost::posix_time::time_duration deauth::stop( session& s ) const {
-    using namespace boost::system;
-    using namespace boost::posix_time;
-    using namespace boost::filesystem;
-
-    ptime start;
-    std::stringstream is(s.valueOf("startTime"));
-    is >> start;
-    ptime stop = second_clock::local_time();
-
-    ofstream file(s.contributorLog(),std::ios_base::app);
-    if( file.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-				 std::string("error opening file"),
-				 s.contributorLog(), 
-				 error_code()));
-    }
-    std::string msg = s.valueOf("message");
-    if( !msg.empty() ) {
-	file << msg << ':' << std::endl;
-    }
-    time_duration aggregate = stop - start;
-    file << start << ' ' << stop << std::endl;
-    file.close();
-    s.remove();
-
-    return aggregate;
-}
-
-
-void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) const {
+void deauthFetch(  session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::posix_time;
 
     if( !s.exists() ) {
@@ -291,8 +290,9 @@ void deauth::fetch(  session& s, const boost::filesystem::path& pathname ) const
     s.out() << "." << std::endl;
 }
 
+char logoutLayout[] = "logout.ui";
 
-void logout::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void logoutFetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
@@ -304,9 +304,8 @@ void logout::fetch( session& s, const boost::filesystem::path& pathname ) const 
     time_duration logged = stop(s);
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
-    s.state("hours",logstr.str());
-    composer pres(s.valueOf("themeDir") + std::string("/logout.ui"));
-    pres.fetch(s,"document");
+    s.state("hours",logstr.str());    
+    composerFetch<logoutLayout>(s,path("document"));
 }
 
 

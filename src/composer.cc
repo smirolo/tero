@@ -46,7 +46,7 @@ composer::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void composer::embed( session& s, const std::string& value ) const {
+void embed( session& s, const std::string& value ) {
     using namespace boost::filesystem;
     std::ostream& prevDisp = s.out();
     try {
@@ -65,75 +65,3 @@ void composer::embed( session& s, const std::string& value ) const {
 }
 
 
-void composer::fetch( session& s, const boost::filesystem::path& pathname ) const
-{
-    using namespace boost;
-    using namespace boost::system;
-    using namespace boost::filesystem;
-
-    static const boost::regex tmplname("<!-- tmpl_name '(\\S+)' -->");
-    static const boost::regex tmplvar("<!-- tmpl_var name='(\\S+)' -->");
-    static const boost::regex tmplinc("<!-- tmpl_include name='(\\S+)' -->");
-    
-    ifstream strm;
-    open(strm,fixed.empty() ? pathname : fixed);
-
-    skipOverTags(s,strm);
-    while( !strm.eof() ) {
-	smatch m;
-	std::string line;
-	bool found = false;
-	std::getline(strm,line);
-	if( regex_search(line,m,tmplname) ) {
-	    std::string varname = m.str(1);
-	    session::variables::const_iterator v = s.vars.find(varname);
-	    s.out() << m.prefix();
-	    if( v != s.vars.end() ) {		
-		s.out() << v->second.value;		
-	    } else {
-		s.out() << varname << " not found!";
-	    }
-	    s.out() << m.suffix() << std::endl;
-	    found = true;
-	}
-
-	if( regex_search(line,m,tmplvar) ) {
-	    found = true;
-	    s.out() << m.prefix();
-	    std::string varname = m.str(1);
-	    /* Hack! duplicate code from dispatchDoc::fetch() - see below. */
-	    session::variables::const_iterator v = s.vars.find(varname);
-	    if( v == s.vars.end() ) {    
-		s.vars[varname] = s.valueOf("document");
-	    }
-	    const document* doc 
-		= dispatchDoc::instance->select(varname,s.valueOf(varname));
-	    if( doc != NULL ) {
-		boost::filesystem::path docname = s.valueAsPath(varname);
-		/* \todo code could be:
-		           doc->fetch(s,docname);  
-			 but that would skip over the override 
-			 of changediff::embed(). */
-		embed(s,varname);					    
-	    } else {
-		s.out() << s.valueOf(varname);
-	    }
-	    s.out() << m.suffix() << std::endl;
-	} else if( regex_search(line,m,tmplinc) ) {
-	    /* \todo fetch another template. This code should
-	     really call to the dispatcher once we can sort
-	     out varnames and pathnames... */
-	    path incpath((fixed.empty() ? pathname.parent_path() 
-			  : fixed.parent_path()) / m.str(1));
-	    const document* doc = dispatchDoc::instance->select("document",incpath.string());
-	    if( doc != NULL ) {
-		doc->fetch(s,incpath);
-	    }
-	    found = true;
-	}
-	if( !found ) {
-	    s.out() << line << std::endl;
-	}
-    }
-    strm.close();
-}

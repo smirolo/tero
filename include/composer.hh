@@ -32,25 +32,28 @@
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-class composer : public text {
+class composer : public text /* always */ {
 protected:
     typedef text super;
 
-    boost::filesystem::path fixed;
-
+#if 0
     /** Embed the content of a variable into a page. 
      */
     virtual void embed( session& s, const std::string& value ) const;
-    
-public:
-    explicit composer( const boost::filesystem::path& f ) 
-	: text(always), fixed(f) {}
+#endif
 
+public:
     static void 
     addSessionVars( boost::program_options::options_description& opts );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
+/** embed content associated to a variable. */
+void embed( session& s, const std::string& value );
+
+template<const char *layout>
+void composerFetch( session& s, const boost::filesystem::path& pathname );
+
+#include "composer.tcc"
 
 #endif

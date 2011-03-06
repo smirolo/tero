@@ -53,6 +53,10 @@
 */
 class docbook : public text {
 protected:
+
+    friend void docbookFetch( session& s, 
+				  const boost::filesystem::path& pathname );
+
     typedef void 
     (docbook::* walkNodePtr) ( session& s, const rapidxml::xml_node<>& node ) const;
 
@@ -121,18 +125,15 @@ public:
     docbook( decorator& l,  decorator& r );
 
     ~docbook();
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
 };
 
-/** Load meta information associated to a docbook file. */
-class docbookMeta : public meta {
-public:
-    explicit docbookMeta( const std::string& v ) 
-	: meta(v,whenFileExist) {}
+void docbookFetch( session& s, const boost::filesystem::path& pathname );
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+
+/** Load meta information associated to a docbook file. (*whenFileExist*) 
+
+    class docbookMeta : public meta    
+ */
+void docbookMeta( session& s, const boost::filesystem::path& pathname );
 
 #endif

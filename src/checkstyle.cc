@@ -42,7 +42,7 @@ const char *licenseCodeTitles[] = {
 
 void checker::cache() {
     static const boost::regex 
-	bsdex("\\S?\\S?\\s*Copyright \\(c\\) ((\\d+)(-\\d+)*), (.*)\\s+"
+	bsdex("\\S?\\S?\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), (.*)\\s+"
     "\\S?\\s*All rights reserved.\\s+"
 "\\S?\\s+"
 "\\S?\\s*Redistribution and use in source and binary forms, with or without\\s+"
@@ -72,6 +72,8 @@ void checker::cache() {
     std::string s(licenseText.begin(),licenseText.size());
     if( boost::regex_search(s,m,bsdex) ) {
 	licenseType = BSDLicense;
+	dates = m.str(1);
+	grantor = m.str(2);
     }
     cached = true;
 }
@@ -211,4 +213,11 @@ void checkstyle::flush( session& s ) const
 	s.out() << html::table::end
 		  << html::p::end;
     }
+}
+
+
+void checkstyleFetch( session& s, const boost::filesystem::path& pathname )
+{
+    checkstyle p;
+    p.fetch(s,pathname);
 }

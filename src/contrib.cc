@@ -31,7 +31,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-void contribCreate::fetch( session& s, const boost::filesystem::path& pathname ) const
+void contribCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
     s.privileged(true);
 
@@ -49,7 +49,7 @@ void contribCreate::fetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void contribIdx::fetch( session& s, const boost::filesystem::path& pathname ) const
+void contribIdxFetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace std;
     using namespace boost::filesystem;
@@ -72,8 +72,7 @@ void contribIdx::fetch( session& s, const boost::filesystem::path& pathname ) co
 			 << html::td::end
 			 << html::td();
 #endif		    
-		    text t;
-		    t.fetch(s,profilePathname);
+		    textFetch(s,profilePathname);
 #if 0		    
 		    s.out() << html::td::end
 			 << html::tr::end;

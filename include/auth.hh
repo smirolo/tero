@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -44,44 +44,27 @@ public:
 };
 
 
-class auth : public document {
+class auth {
 public:
     static void 
     addSessionVars( boost::program_options::options_description& opts );
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+void authFetch( session& s, const boost::filesystem::path& pathname );
+
 
 /** Web-based authentication checks the credentials passed to the CGI
     against permissions granted on the server and returns a session 
     identifier saved as a cookie in the browser on the client-side 
     for further requests. 
 */
-class login : public auth {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void loginFetch( session& s, const boost::filesystem::path& pathname );
 
-
-class deauth : public document {
-protected:
-     /* print out monthly aggregates and return last one. */
-    boost::posix_time::time_duration aggregate( const session& s ) const;
-
-    /* stop counter and return session time. */
-    boost::posix_time::time_duration stop( session& s ) const;
-
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
+void deauthFetch( session& s, const boost::filesystem::path& pathname );
 
 /** Force de-authentication will invalidate the current session identifier
     passed as part of the request.
 */
-class logout : public deauth {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void logoutFetch( session& s, const boost::filesystem::path& pathname );
 
 #endif

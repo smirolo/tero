@@ -21,6 +21,13 @@
 	<base>siteTop</base>
 	<default>theme</default>
       </pathname>
+      <pathname name="commentTop">
+	<description>
+	  commentTop is the root of where page comments are stored
+	</description>
+	<base>siteTop</base>
+	<default>comments</default>
+      </pathname>
       <dep name="build-essential">
 	<bin>g++</bin>
       </dep>

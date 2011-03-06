@@ -66,7 +66,7 @@ public:
 
 
 
-class payment : public document {
+class payment {
 protected:
     struct entry {
 	const boost::regex* regexp;
@@ -92,8 +92,6 @@ public:
 
     static void checkReturn( session& s, const char* page );
 
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;    
-
     static void show( std::ostream& ostr,
 		      session& s, 
 		      const url& returnUrl, 
@@ -103,14 +101,10 @@ public:
 };
 
 
+void paymentFetch( session& s, const boost::filesystem::path& pathname );    
+
+
 /** "Do-nothing" pipeline to process payments 
  */
-class payPipeline : public document {
-protected:
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;    
-
-};
-
-
+void payPipelineFetch( session& s, const boost::filesystem::path& pathname );
 #endif

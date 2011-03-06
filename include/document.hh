@@ -36,46 +36,41 @@
 */
 
 
+/* When the dispatcher has found a matching pattern (and associated 
+   document) for a pathname, before it goes on to call the fetch method,
+   it will check the behavior of that document.
+   
+   *always*          call fetch regardless of pathname
+   *whenFileExist*   call fetch only if *pathname* exists in siteTop.
+   *whenNotCached*   call fetch only if there are no cached version
+                     of *pathname*.
+*/
+enum callFetchType {
+    always = 0,	
+    whenFileExist,
+    whenNotCached
+};
+
+typedef 
+void (*callFetchFunc)( session& s, const boost::filesystem::path& pathname );
+
+struct fetchEntry {
+    boost::regex pat;
+    callFetchType behavior;
+    callFetchFunc callback;
+};
+
+/** Create a file (override it if it already exists). This function
+    throws an exception if there is any error. */
 void createfile( boost::filesystem::ofstream& strm,
 		 const boost::filesystem::path& pathname );
 
-
-/* Base class to generate HTML presentation of documents.
- */
-class document {
-public:
-    /* When the dispatcher has found a matching pattern (and associated 
-       document) for a pathname, before it goes on to call the fetch method,
-       it will check the behavior of that document.
-
-       *always*          call fetch regardless of pathname
-       *whenFileExist*   call fetch only if *pathname* exists in siteTop.
-       *whenNotCached*   call fetch only if there are no cached version
-                         of *pathname*.
-    */
-    enum callFetchType {
-	always = 0,	
-	whenFileExist,
-	whenNotCached
-    };
-
-    callFetchType behavior;
-
-protected:
-    void open( boost::filesystem::ifstream& strm, 
-	       const boost::filesystem::path& pathname ) const;
-    
-public:
-    document() : behavior(always) {}
-
-    explicit document( callFetchType b ) : behavior(b) {}
-
-    virtual void fetch( session& s, 
-			const boost::filesystem::path& pathname ) const = 0;
-
-};
-
-
+/** Open a file for reading. This function
+    throws an exception if there is any error. */
+void openfile( boost::filesystem::ifstream& strm, 
+	       const boost::filesystem::path& pathname );
+ 
+   
 /* Pick the appropriate subclass of *document* based on regular expressions
    applied to the document name.
  */
@@ -84,7 +79,7 @@ public:
     typedef std::map<std::string,std::string> variables;
 
 protected:
-    typedef std::list<std::pair<boost::regex,const document*> > aliasSet;
+    typedef std::list<fetchEntry> aliasSet;
     typedef std::map<std::string,aliasSet> presentationSet;
 
     presentationSet views;
@@ -95,7 +90,7 @@ public:
     static dispatchDoc *instance;
 
     void add( const std::string& varname, const boost::regex& r, 
-	      const document& d );
+	      callFetchFunc f, callFetchType b = always );
 
     bool fetch( session& s, const std::string& varname );
 
@@ -105,7 +100,8 @@ public:
 
     /** \brief handler based on the type of document as filtered by dispatch.
      */
-    const document* select( const std::string& name, const std::string& value ) const;
+    const fetchEntry* 
+    select( const std::string& name, const std::string& value ) const;
 
 };
 
@@ -113,7 +109,7 @@ public:
 /** If the pathname is a directory, iterate through all files and call back
     walk() for file whose name match the regular expression *filematch*.
 */
-class dirwalker : public document {
+class dirwalker {
 protected:
     boost::regex filematch;
 
@@ -126,14 +122,16 @@ public:
     explicit dirwalker( const boost::regex& fm  ) 
 	: filematch(fm) {}
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-
     /** *name* initialized with pathname for the todo filters to set the uuid
 	correctly on filters(). 
     */
     virtual void walk( session& s, std::istream& ins, 
 		       const std::string& name ) const {}
+
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
+
 };
+
 
 /** Add meta information about the document to the session. It includes
     modification date, file revision as well as tags read in the file.
@@ -142,49 +140,61 @@ public:
     information needs to be propagated into different parts of the template
     and not only in the placeholder for the document.
 */
-
-class meta : public document {
-protected:
-    const std::string varname;
-
-public:
-    explicit meta( const std::string& n )
-	: document(always), varname(n) {}
-
-    meta( const std::string& n, callFetchType b )
-	: document(b), varname(n) {}
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+template<const char *varname>
+void metaFetch( session& s, const boost::filesystem::path& pathname )
+{
+    session::variables::const_iterator found = s.vars.find(varname);
+    if( found != s.vars.end() ) {    
+	s.out() << found->second.value;
+    } else {
+	s.out() << pathname;
+    }
+}
 
 
-
-/** associate a constant to a meta.
-*/
-class consMeta : public meta {
-protected:
-    const std::string value;
-
-public:
-    consMeta( const std::string& n, const std::string& v ) 
-	: meta(n,always), value(v) {}
-    
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+template<const char *value>
+void consMeta( session& s, const boost::filesystem::path& pathname )
+{
+    s.out() << value;
+}
 
 
 /** fetch meta information from *pathname* into session *s* 
     and display the one associated to *varname*. 
+    (*whenFileExist*) 
 */
-class textMeta : public meta {
-public:
-    explicit textMeta( const std::string& v ) 
-	: meta(v,whenFileExist) {}
-    
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+template<const char *value>
+void textMeta( session& s, const boost::filesystem::path& pathname )
+{
+    using namespace boost::filesystem; 
+    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
-class text : public document {
+    /* \todo should only load one but how does it sits with dispatchDoc
+     that initializes s[varname] by default to "document"? */
+    ifstream strm;
+    openfile(strm,pathname);
+    while( !strm.eof() ) {
+	boost::smatch m;
+	std::string line;
+	std::getline(strm,line);
+	if( boost::regex_search(line,m,valueEx) ) {
+	    if( m.str(1) == std::string("Subject") ) {
+		s.vars["title"] = session::valT(m.str(2));
+	    } else {
+		s.vars[m.str(1)] = session::valT(m.str(2));
+	    }
+	} else break;
+    }
+    strm.close();
+    /* 
+       std::time_t last_write_time( const path & ph );
+       To convert the returned value to UTC or local time, 
+       use std::gmtime() or std::localtime() respectively. */
+    metaFetch<value>(s,pathname);
+}
+
+
+class text /* whenFileExist */  {
 protected:
     /** fixed header printed before the main body of text.
      */
@@ -193,22 +203,20 @@ protected:
     decorator *leftDec;
     decorator *rightDec;
 
-    void skipOverTags( session& s, std::istream& istr ) const;
-
 public:
     text() 
-	: document(whenFileExist), leftDec(NULL), rightDec(NULL) {}
+	: leftDec(NULL), rightDec(NULL) {}
 
     explicit text( const std::string& h ) 
-	: document(whenFileExist), header(h), leftDec(NULL), rightDec(NULL) {}
+	: header(h), leftDec(NULL), rightDec(NULL) {}
 
     /* composer derives from text even though it can be used for non-text
        documents. */
     explicit text( callFetchType b ) 
-	: document(b), leftDec(NULL), rightDec(NULL) {}
+	: leftDec(NULL), rightDec(NULL) {}
 
     text( decorator& l,  decorator& r ) 
-	: document(whenFileExist), leftDec(&l), rightDec(&r) {}
+	: leftDec(&l), rightDec(&r) {}
 
     /** \brief show difference between two texts side by side 
 
@@ -221,8 +229,16 @@ public:
 			 std::istream& input, std::istream& diff, 
 			 bool inputIsLeftSide= true ) const;
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+    void fetch( session& s, const boost::filesystem::path& pathname );
 };
+
+/** Skip over the meta information 
+ */
+void skipOverTags( session& s, std::istream& istr );
+
+void textFetch( session& s, const boost::filesystem::path& pathname );
+
+void formattedFetch( session& s, const boost::filesystem::path& pathname );
 
 
 #endif

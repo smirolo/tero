@@ -48,7 +48,8 @@ logview::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void logview::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void logviewFetch( session& s, const boost::filesystem::path& pathname ) 
+{
 
     using namespace rapidxml;
     using namespace boost::filesystem;
@@ -235,7 +236,8 @@ void logview::fetch( session& s, const boost::filesystem::path& pathname ) const
 }
 
 
-void regressions::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void regressionsFetch( session& s, const boost::filesystem::path& pathname )
+{
 
     using namespace rapidxml;
     using namespace boost::filesystem;
@@ -250,7 +252,7 @@ void regressions::fetch( session& s, const boost::filesystem::path& pathname ) c
     size_t fileSize = file_size(pathname);
     char text[ fileSize + 1 ];
     ifstream file;
-    open(file,pathname);
+    openfile(file,pathname);
     file.read(text,fileSize);
     text[fileSize] = '\0';
     file.close();

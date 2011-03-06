@@ -23,80 +23,22 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include <cassert>
-#include "shtok.hh"
+#include "shfiles.hh"
+#include "changelist.hh"
 
-/** sh tokenizer
-
-    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
-*/
-
-
-const char *shTokenTitles[] = {
-    "shErr",
-    "shComment",
-    "shCode"
-};
-
-
-#define advance(state) { trans = &&state; goto advancePointer; }
-
-size_t shTokenizer::tokenize( const char *line, size_t n )
+void shFetch( session& s, const boost::filesystem::path& pathname ) 
 {
-    size_t first = 0;
-    size_t last = first;
-    void *trans = state;
-    bool newline = false;
-    const char *p = line;
-    if( n == 0 ) return n;
-    if( trans != NULL ) goto *trans; else goto token;
-    
-advancePointer:
-    ++p;
-    last = std::distance(line,p);
-    switch( ((size_t)std::distance(line,p) >= n) ? '\0' : *p ) {
-    case '\r': 
-	while( *p == '\r' ) ++p; 
-	assert( (*p == '\n') | (*p == '\0') );
-    case '\n':  
-	++p;
-	newline = true;
-    case '\0':  
-	if( *p == '\0' ) ++p;
-	if( last - first > 0 && listener != NULL ) {
-	    listener->token(tok,line,first,last,true);
-	    first = last;
-	}
-	last = std::distance(line,p);
-	if( newline && listener != NULL ) {
-	    listener->newline(line,first,last);
-	    newline = false;
-	    first = last;
-	}
-	trans = &&token;
-    } 
-    if( last >= n ) {
-	state = trans;
-	return last;
-    }
-    goto *trans;
+    htmlEscaper leftLinkText;
+    htmlEscaper rightLinkText;
+    text sh(leftLinkText,rightLinkText);
+    sh.fetch(s,pathname);
+}
 
-code:
-    advance(code);
 
-comment:   
-    advance(comment);
-
-token:
-    tok = shErr;
-    first = p - line;
-    switch( *p ) {
-    case '#':
-	tok = shComment;
-	advance(comment);
-	break;
-    default:
-	tok = shCode;
-	advance(code);
-    }
+void shDiff( session& s, const boost::filesystem::path& pathname ) 
+{
+    htmlEscaper leftLinkText;
+    htmlEscaper rightLinkText;
+ 
+    changediff(s,pathname,&leftLinkText,&rightLinkText);
 }

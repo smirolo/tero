@@ -33,21 +33,16 @@
   
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-class logview : public document {
+class logview {
 public:
     static void 
     addSessionVars( boost::program_options::options_description& opts );
-
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
+void logviewFetch( session& s, const boost::filesystem::path& pathname );
 
 /** Display test unit regressions as provided by a regression.log 
  */
-class regressions : public document {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
+void regressionsFetch( session& s, const boost::filesystem::path& pathname );
 
 #endif

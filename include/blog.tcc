@@ -46,14 +46,14 @@ void blogInterval<cmp>::provide()
 
 
 template<typename cmp>
-void blogByInterval<cmp>::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void blogByIntervalFetch( session& s, const boost::filesystem::path& pathname ) {
     htmlwriter writer(s.out());
     blogInterval<cmp> feeds(&writer,pathname);
-    postFilter *prev = super::feeds;
-    super::feeds = &feeds;
-    super::fetch(s,pathname);
-    super::feeds->flush();
-    super::feeds = prev;
+    postFilter *prev = globalFeeds;
+    globalFeeds = &feeds;
+    feedContentFetch<cmp,allFilesPat>(s,pathname);
+    globalFeeds->flush();
+    globalFeeds = prev;
 }
 
 
@@ -98,20 +98,31 @@ void bySet<cmp>::flush()
     }
 }
 
-template<typename cmp>
-void blogSetLinks<cmp>::fetch( session& s, const boost::filesystem::path& pathname ) const
+
+template<typename cmp, const char *filePat>
+void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
 {
     boost::filesystem::path blogroot = s.root(s.abspath(pathname),"blog") / "blog";
     bySet<cmp> filter(s.out(),s.subdirpart(s.valueOf("siteTop"),blogroot));
 
-    postFilter *prev = super::feeds;
-    super::feeds = &filter;
+    postFilter *prev = globalFeeds;
+    globalFeeds = &filter;
 
-    mailParser parser(filematch,*super::feeds,false);
+    mailParser parser(boost::regex(filePat),*globalFeeds,false);
     parser.fetch(s,blogroot);
-    super::feeds->flush();
+    globalFeeds->flush();
 
-    super::feeds = prev; 
+    globalFeeds = prev; 
+}
+
+template<const char *filePat>
+void blogDateLinks( session& s, const boost::filesystem::path& pathname ) {
+    blogSetLinksFetch<orderByTime<post>,filePat>(s,pathname);
+}
+
+template<const char *filePat>
+void blogTagLinks( session& s, const boost::filesystem::path& pathname ) {
+    blogSetLinksFetch<orderByTag<post>,filePat>(s,pathname);
 }
 
 

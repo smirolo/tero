@@ -35,23 +35,6 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-
-void document::open( boost::filesystem::ifstream& strm, 
-		     const boost::filesystem::path& pathname ) const {
-    using namespace boost::system::errc;
-    using namespace boost::filesystem;
-    if( is_regular_file(pathname) ) {
-	strm.open(pathname);
-	if( !strm.fail() ) return;
-    }
-    /* \todo figure out how to pass iostream error code in exception. */
-    boost::throw_exception(
-        basic_filesystem_error<path>(std::string("file not found"),
-			        pathname, 
-			       	make_error_code(no_such_file_or_directory)));
-}
-
-
 void createfile( boost::filesystem::ofstream& strm, 
 		 const boost::filesystem::path& pathname ) {
     using namespace boost::system;
@@ -67,6 +50,22 @@ void createfile( boost::filesystem::ofstream& strm,
 }
 
 
+void openfile( boost::filesystem::ifstream& strm, 
+		     const boost::filesystem::path& pathname ) {
+    using namespace boost::system::errc;
+    using namespace boost::filesystem;
+    if( is_regular_file(pathname) ) {
+	strm.open(pathname);
+	if( !strm.fail() ) return;
+    }
+    /* \todo figure out how to pass iostream error code in exception. */
+    boost::throw_exception(
+        basic_filesystem_error<path>(std::string("file not found"),
+			        pathname, 
+			       	make_error_code(no_such_file_or_directory)));
+}
+
+
 dispatchDoc *dispatchDoc::instance = NULL;
 
 
@@ -75,15 +74,20 @@ dispatchDoc::dispatchDoc() {
 }
 
 void dispatchDoc::add( const std::string& varname, 
-		    const boost::regex& r, 
-		    const document& d ) {
+		       const boost::regex& r, 
+		       callFetchFunc f, 
+		       callFetchType b ) {
     presentationSet::iterator aliases = views.find(varname);
     if( aliases == views.end() ) {
 	/* first pattern we are adding for the variable */
 	views[varname] = aliasSet();
 	aliases = views.find(varname);
     }
-    aliases->second.push_back(std::make_pair(r,&d));
+    fetchEntry entry;
+    entry.pat = r;
+    entry.behavior = b;
+    entry.callback = f;
+    aliases->second.push_back(entry);
 }
 
 
@@ -101,19 +105,19 @@ bool dispatchDoc::fetch( session& s, const std::string& varname ) {
 bool dispatchDoc::fetch( session& s, 
 			 const std::string& varname,
 			 const boost::filesystem::path& pathname ) {
-    const document* doc = select(varname,pathname.string());
+    const fetchEntry *doc = select(varname,pathname.string());
     if( doc != NULL ) {
 	boost::filesystem::path p(s.abspath(pathname));
 #if 0
 	std::cerr << "behavior: " << doc->behavior << " " << p << std::endl;
 #endif
 	switch( doc->behavior ) {
-	case document::always:
-	    doc->fetch(s,p);
+	case always:
+	    doc->callback(s,p);
 	    break;
-	case document::whenFileExist: {	   
+	case whenFileExist: {	   
 	    if( boost::filesystem::exists(p) ) {
-		doc->fetch(s,p);	
+		doc->callback(s,p);	
 	    } else {
 		using namespace boost::system::errc;
 		using namespace boost::filesystem;
@@ -123,7 +127,7 @@ bool dispatchDoc::fetch( session& s,
 			       	make_error_code(no_such_file_or_directory)));
 	    }
 	} break;
-	case document::whenNotCached:
+	case whenNotCached:
 	    /* Not yet implemented. */
 	    break;
 	}	
@@ -134,11 +138,11 @@ bool dispatchDoc::fetch( session& s,
 
 
 
-const document* 
+const fetchEntry* 
 dispatchDoc::select( const std::string& name, const std::string& value ) const {
     presentationSet::const_iterator view = views.find(name);
 #if 0
-    std::cerr << "select(" << name << "," << value << ")" << std::endl;
+    std::cerr << "select(\"" << name << "\"," << value << ")" << std::endl;
 #endif
     if( view != views.end() ) {
 	const aliasSet& aliases = view->second;
@@ -146,14 +150,14 @@ dispatchDoc::select( const std::string& name, const std::string& value ) const {
 	     alias != aliases.end(); ++alias ) {
 	    boost::smatch m;
 #if 0
-	    std::cerr << "- match(" << value << "," << alias->first << ")?" << std::endl;
+	    std::cerr << "- match(" << value << "," << alias->pat << ")?" << std::endl;
 #endif
-	    if( regex_match(value,m,alias->first) ) {
+	    if( regex_match(value,m,alias->pat) ) {
 #if 0
-		std::cerr << "found " << alias->first << " for "
+		std::cerr << "found " << alias->pat << " for "
 			  << value << std::endl;
 #endif		
-		return alias->second;
+		return &(*alias);
 	    }
 	}
     }
@@ -161,7 +165,7 @@ dispatchDoc::select( const std::string& name, const std::string& value ) const {
 }
 
 
-void dirwalker::fetch( session& s, const boost::filesystem::path& pathname ) const
+void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem;
 
@@ -173,64 +177,18 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname ) con
 	    if( !is_directory(*entry) 
 		&& boost::regex_match(entry->string(),m,filematch) ) {		
 		boost::filesystem::ifstream infile;
-		open(infile,*entry);
+		openfile(infile,*entry);
 		walk(s,infile,entry->string());
 		infile.close();
 	    }
 	}
     } else {
 	boost::filesystem::ifstream infile;
-	open(infile,pathname);
+	openfile(infile,pathname);
 	walk(s,infile,pathname.string());
 	infile.close();
     }
     last();
-}
-
-void meta::fetch( session& s, const boost::filesystem::path& pathname ) const
-{
-    session::variables::const_iterator found = s.vars.find(varname);
-    if( found != s.vars.end() ) {    
-	s.out() << found->second.value;
-    } else {
-	s.out() << pathname;
-    }
-}
-
-
-void consMeta::fetch( session& s, const boost::filesystem::path& pathname ) const
-{
-    s.out() << value;
-}
-
-
-void textMeta::fetch( session& s, const boost::filesystem::path& pathname ) const
-{
-    using namespace boost::filesystem; 
-    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
-
-    /* \todo should only load one but how does it sits with dispatchDoc
-     that initializes s[varname] by default to "document"? */
-    ifstream strm;
-    open(strm,pathname);
-    while( !strm.eof() ) {
-	boost::smatch m;
-	std::string line;
-	std::getline(strm,line);
-	if( boost::regex_search(line,m,valueEx) ) {
-	    if( m.str(1) == std::string("Subject") ) {
-		s.vars["title"] = session::valT(m.str(2));
-	    } else {
-		s.vars[m.str(1)] = session::valT(m.str(2));
-	    }
-	} else break;
-    }
-    strm.close();
-    /* 
-       std::time_t last_write_time( const path & ph );
-       To convert the returned value to UTC or local time, 
-       use std::gmtime() or std::localtime() respectively. */
-    meta::fetch(s,pathname);
 }
 
 
@@ -439,13 +397,30 @@ void text::showSideBySide( session& s,
 }
 
 
-void text::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void skipOverTags( session& s, std::istream& istr )
+{
+    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
+
+    /* Skip over tags */
+    while( !istr.eof() ) {
+	boost::smatch m;
+	std::string line;
+	std::getline(istr,line);
+	if( !boost::regex_search(line,m,valueEx) ) {	
+	    s.out() << line << std::endl;
+	    break;
+	}
+    }
+}
+
+
+void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem; 
 
     ifstream strm;
-    open(strm,pathname);
+    openfile(strm,pathname);
 
     if( !header.empty() ) s.out() << header;
 
@@ -472,18 +447,17 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) const {
 }
 
 
-void text::skipOverTags( session& s, std::istream& istr ) const
-{
-    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
+void textFetch( session& s, const boost::filesystem::path& pathname ) {
+    htmlEscaper leftLinkText;
+    htmlEscaper rightLinkText;
+    text rawtext(leftLinkText,rightLinkText);
+    rawtext.fetch(s,pathname);
+}
 
-    /* Skip over tags */
-    while( !istr.eof() ) {
-	boost::smatch m;
-	std::string line;
-	std::getline(istr,line);
-	if( !boost::regex_search(line,m,valueEx) ) {	
-	    s.out() << line << std::endl;
-	    break;
-	}
-    }
+
+void formattedFetch( session& s, const boost::filesystem::path& pathname ) {
+    linkLight leftFormatedText(s);
+    linkLight rightFormatedText(s);
+    text formatedText(leftFormatedText,rightFormatedText);
+    formatedText.fetch(s,pathname);
 }

@@ -71,6 +71,8 @@ protected:
 
 public:
     /* \todo get through accessors */
+    std::string dates;
+    std::string grantor;
     size_t nbLines;
     size_t nbCodeLines;
     
@@ -83,6 +85,7 @@ public:
 	if( !cached ) cache();
 	return licenseType;
     }
+    
 };
 
 
@@ -133,15 +136,12 @@ public:
 
 
 template<typename checker>
-class checkfile : public document {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void checkfileFetch( session& s, const boost::filesystem::path& pathname );
 
-
+#if 0
 typedef checkfile<cppChecker> cppCheckfile;
 typedef checkfile<shChecker> shCheckfile;
-
+#endif
 
 class checkstyle : public projfiles {
 protected:    
@@ -152,13 +152,10 @@ protected:
     addFile( session& s, const boost::filesystem::path& pathname ) const;
 
     virtual void flush( session& s ) const;
-    
-public:
-    template<typename iter>
-    checkstyle( iter first, iter last ) 
-	: projfiles(first,last) {}
 };
 
+
+void checkstyleFetch( session&s, const boost::filesystem::path& pathname );
 
 #include "checkstyle.tcc"
 

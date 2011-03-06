@@ -71,9 +71,9 @@ public:
 
 /** Creating an item or commenting on an already existing item 
     use very similar mechanism. This abstract class implements
-    such mechanism to append a post to an item.
+    such mechanism to append a post to an item. (*always*)
 */
-class todoModifPost : public document {
+class todoModifPost {
 protected:
 
     /** Directory where modifications to todo items are stored. */
@@ -83,17 +83,17 @@ protected:
 	formatted as an e-mail. */
     std::istream *istr;
 
-    boost::filesystem::path asPath( const std::string& tag ) const;
-
 public:
     explicit todoModifPost( const boost::filesystem::path& m ) 
-	: document(always), modifs(m), istr(NULL) {}
+	: modifs(m), istr(NULL) {}
 
     todoModifPost( const boost::filesystem::path& m,		    
 		    std::istream& is ) 
-	: document(always), modifs(m), istr(&is) {}
+	: modifs(m), istr(&is) {}
 
 };
+
+void todoModifPostFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** Create a new item
@@ -107,9 +107,9 @@ public:
     todoCreate( const boost::filesystem::path& m,
 		std::istream& is ) 
 	: todoModifPost(m,is) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+void todoCreateFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** Comment an item
@@ -123,31 +123,21 @@ public:
     todoComment( const boost::filesystem::path& m,
 		   std::istream& is ) 
 	: todoModifPost(m,is) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+void todoCommentFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** Display an index of all items in a directory with one item per row
-    with the rows sorted in descending score order.
+    with the rows sorted in descending score order. (*always*)
  */
-class todoIndexWriteHtml : public document {
-public:
-    todoIndexWriteHtml() : document(always) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void todoIndexWriteHtmlFetch( session& s, const boost::filesystem::path& pathname );
 
 
 /** Callback when the process of voting on an item has been abandonned
+    (*always*).
  */
-class todoVoteAbandon : public document {
-public:
-    todoVoteAbandon() : document(always) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
+void todoVoteAbandonFetch( session& s, const boost::filesystem::path& pathname );
 
 /** Callback when a vote on an item has successed.
     
@@ -164,26 +154,16 @@ public:
     todoVoteSuccess( const boost::filesystem::path& m, 
 		     const char *retPath ) 
 	: todoModifPost(m), returnPath(retPath) {}
-
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
 
+void todoVoteSuccessFetch( session& s, const boost::filesystem::path& pathname );
 
-class todoMeta : public textMeta {
-public:
-    explicit todoMeta( const std::string& v ) 
-	: textMeta(v) {}
 
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void todoMeta( session& s, const boost::filesystem::path& pathname );
 
 
 /** Generate an HTML printout of an item
  */
-class todoWriteHtml : public document {
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
+void todoWriteHtmlFetch( session& s, const boost::filesystem::path& pathname );
 
 #endif

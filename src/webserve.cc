@@ -51,17 +51,24 @@ getmtime( const boost::filesystem::path& pathname )
 boost::filesystem::path 
 relpath( const boost::filesystem::path& pathname,
 	 const boost::filesystem::path& base ) {
-    boost::filesystem::path::iterator first = pathname.begin();
+
+    boost::filesystem::path existingPath(pathname);
+    while( !boost::filesystem::exists(existingPath) ) {
+	existingPath.remove_leaf();
+    } 
+
+    boost::filesystem::path::iterator first = existingPath.begin();
     boost::filesystem::path::iterator second = base.begin();
+    for( ; (first != existingPath.end()) & (second != base.end()); 
+	 ++first, ++second ) {
+	if( *first != *second ) break;
+    }
+
     boost::filesystem::path result;
-    
-    for( ; (first != pathname.end()) & (second != base.end()); 
-		 ++first, ++second ) {
-		if( *first != *second ) break;
+    for( ; first != existingPath.end(); ++first ) {
+	result /= *first;
     }
-    for( ; first != pathname.end(); ++first ) {
-		result /= *first;
-    }
+
     return result;
 }
 

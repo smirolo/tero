@@ -238,16 +238,9 @@ void byScore::flush()
 }
 
 
-boost::filesystem::path todoModifPost::asPath( const std::string& tag ) const
+void todoCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
-    std::stringstream s;
-    s << (modifs / tag) << ".todo";
-    return boost::filesystem::path(s.str());
-}
-
-
-void todoCreate::fetch( session& s, const boost::filesystem::path& pathname ) const
-{    
+    boost::filesystem::path modifs(s.valueOf("todoDir"));
     boost::filesystem::path 
 	dirname(boost::filesystem::exists(pathname) ? 
 		pathname : s.abspath(modifs));
@@ -273,7 +266,7 @@ void todoCreate::fetch( session& s, const boost::filesystem::path& pathname ) co
 }
 
 
-void todoComment::fetch( session& s, const boost::filesystem::path& pathname ) const
+void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 {
     boost::filesystem::path 
 	postname(boost::filesystem::exists(pathname) ? 
@@ -299,18 +292,19 @@ void todoComment::fetch( session& s, const boost::filesystem::path& pathname ) c
    }
 }
 
-void todoIndexWriteHtml::fetch( session& s, 
-				const boost::filesystem::path& pathname ) const
+void todoIndexWriteHtmlFetch( session& s, 
+			      const boost::filesystem::path& pathname )
 {
     todoliner shortline(s.out());
     byScore order(s.out(),shortline);
     mailParser parser(order,true);
     parser.fetch(s,pathname);
+    order.flush();
 }
 
 
-void todoVoteAbandon::fetch( session& s, 
-			     const boost::filesystem::path& pathname ) const {
+void todoVoteAbandonFetch( session& s, 
+			   const boost::filesystem::path& pathname ) {
 	s.out() << html::p() << "You have abandon the transaction and thus"
 		  << " your vote has not been registered."
 		  << " Thank you for your interest." 
@@ -318,18 +312,23 @@ void todoVoteAbandon::fetch( session& s,
 }
 
 
-void todoVoteSuccess::fetch( session& s, 
-			     const boost::filesystem::path& pathname ) const
+void todoVoteSuccessFetch( session& s, 
+			   const boost::filesystem::path& pathname )
 {
 #if 0
     payment::checkReturn(s,returnPath);
 #endif
 
+    std::stringstream str;
+    boost::filesystem::path modifs(s.valueOf("todoDir"));
+    str << (modifs / s.valueOf("referenceId")) << ".todo";
+    boost::filesystem::path asPath(str.str());
+
     /* The pathname is set to the *todoVote* action name when we get here
        so we derive the document name from *href*. */
     boost::filesystem::path 
 	postname(boost::filesystem::exists(pathname) ? 
-		 pathname : asPath(s.valueOf("referenceId")));
+		 pathname : asPath);
 
     if( !boost::filesystem::is_regular_file(postname) ) {
 	/* If *postname* does not point to a regular file,
@@ -399,28 +398,31 @@ void todoVoteSuccess::fetch( session& s,
     f_lock.unlock();
 }
 
+namespace {
+char titleMeta[] = "title";
+} // anonymous
 
-void todoMeta::fetch( session& s, const boost::filesystem::path& pathname ) const
+void todoMeta( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem; 
     static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
-    std::stringstream title;
-    title << '[' << basename(pathname.filename()) << ']';
+    std::stringstream titles;
+    titles << '[' << basename(pathname.filename()) << ']';
 
     /* \todo should only load one but how does it sits with dispatchDoc
      that initializes s[varname] by default to "document"? */
     ifstream strm;
     std::string line;
-    open(strm,pathname);
+    openfile(strm,pathname);
     std::getline(strm,line);  // skip first line "From  ..." (see mbox)
     while( !strm.eof() ) {
 	boost::smatch m;
 	std::getline(strm,line);
 	if( boost::regex_search(line,m,valueEx) ) {
 	    if( m.str(1) == std::string("Subject") ) {
-		title << " - " << m.str(2);
-		s.vars["title"] = session::valT(title.str());
+		titles << " - " << m.str(2);
+		s.vars["title"] = session::valT(titles.str());
 	    } else {
 		s.vars[m.str(1)] = session::valT(m.str(2));
 	    }
@@ -432,12 +434,12 @@ void todoMeta::fetch( session& s, const boost::filesystem::path& pathname ) cons
        std::time_t last_write_time( const path & ph );
        To convert the returned value to UTC or local time, 
        use std::gmtime() or std::localtime() respectively. */
-    meta::fetch(s,pathname);
+    metaFetch<titleMeta>(s,pathname);
 }
 
 
 void 
-todoWriteHtml::fetch( session& s, const boost::filesystem::path& pathname ) const 
+todoWriteHtmlFetch( session& s, const boost::filesystem::path& pathname )
 {
     htmlwriter writer(s.out()); 
     mailParser parser(writer);

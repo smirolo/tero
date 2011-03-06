@@ -26,7 +26,7 @@
 #include "markup.hh"
 
 template<typename checker>
-void checkfile<checker>::fetch( session& s, const boost::filesystem::path& pathname ) const
+void checkfileFetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem; 
 
@@ -36,7 +36,7 @@ void checkfile<checker>::fetch( session& s, const boost::filesystem::path& pathn
     size_t fileSize = file_size(pathname);
     char buffer[ fileSize + 1 ];
     
-    open(file,pathname);
+    openfile(file,pathname);
     file.read(buffer,fileSize);
     buffer[fileSize] = '\0';
     file.close();
@@ -54,9 +54,11 @@ void checkfile<checker>::fetch( session& s, const boost::filesystem::path& pathn
     }
 
     s.out() << html::tr()
-	 << html::td() << html::a().href(href.string()) 
-	 << name << html::a::end << html::td::end
-	 << html::td() << check.license() << html::td::end
+	    << html::td() << html::a().href(href.string()) 
+	    << name << html::a::end << html::td::end
+	    << html::td() << check.license() 
+	    << " (" << check.dates << "," << check.grantor << ")"
+	    << html::td::end
 	 << html::td() << check.nbCodeLines << html::td::end
 	 << html::td() << check.nbLines << html::td::end
 	 << html::tr::end;

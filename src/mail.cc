@@ -58,19 +58,6 @@ void mailthread::flush() {
 }
 
 
-void mailParser::fetch( session& s, const boost::filesystem::path& pathname ) const
-{
-    dirwalker::fetch(s,pathname);
-#if 0
-    /* \todo Cannot flush here if we want to support feedContent calls blogEntry.
-       This call will generate non-intended intermediate flushes. It might be
-       useful for other parts of the system though...
-     */
-    filter->flush();
-#endif
-}
-
-
 void mailParser::walk( session& s, std::istream& ins, const std::string& name ) const
 {
     using namespace boost::gregorian;
@@ -198,3 +185,17 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
     tags.clear();
 }
 
+
+void mailParserFetch( session& s, const boost::filesystem::path& pathname )
+{
+    mailthread mt(s.out());
+    mailParser mp(mt);
+    mp.fetch(s,pathname);
+#if 0
+    /* \todo Cannot flush here if we want to support feedContent calls blogEntry.
+       This call will generate non-intended intermediate flushes. It might be
+       useful for other parts of the system though...
+     */
+    filter->flush();
+#endif
+}

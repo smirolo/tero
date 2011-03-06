@@ -33,8 +33,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-class projfiles : public document {
-public:
+class projfiles {
+public:    
     typedef std::list<boost::regex> filterContainer;
 
     enum stateCode {
@@ -46,8 +46,6 @@ public:
     mutable stateCode state;
 
 protected:
-    filterContainer filters;
-    
     /** directory in the source tree which is the root of the project (srcDir)
      */
     mutable boost::filesystem::path projdir;
@@ -65,14 +63,11 @@ protected:
     bool selects( const boost::filesystem::path& pathname ) const;
     
 public:
-    
-    template<typename iter>
-    projfiles( iter first, iter last ) {
-	std::copy(first,last,std::back_inserter(filters));
-    }
 
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
+    void fetch( session& s, const boost::filesystem::path& pathname );
+
 };
 
+void projfilesFetch( session& s, const boost::filesystem::path& pathname );
 
 #endif

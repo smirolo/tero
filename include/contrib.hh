@@ -33,19 +33,12 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-class contribCreate : public document {
-public:
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
-
+void contribCreateFetch( session& s, const boost::filesystem::path& pathname );
 
 /** Index the set of contribs and display an HTML row per contrib item
     that contains the date, author and title of the contrib item.
  */
-class contribIdx : public document {
-public:
-    virtual void fetch( session& s, const boost::filesystem::path& pathname ) const;
-};
+void contribIdxFetch( session& s, const boost::filesystem::path& pathname );
 
 
 #endif

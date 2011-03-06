@@ -199,18 +199,18 @@ boost::filesystem::path session::contributorLog() const {
 
 
 boost::filesystem::path 
-session::abspath( const boost::filesystem::path& relpath ) const {
+session::abspath( const boost::filesystem::path& relative ) const {
     using namespace boost::filesystem;
 
     /* This is an absolute path so it is safe to return it as such. */
-    if( relpath.string()[0] == '/' && boost::filesystem::exists(relpath) ) {
-	return relpath;
+    if( relative.string()[0] == '/' && boost::filesystem::exists(relative) ) {
+	return relative;
     }
 
     /* First we try to access the file from cwd. */
     path fromCwd 
-	= current_path() / relpath;
-    if( !relpath.is_complete() && boost::filesystem::exists(fromCwd) ) { 
+	= current_path() / relative;
+    if( !relative.is_complete() && boost::filesystem::exists(fromCwd) ) { 
 	return fromCwd;
     }	
 
@@ -223,12 +223,12 @@ session::abspath( const boost::filesystem::path& relpath ) const {
 				     fromSiteTop, 
 				     boost::system::error_code()));
     }
-    if( relpath.string().compare(0,fromSiteTop.string().size(),fromSiteTop.string()) == 0 ) {
-	fromSiteTop = relpath;
+    if( relative.string().compare(0,fromSiteTop.string().size(),fromSiteTop.string()) == 0 ) {
+	fromSiteTop = relative;
     } else {
 	/* avoid to keep prepending siteTop in case the file does not exist.
 	 */
-	fromSiteTop /= relpath;
+	fromSiteTop /= relative;
     }
     
     /* We used to throw an exception at this point. That does

@@ -34,7 +34,7 @@
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-class calendar : public document {
+class calendar {
 protected:
     typedef void 
     (calendar::* walkNodePtr)( const std::string& s ) const;
@@ -57,7 +57,10 @@ public:
     addSessionVars( boost::program_options::options_description& opts );
 
     void parse( session& s, std::istream& ins ) const;
-    void fetch( session& s, const boost::filesystem::path& pathname ) const;
 };
+
+
+void calendarFetch( session& s, const boost::filesystem::path& pathname );
+
 
 #endif

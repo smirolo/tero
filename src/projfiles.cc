@@ -35,13 +35,7 @@
 
 
 bool projfiles::selects( const boost::filesystem::path& pathname ) const {
-    for( filterContainer::const_iterator filter = filters.begin();
-	 filter != filters.end(); ++filter ) {
-	if( boost::regex_match(pathname.string(),*filter) ) {
-	    return true;
-	}
-    }
-    return false;
+    return dispatchDoc::instance->select("check",pathname.string()) != NULL;
 }
 
 
@@ -104,13 +98,13 @@ void projfiles::flush( session& s ) const
 }
 
 
-void projfiles::fetch( session& s, const boost::filesystem::path& pathname ) const
+void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace std;
     using namespace boost::system;
     using namespace boost::filesystem;
 
-    state = start;
+    state = projfiles::start;
     projdir = s.root(pathname,"dws.xml");
     
     if( !projdir.empty() ) {
@@ -152,4 +146,10 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname ) con
 	}
 	flush(s);
     }
+}
+
+void projfilesFetch( session& s, const boost::filesystem::path& pathname )
+{
+    projfiles p;
+    p.fetch(s,pathname);
 }

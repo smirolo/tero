@@ -25,6 +25,8 @@
 
 #include "feeds.hh"
 
+char allFilesPat[] = ".*";
+
 feedIndex::indexSet feedIndex::indices;
 
 feedIndex::iterator feedIndex::first;
@@ -59,11 +61,11 @@ void feedIndex::flush()
 }
 
 
-postFilter *feedWriter::feeds = NULL;
+postFilter *globalFeeds = NULL;
 
 
-void feedWriter::fetch( session& s, 
-			   const boost::filesystem::path& pathname ) const
+void feedWriterFetch( session& s, 
+		      const boost::filesystem::path& pathname )
 {
 #if 0
     postWriter writer(s.out());
@@ -124,74 +126,77 @@ void feedWriter::fetch( session& s,
 }
 
 
-void feedContent::fetch( session& s, 
-		     const boost::filesystem::path& pathname ) const
+void feedRepositoryPopulate( session& s, 
+			    const boost::filesystem::path& pathname )
 {
-    using namespace boost::filesystem;
-
-    /* Always generate the feed from a content directory even
-       when a file is passed as *pathname* */
-    path base(pathname);
-    while( base.string().size() > s.valueOf("siteTop").size()
-	   && !is_directory(base) ) {
-	base = base.parent_path();
-    }
-    if( !base.empty() ) {
-	for( directory_iterator entry = directory_iterator(base); 
-	     entry != directory_iterator(); ++entry ) {
-	    boost::smatch m;
-	    if( !is_directory(*entry) 
-		&& boost::regex_match(entry->string(),m,filePat) ) {
-		path filename(base / entry->filename());	    
-		std::string reluri = s.subdirpart(s.valueOf("siteTop"),
-						  filename).string();	    
-		/* We should pop out a post for those docs that don't
-		   even when they fetch (book vs. mail/blogentry). */
-		if( !dispatchDoc::instance->fetch(s,"document",reluri)) {
-		    post p;
-		    p.title = reluri;	    
-		    p.guid = reluri;
-		    std::time_t lwt = last_write_time(filename);
-		    p.time = boost::posix_time::from_time_t(lwt);
-		    super::feeds->filters(p);
-		}
-	    }
+    revisionsys *rev = revisionsys::findRev(s,pathname);
+    if( rev ) {
+	history hist;
+	boost::filesystem::path base =  boost::filesystem::path("/") 
+	    / s.subdirpart(s.valueOf("siteTop"),rev->rootpath);
+	std::string projname = s.subdirpart(s.valueOf("srcTop"),rev->rootpath).string();
+	if( projname[projname.size() - 1] == '/' ) {
+	    projname = projname.substr(0,projname.size() - 1);
 	}
-   }
+	s.vars["title"] = projname;
+	rev->checkins(hist,s,pathname);
+	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
+	     ci != hist.checkins.end(); ++ci ) {
+	    ci->normalize();
+	    std::stringstream strm;
+	    strm << html::p();
+	    strm << projname << " &nbsp;&mdash;&nbsp; " << ci->guid << "<br />";
+	    strm << ci->descr;
+	    strm << html::p::end;
+	    strm << html::pre();
+	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
+		 file != ci->files.end(); ++file ) {
+		/* \todo link to diff with previous revision */
+		writelink(strm,base,*file);
+		strm << std::endl;
+	    }
+	    strm << html::pre::end;
+	    post p(*ci);
+	    p.descr = strm.str();
+	    globalFeeds->filters(p);
+	}	
+    }
 }
 
 
-void htmlContent::fetch( session& s, const boost::filesystem::path& pathname ) const
+void htmlContentFetch( session& s, const boost::filesystem::path& pathname )
 {
+    typedef feedPage<feedOrdered<orderByTime<post> > > feedFilterType;
     htmlwriter writer(s.out());
     feedOrdered<orderByTime<post> > latests(&writer);
-    feedPage<feedOrdered<orderByTime<post> > > feeds(latests,0,5); 
+    feedFilterType feeds(latests,0,5); 
 
-    postFilter *prev = super::feeds;
-    if( !super::feeds ) {
-	super::feeds = &feeds;
+    postFilter *prev = globalFeeds;
+    if( !globalFeeds ) {
+	globalFeeds = &feeds;
     } 
-    super::fetch(s,pathname);
-    super::feeds = prev;
-    if( !super::feeds ) {
+    feedContentFetch<feedFilterType,allFilesPat>(s,pathname);
+    globalFeeds = prev;
+    if( !globalFeeds ) {
 	feeds.flush();
     }
 }
 
 
-void rssContent::fetch( session& s, const boost::filesystem::path& pathname ) const
+void rssContentFetch( session& s, const boost::filesystem::path& pathname )
 {
+    typedef feedPage<feedOrdered<orderByTime<post> > > feedFilterType;
     rsswriter writer(s.out());
     feedOrdered<orderByTime<post> > latests(&writer);
-    feedPage<feedOrdered<orderByTime<post> > > feeds(latests,0,5); 
+    feedFilterType feeds(latests,0,5); 
 
-    postFilter *prev = super::feeds;
-    if( !super::feeds ) {
-	super::feeds = &feeds;
+    postFilter *prev = globalFeeds;
+    if( !globalFeeds ) {
+	globalFeeds = &feeds;
     }
-    super::fetch(s,pathname);
-    super::feeds = prev;
-    if( !super::feeds ) {
+    feedContentFetch<feedFilterType,allFilesPat>(s,pathname);
+    globalFeeds = prev;
+    if( !globalFeeds ) {
 	feeds.flush();
     }
 }

@@ -34,7 +34,8 @@
 */
 
 
-void projCreate::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void projCreateFetch( session& s, const boost::filesystem::path& pathname )
+{
     using namespace boost::system;
     using namespace boost::filesystem;
 
@@ -90,7 +91,8 @@ projindex::addSessionVars( boost::program_options::options_description& opts )
 }
 
 
-void projindex::fetch( session& s, const boost::filesystem::path& pathname ) const {
+void projindexFetch( session& s, const boost::filesystem::path& pathname )
+{
     using namespace rapidxml;
     using namespace boost::filesystem;
 
@@ -98,7 +100,7 @@ void projindex::fetch( session& s, const boost::filesystem::path& pathname ) con
     size_t fileSize = file_size(pathname);
     char text[ fileSize + 1 ];
     ifstream file;
-    open(file,pathname);
+    openfile(file,pathname);
     file.read(text,fileSize);
     text[fileSize] = '\0';
     xml_document<> doc;    // character type defaults to char
