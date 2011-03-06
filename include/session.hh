@@ -159,6 +159,10 @@ public:
 
     void filters( variables& results, sourceType source ) const;
     
+    void loadsession( const boost::program_options::options_description& opts ) {
+	load(opts,stateFilePath(),sessionfile);
+    }
+
     /** \brief Value of a variable as an absolute pathname
 	
 	If the variable exists in the session and its value can
