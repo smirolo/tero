@@ -107,8 +107,11 @@ void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
 
     postFilter *prev = globalFeeds;
     globalFeeds = &filter;
-
-    mailParser parser(boost::regex(filePat),*globalFeeds,false);
+    
+    /* workaround Ubuntu/gcc-4.4.3 is not happy with boost::regex(filePat) 
+       passed as parameter to parser. */
+    boost::regex pat(filePat);
+    mailParser parser(pat,*globalFeeds,false);
     parser.fetch(s,blogroot);
     globalFeeds->flush();
 
