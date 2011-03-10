@@ -43,12 +43,13 @@ public:
     }
 };
 
+boost::filesystem::path contributorLog( const session& s );
 
-class auth {
-public:
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
-};
+/** Add session variables related to auth module.
+ */
+void authAddSessionVars( boost::program_options::options_description& opts,
+			 boost::program_options::options_description& visible );
+
 
 void authFetch( session& s, const boost::filesystem::path& pathname );
 

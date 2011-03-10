@@ -37,6 +37,15 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
  */
 
+extern sessionVariable awsAccessKey;
+extern sessionVariable awsSecretKey;
+extern sessionVariable awsCertificate;
+
+void 
+awsAddSessionVars( boost::program_options::options_description& opts,
+		   boost::program_options::options_description& visible );
+
+
 class awsStandardButton {
 public:
     typedef std::map<std::string,std::string> paramMap;
@@ -74,9 +83,7 @@ public:
     url returnUrl;
     
 public:
-    awsStandardButton( const std::string& accessKey,
-		       const std::string& secretKey,
-		       const std::string& certificate );
+    explicit awsStandardButton( const session& s );
 
     void build( const std::string& referenceId, uint32_t amount );
 

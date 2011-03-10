@@ -37,6 +37,14 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
  */
 
+extern sessionVariable paypalSecretKey;
+extern sessionVariable paypalPublicCertificate;
+
+void 
+paypalAddSessionVars( boost::program_options::options_description& opts,
+		      boost::program_options::options_description& visible );
+
+
 class paypalStandardButton {
 public:
     typedef std::map<std::string,std::string> paramMap;
@@ -75,8 +83,7 @@ public:
     url returnUrl;
     
 public:
-    paypalStandardButton( const boost::filesystem::path& secretKeyPath,
-			  const std::string& certificate );
+    explicit paypalStandardButton( const session& s );
 
     void build( const std::string& referenceId, uint32_t amount );
 

@@ -38,10 +38,97 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+pathVariable document("view","document to be displayed");
+
+pathVariable siteTop("siteTop","root directory that contains the web site");
+
+/* \todo Unless we communicate a callback to another site,
+         we should be clean of requiring domainName... 
+	 not true: We need domain name to display fully qualified src 
+	 repository urls.
+*/
+urlVariable domainName("domainName","domain name of the web server");
+
+timeVariable startTime("startTime","start time for the session");
+
 
 undefVariableError::undefVariableError( const std::string& varname ) 
     : std::runtime_error(std::string("undefined variable in session ") 
 			 + varname) {}
+
+
+boost::shared_ptr<boost::program_options::option_description> 
+sessionVariable::option() { 
+    return boost::shared_ptr<boost::program_options::option_description> 
+	(new boost::program_options::option_description(opt)); 
+}
+
+
+std::string sessionVariable::value( const session& s ) const
+{
+    return s.valueOf(name);
+}
+
+
+boost::filesystem::path pathVariable::value( const session& s ) const
+{
+    using namespace boost::filesystem;
+
+    path absolute = s.abspath(sessionVariable::value(s));
+#if 0
+    /* if we do that, we cannot generate dynamic pages. On the other
+     hand using sessionVariable instead of pathVariable for *document*
+     will not check it is an actual pathname. */
+    if( !boost::filesystem::exists(absolute) ) {
+	using namespace boost::system::errc;
+	boost::throw_exception(			       
+	  basic_filesystem_error<path>(std::string("path not found"),
+				absolute, 
+			       	make_error_code(no_such_file_or_directory)));
+    }
+#endif
+    return absolute;
+}
+
+boost::posix_time::ptime timeVariable::value( const session& s ) const 
+{
+    std::stringstream is(sessionVariable::value(s));
+    boost::posix_time::ptime t;
+    is >> t;
+    return t;
+}
+
+
+url urlVariable::value( const session& s ) const 
+{
+    return url(sessionVariable::value(s));
+}
+
+
+std::string session::sessionName;
+
+
+void 
+session::addSessionVars( boost::program_options::options_description& all,
+			 boost::program_options::options_description& visible ) 
+{
+    using namespace boost::program_options;
+
+    options_description localOptions("session");
+    localOptions.add_options()
+	("config",value<std::string>(),(std::string("path to the configuration file (defaults to ") + configFile + std::string(")")).c_str())
+	("sessionDir",value<std::string>(),(std::string("directory where session files are stored (defaults to ") + sessionDir + std::string(")")).c_str())
+	(sessionName.c_str(),value<std::string>(),"name of the session id variable (or cookie)");
+    localOptions.add(domainName.option());
+    localOptions.add(siteTop.option());
+    all.add(localOptions);
+    visible.add(localOptions);
+
+    options_description hiddenOptions("hidden");
+    hiddenOptions.add(startTime.option());
+    hiddenOptions.add(document.option());
+    all.add(hiddenOptions);
+}
 
 
 void session::load( const boost::program_options::options_description& opts,
@@ -73,6 +160,67 @@ void session::load( const boost::program_options::options_description& opts,
 	}
     }
 }
+
+
+slice<char> session::loadtext( const boost::filesystem::path& p )
+{
+    using namespace boost::filesystem;
+    using namespace boost::system::errc;
+
+    textMap::const_iterator found = texts.find(p);
+    if( found != texts.end() ) {
+	return found->second;
+    }
+
+    if( is_regular_file(p) ) {
+	size_t fileSize = file_size(p);
+	char *text = new char[ fileSize + 1 ];
+	ifstream file(p);
+	if( file.fail() ) {
+	    boost::throw_exception(basic_filesystem_error<path>(
+				std::string("error opening file"),
+				p,
+				make_error_code(no_such_file_or_directory)));
+	}
+	file.read(text,fileSize);
+	text[fileSize] = '\0';
+	file.close();
+	/* +1 for zero but it would arbitrarly augment text -
+	   does not work for tokenizers. */
+	texts[p] = slice<char>(text,&text[fileSize]); 
+	return texts[p];
+    }
+
+    return slice<char>();
+}
+
+
+rapidxml::xml_document<>*
+session::loadxml( const boost::filesystem::path& p )
+{
+    xmlMap::const_iterator found = xmls.find(p);
+    if( found != xmls.end() ) {
+	return found->second;
+    }
+    slice<char> buffer = loadtext(p);
+#if 0
+    std::cerr << "loadxml(" << p << "):" << std::endl;
+    std::cerr << "\"" << buffer.begin() << "\"" << std::endl;
+#endif
+    rapidxml::xml_document<> *doc = new rapidxml::xml_document<>();
+    try {
+	doc->parse<0>(buffer.begin());
+	xmls[p] = doc;
+    } catch( std::exception& e ) {
+	delete doc;
+	doc = NULL;
+	/* We would rather return NULL here instead of rethrowing the exception
+	   because part of the callback fetch that requested the XML must 
+	   write an alternate message. */
+    }
+    return doc; 
+}
+
 
 boost::filesystem::path session::stateDir() const {
     std::string s = valueOf("sessionDir");
@@ -114,7 +262,8 @@ void session::filters( variables& results, sourceType source ) const
 void session::insert( const std::string& name, const std::string& value,
 		      sourceType source ) 
 {
-    if( vars.find(name) == vars.end() ) { 
+    variables::const_iterator look = vars.find(name);
+    if( look == vars.end() || source <= look->second.source ) { 
 	vars[name] = valT(value,source);
     }
 }
@@ -129,10 +278,6 @@ void session::state( const std::string& name, const std::string& value )
 	std::stringstream s;
 	s << boost::uuids::random_generator()();
 	sessionId = s.str();
-
-	using namespace boost::filesystem;
-	variables::iterator iter = vars.find("message");
-	if( iter != vars.end() ) iter->second.source = sessionfile;
 
 	s.str("");
 	s << second_clock::local_time();
@@ -185,34 +330,34 @@ const std::string& session::valueOf( const std::string& name ) const {
 }
 
 
-boost::filesystem::path session::userPath() const {
-    variables::const_iterator srcTop = vars.find("srcTop");
-    assert( srcTop != vars.end() );
-    return boost::filesystem::path(srcTop->second.value) 
-	/ boost::filesystem::path("contrib") 
-	/ username();
-}
-
-boost::filesystem::path session::contributorLog() const {
-    return userPath() / boost::filesystem::path("hours");
-}
-
-
 boost::filesystem::path 
 session::abspath( const boost::filesystem::path& relative ) const {
     using namespace boost::filesystem;
 
-    /* This is an absolute path so it is safe to return it as such. */
-    if( relative.string()[0] == '/' && boost::filesystem::exists(relative) ) {
+#if 1
+    /* \todo This code creates trouble for command-line processing 
+       as well as for dispatching but is required to get homepage displayed
+       correctly. To figure out how to clean it up...
+    */
+    /* When we are running is CGI mode, every path needs to be interpreted
+       from *siteTop*. On command-line mode, we can relax the rule a little
+       and if we are passed an absolute path that exists, it is safe 
+       to return it as such. */
+    if( relative.is_complete() 
+	&& boost::filesystem::exists(relative) ) {
 	return relative;
     }
+#endif
 
+#if 0
+    /* \todo seems like bogus code now... */
     /* First we try to access the file from cwd. */
     path fromCwd 
 	= current_path() / relative;
     if( !relative.is_complete() && boost::filesystem::exists(fromCwd) ) { 
 	return fromCwd;
     }	
+#endif
 
     /* Second we try to access the file as a relative pathname 
        from siteTop. */
@@ -244,46 +389,16 @@ session::abspath( const boost::filesystem::path& relative ) const {
 }
 
 
-boost::filesystem::path 
-session::build( const boost::filesystem::path& p ) const
-{
-    boost::filesystem::path buildTop = valueOf("buildTop");
-    boost::filesystem::path srcTop = valueOf("srcTop");
-    if( prefix(srcTop,p) ) {
-	return buildTop / p.string().substr(srcTop.string().size() + 1);
-    }
-    return p;
-}
-
-
 void session::restore( int argc, char *argv[],
-		       const boost::program_options::options_description& o )
+		       const boost::program_options::options_description& opts )
 {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem;
     using namespace boost::program_options;
 
-    boost::program_options::options_description opts(o);
-    opts.add_options()
-	("config",value<std::string>(),(std::string("path to the configuration file (defaults to ") + configFile + std::string(")")).c_str())
-	("sessionDir",value<std::string>(),(std::string("directory where session files are stored (defaults to ") + sessionDir + std::string(")")).c_str())
-	(sessionName.c_str(),value<std::string>(),"name of the session id variable (or cookie)")
-	("username",value<std::string>(),"username")
-	(posCmd,value<std::string>(),posCmd)
-
-	("buildTop",value<std::string>(),"path to build root")
-	("srcTop",value<std::string>(),"path to document top")
-	("siteTop",value<std::string>(),"path to the files published on the web site")
-	/* \todo only in payments? */
-	("domainName",value<std::string>(),"domain name of the web server")
-
-	("message,m",value<std::string>(),"Message inserted in the contributor's hours log")
-	("startTime",value<std::string>(),"start time for the session");
-
-
     positional_options_description pd;     
-    pd.add(posCmd, 1);
+    pd.add(document.name, 1);
 
     /* 1. The command-line arguments are added to the session. */
     {
@@ -357,11 +472,11 @@ void session::restore( int argc, char *argv[],
 
     /* Append a trailing '/' if the document is a directory
        to match Apache's rewrite rules. */    
-    std::string document = abspath(valueOf(posCmd)).string();
-    if( boost::filesystem::is_directory(document) 
-	&& (document.size() == 0 
-	    || document[document.size() - 1] != '/') ) {
-	insert(posCmd,document + '/');
+    std::string docname = document.value(*this).string();
+    if( boost::filesystem::is_directory(docname) 
+	&& (docname.size() == 0 
+	    || docname[docname.size() - 1] != '/') ) {
+	insert(document.name,docname + '/');
     }
 }
 
@@ -376,17 +491,15 @@ session::root( const boost::filesystem::path& leaf,
     if( !is_directory(dirname) ) {
 	dirname = dirname.parent_path();
     }
-#if 0
-    std::cerr << "root(" << leaf << "," << trigger << "), start=" << dirname << std::endl;
-#endif
     bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
     while( !foundProject && (dirname.string() != srcTop) ) {
 	dirname.remove_leaf();
 	if( dirname.string().empty() ) {
+	    using namespace boost::system::errc;
 	    boost::throw_exception(basic_filesystem_error<path>(
 			std::string("no trigger from path up"),
 			leaf, 
-			boost::system::error_code())); 
+			make_error_code(no_such_file_or_directory))); 
 	}
 	foundProject = boost::filesystem::exists(dirname.string() / trigger);
     }
@@ -405,7 +518,7 @@ void session::show( std::ostream& ostr ) {
     };
 
     if( exists() ) {
-	ostr << "session " << sessionId << " for " << username() << std::endl;
+	ostr << "session " << sessionId << std::endl;
     } else {
 	ostr << "no session id" << std::endl;
     }
@@ -414,26 +527,6 @@ void session::show( std::ostream& ostr ) {
 	ostr << var->first << ": " << var->second.value 
 	     << " [" << sourceTypeNames[var->second.source] << "]" << std::endl;
     }
-}
-
-
-boost::filesystem::path 
-session::src( const boost::filesystem::path& p ) const
-{
-    boost::filesystem::path buildTop = valueOf("buildTop");
-    boost::filesystem::path srcTop = valueOf("srcTop");
-    if( prefix(buildTop,p) ) {
-	return srcTop / p.string().substr(buildTop.string().size() + 1);
-    }
-    return p;
-}
-
-
-boost::filesystem::path 
-session::srcDir( const boost::filesystem::path& p ) const
-{
-    boost::filesystem::path srcTop = valueOf("srcTop");    
-    return srcTop / p;
 }
 
 
@@ -479,5 +572,7 @@ session::valueAsPath( const std::string& name ) const {
     if( iter == vars.end() ) {
 	boost::throw_exception(undefVariableError(name));
     }
-    return abspath(boost::filesystem::path(iter->second.value));
+    boost::filesystem::path absolute 
+	= abspath(boost::filesystem::path(iter->second.value));
+    return absolute;
 }

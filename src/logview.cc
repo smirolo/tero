@@ -35,24 +35,15 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-void 
-logview::addSessionVars( boost::program_options::options_description& opts )
-{
-    using namespace boost::program_options;
-    
-    options_description vars("logview");
-    vars.add_options()
-	("remoteIndexFile",value<std::string>(),"path to project interdependencies")
-        ("indexFile",value<std::string>(),"path to project interdependencies");
-    opts.add(vars);
-}
-
-
 void logviewFetch( session& s, const boost::filesystem::path& pathname ) 
 {
 
     using namespace rapidxml;
     using namespace boost::filesystem;
+
+    /* remove the '/log' command tag and add the project dependency info 
+       (dws.xml). */
+    boost::filesystem::path indexFile = s.root(pathname,"dws.xml") / "dws.xml";
 
     /* Each log contains the results gathered on a build server. We prefer
        to present one build results per column but need to write s.out()
@@ -72,98 +63,64 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
     typedef std::map<std::string,colType> tableType;
     tableType table;
 
-    path srcTop(s.valueOf("srcTop"));
-    boost::filesystem::path srcBase(boost::filesystem::path("/") 
-				    / s.subdirpart(s.valueOf("siteTop"),
-						   s.valueOf("srcTop")));
-
-#if 0
-    /* Populate the project names based on the directories in *srcTop*
-       which hold a repository control subdirectory (.git, .svn, etc.). */
-    for( directory_iterator entry = directory_iterator(srcTop); 
-	 entry != directory_iterator(); ++entry ) {
-	path repcontrol((srcTop / entry->filename()) / ".git");
-	if( boost::filesystem::exists(repcontrol) ) {
-	    table[entry->filename()] = colType();
-	}
-    }
-#else
     /* Populate the project names based on the projects specified
        in the index file. */
-    size_t fileSize = file_size(s.valueOf("indexFile"));
-    char text[ fileSize + 1 ];
-    ifstream file(s.valueOf("indexFile"));
-    if( file.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-		std::string("error opening file"),
-		s.valueOf("indexFile"), 
-		boost::system::error_code()));
-    }
-    file.read(text,fileSize);
-    text[fileSize] = '\0';
-    xml_document<> doc;    // character type defaults to char
-    doc.parse<0>(text);     // 0 means default parse flags
-    
-    xml_node<> *root = doc.first_node();
-    if( root != NULL ) {
-	for( xml_node<> *project = root->first_node("project");
-	     project != NULL; project = project->next_sibling("project") ) {
-	    xml_attribute<> *name = project->first_attribute("name");
-	    if( name != NULL ) {
-		path repcontrol((srcTop / path(name->value())) / ".git");
-		if( boost::filesystem::exists(repcontrol) ) {
-		    table[name->value()] = colType();
+    xml_document<> *doc = s.loadxml(indexFile);
+    if ( doc ) {
+	/* Error loading the document, don't bother */
+	xml_node<> *root = doc->first_node();
+	if( root != NULL ) {
+	    for( xml_node<> *project = root->first_node("project");
+		 project != NULL; project = project->next_sibling("project") ) {
+		xml_attribute<> *name = project->first_attribute("name");
+		if( name != NULL ) {
+		    path repcontrol((srcTop.value(s) / path(name->value())) / ".git");
+		    if( boost::filesystem::exists(repcontrol) ) {
+			table[name->value()] = colType();
+		    }
 		}
 	    }
 	}
-    }
-#endif
-       
+    
+	path dirname(s.abspath(is_directory(pathname) ?
+			       pathname : siteTop.value(s) / "log"));
 
-    path dirname(s.abspath(is_directory(pathname) ?
-			   pathname : pathname.parent_path()));
-
-    std::string logBase;
-    for( directory_iterator entry = directory_iterator(dirname); 
-	 entry != directory_iterator(); ++entry ) {
-	boost::smatch m;
-	path filename(entry->filename());	
-	if( boost::regex_search(entry->filename(),m,logPat) ) {
-	    logBase = m.str(1);
-	    size_t fileSize = file_size(*entry);
-	    char text[ fileSize + 1 ];
-	    ifstream file(*entry);
-	    if( file.fail() ) {
-		boost::throw_exception(basic_filesystem_error<path>(
-				       std::string("error opening file"),
-				       *entry, 
-				       boost::system::error_code()));
-	    }
-	    file.read(text,fileSize);
-	    text[fileSize] = '\0';
-	    xml_document<> doc;    // character type defaults to char
-	    doc.parse<0>(text);     // 0 means default parse flags
-
-	    colHeaders.insert(filename);
-	    xml_node<> *root = doc.first_node();
-	    if( root != NULL ) {
-		for( xml_node<> *project = root->first_node("section");
-		     project != NULL; project = project->next_sibling() ) {
-		    xml_attribute<> *name = project->first_attribute("id");
-		    if( name != NULL ) {
-			xml_node<> *status = project->first_node("status");
-			if( status != NULL ) {
-			    int exitCode = 0;
-			    xml_attribute<> *exitAttr 
-				= status->first_attribute("error");
-			    if( exitAttr ) {
-				exitCode = atoi(exitAttr->value());
+	std::string logBase;
+	for( directory_iterator entry = directory_iterator(dirname); 
+	     entry != directory_iterator(); ++entry ) {
+	    boost::smatch m;
+	    path filename(entry->filename());	
+	    if( boost::regex_search(entry->filename(),m,logPat) ) {
+		xml_document<> *doc = s.loadxml(*entry);
+		if ( doc ) {
+		    /* If there was an error loading the XML file, don't bother. */
+		    logBase = m.str(1);
+		    colHeaders.insert(filename);
+		    xml_node<> *root = doc->first_node();
+		    if( root != NULL ) {
+			for( xml_node<> *project 
+				 = root->first_node("section");
+			     project != NULL; 
+			     project = project->next_sibling() ) {
+			    xml_attribute<> *name 
+				= project->first_attribute("id");
+			    if( name != NULL ) {
+				xml_node<> *status 
+				    = project->first_node("status");
+				if( status != NULL ) {
+				    int exitCode = 0;
+				    xml_attribute<> *exitAttr 
+					= status->first_attribute("error");
+				    if( exitAttr ) {
+					exitCode = atoi(exitAttr->value());
+				    }
+				    table[name->value()][filename] 
+				    = std::make_pair(status->value(),exitCode);
+				}
 			    }
-			    table[name->value()][filename] 
-				= std::make_pair(status->value(),exitCode);
-			}
-		    }
-		}	
+			}	
+		    }	    
+		}
 	    }
 	}
     }
@@ -173,9 +130,9 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	"obtained by running the following command on a local machine:" 
 	      << html::p::end;
     s.out() << html::pre() << html::a().href("/resources/dws") 
-	      << "dws" << html::a::end << " build " 
-	      << s.valueOf("remoteIndexFile")
-	      << html::pre::end;
+	    << "dws" << html::a::end << " build " 
+	    << s.asUrl(indexFile.parent_path() / ".git")
+	    << html::pre::end;
     s.out() << html::p() << "dws, the inter-project dependency tool "
 	"generates a build log file with XML markups as part of building "
 	"projects. That build log is then stamped with the local machine "
@@ -203,7 +160,7 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	for( tableType::const_iterator row = table.begin();
 	     row != table.end(); ++row ) {
 	    s.out() << html::tr();
-	    s.out() << html::th() << projhref(srcBase,row->first) 
+	    s.out() << html::th() << projhref(s,row->first) 
 		    << html::th::end;
 	    for( colHeadersType::const_iterator col = colHeaders.begin();
 		 col != colHeaders.end(); ++col ) {
@@ -238,29 +195,24 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 
 void regressionsFetch( session& s, const boost::filesystem::path& pathname )
 {
-
     using namespace rapidxml;
     using namespace boost::filesystem;
 
-    if( !boost::filesystem::exists(pathname) ) {
+    boost::filesystem::path regressname
+	= siteTop.value(s) 
+	/ boost::filesystem::path("log/tests")
+	/ (document.value(s).parent_path().filename() 
+	   + std::string("-test/regression.log"));
+
+    if( !boost::filesystem::exists(regressname) ) {
 	s.out() << html::p()
-		  << "There are no regression logs available for the unit tests."
-		  << html::p::end;
+		<< "There are no regression logs available for the unit tests."
+		<< html::p::end;
 	return;
     }
 
-    size_t fileSize = file_size(pathname);
-    char text[ fileSize + 1 ];
-    ifstream file;
-    openfile(file,pathname);
-    file.read(text,fileSize);
-    text[fileSize] = '\0';
-    file.close();
-    xml_document<> doc;    // character type defaults to char
-    doc.parse<0>(text);     // 0 means default parse flags
-
-
-    xml_node<> *root = doc.first_node();
+    xml_document<> *doc = s.loadxml(regressname);
+    xml_node<> *root = doc->first_node();
     if( root != NULL ) {
 	size_t col = 1;
 	typedef std::map<std::string,size_t> colMap;

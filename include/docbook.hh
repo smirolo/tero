@@ -26,7 +26,6 @@
 #ifndef guarddocbook
 #define guarddocbook
 
-#include <boost/property_tree/detail/rapidxml.hpp>
 #include "document.hh"
 #include "decorator.hh"
 #include "booktok.hh"
@@ -70,9 +69,7 @@ protected:
 
     static walkNodeEntry walkers[];
 
-    mutable char *buffer;
-    mutable size_t length;
-    mutable rapidxml::xml_document<> doc;
+    mutable rapidxml::xml_document<> *doc;
 
     mutable bool info;
     mutable bool linebreak;
@@ -123,8 +120,6 @@ protected:
 
 public:
     docbook( decorator& l,  decorator& r );
-
-    ~docbook();
 };
 
 void docbookFetch( session& s, const boost::filesystem::path& pathname );

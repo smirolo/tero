@@ -34,7 +34,6 @@
 #include "changelist.hh"
 #include "composer.hh"
 #include "docbook.hh"
-#include "projfiles.hh"
 #include "project.hh"
 #include "logview.hh"
 #include "checkstyle.hh"
@@ -60,6 +59,9 @@
 #ifndef SESSION_DIR
 #error "SESSION_DIR should be defined when compiling this file"
 #endif
+#ifndef VERSION
+#error "VERSION should be defined when compiling this file"
+#endif
 
 const char* session::configFile = CONFIG_FILE;
 const char* session::sessionDir = SESSION_DIR;
@@ -77,11 +79,10 @@ char corpExt[] = "corp";
 char rssExt[] = "rss";
 char blogExt[] = "blog";
 char project[] = "project";
-char document[] = "document";
+char docPage[] = "document";
 char todos[] = "todos";
 char blogPat[] = ".*\\.blog";
 char source[] = "source";
-char genericDoc[] = "document";
 char title[] = "title";
 char feed[] = "feed";
 char indexPage[] = "index";
@@ -125,7 +126,7 @@ callEntry entries[] = {
     /* A project dws.xml "document" file show a description,
        commits and unit test status of a single project through 
        a project "view". */
-    { "regressions", boost::regex(".*regression\\.log"), always, regressionsFetch },
+    { "regressions", boost::regex(".*dws\\.xml"), whenFileExist, regressionsFetch },
 
     { "check", boost::regex(".*\\.c"), whenFileExist, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.h"), whenFileExist, checkfileFetch<cppChecker> },
@@ -183,7 +184,7 @@ callEntry entries[] = {
     { "document", boost::regex(".*\\.git/index\\.rss"), always,
       feedRepository<rsswriter> },
     { "document", boost::regex(".*/index\\.rss"), always,
-      feedAggregateFetch<rsswriter,document> },
+      feedAggregateFetch<rsswriter,docPage> },
 
     /* Composer and document for the todos index view */
     { "view", boost::regex(".*todos/.+"), always, composerFetch<todos> },
@@ -191,15 +192,14 @@ callEntry entries[] = {
     { "document", boost::regex(std::string(".*") + active), always,
       todoIndexWriteHtmlFetch },
 
-    { "document", boost::regex("/todos/create"), always, todoCreateFetch },
-#if 0
-    { "view", boost::regex(".*\\.todo/comment"), always, todocomment },
-    { "document", boost::regex(".*\\.todo/comment"),always, todocomment },
+    { "document", boost::regex(".*/todoCreate"), always, todoCreateFetch },
+    { "view", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
+    { "document", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
     { "document", boost::regex(".*\\.todo/voteAbandon"), always, todoVoteAbandonFetch },
-    { "document", boost::regex(".*\\.todo/voteSuccess"), always, todoVoteSuccess },
-#endif
+    { "document", boost::regex(".*\\.todo/voteSuccess"), always, todoVoteSuccessFetch },
+
     /* comments */
-    { "view", boost::regex(std::string("/comments/create.*")), always, commentPageFetch },
+    { "view", boost::regex(std::string(".*/comment")), always, commentPage },
 
     /* blog presentation */ 
     { "view", boost::regex(".*/blog/.*"), always, composerFetch<blogExt> },
@@ -235,20 +235,21 @@ callEntry entries[] = {
     { "document", boost::regex(".*"), whenFileExist, textFetch },
 
     /* Load title from the meta tags in a text file. */
-    { "title",boost::regex(".*/log/"),whenFileExist,consMeta<buildView> },
+    { "title", boost::regex(".*/log/"),   always, consMeta<buildView> },
     { "title", boost::regex(".*\\.book"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.corp"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.todo"), whenFileExist, todoMeta },
     { "title", boost::regex(".*\\.template"), whenFileExist, textMeta<title> },
+    { "title", boost::regex(".*dws\\.xml"), whenFileExist, projectTitle },
     { "title", boost::regex(".*"), whenFileExist,metaFetch<title> },
 
     /* homepage */
     { "feed", boost::regex(".*\\.git/index\\.feed"), always, feedRepositoryPopulate },
-    { "feed", boost::regex("^/index\\.feed"),always, htmlSiteAggregate<feed> },
+    { "feed", boost::regex("/"),always, htmlSiteAggregate<feed> },
     { "view", boost::regex("/"),always, composerFetch<indexPage> },
 
     /* default catch-all */
-    { "view",boost::regex(".*"), always, composerFetch<genericDoc> },
+    { "view",boost::regex(".*"), always, composerFetch<docPage> },
 
     /* Widget to display status of static analysis of a project 
        source files in the absence of a more restrictive pattern. */
@@ -278,91 +279,83 @@ int main( int argc, char *argv[] )
     using namespace boost::filesystem;
 
     std::stringstream mainout;
-    session s("view","semillaId",mainout);
+    session s("semillaId",mainout);
     s.privileged(false);
 
     try {
 	/* parse command line arguments */
 	options_description opts;
+	options_description visible;
 	options_description genOptions("general");
 	genOptions.add_options()
-	    ("help","produce help message")
-	    ("binDir",value<std::string>(),"path to outside executables");
-	
+	    ("help","produce help message");	
 	opts.add(genOptions);
-	auth::addSessionVars(opts);
-	change::addSessionVars(opts);
-	composer::addSessionVars(opts);
-	post::addSessionVars(opts);
-	logview::addSessionVars(opts);
-	projindex::addSessionVars(opts);
-	calendar::addSessionVars(opts);
-	commentPage::addSessionVars(opts);
-
-#if 0
-	bool printHelp = false;
-	if( argc <= 1 ) {
-	    printHelp = true;
-	} else {
-	    for( int i = 1; i < argc; ++i ) {
-		if( strncmp(argv[i],"--help",6) == 0 ) {
-		    printHelp = true;
-		}
-	    }
-	}
-	if( printHelp ) {
-	    cout << opts << endl;
-	    cout << "1. Environment variables\n"
-		 << "2. Command-line arguments\n"
-		 << "3. Session database\n"
-		 << "4. Configuration file\n";
-	    return 0;
-	}
-#endif
+	visible.add(genOptions);
+	session::addSessionVars(opts,visible);
+	authAddSessionVars(opts,visible);
+	changelistAddSessionVars(opts,visible);
+	composerAddSessionVars(opts,visible);
+	post::addSessionVars(opts,visible);
+	projectAddSessionVars(opts,visible);
+	calendarAddSessionVars(opts,visible);
+	commentAddSessionVars(opts,visible);
 
 	s.restore(argc,argv,opts);
-
-	/* If no document is present, set document 
-	   as view in order to catch default dispatch 
-	   clause. */
-	session::variables::const_iterator doc = s.vars.find("document");
-	if( doc == s.vars.end() ) {
-	    s.insert("document",s.valueOf("view"));
+	
+	if( !s.runAsCGI() ) {
+	    bool printHelp = false;
+	    if( argc <= 1 ) {
+		printHelp = true;
+	    } else {
+		for( int i = 1; i < argc; ++i ) {
+		    if( strncmp(argv[i],"--help",6) == 0 ) {
+			printHelp = true;
+		    }
+		}
+	    }
+	    if( printHelp ) {
+		boost::filesystem::path binname 
+		    = boost::filesystem::basename(argv[0]);
+		cout << binname << "[options] pathname" << endl << endl
+		     << "Version" << endl
+		     << "  " << binname << " version " << VERSION << endl << endl;
+		cout << "Options" << endl
+		     << opts << endl;
+		cout << "Further Documentation" << endl
+		     << "Semilla relies on session variables (ex. *siteTop*)"
+		     << " to find relevent pieces of information to build"
+		     << " a page."
+		     << " Session variables can be defined as:\n"
+		     << "   * Arguments on the command-line\n"
+		     << "   * Name=Value pairs in a global configuration file\n"
+		     << "   * Parameters passed through CGI environment "
+		     << "variables\n"
+		     << "   * Name=Value pairs in a unique session file\n"
+		     << "When a variable is defined in more than one set, "
+		 << "command-line arguments have precedence over the global "
+		     << "configuration file which has precedence over"
+		     << " environment variables which in turn as precedence"
+		     << " over the session file." << endl;
+		return 0;
+	    }
 	}
- 
+
 	/* by default bring the index page */
-	if( (s.valueOf("view").empty() || s.valueOf("view") == "/") 
-	    && boost::filesystem::exists(s.valueOf("siteTop") 
-					 + std::string("/index.html")) ) {
+	if( (document.value(s).empty() || document.value(s) == "/") 
+	    && boost::filesystem::exists(siteTop.value(s) 
+					 / std::string("index.html")) ) {
 	    cout << httpHeaders.location(url("index.html"));		       
 	    
 	} else {	    		       
 	    dispatchDoc docs;
-
-	    boost::filesystem::path regressname
-		= s.valueOf("siteTop") 
-		/ boost::filesystem::path("log/tests")
-		/ (boost::filesystem::path(s.valueOf("document")).parent_path().filename() 
-		   + std::string("-test/regression.log"));
-	    s.vars["regressions"] = regressname.string();
-#if 0
-	    s.vars["dates"] = s.valueOf("document");
-	    s.vars["tags"] = s.valueOf("document");
-	    s.vars["checkstyle"] = s.valueOf("document");
-	    s.vars["history"] = s.valueOf("document");
-	    s.vars["projfiles"] = s.valueOf("document");
-	    s.vars["payproc"] = s.valueOf("document");
-#endif     
-	    /* homepage */
-	    s.vars["feed"] = session::valT("/index.feed");
 
 	    for( callEntry *e = entries; 
 		 e != &entries[sizeof(entries)/sizeof(entries[0])];
 		 ++e ) {
 		docs.add(e->name,e->pat,e->callback,e->behavior);
 	    }
-     	    
-	    docs.fetch(s,"view");
+
+	    docs.fetch(s,document.name);
 	    if( s.runAsCGI() ) {
 		std::cout << httpHeaders
 		    .contentType()

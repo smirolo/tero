@@ -29,7 +29,7 @@
 #include <boost/date_time.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-
+#include "session.hh"
 
 /** Snipset of information easily presented through different 
     channels (web, rss feed, e-mail, ...).
@@ -49,6 +49,11 @@
 */
 class post {
 public:
+
+    static sessionVariable titleVar;
+    static sessionVariable authorVar;
+    static sessionVariable descrVar;
+
     /** File this short post is derived from. 
      */
     boost::filesystem::path filename;
@@ -99,7 +104,8 @@ public:
     post( const post& p );
 
     static void 
-    addSessionVars( boost::program_options::options_description& opts );
+    addSessionVars( boost::program_options::options_description& all,
+		    boost::program_options::options_description& visible );
 
     /** remove non meaningful whitespaces from the *author* and *title* fields. 
      */

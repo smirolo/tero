@@ -143,11 +143,11 @@ public:
 template<const char *varname>
 void metaFetch( session& s, const boost::filesystem::path& pathname )
 {
-    session::variables::const_iterator found = s.vars.find(varname);
-    if( found != s.vars.end() ) {    
-	s.out() << found->second.value;
+    session::variables::const_iterator look = s.find(varname);
+    if( s.found(look) ) {    
+	s.out() << look->second.value;
     } else {
-	s.out() << pathname;
+	s.out() << s.subdirpart(siteTop.value(s),pathname);
     }
 }
 
@@ -179,9 +179,9 @@ void textMeta( session& s, const boost::filesystem::path& pathname )
 	std::getline(strm,line);
 	if( boost::regex_search(line,m,valueEx) ) {
 	    if( m.str(1) == std::string("Subject") ) {
-		s.vars["title"] = session::valT(m.str(2));
+		s.insert("title",m.str(2));
 	    } else {
-		s.vars[m.str(1)] = session::valT(m.str(2));
+		s.insert(m.str(1),m.str(2));
 	    }
 	} else break;
     }

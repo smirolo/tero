@@ -33,11 +33,6 @@
   
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-class logview {
-public:
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
-};
 
 void logviewFetch( session& s, const boost::filesystem::path& pathname );
 

@@ -127,7 +127,7 @@ public:
 
 
 template<typename next>
-class summarize : next {
+class summarize : public next {
 public:
     explicit summarize( std::ostream& o ) : next(o) {}
 
@@ -149,13 +149,6 @@ void feedWriterFetch( session& s, const boost::filesystem::path& pathname );
 
  *varname* variable used to match pattern. We cannot use document
  else the catch-all forbids recursive descent through directories.
-
-
-#if 0
-Complete aggregate, does not discard posts. 
-typedef feedAggregate<rsswriter> rssAggregate;
-#endif
-
 */
 template<typename postWriter,const char*varname>
 void feedAggregateFetch( session& s, const boost::filesystem::path& pathname );
@@ -191,6 +184,7 @@ void rssContentFetch( session& s, const boost::filesystem::path& pathname );
     The summary is based on the first N lines of the file 
     or the filename when there are no assiated presentation.
  */
+#if 0
 template<typename postWriter>
 class feedSummary : public feedContent {
 protected:
@@ -200,12 +194,10 @@ public:
     explicit feedSummary( const boost::regex& pat = boost::regex(".*") )
 	: super(pat) {}
 };
+#endif
 
+template<typename postWriter>
 void feedSummaryFetch( session& s, const boost::filesystem::path& pathname );
-
-
-typedef feedSummary<htmlwriter> htmlSummary;
-typedef feedSummary<rsswriter> rssSummary;
 
 
 /** Feed from a repository commits

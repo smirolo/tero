@@ -31,17 +31,8 @@ void checkfileFetch( session& s, const boost::filesystem::path& pathname )
     using namespace boost::filesystem; 
 
     checker check;
- 
-    ifstream file;
-    size_t fileSize = file_size(pathname);
-    char buffer[ fileSize + 1 ];
-    
-    openfile(file,pathname);
-    file.read(buffer,fileSize);
-    buffer[fileSize] = '\0';
-    file.close();
-
-    check.tokenize(buffer,fileSize);
+    slice<char> buffer = s.loadtext(pathname);
+    check.tokenize(buffer.begin(),buffer.size());
 
     url href;
     std::string name;

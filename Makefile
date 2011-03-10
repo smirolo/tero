@@ -43,7 +43,7 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			checkstyle.o comments.o composer.o contrib.o \
 			cppfiles.o cpptok.o \
 			docbook.o document.o feeds.o hreftok.o revsys.o \
-			logview.o mail.o markup.o project.o projfiles.o \
+			logview.o mail.o markup.o project.o \
 			post.o session.o shfiles.o shtok.o todo.o webserve.o \
 			xmlesc.o xmltok.o
 
@@ -61,7 +61,7 @@ semilla: semilla.cc libsemilla.a libpayproc.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system
-	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(semillaSessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
+	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(semillaSessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
 
 smailui: smailui.cc libsemilla.a \

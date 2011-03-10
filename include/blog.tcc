@@ -103,7 +103,7 @@ template<typename cmp, const char *filePat>
 void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
 {
     boost::filesystem::path blogroot = s.root(s.abspath(pathname),"blog") / "blog";
-    bySet<cmp> filter(s.out(),s.subdirpart(s.valueOf("siteTop"),blogroot));
+    bySet<cmp> filter(s.out(),s.subdirpart(siteTop.value(s),blogroot));
 
     postFilter *prev = globalFeeds;
     globalFeeds = &filter;

@@ -157,6 +157,8 @@ void GetPublicKeyFromCert( const char* pathname,
 }
 
 
+
+
 #if 1
 const char *paypalStandardButton::paypipeline 
     = "https://www.paypal.com/cgi-bin/webscr";
@@ -172,11 +174,24 @@ static const char *httpMethod = "GET";
 static const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
 static const char *requestURI = "/pba/paypipeline";
 
-paypalStandardButton::paypalStandardButton( 
-		        const boost::filesystem::path& skp,
-			const std::string& cf )
-    : secretKeyPath(skp),
-      certificate(cf),
+sessionVariable paypalSecretKey("paypalSecretKey","Paypal Private Key File");
+sessionVariable paypalPublicCertificate("paypalPublicCertificate","Certificate for the paypal API public key");
+
+void 
+paypalAddSessionVars( boost::program_options::options_description& opts,
+			boost::program_options::options_description& visible ) {
+    using namespace boost::program_options;
+    options_description localOpts("paypal");
+    localOpts.add(paypalSecretKey.option());
+    localOpts.add(paypalPublicCertificate.option());
+    opts.add(localOpts);
+    visible.add(localOpts);
+}
+
+
+paypalStandardButton::paypalStandardButton( const session& s )
+    : secretKeyPath(paypalSecretKey.value(s)),
+      certificate(paypalPublicCertificate.value(s)),
       amount(0),
       referenceId(),
       signature(),

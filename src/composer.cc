@@ -33,16 +33,24 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+pathVariable themeDir("themeDir",
+		      "directory that contains the user interface templates");
+
 void 
-composer::addSessionVars( boost::program_options::options_description& opts )
+composerAddSessionVars( boost::program_options::options_description& opts,
+			boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
     
-    options_description vars("composer");
-    vars.add_options()
-	("document",value<std::string>(),"document")
-	("themeDir",value<std::string>(),"path to user interface elements");
-    opts.add(vars);
+    options_description localOpts("composer");
+    localOpts.add(themeDir.option());
+    opts.add(localOpts);    
+    visible.add(localOpts);
+
+    options_description hiddenOpts("hidden");
+    hiddenOpts.add_options()
+	("document",value<std::string>(),"document");
+    opts.add(hiddenOpts);    
 }
 
 

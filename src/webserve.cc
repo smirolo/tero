@@ -260,17 +260,6 @@ basic_cgi_parser::run() {
 	std::string pathInfo(cPathInfo);
         const std::string& command = positionalDesc->name_for_position(0);
 	query[command] = pathInfo;
-#if 0
-	const option_description* d = optDesc->find_nothrow(command,false);
-	if( d != NULL ) {
-	    option opt;
-	    opt.string_key = command;
-	    opt.position_key = 1;
-	    opt.value.push_back(pathInfo);
-	    opt.original_tokens.push_back(pathInfo);
-	    opts.push_back(opt);
-	}
-#endif
     }
 	
     char *cQueryString = getenv("QUERY_STRING");

@@ -26,6 +26,7 @@
 #include "payment.hh"
 #include "todo.hh"
 #include "aws.hh"
+#include "paypal.hh"
 
 /** Payment processing pipeline
 
@@ -95,21 +96,19 @@ void payment::add( const boost::regex& r,
 }
 
 
+sessionVariable 
+referenceId("referenceId","Identifier of the article being paid for");
+
+urlVariable 
+returnUrl("returnUrl","callback for the payment processing system");
+
+
 void 
-payment::addSessionVars( boost::program_options::options_description& opts ) {
+payment::addSessionVars( boost::program_options::options_description& opts,
+			boost::program_options::options_description& visible ) {
     using namespace boost::program_options;
-    /* For authentication with Amazon payment services. */
-    options_description amazonOpts("amazon");
-    amazonOpts.add_options()
-	("awsAccessKey",value<std::string>(),"Amazon Access Key")
-	("awsSecretKey",value<std::string>(),"Amazon Secret Key")
-	("awsCertificate",value<std::string>(),"Amazon Public Certificate")
-	("paypalSecretKey",value<std::string>(),"Paypal Private Key File")
-	("paypalPublicCertificate",value<std::string>(),
-	 "Certificate for the paypal API public key")
-	("referenceId",value<std::string>(),
-	 "Identifier of the article being paid for");
-    opts.add(amazonOpts);
+    paypalAddSessionVars(opts,visible);
+    awsAddSessionVars(opts,visible);
 }
 
 
@@ -119,7 +118,7 @@ void payment::checkReturn( session& s, const char* page ) {
 			     s.valueOf("awsSecretKey"),
 			     s.valueOf("awsCertificate"));
 #else
-    payCheckoutButton button(url(s.valueOf("domainName")));
+    payCheckoutButton button(domainName.value(s));
 #endif	    
     if( !button.checkReturn(s,page) ) {
 	throw std::runtime_error("wrong signature for request");
@@ -139,10 +138,10 @@ void paymentFetch( session& s, const boost::filesystem::path& pathname ) {
 				     s.valueOf("awsSecretKey"),
 				     s.valueOf("awsCertificate"));
 #else
-	    payCheckoutButton button(url(s.valueOf("domainName")));
+	    payCheckoutButton button(domainName.value(s));
 #endif	    
 	    button.returnUrl = url(std::string("http://") 
-				   + s.valueOf("domainName") 
+				   + domainName.value(s).string() 
 				   + e->retPath);
 	    article a = e->adapt->fetch(s,pathname);
 	    button.description = a.descr;
@@ -165,7 +164,7 @@ void payment::show( std::ostream& ostr,
 			     s.valueOf("awsSecretKey"),
 			     s.valueOf("awsCertificate"));
 #else
-    payCheckoutButton button(url(s.valueOf("domainName")));
+    payCheckoutButton button(domainName.value(s));
 #endif	    
     button.returnUrl = returnUrl;
     button.description = descr;
@@ -177,7 +176,7 @@ void payment::show( std::ostream& ostr,
 void payPipelineFetch( session& s, const boost::filesystem::path& pathname )
 {
     std::stringstream r;
-    r << s.valueOf("returnUrl") << "?referenceId=" << s.valueOf("referenceId");
+    r << returnUrl.value(s) << "?referenceId=" << referenceId.value(s);
     s.out() << httpHeaders.refresh(0,url(r.str())) << std::endl;
 }    
 

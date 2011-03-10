@@ -26,6 +26,21 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "comments.hh"
 
+pathVariable commentTop("commentTop",
+			"root of the tree where comments are stored");
+
+void 
+commentAddSessionVars( boost::program_options::options_description& opts,
+		       boost::program_options::options_description& visible )
+{
+    using namespace boost::program_options;
+
+    options_description localOptions("comments");
+    localOptions.add(commentTop.option());
+    opts.add(localOptions);
+}
+
+
 /** Create the comments file if it does not exists and then append
     the comment at the end of the comments file.
  */
@@ -116,7 +131,7 @@ void sendPostToSMTP::filters( const post& p ) {
     msg << "From:" << p.authorEmail << std::endl;
     msg << "Subject:" << p.title << std::endl;
 #if 0
-    msg << "To:" << "info@" << s.valueOf("domainName")
+    msg << "To:" << "info@" << domainName.value(s)
 	<< std::endl << std::endl;
 #endif
     msg << p.descr << std::endl;
@@ -136,29 +151,17 @@ void pageCommentsFetch( session& s,
 }
 
 
-void 
-commentPage::addSessionVars( boost::program_options::options_description& opts )
+void commentPage( session& s, 
+		  const boost::filesystem::path& pathname )
 {
-    using namespace boost::program_options;
+    boost::filesystem::path docname(pathname.parent_path());
+    url	postname(s.asUrl(docname));
 
-    options_description localOptions("comments");
-    localOptions.add_options()
-	("commentTop",value<std::string>(),"commentTop");
-    opts.add(localOptions);
-}
-
-
-void commentPageFetch( session& s, 
-			 const boost::filesystem::path& pathname )
-{
-    url	postname(s.asUrl(boost::filesystem::exists(pathname) ? 
-			 pathname : s.abspath(s.valueOf("href"))));
-
-    appendPostToFile comment(s.valueOf("commentTop"),postname.string());
+    appendPostToFile comment(commentTop.value(s),postname.string());
 
     post p;
-    p.authorEmail = s.valueOf("author");
-    p.descr = s.valueOf("descr");
+    p.authorEmail = post::authorVar.value(s);
+    p.descr = post::descrVar.value(s);
     p.time = boost::posix_time::second_clock::local_time();
     comment.filters(p);
 

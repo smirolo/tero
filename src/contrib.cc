@@ -35,6 +35,7 @@ void contribCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
     s.privileged(true);
 
+#if 0
     /* \todo useradd
        It's in the shadow-utils package on Redhat 6.0.
        Hint: rpm -qf /usr/sbin/useradd
@@ -44,7 +45,7 @@ void contribCreateFetch( session& s, const boost::filesystem::path& pathname )
     */
     s.out() << "create contributor with " << s.valueOf("contribName")
 	  << ", " << s.valueOf("contribPasswd");
-
+#endif
     s.privileged(false);
 }
 

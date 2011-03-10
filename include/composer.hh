@@ -32,24 +32,23 @@
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-class composer : public text /* always */ {
-protected:
-    typedef text super;
 
-#if 0
-    /** Embed the content of a variable into a page. 
-     */
-    virtual void embed( session& s, const std::string& value ) const;
-#endif
 
-public:
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
+void 
+composerAddSessionVars( boost::program_options::options_description& all,
+			boost::program_options::options_description& visible );
 
-};
+extern pathVariable themeDir;
 
-/** embed content associated to a variable. */
-void embed( session& s, const std::string& value );
+
+/** Embed content associated to *variable*.
+
+    Implementation note
+    *embed* is referenced from *composerFetch* so a prototype has to be 
+    available.
+ */
+void embed( session& s, const std::string& variable );
+
 
 template<const char *layout>
 void composerFetch( session& s, const boost::filesystem::path& pathname );

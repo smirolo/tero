@@ -35,7 +35,7 @@ void composerFetch( session& s, const boost::filesystem::path& pathname )
     static const boost::regex tmplinc("<!-- tmpl_include name='(\\S+)' -->");
 
     ifstream strm;
-    path fixed(path(s.valueOf("themeDir")) 
+    path fixed(themeDir.value(s)
 	       / (std::string(layout) + ".template"));
     openfile(strm,fixed.empty() ? pathname : fixed);
 
@@ -47,9 +47,9 @@ void composerFetch( session& s, const boost::filesystem::path& pathname )
 	std::getline(strm,line);
 	if( regex_search(line,m,tmplname) ) {
 	    std::string varname = m.str(1);
-	    session::variables::const_iterator v = s.vars.find(varname);
+	    session::variables::const_iterator v = s.find(varname);
 	    s.out() << m.prefix();
-	    if( v != s.vars.end() ) {		
+	    if( s.found(v) ) {		
 		s.out() << v->second.value;		
 	    } else {
 		s.out() << varname << " not found!";
@@ -61,24 +61,7 @@ void composerFetch( session& s, const boost::filesystem::path& pathname )
 	if( regex_search(line,m,tmplvar) ) {
 	    found = true;
 	    s.out() << m.prefix();
-	    std::string varname = m.str(1);
-	    /* Hack! duplicate code from dispatchDoc::fetch() - see below. */
-	    session::variables::const_iterator v = s.vars.find(varname);
-	    if( v == s.vars.end() ) {    
-		s.vars[varname] = s.valueOf("document");
-	    }
-	    const fetchEntry *doc
-		= dispatchDoc::instance->select(varname,s.valueOf(varname));
-	    if( doc != NULL ) {
-		boost::filesystem::path docname = s.valueAsPath(varname);
-		/* \todo code could be:
-		           doc->fetch(s,docname);  
-			 but that would skip over the override 
-			 of changediff::embed(). */
-		embed(s,varname);					    
-	    } else {
-		s.out() << s.valueOf(varname);
-	    }
+	    embed(s,m.str(1));					    
 	    s.out() << m.suffix() << std::endl;
 	} else if( regex_search(line,m,tmplinc) ) {
 	    /* \todo fetch another template. This code should

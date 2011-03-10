@@ -34,6 +34,14 @@
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+extern sessionVariable month;
+
+void 
+calendarAddSessionVars( boost::program_options::options_description& all,
+			boost::program_options::options_description& visible );
+
+
 class calendar {
 protected:
     typedef void 
@@ -53,9 +61,6 @@ protected:
     walkNodeEntry* walker( const std::string& s ) const;
 
 public:
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
-
     void parse( session& s, std::istream& ins ) const;
 };
 

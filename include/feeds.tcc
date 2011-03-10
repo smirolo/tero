@@ -119,7 +119,9 @@ void feedLatestPostsFetch( session& s,
 template<const char*varname>
 void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname ) 
 {
-    feedLatestPostsFetch<htmlwriter,varname>(s,pathname);
+    std::cerr << "!!! Got here? (" << (pathname / "index.feed") 
+	      << ")" << std::endl;
+    feedLatestPostsFetch<htmlwriter,varname>(s,s.abspath("/index.feed"));
 }
 
 template<const char*varname>
@@ -138,7 +140,7 @@ void feedSummaryFetch( session& s,
     if( !globalFeeds ) {
 	globalFeeds = &feeds;
     }
-    feedContentFetch<postWriter>(s,pathname);
+    feedContentFetch<postWriter,allFilesPat>(s,pathname);
     globalFeeds = prev;
 }
 
@@ -152,7 +154,7 @@ void feedContentFetch( session& s,
     /* Always generate the feed from a content directory even
        when a file is passed as *pathname* */
     path base(pathname);
-    while( base.string().size() > s.valueOf("siteTop").size()
+    while( base.string().size() > siteTop.value(s).string().size()
 	   && !is_directory(base) ) {
 	base = base.parent_path();
     }
@@ -164,7 +166,7 @@ void feedContentFetch( session& s,
 		&& boost::regex_match(entry->string(),m,
 				      boost::regex(filePat)) ) {
 		path filename(base / entry->filename());	    
-		std::string reluri = s.subdirpart(s.valueOf("siteTop"),
+		std::string reluri = s.subdirpart(siteTop.value(s),
 						  filename).string();	    
 		/* We should pop out a post for those docs that don't
 		   even when they fetch (book vs. mail/blogentry). */

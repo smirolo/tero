@@ -35,13 +35,19 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+extern pathVariable srcTop;
+
+void 
+projectAddSessionVars( boost::program_options::options_description& all,
+		       boost::program_options::options_description& visible );
+
 
 /** output an hyper link to a project index page.
 */
 class projhref {    
 protected:  
-    boost::filesystem::path base;
     std::string name;
+    boost::filesystem::path base;
 
     template<typename ch, typename tr>
     friend inline std::basic_ostream<ch, tr>&
@@ -52,10 +58,19 @@ protected:
     }
     
 public:  
-    projhref( const boost::filesystem::path& b, const std::string& n ) 
-	: base(b), name(n) {}
+    projhref( const session& s, const std::string& n ); 
 
 };
+
+
+/** extract the part of a path *p* that represents a project name.
+ */
+boost::filesystem::path 
+projectName( const session& s, const boost::filesystem::path& p );
+
+/** Sets title to project name.
+*/
+void projectTitle( session& s, const boost::filesystem::path& pathname );
 
 
 /** Create a new directory and initialize it as a project repository.
@@ -71,14 +86,45 @@ void projCreateFetch( session& s, const boost::filesystem::path& pathname );
     to download <!-- through e-commerce transaction? --> the project as 
     a package, browse the source code and sign-on to the rss feed.
 */
-class projindex {
-public:
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
-};
-
 void projindexFetch( session& s, const boost::filesystem::path& pathname );
 
+
+class projfiles {
+public:    
+    typedef std::list<boost::regex> filterContainer;
+
+    enum stateCode {
+	start,
+	toplevelFiles,
+	direntryFiles
+    };
+
+    mutable stateCode state;
+
+protected:
+    /** directory in the source tree which is the root of the project (srcDir)
+     */
+    mutable boost::filesystem::path projdir;
+    
+    virtual void 
+    addDir( session& s, const boost::filesystem::path& pathname ) const;
+
+    virtual void 
+    addFile( session& s, const boost::filesystem::path& pathname ) const;
+
+    virtual void flush( session& s ) const;
+
+    /** returns true when the pathname matches one of the pattern in *filters*.
+     */
+    bool selects( const boost::filesystem::path& pathname ) const;
+    
+public:
+
+    void fetch( session& s, const boost::filesystem::path& pathname );
+
+};
+
+void projfilesFetch( session& s, const boost::filesystem::path& pathname );
 
  
 #endif

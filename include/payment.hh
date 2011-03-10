@@ -88,7 +88,8 @@ public:
     void add( const boost::regex& r, const char *retPath, adapter& a );
 
     static void 
-    addSessionVars( boost::program_options::options_description& opts );
+    addSessionVars( boost::program_options::options_description& all,
+		    boost::program_options::options_description& visible );
 
     static void checkReturn( session& s, const char* page );
 

@@ -94,11 +94,11 @@ void dispatchDoc::add( const std::string& varname,
 bool dispatchDoc::fetch( session& s, const std::string& varname ) {
     /* By default if a variable does not have a value, use the value
        of "document". */
-    session::variables::const_iterator found = s.vars.find(varname);
-    if( found == s.vars.end() ) {    
-	s.vars[varname] = s.valueOf("document");
+    session::variables::const_iterator look = s.find(varname);
+    if( !s.found(look) ) {    
+	s.insert(varname,document.value(s).string());
     }
-    return fetch(s,varname,boost::filesystem::path(s.valueOf(varname)));
+    return fetch(s,varname,s.valueAsPath(document.name));
 }
 
 

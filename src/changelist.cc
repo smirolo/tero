@@ -32,6 +32,28 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace {
+    sessionVariable leftRev("left","commit tag for left pane of diff");
+    sessionVariable rightRev("right","commit tag for right pane of diff");
+
+} // anonymous namespace
+
+pathVariable binDir("binDir","path to external executables");
+
+void 
+changelistAddSessionVars( boost::program_options::options_description& all,
+			  boost::program_options::options_description& visible )
+{
+    using namespace boost::program_options;
+
+    options_description localOptions("changelist");
+    localOptions.add(binDir.option());
+    localOptions.add(leftRev.option());
+    localOptions.add(rightRev.option());
+    all.add(localOptions);
+    visible.add(localOptions);
+}
+
 
 url diffref::asUrl( const boost::filesystem::path& doc, 
 		       const std::string& rev ) const {
@@ -51,21 +73,7 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 
 
 void cancelFetch( session& s, const boost::filesystem::path& pathname ) {
-    httpHeaders.location(url(s.doc()));
-}
-
-
-void 
-change::addSessionVars( boost::program_options::options_description& opts )
-{
-    using namespace boost::program_options;
-
-    options_description changeOpts("changelist");
-    changeOpts.add_options()    
-	("href",value<std::string>(),"href")
-	("right",value<std::string>(),"commit tag for right pane of diff")
-	("editedText",value<std::string>(),"text submitted after an online edit");
-    opts.add(changeOpts);
+    httpHeaders.location(url(document.value(s).string()));
 }
 
 
@@ -74,25 +82,26 @@ void changeFetch(  session& s, const boost::filesystem::path& pathname )
     using namespace boost::system;
     using namespace boost::filesystem;
 
-    session::variables::const_iterator text = s.vars.find("editedText");
-    if( text != s.vars.end() ) {
-	path docName(s.valueOf("srcTop") + s.valueOf("document")
-		     + std::string(".edits")); 
-
+    session::variables::const_iterator text = s.find("editedText");
+    if( s.found(text) ) {
+	path docName
+#if 0	
+	/* \todo wiki-like edits are not currently working */
+	(s.valueOf("srcTop") + s.valueOf("document")
+		     + std::string(".edits"))
+#endif
+	;
 	if( !exists(docName) ) {
 	    create_directories(docName);
 	}
 
-	ofstream file(docName);
-	if( file.fail() ) {
-	    boost::throw_exception(basic_filesystem_error<path>(
-		std::string("unable to open file"),
-		docName, 
-		error_code()));
-	}
+	ofstream file;
+	createfile(file,docName);
 	file << text->second.value;
 	file.close();
 
+#if 0	
+	/* \todo wiki-like edits are not currently working */
 	/* add entry in the changelist */
 	path changesPath(s.userPath().string() + std::string("/changes"));
 	ofstream changes(changesPath,std::ios::app);
@@ -104,8 +113,10 @@ void changeFetch(  session& s, const boost::filesystem::path& pathname )
 	}
 	file << docName;
 	file.close();
+#endif
     }
-    httpHeaders.location(url(s.doc() + std::string(".edits")));
+    httpHeaders.location(url(document.value(s).string() 
+			     + std::string(".edits")));
 }
 
 void changediff( session& s, const boost::filesystem::path& pathname,
@@ -114,8 +125,8 @@ void changediff( session& s, const boost::filesystem::path& pathname,
     using namespace std;
 
     std::stringstream text;
-    std::string leftRevision = s.valueOf("left");
-    std::string rightRevision = s.valueOf("right");
+    std::string leftRevision = leftRev.value(s);
+    std::string rightRevision = rightRev.value(s);
     boost::filesystem::path docname(pathname.parent_path());
 
     revisionsys *rev = revisionsys::findRev(s,docname);

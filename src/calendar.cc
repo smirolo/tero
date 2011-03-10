@@ -32,6 +32,20 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+sessionVariable month("month","month");
+
+
+void 
+calendarAddSessionVars( boost::program_options::options_description& all,
+			boost::program_options::options_description& visible )
+{
+    using namespace boost::program_options;
+
+    options_description localOptions("calendar");
+    localOptions.add(month.option());
+    all.add(localOptions);
+    visible.add(localOptions);
+}
 
 
 bool calendar::walkNodeEntry::operator<( const walkNodeEntry& right ) const {
@@ -93,18 +107,6 @@ void calendar::any( const std::string& s ) const {
 }
 
 
-void 
-calendar::addSessionVars( boost::program_options::options_description& opts )
-{
-    using namespace boost::program_options;
-
-    options_description calOptions("calendar");
-    calOptions.add_options()
-	("month",value<std::string>(),"month");
-    opts.add(calOptions);
-}
-
-
 calendar::walkNodeEntry* calendar::walker( const std::string& s ) const {
     walkNodeEntry *walkersEnd 
 	= &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
@@ -150,7 +152,7 @@ void calendarFetch( session& s, const boost::filesystem::path& pathname ) {
     }
 
     date today;
-    std::string ms = s.valueOf("month");
+    std::string ms = month.value(s);
     if( ms.empty() ) {
 	today = second_clock::local_time().date();
     } else {

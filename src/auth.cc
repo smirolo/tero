@@ -33,16 +33,23 @@
 #include <boost/filesystem/fstream.hpp>
 #include "auth.hh"
 #include "composer.hh"
+#include <security/pam_appl.h>
 
 /** Authentication
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-#include <security/pam_appl.h>
-
 
 namespace {
+
+    sessionVariable credentials("credentials","password");
+    sessionVariable username("username","username");
+    pathVariable contribTop("contribTop",
+			    "root to the contributors directories");
+    sessionVariable authMessage("message",
+			    "Message inserted in the contributor's hours log");
+
 
 boost::posix_time::time_duration
 aggregate( const session& s ) {
@@ -51,7 +58,7 @@ aggregate( const session& s ) {
     using namespace boost::filesystem;
 
     ifstream file;
-    openfile(file,s.contributorLog());
+    openfile(file,contributorLog(s));
     
     time_duration aggr;
     ptime start, stop, prev;
@@ -101,19 +108,17 @@ boost::posix_time::time_duration stop( session& s ) {
     using namespace boost::posix_time;
     using namespace boost::filesystem;
 
-    ptime start;
-    std::stringstream is(s.valueOf("startTime"));
-    is >> start;
+    ptime start = startTime.value(s);
     ptime stop = second_clock::local_time();
 
-    ofstream file(s.contributorLog(),std::ios_base::app);
+    ofstream file(contributorLog(s),std::ios_base::app);
     if( file.fail() ) {
 	boost::throw_exception(basic_filesystem_error<path>(
 				 std::string("error opening file"),
-				 s.contributorLog(), 
+				 contributorLog(s), 
 				 error_code()));
     }
-    std::string msg = s.valueOf("message");
+    std::string msg = authMessage.value(s);
     if( !msg.empty() ) {
 	file << msg << ':' << std::endl;
     }
@@ -126,6 +131,11 @@ boost::posix_time::time_duration stop( session& s ) {
 }
 
 } // anonymous namespace
+
+
+boost::filesystem::path contributorLog( const session& s ) {
+    return contribTop.value(s) / boost::filesystem::path("hours");
+}
 
 
 int su_conv( int num_msg,
@@ -144,15 +154,15 @@ int su_conv( int num_msg,
 	switch(msgm[count]->msg_style) {
         case PAM_PROMPT_ECHO_OFF:
 	    std::cerr << msgm[count]->msg;
-	    value = (char*)malloc((s->valueOf("credentials").size() + 1)
+	    value = (char*)malloc((credentials.value(*s).size() + 1)
 				  * sizeof(char));
-	    strcpy(value,s->valueOf("credentials").c_str());
+	    strcpy(value,credentials.value(*s).c_str());
 	    break;
 	case PAM_PROMPT_ECHO_ON:
 	    std::cerr << msgm[count]->msg;
-	    value = (char*)malloc((s->username().size() + 1)
+	    value = (char*)malloc((username.value(*s).size() + 1)
 				  * sizeof(char));
-	    strcpy(value,s->username().c_str());
+	    strcpy(value,username.value(*s).c_str());
 	    break;	    
         case PAM_ERROR_MSG:
 	case PAM_TEXT_INFO:
@@ -170,16 +180,20 @@ int su_conv( int num_msg,
 }
 
 
-
-void auth::addSessionVars( boost::program_options::options_description& opts )
+void authAddSessionVars( boost::program_options::options_description& all,
+			 boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
     
-    options_description authOptions("authentication");
-    authOptions.add_options()
-	("credentials",value<std::string>(),"credentials");
-    opts.add(authOptions);
+    options_description localOptions("authentication");
+    localOptions.add(username.option());
+    localOptions.add(credentials.option());
+    localOptions.add(contribTop.option());
+    localOptions.add(authMessage.option());
+    all.add(localOptions);
+    visible.add(localOptions);
 }
+
 
 void authFetch( session& s, const boost::filesystem::path& pathname ) {
 
@@ -201,7 +215,7 @@ void authFetch( session& s, const boost::filesystem::path& pathname ) {
 	      << '(' << pw->pw_name << ")\t" << getegid() 
 	      << '(' << grp->gr_name << ')' << std::endl;
 #endif
-    s.state("username",s.username());
+    s.state("username",username.value(s));
     s.store();
 }
 
@@ -211,8 +225,7 @@ void loginFetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::posix_time;
     using namespace boost::filesystem;
     
-    session::variables::const_iterator credentials = s.vars.find("credentials");
-    if( s.username().empty() ) {
+    if( username.value(s).empty() ) {
 	throw invalidAuthentication();
     }
 
@@ -253,12 +266,19 @@ void loginFetch( session& s, const boost::filesystem::path& pathname ) {
     authFetch(s,pathname);
     
     /* Set a session cookie */
-    httpHeaders.setCookie(s.sessionName,s.id()).location(url(s.doc()));
+    httpHeaders.setCookie(s.sessionName,
+			  s.id()).location(url(document.value(s).string()));
 }
 
 
 void deauthFetch(  session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::posix_time;
+
+#if 0
+    /* \todo !!! find where this should go! */
+    variables::iterator iter = vars.find("message");
+    if( iter != vars.end() ) iter->second.source = sessionfile;
+#endif
 
     if( !s.exists() ) {
 	using namespace boost::filesystem;

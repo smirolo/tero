@@ -30,7 +30,9 @@
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/property_tree/detail/rapidxml.hpp>
 #include "webserve.hh"
+#include "slice.hh"
 
 /**
    Session Manager.
@@ -48,6 +50,61 @@ public:
     explicit undefVariableError( const std::string& varname );
 };
 
+// forward declaration
+class session;
+
+class sessionVariable {
+public:
+    const char* const name;
+
+protected:
+    const char *descr;
+    boost::program_options::option_description opt;
+
+public:
+    sessionVariable( const char *n, const char *d )
+	: name(n), descr(d),
+	  opt(name,boost::program_options::value<std::string>(),descr) {}
+
+    boost::shared_ptr<boost::program_options::option_description> 
+    option();
+
+    std::string value( const session& s ) const;
+};
+
+
+class pathVariable : public sessionVariable {
+public:
+    pathVariable( const char *name, const char *descr )
+	: sessionVariable(name,descr) {}
+
+    boost::filesystem::path value( const session& s ) const;
+};
+
+class timeVariable : public sessionVariable {
+public:
+    timeVariable( const char *name, const char *descr )
+	: sessionVariable(name,descr) {}
+
+    boost::posix_time::ptime value( const session& s ) const;
+};
+
+
+class urlVariable : public sessionVariable {
+public:
+    urlVariable( const char *name, const char *descr )
+	: sessionVariable(name,descr) {}
+
+    url value( const session& s ) const;
+};
+
+/** name of the document (extended to commands) requested through 
+    the positional argument on the executable command line.
+*/
+extern pathVariable document;
+extern urlVariable domainName;
+extern pathVariable siteTop;
+extern timeVariable startTime;
 
 /** A session instance is used to store a set of (name,value) pairs
     persistent accross runs of the program and thus one of the building 
@@ -78,13 +135,16 @@ public:
 
 
     /** Source from which a session variable was initialized. 
+	
+	The order of this enum is used by *insert* to replace 
+	pre-existing values or not.
      */
-    enum sourceType {
-	unknown,
-	queryenv,
+    enum sourceType {		
 	cmdline,
+	configfile,
 	sessionfile,
-	configfile
+	queryenv,
+	unknown
     };
 
     struct valT {
@@ -104,6 +164,16 @@ public:
 
 protected:
 
+    typedef std::map<boost::filesystem::path,slice<char> > textMap;
+    typedef std::map<boost::filesystem::path,
+		      rapidxml::xml_document<>* > xmlMap;
+
+    /** Set of all text files currently cached in memory. 
+     */
+    textMap texts;
+
+    xmlMap xmls;
+
     bool ascgi;
     
     /** Unique identifier for the session */
@@ -116,17 +186,7 @@ protected:
     void load( const boost::program_options::options_description& opts,
 	       const boost::filesystem::path& p, sourceType st );
 
-public:
-    /** name of the "command" option as a positional argument 
-     */
-    const char *posCmd;
-
-    /** All applications that keep state over multiple http connections
-	use a "session token". The name for such session identifier can
-	be specified when the session instance is created and thus help
-	administrators resolve conflicts when multiple applications run 
-	on the same server. */
-    const std::string sessionName;
+protected:
 
     /* \todo workout details of auth.cc first before making private. */
     /* map of variable names to values */
@@ -134,24 +194,37 @@ public:
 
     std::ostream *ostr;
 
+    friend class sessionVariable;
+
+    /** returns the value of a variable
+     */
+    const std::string& valueOf( const std::string& name ) const;
+
+
 public:
+    /** All applications that keep state over multiple http connections
+	use a "session token". The name for such session identifier can
+	be specified when the session instance is created and thus help
+	administrators resolve conflicts when multiple applications run 
+	on the same server. */
+    static std::string sessionName;
+
     /** number of errors encountered while generating a page. */
     unsigned int nErrs;
     
-    session( const char* p,
-	     const std::string& sn,
+    session( const std::string& sn,
 	     std::ostream& o ) 
-	: sessionId(""), posCmd(p), sessionName(sn), ostr(&o), nErrs(0) {}
+	: sessionId(""), ostr(&o), nErrs(0) {	
+	sessionName = sn;
+    }
+
+    static void 
+    addSessionVars( boost::program_options::options_description& all,
+		     boost::program_options::options_description& visible );
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */
     url asUrl( const boost::filesystem::path& p ) const;
-        
-    boost::filesystem::path contributorLog() const;
-
-    /** absolute name to the user personal directory
-     */
-    boost::filesystem::path userPath() const;
 
     bool errors() const { return nErrs > 0; }
     
@@ -159,9 +232,17 @@ public:
 
     void filters( variables& results, sourceType source ) const;
     
-    void loadsession( const boost::program_options::options_description& opts ) {
+    void 
+    loadsession( const boost::program_options::options_description& opts ) {
 	load(opts,stateFilePath(),sessionfile);
     }
+
+    /** Load and cache a text file in memory. Two back-to-back calls 
+	will return the same null-terminated buffer.
+     */
+    slice<char> loadtext( const boost::filesystem::path& p );
+
+    rapidxml::xml_document<> *loadxml( const boost::filesystem::path& p );
 
     /** \brief Value of a variable as an absolute pathname
 	
@@ -178,17 +259,15 @@ public:
     boost::filesystem::path 
     abspath( const boost::filesystem::path& name ) const;
 
-    /* returns the equivalent to path *p* within the build tree 
-       rooted at siteTop. */
-    boost::filesystem::path build( const boost::filesystem::path& p ) const;
-
-    /** name of the document (extended to commands) requested through 
-	the positional argument on the executable command line.
-     */
-    const std::string& doc() const {
-	return valueOf(posCmd);
+    session::variables::const_iterator find( const std::string name ) const {
+	return vars.find(name);
     }
 
+    bool found( session::variables::const_iterator p ) const {
+	return p != vars.end();
+    }
+
+    /* \todo used in deauth. */
     void id( const std::string& v ) {
 	sessionId = v;
     }
@@ -252,14 +331,6 @@ public:
     /** \brief Display debug information for the session
      */
     void show( std::ostream& ostr );
-
-    /* returns the equivalent to path *p* within the source tree 
-       rooted at srcTop. */
-    boost::filesystem::path src( const boost::filesystem::path& p ) const;
-
-    /** returns the absolute pathname formed by srcTop/p.
-     */
-    boost::filesystem::path srcDir( const boost::filesystem::path& p ) const;
     
     /** Store session information into persistent storage 
      */
@@ -277,18 +348,9 @@ public:
     subdirpart( const boost::filesystem::path& root,
 		  const boost::filesystem::path& leaf ) const;
 
-
-    const std::string& username() const {
-	return valueOf("username");
-    }
-
     /* Returns the value of a variable as an absolute pathname. 
      */
     boost::filesystem::path valueAsPath( const std::string& name ) const;
-
-    /** returns the value of a variable
-     */
-    const std::string& valueOf( const std::string& name ) const;
 };
 
 

@@ -43,8 +43,11 @@ namespace {
 	     n != NULL; n = n->next_sibling() ) {
 	    switch( n->type() ) {
 	    case node_element:
+#if 1
+		/* \todo be careful with insert. code used to be s.vars[] = */
 		/* author, title, date. */		
-		s.vars[n->name()] = session::valT(n->value());
+		s.insert(n->name(),n->value());
+#endif
 	    default:
 		/* Nothing to do except prevent gcc from complaining. */
 		break;
@@ -430,11 +433,8 @@ bool docbook::walkNodeEntry::operator<( const walkNodeEntry& right ) const {
 
 docbook::docbook( decorator& l,  decorator& r ) 
     : text(l,r), 
-      buffer(NULL), info(false), linebreak(false), sectionLevel(0) {}
+      info(false), linebreak(false), sectionLevel(0) {}
 
-docbook::~docbook() {
-    if( buffer != NULL ) delete [] buffer;
-}
 
 void docbook::any( session& s, const rapidxml::xml_node<>& node ) const {
 }
@@ -766,23 +766,9 @@ void docbookMeta( session& s, const boost::filesystem::path& pathname )
     /* \todo should only load one but how does it sits with dispatchDoc
      that initializes s[varname] by default to "document"? */
 
-    char *buffer;
-    size_t length;
-    rapidxml::xml_document<> doc;
+    rapidxml::xml_document<> *doc = s.loadxml(pathname);
 
-    size_t fileSize = file_size(pathname);
-    length = fileSize + 1;
-    buffer = new char [ length ];
-    boost::filesystem::ifstream file;
-
-    openfile(file,pathname);
-    file.read(buffer,fileSize);
-    buffer[fileSize] = '\0';
-    file.close();
-
-    doc.parse<0>(buffer);
-
-    xml_node<> *root = doc.first_node();
+    xml_node<> *root = doc->first_node();
     if( root != NULL ) {
 	xml_node<> *info = root->first_node("info");
 	if( info == NULL ) {
@@ -792,9 +778,9 @@ void docbookMeta( session& s, const boost::filesystem::path& pathname )
 	    parseInfo(s,*info);
 	}
     }
-    session::variables::const_iterator found = s.vars.find("title");
-    if( s.vars.find("title") == s.vars.end() ) {
-	s.insert("title",s.valueOf("document"));
+    session::variables::const_iterator found = s.find("title");
+    if( !s.found(found) ) {
+	s.insert("title",document.value(s).string());
     }    
     metaFetch<titleMeta>(s,pathname);
 }
@@ -806,20 +792,9 @@ void docbookFetch( session& s, const boost::filesystem::path& pathname )
     linkLight rightFormatedText(s);
     docbook d(leftFormatedText,rightFormatedText);
 
-    size_t fileSize = file_size(pathname);
-    d.length = fileSize + 1;
-    d.buffer = new char [ d.length ];
-    boost::filesystem::ifstream file;
-
-    openfile(file,pathname);
-    file.read(d.buffer,fileSize);
-    d.buffer[fileSize] = '\0';
-    file.close();
-
-    d.doc.parse<0>(d.buffer);
-
+    d.doc = s.loadxml(pathname);
     d.leftDec->attach(s.out());
-    rapidxml::xml_node<> *root = d.doc.first_node();
+    rapidxml::xml_node<> *root = d.doc->first_node();
     if( root != NULL ) {
 	d.walk(s,*root);
     }

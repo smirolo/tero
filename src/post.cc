@@ -32,6 +32,25 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+sessionVariable post::titleVar("title","title of a post");
+sessionVariable post::authorVar("author","author of a post");
+sessionVariable post::descrVar("descr","content of a post");
+
+
+void 
+post::addSessionVars( boost::program_options::options_description& opts,
+		      boost::program_options::options_description& visible )
+{
+    using namespace boost::program_options;
+
+    options_description localOptions("posts");
+    localOptions.add(titleVar.option());
+    localOptions.add(authorVar.option());
+    localOptions.add(descrVar.option());
+    opts.add(localOptions);
+    visible.add(localOptions);
+}
+
 
 #if 1
 post::post( const post& p ) 
@@ -47,20 +66,6 @@ post::post( const post& p )
 {
 }
 #endif
-
-
-void 
-post::addSessionVars( boost::program_options::options_description& opts )
-{
-    using namespace boost::program_options;
-
-    options_description postOptions("posts");
-    postOptions.add_options()
-	("title",value<std::string>(),"title")
-	("author",value<std::string>(),"author")
-	("descr",value<std::string>(),"descr");
-    opts.add(postOptions);
-}
 
 
 void post::normalize() {

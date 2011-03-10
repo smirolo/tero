@@ -143,12 +143,31 @@ static const char *httpMethod = "GET";
 static const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
 static const char *requestURI = "/pba/paypipeline";
 
-awsStandardButton::awsStandardButton( const std::string& ak,
-				      const std::string& sk,
-				      const std::string& cf )
-    : accessKey(ak),
-      secretKey(sk),
-      certificate(cf),
+
+sessionVariable awsAccessKey("awsAccessKey","Amazon Access Key");
+sessionVariable awsSecretKey("awsSecretKey","Amazon Secret Key");
+sessionVariable awsCertificate("awsCertificate","Amazon Public Certificate");
+
+
+void 
+awsAddSessionVars( boost::program_options::options_description& opts,
+		   boost::program_options::options_description& visible ) {
+    using namespace boost::program_options;
+ 
+    /* For authentication with Amazon payment services. */
+    options_description localOpts("amazon");
+    localOpts.add(awsAccessKey.option());
+    localOpts.add(awsSecretKey.option());
+    localOpts.add(awsCertificate.option());
+    opts.add(localOpts);
+    visible.add(localOpts);
+}
+
+
+awsStandardButton::awsStandardButton( const session& s )
+    : accessKey(awsAccessKey.value(s)),
+      secretKey(awsSecretKey.value(s)),
+      certificate(awsCertificate.value(s)),
       amount(0),
       referenceId(),
       signature(),
@@ -266,7 +285,7 @@ bool awsStandardButton::checkReturn( const session& s,
     std::string signatureS;
     paramMap params;
     const char *httpMethod = "GET";				     
-    const char *hostHeader = s.valueOf("domainName").c_str();
+    const char *hostHeader = domainName.value(s).string().c_str();
 
     session::variables qs;
     s.filters(qs,session::queryenv);

@@ -28,12 +28,14 @@
 #include "changelist.hh"
 #include "markup.hh"
 #include <boost/regex.hpp>
+#include "project.hh"
 
 /** Execute git commands
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+extern pathVariable binDir;
 
 /** interaction with a git repository.
  */
@@ -52,8 +54,8 @@ protected:
 public:
     gitcmd() : revisionsys(".git") {}
 
-    static gitcmd& instance( const boost::filesystem::path& binDir ) {
-	_instance.executable = binDir / "git";
+    static gitcmd& instance( const boost::filesystem::path& binName ) {
+	_instance.executable = binName;
 	return _instance;
     }
 
@@ -88,7 +90,7 @@ revisionsys*
 revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
     if( revs.empty() ) {
 	/* first time */
-	revs.push_back(&gitcmd::instance(s.valueOf("binDir")));
+	revs.push_back(&gitcmd::instance(binDir.value(s) / "git"));
     }
 
     /* The pathname is absolute at this point. */
@@ -108,7 +110,7 @@ revisionsys*
 revisionsys::findRevByMetadir( session& s, const std::string& metadir ) {
     if( revs.empty() ) {
 	/* first time */
-	revs.push_back(&gitcmd::instance(s.valueOf("binDir")));
+	revs.push_back(&gitcmd::instance(binDir.value(s) / "git"));
     }
 
     for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
@@ -403,8 +405,7 @@ void gitcmd::checkins( ::history& hist,
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
 
-    boost::filesystem::path project \
-	= s.subdirpart(s.valueOf("srcTop"),rootpath);
+    boost::filesystem::path project = projectName(s,rootpath);
 
     /* shows only the last 2 commits */
     std::stringstream sstm;
@@ -466,11 +467,7 @@ void gitcmd::checkins( ::history& hist,
 	    if( !isspace(line[0]) ) {
 		/* We are dealing with a file that was part of this commit. */
 		std::stringstream hrefs;
-#if 0
-		hrefs << s.asUrl(project / boost::filesystem::path(strip(line)));
-#else
 		hrefs << s.asUrl(boost::filesystem::path(strip(line)));
-#endif
 		ci->addFile(hrefs.str());
 	    } else {
 		size_t maxTitleLength = 80;

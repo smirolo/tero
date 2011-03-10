@@ -24,6 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "feeds.hh"
+#include "project.hh"
 
 char allFilesPat[] = ".*";
 
@@ -133,12 +134,9 @@ void feedRepositoryPopulate( session& s,
     if( rev ) {
 	history hist;
 	boost::filesystem::path base =  boost::filesystem::path("/") 
-	    / s.subdirpart(s.valueOf("siteTop"),rev->rootpath);
-	std::string projname = s.subdirpart(s.valueOf("srcTop"),rev->rootpath).string();
-	if( projname[projname.size() - 1] == '/' ) {
-	    projname = projname.substr(0,projname.size() - 1);
-	}
-	s.vars["title"] = projname;
+	    / s.subdirpart(siteTop.value(s),rev->rootpath);
+	boost::filesystem::path projname = projectName(s,rev->rootpath);	
+	s.insert("title",projname.string());
 	rev->checkins(hist,s,pathname);
 	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {

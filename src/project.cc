@@ -34,6 +34,55 @@
 */
 
 
+pathVariable srcTop("srcTop","path to document top");
+
+
+void 
+projectAddSessionVars( boost::program_options::options_description& all,
+		       boost::program_options::options_description& visible )
+{
+    using namespace boost::program_options;
+    
+    options_description localOpts("project");
+    localOpts.add(srcTop.option());
+    all.add(localOpts);
+    visible.add(localOpts);
+}
+
+
+projhref::projhref( const session& s, const std::string& n ) 
+    : name(n), base(boost::filesystem::path("/") 
+		    / s.subdirpart(siteTop.value(s),
+				   srcTop.value(s)))
+{
+}
+
+
+boost::filesystem::path 
+projectName( const session& s, const boost::filesystem::path& p ) {
+    boost::filesystem::path base(p);
+    while( !base.string().empty() && !is_directory(base) ) {
+	base.remove_leaf();
+    }
+    std::string projname = s.subdirpart(srcTop.value(s),base).string();
+    if( projname[projname.size() - 1] == '/' ) {
+	projname = projname.substr(0,projname.size() - 1);
+    }
+    return projname;
+}
+
+void projectTitle( session& s, const boost::filesystem::path& pathname )
+{
+    s.insert("title",projectName(s,pathname).string());
+    session::variables::const_iterator look = s.find("title");
+    if( s.found(look) ) {    
+	s.out() << look->second.value;
+    } else {
+	s.out() << pathname;
+    }
+}
+
+
 void projCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::system;
@@ -79,32 +128,15 @@ void projCreateFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void 
-projindex::addSessionVars( boost::program_options::options_description& opts )
-{
-    using namespace boost::program_options;
-    
-    options_description vars("project");
-    vars.add_options()
-	("remoteSrcTop",value<std::string>(),"path to root of the project repositories");
-    opts.add(vars);
-}
-
-
 void projindexFetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace rapidxml;
     using namespace boost::filesystem;
 
     std::string projdir = pathname.parent_path().filename();
-    size_t fileSize = file_size(pathname);
-    char text[ fileSize + 1 ];
-    ifstream file;
-    openfile(file,pathname);
-    file.read(text,fileSize);
-    text[fileSize] = '\0';
+    slice<char> text = s.loadtext(pathname);
     xml_document<> doc;    // character type defaults to char
-    doc.parse<0>(text);     // 0 means default parse flags
+    doc.parse<0>(text.begin());     // 0 means default parse flags
 
     xml_node<> *root = doc.first_node();
     if( root != NULL ) {
@@ -164,7 +196,7 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 	    candidateSet candidates;
 	    for( const char **d = dists; 
 		 d != &dists[sizeof(dists)/sizeof(char*)]; ++d ) {
-		path dirname(s.valueOf("siteTop") + "/" + std::string(*d));
+		path dirname(siteTop.value(s) / std::string(*d));
 		path prefix(dirname / std::string(projname->value()));
 		if( boost::filesystem::exists(dirname) ) {
 		    for( directory_iterator entry = directory_iterator(dirname); 
@@ -189,11 +221,6 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 	    }
 	    s.out() << html::p::end;
 
-	    boost::filesystem::path srcBase(boost::filesystem::path("/") 
-					    / s.subdirpart(s.valueOf("siteTop"),
-						       s.valueOf("srcTop")));
-	   
-
 	    /* Dependencies to install the project from a source compilation. */
 	    xml_node<> *repository = project->first_node("repository");
 	    if( repository == NULL ) repository = project->first_node("patch");
@@ -202,18 +229,19 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 		s.out() << html::p() << "The repository is available at "
 			  << html::p::end;
 		s.out() << html::pre()
-			  << s.valueOf("remoteSrcTop") 
-			  << "/" << projdir << "/.git"
-			  << html::pre::end;
+			<< "http://" << domainName.value(s) 
+			<< "/" << projhref(s,projdir) << "/.git"
+			<< html::pre::end;
 		s.out() << html::p() << "The following prerequisites are "
 		    "necessary to build the project from source: ";
 		for( xml_node<> *dep = repository->first_node("dep");
 		     dep != NULL; dep = dep->next_sibling() ) {
 		    xml_attribute<> *name = dep->first_attribute("name");
 		    if( name != NULL ) {
-			if( boost::filesystem::exists(s.srcDir(name->value())) ) {			
+			if( boost::filesystem::exists(srcTop.value(s) 
+						      / name->value()) ) {
 			    s.out() << sep 
-				    << projhref(srcBase,name->value());
+				    << projhref(s,name->value());
 			} else {
 			    s.out() << sep << name->value();
 			}
@@ -234,12 +262,131 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 		s.out() << html::p::end;
 		s.out() << html::pre();
 		s.out() << "cd *buildTop*/" << projname->value() << std::endl;
-		s.out() << html::a().href("/resources/dws") 
-			  << "dws" << html::a::end 
-			  << " make recurse" << std::endl;
+		s.out() << "dws make recurse" << std::endl;
 		s.out() << "dws make install" << std::endl;
 		s.out() << html::pre::end;
 	    }
 	}
     }
+}
+
+
+bool projfiles::selects( const boost::filesystem::path& pathname ) const {
+    return dispatchDoc::instance->select("check",pathname.string()) != NULL;
+}
+
+
+void 
+projfiles::addDir( session& s, const boost::filesystem::path& dir ) const {
+    switch( state ) {
+    case start:
+	s.out() << html::div().classref("MenuWidget");
+	break;
+    case toplevelFiles:
+    case direntryFiles:
+	s.out() << html::p::end;
+	break;	
+    }
+    state = direntryFiles;
+
+    std::string href = dir.string();
+    if( href.compare(0,srcTop.value(s).string().size(),
+		     srcTop.value(s).string()) == 0 ) {
+	href = (s.subdirpart(srcTop.value(s),dir) / std::string("dws.xml")).string();
+    }
+    if( boost::filesystem::exists(dir / std::string("dws.xml")) ) {
+	s.out() << html::a().href(href) 
+		  << html::h(2)
+		  << dir.leaf() 
+		  << html::h(2).end()
+		  << html::a::end;
+    } else {
+	s.out() << html::h(2) << dir.leaf() << html::h(2).end();
+    }
+    s.out() << html::p();
+}
+
+
+void 
+projfiles::addFile( session& s, const boost::filesystem::path& file ) const {
+    if( state == start ) {
+	s.out() << html::div().classref("MenuWidget");
+	s.out() << html::p();
+	state = toplevelFiles;
+    }
+    s.out() << html::a().href(s.asUrl(file).string()) 
+	      << file.leaf() 
+	      << html::a::end << "<br />" << std::endl;
+}
+
+
+void projfiles::flush( session& s ) const 
+{
+    switch( state ) {
+    case toplevelFiles:
+    case direntryFiles:
+	s.out() << html::p::end;
+	s.out() << html::div::end;
+	break;	
+    default:
+	/* Nothing to do excepts shutup gcc warnings. */
+	break;
+    }	
+}
+
+
+void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
+{
+    using namespace std;
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+    state = projfiles::start;
+    projdir = s.root(pathname,"dws.xml");
+    
+    if( !projdir.empty() ) {
+	/* We insert pathnames into a set<> such that they later can be 
+	   iterated in alphabetically sorted order. */
+	std::set<path> topdirs;
+	std::set<path> topfiles;
+	for( directory_iterator entry = directory_iterator(projdir); 
+		 entry != directory_iterator(); ++entry ) {
+	    if( is_directory(*entry) ) {
+		topdirs.insert(*entry);
+	    } else {
+		if( selects(*entry) ) topfiles.insert(*entry);
+	    }
+	}
+	
+	for( std::set<path>::const_iterator entry = topfiles.begin(); 
+		 entry != topfiles.end(); ++entry ) {
+	    addFile(s,*entry);
+	}
+	
+	for( std::set<path>::const_iterator entry = topdirs.begin(); 
+		 entry != topdirs.end(); ++entry ) {
+	    std::set<path> files;
+	    /* Insert all filename which match a filter */
+	    for( directory_iterator file = directory_iterator(*entry); 
+		 file != directory_iterator(); ++file ) {
+		if( !is_directory(*file) ) {
+		    if( selects(*file) ) files.insert(*file);
+		}
+	    }
+	    if( !files.empty() ) {
+		addDir(s,*entry);
+		for( std::set<path>::const_iterator file = files.begin(); 
+		     file != files.end(); ++file ) {
+		    addFile(s,*file);
+		}
+	    }
+	}
+	flush(s);
+    }
+}
+
+void projfilesFetch( session& s, const boost::filesystem::path& pathname )
+{
+    projfiles p;
+    p.fetch(s,pathname);
 }

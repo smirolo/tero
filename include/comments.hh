@@ -36,6 +36,12 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+void
+commentAddSessionVars( boost::program_options::options_description& all,
+		       boost::program_options::options_description& visible );
+
+
+
 /** Display comments on a page
  */
 void pageCommentsFetch( session& s, const boost::filesystem::path& pathname);
@@ -48,13 +54,8 @@ void pageCommentsFetch( session& s, const boost::filesystem::path& pathname);
 
     (*always*)
 */
-class commentPage {
-public:
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
-};
 
-void commentPageFetch( session& s, const boost::filesystem::path& pathname );
+void commentPage( session& s, const boost::filesystem::path& pathname );
 
 
 #endif

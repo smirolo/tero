@@ -65,19 +65,21 @@ int main( int argc, char *argv[] )
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
-    session s("view","semillaId",std::cout);
+    session s("semillaId",std::cout);
     s.privileged(false);
 
     try {
 	/* parse command line arguments */
 	options_description opts;
+	options_description visible;
 	options_description genOptions("general");
 	genOptions.add_options()
-	    ("help","produce help message")
-	    ("binDir",value<std::string>(),"path to outside executables");
+	    ("help","produce help message");
 	
 	opts.add(genOptions);
-	auth::addSessionVars(opts);
+	visible.add(genOptions);
+	session::addSessionVars(opts,visible);
+	authAddSessionVars(opts,visible);
 
 	s.restore(argc,argv,opts);
 

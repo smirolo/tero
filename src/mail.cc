@@ -81,7 +81,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 
     p.score = 0;
     p.filename = boost::filesystem::path(name);
-    p.guid = std::string("/") + s.subdirpart(s.valueOf("siteTop"),name).string();	   
+    p.guid = std::string("/") + s.subdirpart(siteTop.value(s),name).string();
     descr << html::pre();
 
     while( !ins.eof() ) {
@@ -112,7 +112,8 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	    }
 	    p = post();
 	    p.filename = boost::filesystem::path(name);
-	    p.guid = std::string("/") + s.subdirpart(s.valueOf("siteTop"),name).string();
+	    p.guid = std::string("/") 
+		+ s.subdirpart(siteTop.value(s),name).string();
 	    p.score = 0;
 	    first = false;
 	    state = startParse;

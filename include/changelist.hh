@@ -34,6 +34,15 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+
+/** Add session variables related to changelist module. 
+*/
+void 
+changelistAddSessionVars( boost::program_options::options_description& all,
+			  boost::program_options::options_description& visible );
+
+
+
 class historyref {
 public:
     historyref() {}
@@ -154,14 +163,6 @@ public:
 */
 void cancelFetch( session& s, const boost::filesystem::path& pathname );
 
-
-/* Add a changed file to the default change list 
-*/
-class change {
-public:
-    static void 
-    addSessionVars( boost::program_options::options_description& opts );
-};
 
 void changeFetch( session& s, const boost::filesystem::path& pathname );
 

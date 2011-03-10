@@ -29,7 +29,7 @@
 #include "slice.hh"
 #include "cpptok.hh"
 #include "shtok.hh"
-#include "projfiles.hh"
+#include "project.hh"
 
 /**
    Check the style conventions for source files in a project.
@@ -138,10 +138,6 @@ public:
 template<typename checker>
 void checkfileFetch( session& s, const boost::filesystem::path& pathname );
 
-#if 0
-typedef checkfile<cppChecker> cppCheckfile;
-typedef checkfile<shChecker> shCheckfile;
-#endif
 
 class checkstyle : public projfiles {
 protected:    

@@ -240,38 +240,26 @@ void byScore::flush()
 
 void todoCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
-    boost::filesystem::path modifs(s.valueOf("todoDir"));
     boost::filesystem::path 
 	dirname(boost::filesystem::exists(pathname) ? 
-		pathname : s.abspath(modifs));
+		pathname : s.abspath(pathname.parent_path()));
     
 
     todoCreateFeedback fb(s.out());
     todocreator create(dirname,&fb);
-#if 0
-    if( !istr->eof() ) {
-	mailParser parser(create);
-	parser.walk(s,*istr);
-    } else 
-#endif
-	{
-	post p;
-	p.score = 0;
-	p.title = s.valueOf("title");
-	p.authorEmail = s.valueOf("author");
-	p.descr = s.valueOf("descr");	
-	create.filters(p);
-	}
 
+    post p;
+    p.score = 0;
+    p.title = post::titleVar.value(s);
+    p.authorEmail = post::authorVar.value(s);
+    p.descr = post::descrVar.value(s);
+    create.filters(p);
 }
 
 
 void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 {
-    boost::filesystem::path 
-	postname(boost::filesystem::exists(pathname) ? 
-		 pathname : s.abspath(s.valueOf("href")));
-
+    boost::filesystem::path postname(pathname.parent_path());
     todoCommentFeedback fb(s.out(),s.asUrl(postname).string());
     todocommentor comment(postname,&fb);
 
@@ -283,8 +271,8 @@ void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 #endif
 	{
 	post p;
-	p.authorEmail = s.valueOf("author");
-	p.descr = s.valueOf("descr");
+	p.authorEmail = post::authorVar.value(s);
+	p.descr = post::descrVar.value(s);
 	p.time = boost::posix_time::second_clock::local_time();
 	p.guid = todoAdapter().fetch(s,postname).guid;
 	p.score = 0;
@@ -319,10 +307,18 @@ void todoVoteSuccessFetch( session& s,
     payment::checkReturn(s,returnPath);
 #endif
 
+#if 0
+    /* \todo keep old code around until we can verify pathname as return
+       url works well. */
     std::stringstream str;
     boost::filesystem::path modifs(s.valueOf("todoDir"));
     str << (modifs / s.valueOf("referenceId")) << ".todo";
     boost::filesystem::path asPath(str.str());
+#else    
+    boost::filesystem::path 
+	asPath(boost::filesystem::exists(pathname) ? 
+	       pathname : s.abspath(pathname.parent_path()));
+#endif
 
     /* The pathname is set to the *todoVote* action name when we get here
        so we derive the document name from *href*. */
@@ -402,6 +398,7 @@ namespace {
 char titleMeta[] = "title";
 } // anonymous
 
+
 void todoMeta( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem; 
@@ -422,9 +419,9 @@ void todoMeta( session& s, const boost::filesystem::path& pathname )
 	if( boost::regex_search(line,m,valueEx) ) {
 	    if( m.str(1) == std::string("Subject") ) {
 		titles << " - " << m.str(2);
-		s.vars["title"] = session::valT(titles.str());
+		s.insert("title",titles.str());
 	    } else {
-		s.vars[m.str(1)] = session::valT(m.str(2));
+		s.insert(m.str(1),m.str(2));
 	    }
 	} else break;
     }
