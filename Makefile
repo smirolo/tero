@@ -32,7 +32,9 @@ include $(makeHelperDir)/prefix.mk
 bins 		:=	semilla smailui
 etcs		:=	semilla.conf
 libs		:=	libsemilla.a libpayproc.a
-shares		:=	semilla.pdf
+# \todo documentation specific to the project is currently broken. 
+#       It needs to be written up anyway :).
+#shares		:=	semilla.pdf
 
 semillaConfFile		?=	/etc/semilla.conf
 semillaSessionDir	?=	/var/semilla
