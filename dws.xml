@@ -36,10 +36,10 @@
       </dep>      
       <dep name="drop">
 	<bin>dws</bin>
-	<share>.*/(dws)/prefix.mk</share>
+	<share>(dws)/prefix.mk</share>
       </dep>
       <dep name="contrib/boost">
-	<include>.*/(boost)/version.hpp</include>
+	<include>.*(boost)/version.hpp</include>
 	<lib>boost_date_time</lib>
 	<lib>boost_filesystem</lib>
 	<lib>boost_program_options</lib>
