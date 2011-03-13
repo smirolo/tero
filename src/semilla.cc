@@ -184,7 +184,7 @@ callEntry entries[] = {
     { "document", boost::regex(".*\\.git/index\\.rss"), always,
       feedRepository<rsswriter> },
     { "document", boost::regex(".*/index\\.rss"), always,
-      feedAggregateFetch<rsswriter,docPage> },
+      rssSiteAggregate<docPage> },
 
     /* Composer and document for the todos index view */
     { "view", boost::regex(".*todos/.+"), always, composerFetch<todos> },

@@ -66,9 +66,11 @@ void embed( session& s, const std::string& value ) {
 	/* \todo s.out not restored correctly. */
 	s.out() << "<p>" << e.what() << "</p>" << std::endl;
 #else
+#if 0
 	std::cerr << "[embed of '" << value << "']: " 
 		  << e.what() << std::endl;	
 #endif	
+#endif
     }
 }
 

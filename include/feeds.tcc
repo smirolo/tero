@@ -83,7 +83,6 @@ void feedAggregateFetch( session& s,
 			   const boost::filesystem::path& pathname )
 {
     feedAggregateRecursive<postWriter,varname>(s,pathname);
-    globalFeeds->flush();
 }
 
 
@@ -91,11 +90,15 @@ template<typename postWriter>
 void feedRepository( session& s, 
 			    const boost::filesystem::path& pathname )
 {
+	if( !globalFeeds ) {
     postFilter *prev = globalFeeds;
     postWriter feeds(s.out());    
     globalFeeds = &feeds;
     feedRepositoryPopulate(s,pathname);
     globalFeeds = prev;
+} else {
+    feedRepositoryPopulate(s,pathname);
+}
 }
 
 
@@ -103,6 +106,7 @@ template<typename postWriter, const char*varname>
 void feedLatestPostsFetch( session& s, 
 			 const boost::filesystem::path& pathname )
 {
+    if( !globalFeeds ) {
     postFilter *prev = globalFeeds;
 
     postWriter writer(s.out());
@@ -111,16 +115,19 @@ void feedLatestPostsFetch( session& s,
     feedPage<feedOrdered<orderByTime<post> > > feeds(latests,0,5); 
     globalFeeds = &feeds;
     feedAggregateFetch<postWriter,varname>(s,pathname);
-
+    if( globalFeeds ) {
+    globalFeeds->flush();
+}
     globalFeeds = prev;
+    } else {
+        feedAggregateFetch<postWriter,varname>(s,pathname);
+    }
 }
 
 
 template<const char*varname>
 void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname ) 
 {
-    std::cerr << "!!! Got here? (" << (pathname / "index.feed") 
-	      << ")" << std::endl;
     feedLatestPostsFetch<htmlwriter,varname>(s,s.abspath("/index.feed"));
 }
 

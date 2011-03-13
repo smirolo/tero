@@ -28,8 +28,8 @@
 include $(shell dws context)
 include $(makeHelperDir)/prefix.mk
 
-#bins 		:=	semilla
-bins 		:=	semilla smailui
+bins 		:=	semilla
+#bins 		:=	semilla smailui
 etcs		:=	semilla.conf
 libs		:=	libsemilla.a libpayproc.a
 # \todo documentation specific to the project is currently broken. 
