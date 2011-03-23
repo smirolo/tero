@@ -162,6 +162,77 @@ void session::load( const boost::program_options::options_description& opts,
 }
 
 
+void session::check( const boost::filesystem::path& pathname ) const
+{
+    if( !boost::filesystem::exists(pathname)
+	|| !is_regular_file(pathname) ) {
+	using namespace boost::system::errc;
+	using namespace boost::filesystem;
+ 
+	boost::throw_exception(basic_filesystem_error<path>(
+	    std::string("[checkfile]"),
+	    pathname, 
+	    make_error_code(no_such_file_or_directory)));	
+    }
+}
+
+void session::appendfile( boost::filesystem::ofstream& strm, 
+			  const boost::filesystem::path& pathname ) {
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+    if( !boost::filesystem::exists(pathname) ) {
+	createfile(strm,pathname);
+    } else {
+	using namespace boost::system::errc;
+
+	strm.open(pathname,std::ios_base::out | std::ios_base::app);
+	if( strm.fail() ) {
+	    boost::throw_exception(basic_filesystem_error<path>(
+		std::string("[appendfile]"),
+		pathname, 
+		make_error_code(no_such_file_or_directory)));
+	}
+    }
+}
+
+
+void session::createfile( boost::filesystem::ofstream& strm, 
+		 const boost::filesystem::path& pathname ) {
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+    create_directories(pathname.parent_path());
+    strm.open(pathname,std::ios_base::out | std::ios_base::trunc);
+    if( strm.fail() ) {
+	using namespace boost::system::errc;
+
+	boost::throw_exception(basic_filesystem_error<path>(
+	   std::string("[createfile]"),
+	   pathname, 
+	   make_error_code(no_such_file_or_directory)));
+    }
+}
+
+
+void session::openfile( boost::filesystem::ifstream& strm, 
+		     const boost::filesystem::path& pathname ) {
+    using namespace boost::system::errc;
+    using namespace boost::filesystem;
+
+    check(pathname);
+
+    strm.open(pathname);
+    if( !strm.fail() ) return;
+    
+    /* \todo figure out how to pass iostream error code in exception. */
+    boost::throw_exception(basic_filesystem_error<path>(
+	std::string("[openfile]"),
+	pathname, 
+	make_error_code(no_such_file_or_directory)));
+}
+
+
 slice<char> session::loadtext( const boost::filesystem::path& p )
 {
     using namespace boost::filesystem;
@@ -175,13 +246,8 @@ slice<char> session::loadtext( const boost::filesystem::path& p )
     if( is_regular_file(p) ) {
 	size_t fileSize = file_size(p);
 	char *text = new char[ fileSize + 1 ];
-	ifstream file(p);
-	if( file.fail() ) {
-	    boost::throw_exception(basic_filesystem_error<path>(
-				std::string("error opening file"),
-				p,
-				make_error_code(no_such_file_or_directory)));
-	}
+	ifstream file;
+	openfile(file,p);
 	file.read(text,fileSize);
 	text[fileSize] = '\0';
 	file.close();
@@ -334,41 +400,22 @@ boost::filesystem::path
 session::abspath( const boost::filesystem::path& relative ) const {
     using namespace boost::filesystem;
 
-#if 1
-    /* \todo This code creates trouble for command-line processing 
-       as well as for dispatching but is required to get homepage displayed
-       correctly. To figure out how to clean it up...
-    */
-    /* When we are running is CGI mode, every path needs to be interpreted
-       from *siteTop*. On command-line mode, we can relax the rule a little
-       and if we are passed an absolute path that exists, it is safe 
-       to return it as such. */
-    if( relative.is_complete() 
-	&& boost::filesystem::exists(relative) ) {
-	return relative;
+    /* In CGI mode, we interpret paths relative to siteTop,
+       otherwise in command-line mode, we use the usual convention
+       of paths relative to current directory. */
+    if( !runAsCGI() ) {
+	return relative.is_complete() ? relative : (current_path() / relative);
     }
-#endif
 
-#if 0
-    /* \todo seems like bogus code now... */
-    /* First we try to access the file from cwd. */
-    path fromCwd 
-	= current_path() / relative;
-    if( !relative.is_complete() && boost::filesystem::exists(fromCwd) ) { 
-	return fromCwd;
-    }	
-#endif
-
-    /* Second we try to access the file as a relative pathname 
-       from siteTop. */
     path fromSiteTop(valueOf("siteTop"));
     if( fromSiteTop.empty() ) {
 	boost::throw_exception(
-        basic_filesystem_error<path>(std::string("siteTop not found"),
-				     fromSiteTop, 
-				     boost::system::error_code()));
+	    basic_filesystem_error<path>(std::string("siteTop not found"),
+					 fromSiteTop, 
+					 boost::system::error_code()));
     }
-    if( relative.string().compare(0,fromSiteTop.string().size(),fromSiteTop.string()) == 0 ) {
+    if( relative.string().compare(0,fromSiteTop.string().size(),
+				  fromSiteTop.string()) == 0 ) {
 	fromSiteTop = relative;
     } else {
 	/* avoid to keep prepending siteTop in case the file does not exist.
@@ -396,6 +443,10 @@ void session::restore( int argc, char *argv[],
     using namespace boost::system;
     using namespace boost::filesystem;
     using namespace boost::program_options;
+
+    /* We assume that if SCRIPT_FILENAME is defined
+       we are running as a cgi. */
+    ascgi = ( getenv("SCRIPT_FILENAME") != NULL );
 
     positional_options_description pd;     
     pd.add(document.name, 1);
@@ -466,17 +517,18 @@ void session::restore( int argc, char *argv[],
 	}
     }
 
-    /* We assume that if SCRIPT_FILENAME is defined
-       we are running as a cgi. */
-    ascgi = ( getenv("SCRIPT_FILENAME") != NULL );
-
     /* Append a trailing '/' if the document is a directory
        to match Apache's rewrite rules. */    
     std::string docname = document.value(*this).string();
     if( boost::filesystem::is_directory(docname) 
 	&& (docname.size() == 0 
 	    || docname[docname.size() - 1] != '/') ) {
-	insert(document.name,docname + '/');
+	sourceType source = unknown;
+	variables::const_iterator iter = vars.find(document.name);
+	if( iter != vars.end() ) {
+	    source = iter->second.source;
+	}
+	insert(document.name,docname + '/',source);
     }
 }
 
@@ -561,8 +613,13 @@ void session::remove() {
 boost::filesystem::path 
 session::subdirpart( const boost::filesystem::path& root,
 		     const boost::filesystem::path& leaf ) const {
-    return leaf.string().substr(root.string().size() 
-	+ (root.string()[root.string().size() - 1] != '/' ? 1 : 0));
+    if( leaf.string().compare(0,root.string().size(),root.string()) != 0 ) {
+	boost::throw_exception(std::runtime_error(root.string() 
+		+ " is not a prefix of " + leaf.string()));
+    }
+    return leaf.string().substr(std::min(leaf.string().size(),
+	root.string().size() 
+        + (root.string()[root.string().size() - 1] != '/' ? 1 : 0)));
 }
 
 

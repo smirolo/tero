@@ -54,16 +54,16 @@ public:
 };
 
 
-template<typename cmp>
-void 
-blogByIntervalFetch( session& s, const boost::filesystem::path& pathname );
+template<typename defaultWriter, const char* varname, const char* filePat, 
+	 typename cmp>
+void blogByInterval( session& s, const boost::filesystem::path& pathname );
 
 void blogByIntervalDate( session& s, const boost::filesystem::path& pathname );
 void blogByIntervalTags( session& s, const boost::filesystem::path& pathname );
 
 
 template<typename cmp>
-class bySet : public feedIndex {
+class bySet : public retainedFilter {
 protected:
     /* store the number blog entries with a specific key. */
     typedef std::map<typename cmp::keyType,uint32_t> linkSet;

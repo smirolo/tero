@@ -58,19 +58,13 @@ void embed( session& s, const std::string& value ) {
     using namespace boost::filesystem;
     std::ostream& prevDisp = s.out();
     try {
-	dispatchDoc::instance->fetch(s,value);
+	dispatchDoc::instance()->fetch(s,value);
     } catch( const basic_filesystem_error<path>& e ) {
 	s.out(prevDisp);
 	++s.nErrs;
-#if 0
-	/* \todo s.out not restored correctly. */
-	s.out() << "<p>" << e.what() << "</p>" << std::endl;
-#else
-#if 0
-	std::cerr << "[embed of '" << value << "']: " 
+	std::cerr << "[embed of '" << value << "'] " 
 		  << e.what() << std::endl;	
-#endif	
-#endif
+	s.out() << "<p>" << e.what() << "</p>" << std::endl;
     }
 }
 

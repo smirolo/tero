@@ -34,24 +34,21 @@
 */
 
 
+/** Add the command line options which are referenced (*all*) and the subset
+    printed in the command line help (*visible*).
+ */
 void 
 composerAddSessionVars( boost::program_options::options_description& all,
 			boost::program_options::options_description& visible );
 
+/** Path to the directory containing the template HTML files (.template)
+ */
 extern pathVariable themeDir;
 
-
-/** Embed content associated to *variable*.
-
-    Implementation note
-    *embed* is referenced from *composerFetch* so a prototype has to be 
-    available.
+/** Use the *layout* template HTML to display document *pathname*.
  */
-void embed( session& s, const std::string& variable );
-
-
 template<const char *layout>
-void composerFetch( session& s, const boost::filesystem::path& pathname );
+void compose( session& s, const boost::filesystem::path& pathname );
 
 #include "composer.tcc"
 

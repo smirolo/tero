@@ -44,7 +44,7 @@ commentAddSessionVars( boost::program_options::options_description& opts,
 /** Create the comments file if it does not exists and then append
     the comment at the end of the comments file.
  */
-class appendPostToFile : public postFilter {
+class appendPostToFile : public passThruFilter {
 protected:
     boost::filesystem::path commentTop;
     boost::filesystem::path postname;
@@ -57,7 +57,7 @@ public:
     appendPostToFile( const boost::filesystem::path& top,
 		     const boost::filesystem::path& p, 
 		     postFilter* n ) 
-	: postFilter(n), commentTop(top), postname(p) {}
+	: passThruFilter(n), commentTop(top), postname(p) {}
 
     virtual void filters( const post& );
 };
@@ -70,22 +70,15 @@ void appendPostToFile::filters( const post& p ) {
     boost::filesystem::ofstream file;
     boost::filesystem::path comments = commentTop / postname;
 
-    if( !boost::filesystem::exists(comments) ) {
-	create_directories(comments.parent_path());
-	createfile(file,comments);
-    } else {
-	file.open(comments,std::ios_base::out | std::ios_base::app);
-	if( file.fail() ) {
-	    boost::throw_exception(basic_filesystem_error<path>(
-		std::string("no permissions to open file"),
-		postname, 
-		make_error_code(no_such_file_or_directory)));
-	}
-    }
+#if 0
+    /* \todo How do this? pass session to filter? 
+       append and pass stream to filter? */
+    s.appendfile(file,comments);
+#endif
 
     boost::interprocess::file_lock f_lock(comments.string().c_str());
     f_lock.lock();    
-    blogwriter writer(file);
+    mailwriter writer(file);
     writer.filters(p);
     file.close();
     f_lock.unlock();
@@ -96,20 +89,14 @@ void appendPostToFile::filters( const post& p ) {
 
 /** Send the comment post to the SMTP server through the sendmail command.
  */
-class sendPostToSMTP : public postFilter {
+class sendPostToSMTP : public passThruFilter {
 protected:
-    boost::filesystem::path commentTop;
-    boost::filesystem::path postname;
+    std::string recipient;
 
 public:
-   sendPostToSMTP( const boost::filesystem::path& top,
-		     const boost::filesystem::path& p ) 
-       : commentTop(top), postname(p) {}
-
-    sendPostToSMTP( const boost::filesystem::path& top,
-		     const boost::filesystem::path& p, 
-		     postFilter* n ) 
-	: postFilter(n), commentTop(top), postname(p) {}
+    explicit sendPostToSMTP( const std::string& r ) : recipient(r) {}
+    sendPostToSMTP( const std::string& r, postFilter *n ) 
+	: passThruFilter(n), recipient(r) {}
 
     virtual void filters( const post& );
 };
@@ -118,29 +105,31 @@ public:
 void sendPostToSMTP::filters( const post& p ) {
     using namespace boost::system::errc;
     using namespace boost::filesystem;
-
+ 
+    /* Format the post to be sent as an email. */
+    std::stringstream msg;
+    mailwriter mail(msg);
+    mail.filters(p);
+ 
+    /* \todo For now, execute the sendmail shell command. Later,
+             it might be better to communicate with the MTA directly.
+    */
     std::stringstream cmd;
-    cmd << "sendmail";
+    cmd << "sendmail " << recipient;
     FILE *f = popen(cmd.str().c_str(),"rw");
     if( f == NULL ) {
-	throw basic_filesystem_error<path>(std::string("executing"),
-					   cmd.str(), 
-					   make_error_code(no_such_file_or_directory));
+	boost::throw_exception(basic_filesystem_error<path>(
+	    std::string("executing"),
+	    cmd.str(), 
+	    make_error_code(no_such_file_or_directory)));
     }
-    std::stringstream msg;
-    msg << "From:" << p.authorEmail << std::endl;
-    msg << "Subject:" << p.title << std::endl;
-#if 0
-    msg << "To:" << "info@" << domainName.value(s)
-	<< std::endl << std::endl;
-#endif
-    msg << p.descr << std::endl;
     fwrite(msg.str().c_str(),msg.str().size(),1,f);
     int err = pclose(f);
     if( err ) {
-	throw basic_filesystem_error<path>(std::string("exiting"),
-					   cmd.str(), 
-					   make_error_code(no_such_file_or_directory));
+	boost::throw_exception(basic_filesystem_error<path>(
+	    std::string("exiting"),
+	    cmd.str(), 
+	    make_error_code(no_such_file_or_directory)));
     }
 }
 
@@ -157,11 +146,22 @@ void commentPage( session& s,
     boost::filesystem::path docname(pathname.parent_path());
     url	postname(s.asUrl(docname));
 
+#if 0
     appendPostToFile comment(commentTop.value(s),postname.string());
+#else
+    /* \todo Still in testing, we send to info@domainName but the address
+       might be worth a toplevel variable... */
+    std::stringstream recipient;
+    recipient << "info@" << domainName.value(s);
+    sendPostToSMTP comment(recipient.str());
+#endif
 
     post p;
-    p.authorEmail = post::authorVar.value(s);
-    p.descr = post::descrVar.value(s);
+    p.authorEmail = authorVar.value(s);
+    std::stringstream title;
+    title << "Comment on " << postname;
+    p.title = title.str();
+    p.content = descrVar.value(s);
     p.time = boost::posix_time::second_clock::local_time();
     comment.filters(p);
 

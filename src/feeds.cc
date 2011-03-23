@@ -28,22 +28,8 @@
 
 char allFilesPat[] = ".*";
 
-feedIndex::indexSet feedIndex::indices;
-
-feedIndex::iterator feedIndex::first;
-feedIndex::iterator feedIndex::last;
-
-void feedIndex::filters( const post& p ) {
-    indices.push_back(p);
-}
-
-
-void feedIndex::provide() {
-    first = indices.begin();
-    last = indices.end();
-}
-
-
+#if 0
+/* \todo this is an embed distinct filter */
 void feedIndex::flush()
 {
     provide();
@@ -60,15 +46,37 @@ void feedIndex::flush()
 	next->flush();
     }
 }
+#endif
 
 
-postFilter *globalFeeds = NULL;
+void summarize::filters( const post& v )
+{
+    if( next ) {
+	post p = v;
+	p.content = p.content.substr(0,std::min(length,p.content.size()));
+	next->filters(p);
+    }
+}
 
 
+void oneliner::filters( const post& p ) {
+    *ostr << html::tr() 
+	  << html::td() << p.time.date() << html::td::end
+	  << html::td() << p.author << html::td::end
+	  << html::td() << html::a().href(p.guid) 
+	  << p.title 
+	  << html::a::end << html::td::end;
+    *ostr << html::td()
+	  << p.score
+	  << html::td::end;
+    *ostr << html::tr::end;
+}
+
+
+#if 0
 void feedWriterFetch( session& s, 
 		      const boost::filesystem::path& pathname )
 {
-#if 0
     postWriter writer(s.out());
 
     bool firstTime = true;
@@ -81,7 +89,7 @@ void feedWriterFetch( session& s,
 	if( firstTime || first->guid != prev->guid ) {
 	    if( first->descr.empty() ) {
 		strm.str("");		
-		if( dispatchDoc::instance->fetch(s,"document",first->guid)) {
+		if( dispatchDoc::instance()->fetch(s,"document",first->guid)) {
 		    if( !s.valueOf("title").empty() ) {
 			first->title = s.valueOf("title");
 		    }
@@ -123,45 +131,10 @@ void feedWriterFetch( session& s,
 	firstTime = false;	
     }
     s.out(prevDisp);
+}
 #endif
-}
 
-
-void feedRepositoryPopulate( session& s, 
-			    const boost::filesystem::path& pathname )
-{
-    revisionsys *rev = revisionsys::findRev(s,pathname);
-    if( rev ) {
-	history hist;
-	boost::filesystem::path base =  boost::filesystem::path("/") 
-	    / s.subdirpart(siteTop.value(s),rev->rootpath);
-	boost::filesystem::path projname = projectName(s,rev->rootpath);	
-	s.insert("title",projname.string());
-	rev->checkins(hist,s,pathname);
-	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    ci->normalize();
-	    std::stringstream strm;
-	    strm << html::p();
-	    strm << projname << " &nbsp;&mdash;&nbsp; " << ci->guid << "<br />";
-	    strm << ci->descr;
-	    strm << html::p::end;
-	    strm << html::pre();
-	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
-		 file != ci->files.end(); ++file ) {
-		/* \todo link to diff with previous revision */
-		writelink(strm,base,*file);
-		strm << std::endl;
-	    }
-	    strm << html::pre::end;
-	    post p(*ci);
-	    p.descr = strm.str();
-	    globalFeeds->filters(p);
-	}	
-    }
-}
-
-
+#if 0
 void htmlContentFetch( session& s, const boost::filesystem::path& pathname )
 {
     typedef feedPage<feedOrdered<orderByTime<post> > > feedFilterType;
@@ -198,4 +171,4 @@ void rssContentFetch( session& s, const boost::filesystem::path& pathname )
 	feeds.flush();
     }
 }
-
+#endif

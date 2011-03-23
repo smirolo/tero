@@ -32,13 +32,14 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-sessionVariable post::titleVar("title","title of a post");
-sessionVariable post::authorVar("author","author of a post");
-sessionVariable post::descrVar("descr","content of a post");
+sessionVariable titleVar("title","title of a post");
+sessionVariable authorVar("author","author of a post");
+sessionVariable authorEmail("authorEmail","email for the author of a post");
+sessionVariable descrVar("descr","content of a post");
 
 
 void 
-post::addSessionVars( boost::program_options::options_description& opts,
+postAddSessionVars( boost::program_options::options_description& opts,
 		      boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
@@ -46,34 +47,19 @@ post::addSessionVars( boost::program_options::options_description& opts,
     options_description localOptions("posts");
     localOptions.add(titleVar.option());
     localOptions.add(authorVar.option());
+    localOptions.add(authorEmail.option());
     localOptions.add(descrVar.option());
     opts.add(localOptions);
     visible.add(localOptions);
 }
 
 
-#if 1
-post::post( const post& p ) 
-    : filename(p.filename),
-      authorName(p.authorName),
-      authorEmail(p.authorEmail),
-      tag(p.tag),
-      time(p.time),
-      title(p.title),
-      guid(p.guid), 
-      descr(p.descr), 
-      score(p.score)
-{
-}
-#endif
-
-
 void post::normalize() {
     title = ::normalize(title);
-    authorName = ::normalize(authorName);
+    author = ::normalize(author);
     authorEmail = ::normalize(authorEmail);
     guid = ::strip(guid);
-    descr = ::strip(descr);
+    content = ::strip(content);
 }
 
 
@@ -85,16 +71,30 @@ bool post::valid() const {
 	    return false;
 	}
     }    
-    return (!title.empty() & !authorEmail.empty() & !descr.empty());
+    return (!title.empty() & !authorEmail.empty() & !content.empty());
 }
 
 
-void postFilter::filters( const post& p ) {
-    if( next ) next->filters(p);
-}
-
-void postFilter::flush() {
+void passThruFilter::flush() {
     if( next ) next->flush();
+}
+
+
+void retainedFilter::provide() {
+    first = posts.begin();
+    last = posts.end();
+}
+
+
+void retainedFilter::flush()
+{
+    provide();
+    if( next ) {
+	for( const_iterator p = first; p != last  ; ++p ) {
+	    next->filters(*p);
+	}
+	next->flush();
+    }
 }
 
 
@@ -111,13 +111,13 @@ void htmlwriter::filters( const post& p ) {
     /* caption for the post */
     *ostr << html::div().classref("postCaption");    
     *ostr << "by " << html::a().href(std::string("mailto:") + p.authorEmail)
-	  << p.authorName << html::a::end
+	  << p.author << html::a::end
 	  << " on " << p.time;
     *ostr << html::div::end;    
 
     /* body of the post */
     *ostr << html::div().classref("postBody");    
-    *ostr << p.descr;
+    *ostr << p.content;
     *ostr << html::div::end;
     
     *ostr << html::div::end;    
@@ -125,7 +125,7 @@ void htmlwriter::filters( const post& p ) {
 }
 
 
-void blogwriter::filters( const post& p ) {
+void mailwriter::filters( const post& p ) {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
@@ -142,7 +142,7 @@ void blogwriter::filters( const post& p ) {
     *ostr << "Score: " << p.score << std::endl;
     *ostr << std::endl << std::endl;
     /* \todo avoid description starting with "From " */
-    *ostr << p.descr << std::endl << std::endl;
+    *ostr << p.content << std::endl << std::endl;
 }
 
 
@@ -154,8 +154,8 @@ void rsswriter::filters( const post& p ) {
 
     *ostr << description();
     esc.attach(*ostr);
-    *ostr << html::p() << p.authorName << ":" << html::p::end;
-    *ostr << p.descr;
+    *ostr << html::p() << p.author << ":" << html::p::end;
+    *ostr << p.content;
     ostr->flush();
     esc.detach();
     *ostr << description::end;

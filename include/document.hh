@@ -30,14 +30,14 @@
 #include "decorator.hh"
 
 /**
-   Base document classes.
+   Basic functions to display the content of a "document".
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 
 /* When the dispatcher has found a matching pattern (and associated 
-   document) for a pathname, before it goes on to call the fetch method,
+   callback) for a pathname, before it goes on to call the fetch method,
    it will check the behavior of that document.
    
    *always*          call fetch regardless of pathname
@@ -51,55 +51,73 @@ enum callFetchType {
     whenNotCached
 };
 
+/** Prototype for document callbacks
+ */
 typedef 
 void (*callFetchFunc)( session& s, const boost::filesystem::path& pathname );
 
+
+/** An entry in the dispatch table.
+ */
 struct fetchEntry {
+    const char *name;
     boost::regex pat;
     callFetchType behavior;
     callFetchFunc callback;
 };
 
-/** Create a file (override it if it already exists). This function
-    throws an exception if there is any error. */
-void createfile( boost::filesystem::ofstream& strm,
-		 const boost::filesystem::path& pathname );
+inline
+bool operator<( const fetchEntry& left, const fetchEntry& right ) {
+    return strcmp(left.name,right.name) < 0;
+}
 
-/** Open a file for reading. This function
-    throws an exception if there is any error. */
-void openfile( boost::filesystem::ifstream& strm, 
-	       const boost::filesystem::path& pathname );
- 
    
-/* Pick the appropriate subclass of *document* based on regular expressions
-   applied to the document name.
+/* Pick the appropriate presentation entry (callback) based on regular 
+   expressions applied to a document name.
  */
 class dispatchDoc {
-public:
-    typedef std::map<std::string,std::string> variables;
+protected:    
+    fetchEntry* entries;
+    size_t nbEntries;
 
-protected:
-    typedef std::list<fetchEntry> aliasSet;
-    typedef std::map<std::string,aliasSet> presentationSet;
-
-    presentationSet views;
+    static dispatchDoc *singleton;
 
 public:
-    dispatchDoc();
 
-    static dispatchDoc *instance;
+    /** Initialize the dispatcher with a set of (name,pattern,callback) 
+	enties.
 
-    void add( const std::string& varname, const boost::regex& r, 
-	      callFetchFunc f, callFetchType b = always );
+	The entries have to be sorted by name in increasing alphabetical 
+	order. Out of the patterns associated to a specific name, the first
+	matching rule applies.
+    */
+    dispatchDoc( fetchEntry* entries, size_t nbEntries );
 
+    /** returns the singleton instance
+     */
+    static dispatchDoc *instance() { 
+	assert( singleton != NULL );
+	return singleton;
+    }
+
+    /** Invoke the callback associated with *varname* and the matching
+	pattern for the value associated to *varname* in the session *s*.
+	
+	This method returns true when a callback has been invoked.
+    */
     bool fetch( session& s, const std::string& varname );
 
-    /** returns true if a pattern has matched. */
+    /** Invoke the callback associated with *varname* and the matching
+	pattern for *pathname*.
+	
+	This method returns true when a callback has been invoked.
+    */
     bool fetch( session& s, const std::string& varname,
 		const boost::filesystem::path& pathname );
 
-    /** \brief handler based on the type of document as filtered by dispatch.
-     */
+    /** Returns the entry associated with *name* and those pattern
+	matches *value* or NULL if no entries could be found.
+    */
     const fetchEntry* 
     select( const std::string& name, const std::string& value ) const;
 
@@ -133,13 +151,28 @@ public:
 };
 
 
-/** Add meta information about the document to the session. It includes
-    modification date, file revision as well as tags read in the file.
-    
-    This method is called before the template is processed because meta
-    information needs to be propagated into different parts of the template
-    and not only in the placeholder for the document.
-*/
+/** Always prints *value*.
+ */
+template<const char *value>
+void consMeta( session& s, const boost::filesystem::path& pathname )
+{
+    s.out() << value;
+}
+
+/** Assign the last modification time of *pathname* to the time session 
+    variable.
+ */
+void metaLastTime( session& s, const boost::filesystem::path& pathname );
+
+
+/** Assign the owner name of *pathname* to the author session variable.
+ */
+void metaFileOwner( session& s, const boost::filesystem::path& pathname );
+
+
+/** Prints the content of *varname* or the relative url to *pathname*
+    when *varname* cannot be found in the session.
+ */
 template<const char *varname>
 void metaFetch( session& s, const boost::filesystem::path& pathname )
 {
@@ -152,18 +185,13 @@ void metaFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-template<const char *value>
-void consMeta( session& s, const boost::filesystem::path& pathname )
-{
-    s.out() << value;
-}
+/** Fetch meta information from *pathname* into session *s* 
+    and prints the value of meta information associated to *varname*.
 
-
-/** fetch meta information from *pathname* into session *s* 
-    and display the one associated to *varname*. 
-    (*whenFileExist*) 
+    Text meta information consists of all entries of the form Name: Value
+    at the beginning of a text file.    
 */
-template<const char *value>
+template<const char *varname>
 void textMeta( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem; 
@@ -172,7 +200,7 @@ void textMeta( session& s, const boost::filesystem::path& pathname )
     /* \todo should only load one but how does it sits with dispatchDoc
      that initializes s[varname] by default to "document"? */
     ifstream strm;
-    openfile(strm,pathname);
+    s.openfile(strm,pathname);
     while( !strm.eof() ) {
 	boost::smatch m;
 	std::string line;
@@ -190,29 +218,17 @@ void textMeta( session& s, const boost::filesystem::path& pathname )
        std::time_t last_write_time( const path & ph );
        To convert the returned value to UTC or local time, 
        use std::gmtime() or std::localtime() respectively. */
-    metaFetch<value>(s,pathname);
+    metaFetch<varname>(s,pathname);
 }
 
 
 class text /* whenFileExist */  {
 protected:
-    /** fixed header printed before the main body of text.
-     */
-    std::string header;
-
     decorator *leftDec;
     decorator *rightDec;
 
 public:
     text() 
-	: leftDec(NULL), rightDec(NULL) {}
-
-    explicit text( const std::string& h ) 
-	: header(h), leftDec(NULL), rightDec(NULL) {}
-
-    /* composer derives from text even though it can be used for non-text
-       documents. */
-    explicit text( callFetchType b ) 
 	: leftDec(NULL), rightDec(NULL) {}
 
     text( decorator& l,  decorator& r ) 
@@ -236,9 +252,15 @@ public:
  */
 void skipOverTags( session& s, std::istream& istr );
 
+
+/** Skip over the meta information (i.e. Name: Value) in a text file 
+    and prints the remaining of the file "as is".
+ */
 void textFetch( session& s, const boost::filesystem::path& pathname );
 
+/** Skip over the meta information (i.e. Name: Value) in a text file 
+    and prints the remaining of the file highlighting url links.
+ */
 void formattedFetch( session& s, const boost::filesystem::path& pathname );
-
 
 #endif

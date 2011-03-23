@@ -29,6 +29,7 @@
 #include "markup.hh"
 #include <boost/regex.hpp>
 #include "project.hh"
+#include "revsys.hh"
 
 /** Execute git commands
 
@@ -79,6 +80,9 @@ public:
 		  const session& s, 
 		  const boost::filesystem::path& pathname,
 		  historyref& r );	
+
+    void showDetails( std::ostream& ostr,
+		      const std::string& commit );
 }; 
 
 gitcmd gitcmd::_instance;
@@ -424,7 +428,7 @@ void gitcmd::checkins( ::history& hist,
 	if( strncmp(lcstr,"commit",6) == 0 ) {
 	    if( descrStarted ) {		
 		ci->title = title.str();
-		ci->descr = descr.str();		
+		ci->content = descr.str();		
 		descrStarted = false;
 	    }
 	    itemStarted = true;	    
@@ -440,7 +444,7 @@ void gitcmd::checkins( ::history& hist,
 	    while( last < line.size() ) {
 		switch( line[last] ) {
 		case '<':
-		    ci->authorName = line.substr(first,last - first);
+		    ci->author = line.substr(first,last - first);
 		    first = last + 1;
 		    break;
 		case '>':
@@ -486,10 +490,30 @@ void gitcmd::checkins( ::history& hist,
     pclose(summary);
     if( descrStarted ) {
 	ci->title = title.str();
-	ci->descr = descr.str();
+	ci->content = descr.str();
 	descrStarted = false;
     }
     boost::filesystem::current_path(boost::filesystem::initial_path());
 }
 
 
+void gitcmd::showDetails( std::ostream& ostr,	
+			  const std::string& commit ) {    
+    /* The git command needs to be issued from within a directory 
+       where .git can be found by walking up the tree structure. */ 
+    boost::filesystem::initial_path();
+    boost::filesystem::current_path(rootpath);
+
+    std::stringstream sstm;
+    sstm << executable << " show " << commit; 
+    
+    char lcstr[256];
+    FILE *summary = popen(sstm.str().c_str(),"r");
+    assert( summary != NULL );
+    while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
+	ostr << lcstr;
+    }
+    pclose(summary);
+
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+}

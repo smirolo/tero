@@ -31,29 +31,37 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace {
+
+    char docPage[] = "document";
+
+} // anonymous namespace
+
 
 void blogByIntervalDate( session& s, const boost::filesystem::path& pathname )
 {
-    blogByIntervalFetch<orderByTime<post> >(s,pathname);
+    blogByInterval<htmlwriter,docPage,allFilesPat,orderByTime<post> >(s,pathname);
 }
 
 
 void blogByIntervalTags( session& s, const boost::filesystem::path& pathname )
 {
-    blogByIntervalFetch<orderByTag<post> >(s,pathname);
+    blogByInterval<htmlwriter,docPage,allFilesPat,orderByTag<post> >(s,pathname);
 }
 
 
 void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
 {
-    postFilter *prev = globalFeeds;
-
     htmlwriter writer(s.out());
-    if( !globalFeeds ) {
-	globalFeeds = &writer;
+    if( !s.feeds ) {
+	s.feeds = &writer;
     }
-    mailParser parser(boost::regex(".*\\.blog"),*globalFeeds,true);
+
+    mailParser parser(boost::regex(".*\\.blog"),*s.feeds,true);
     parser.fetch(s,s.abspath(pathname));
 
-    globalFeeds = prev;
+    if( s.feeds == &writer ) {
+	s.feeds->flush();
+	s.feeds = NULL;
+    }
 }

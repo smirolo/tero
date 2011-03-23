@@ -96,7 +96,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	    if( !first ) {
 		if( stopOnFirst ) break;
 		descr << html::pre::end;
-		p.descr = descr.str();
+		p.content = descr.str();
 		descr.str("");
 		descr << html::pre();
 		p.normalize();
@@ -127,7 +127,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	} else if( line.compare(0,5,"From:") == 0 ) {
 	    p.authorEmail = line.substr(5);
 	    /* \todo As long as we donot parse name separately. */
-	    p.authorName = line.substr(5);
+	    p.author = line.substr(5);
 	    state = authorParse;
 	} else if( line.compare(0,9,"Subject: ") == 0 ) {
 	    p.title = line.substr(9);
@@ -172,7 +172,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	}
     }
     descr << html::pre::end;
-    p.descr = descr.str();
+    p.content = descr.str();
     descr.str("");
     p.normalize();
     if( tags.empty() ) {

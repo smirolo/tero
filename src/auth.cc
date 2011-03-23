@@ -52,13 +52,13 @@ namespace {
 
 
 boost::posix_time::time_duration
-aggregate( const session& s ) {
+aggregate( session& s ) {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
 
     ifstream file;
-    openfile(file,contributorLog(s));
+    s.openfile(file,contributorLog(s));
     
     time_duration aggr;
     ptime start, stop, prev;
@@ -110,14 +110,9 @@ boost::posix_time::time_duration stop( session& s ) {
 
     ptime start = startTime.value(s);
     ptime stop = second_clock::local_time();
-
-    ofstream file(contributorLog(s),std::ios_base::app);
-    if( file.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-				 std::string("error opening file"),
-				 contributorLog(s), 
-				 error_code()));
-    }
+    
+    ofstream file;
+    s.appendfile(file,contributorLog(s));
     std::string msg = authMessage.value(s);
     if( !msg.empty() ) {
 	file << msg << ':' << std::endl;
@@ -325,7 +320,7 @@ void logoutFetch( session& s, const boost::filesystem::path& pathname ) {
     std::stringstream logstr;
     logstr << logged.hours() << " hours logged." << std::endl;
     s.state("hours",logstr.str());    
-    composerFetch<logoutLayout>(s,path("document"));
+    compose<logoutLayout>(s,document.name);
 }
 
 

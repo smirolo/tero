@@ -99,64 +99,6 @@ public:
 };
 
 
-/** Base class definition for interacting with a source code control system.    
- */
-class revisionsys {
-public:
-    typedef std::vector<revisionsys*> revsSet;
-    static revsSet revs;
-
-    boost::filesystem::path rootpath;
-
-    /** Directory name in which revision control meta information 
-	is stored (example: .git). 
-    */
-    const char* metadir;
-
-public:
-    explicit revisionsys( const char* m ) : metadir(m) {}
-
-    /** Create a new repository from directory *pathname*. When *group*
-	is true, all users in the same group as the creator have permissions
-	to push changes into the repository otherwise only the creator
-	can push changes.
-     */
-    virtual void create( const boost::filesystem::path& pathname,
-			 bool group = false ) = 0;
-
-    /** Add *pathname* to the changelist to be committed. 
-     */
-    virtual void add( const boost::filesystem::path& pathname ) = 0;
-
-    /** Commit the default changelist.
-     */
-    virtual void commit( const std::string& msg ) = 0;
-
-    virtual void diff( std::ostream& ostr, 
-		       const std::string& leftCommit, 
-		       const std::string& rightCommit, 
-		       const boost::filesystem::path& pathname ) = 0;
-    
-    virtual void history( std::ostream& ostr,
-			  const session& s, 
-			  const boost::filesystem::path& pathname,
-			  historyref& r ) = 0;
-    
-    virtual void checkins( ::history& hist,
-			   const session& s, 
-			   const boost::filesystem::path& pathname ) = 0;
-    
-    /** returns the revision system associated with a pathname 
-     */
-    static revisionsys*
-    findRev( session& s, const boost::filesystem::path& pathname );
-
-    /** returns the revision system associated with a specific metadir
-     */
-    static revisionsys*
-    findRevByMetadir( session& s, const std::string& metadir );
-
-};
 
 
 /** Command to cancel web edits
@@ -188,5 +130,35 @@ void changecheckinFetch( session& s, const boost::filesystem::path& pathname );
 /** History of changes to a file under revision control
  */
 void changehistoryFetch( session& s, const boost::filesystem::path& pathname );
+
+
+/** Display a unified diff between a commit and the previous one. 
+ */
+void changeShowDetails( session& s, const boost::filesystem::path& pathname );
+
+
+/** Populate *s.feeds* with the commit log of *pathname*.
+ */
+void 
+feedRepositoryPopulate( session& s, const boost::filesystem::path& pathname );
+
+
+/** Populate a feed from the commit log of *pathname* in a repository
+ */
+template<typename defaultWriter>
+void feedRepository( session& s, const boost::filesystem::path& pathname ) {
+    defaultWriter writer(s.out());
+    if( !s.feeds ) {
+	s.feeds = &writer;
+    }
+
+    feedRepositoryPopulate(s,pathname);
+
+    if( s.feeds == &writer ) {
+	s.feeds->flush();
+	s.feeds = NULL;
+    }
+}
+
 
 #endif

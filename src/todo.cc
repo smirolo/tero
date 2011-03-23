@@ -29,6 +29,7 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "todo.hh"
 #include "markup.hh"
+#include "feeds.hh"
 
 /** Pages related to todo items.
 
@@ -53,17 +54,7 @@ std::string todoFilter::asPath( const std::string& tag ) {
 }
 
 
-class todoliner : public postFilter {
-protected:
-    std::ostream *ostr;
-
-public:
-    explicit todoliner( std::ostream& o ) : ostr(&o) {}
-
-    virtual void filters( const post& );
-};
-
-class byScore : public postFilter {
+class byScore : public retainedFilter {
 protected:
     typedef std::vector<post> indexSet;
     
@@ -71,14 +62,14 @@ protected:
     std::ostream *ostr;
     
 public:
-    byScore( std::ostream& o, postFilter &n ) : postFilter(&n), ostr(&o) {}
+    byScore( std::ostream& o, postFilter &n ) : retainedFilter(&n), ostr(&o) {}
     
     virtual void filters( const post& );
     virtual void flush();
 };
 
 
-class todoCreateFeedback : public postFilter {
+class todoCreateFeedback : public passThruFilter {
 protected:
     std::ostream *ostr;
 
@@ -89,7 +80,7 @@ public:
 };
 
 
-class todoCommentFeedback : public postFilter {
+class todoCommentFeedback : public passThruFilter {
 protected:
     std::ostream *ostr;
     std::string posturl;
@@ -114,13 +105,13 @@ public:
 };
 
 
-class todocommentor : public postFilter {
+class todocommentor : public passThruFilter {
 protected:
     boost::filesystem::path postname;
 
 public:
     todocommentor( const boost::filesystem::path& p, postFilter* n  ) 
-	: postFilter(n), postname(p) {}
+	: passThruFilter(n), postname(p) {}
 
     virtual void filters( const post& );
 };
@@ -143,8 +134,11 @@ void todocreator::filters( const post& v ) {
 
 #ifndef READONLY
     boost::filesystem::ofstream file;
+#if 0
+    /*\todo*/
     createfile(file,asPath(p.guid));
-    blogwriter writer(file);
+#endif
+    mailwriter writer(file);
     writer.filters(p);	
     file.flush();    
     file.close();    
@@ -176,7 +170,7 @@ void todocommentor::filters( const post& p ) {
 	   error_code()));
     }
 
-    blogwriter writer(file);
+    mailwriter writer(file);
     writer.filters(p);	
     file.flush();
     
@@ -195,21 +189,6 @@ void todoCommentFeedback::filters( const post& p ) {
     /* \todo clean-up. We use this code such that the browser displays
        the correct url. If we use a redirect, it only works with static pages (index.html). */
     httpHeaders.refresh(0,url(posturl));
-}
-
-
-void todoliner::filters( const post& p ) {
-    *ostr << html::tr() 
-	      << "<!-- " << p.score << " -->" << std::endl
-	      << html::td() << p.time.date() << html::td::end
-	      << html::td() << p.authorEmail << html::td::end
-	  << html::td() << html::a().href(p.guid) 
-	      << p.title 
-	      << html::a::end << html::td::end;
-    *ostr << html::td()
-	      << p.score
-	      << html::td::end;
-    *ostr << html::tr::end;
 }
 
 
@@ -250,9 +229,9 @@ void todoCreateFetch( session& s, const boost::filesystem::path& pathname )
 
     post p;
     p.score = 0;
-    p.title = post::titleVar.value(s);
-    p.authorEmail = post::authorVar.value(s);
-    p.descr = post::descrVar.value(s);
+    p.title = titleVar.value(s);
+    p.authorEmail = authorVar.value(s);
+    p.content = descrVar.value(s);
     create.filters(p);
 }
 
@@ -261,7 +240,7 @@ void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 {
     boost::filesystem::path postname(pathname.parent_path());
     todoCommentFeedback fb(s.out(),s.asUrl(postname).string());
-    todocommentor comment(postname,&fb);
+    todocommentor comment(pathname,&fb);
 
 #if 0
     if( !istr->eof() ) {
@@ -271,8 +250,9 @@ void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 #endif
 	{
 	post p;
-	p.authorEmail = post::authorVar.value(s);
-	p.descr = post::descrVar.value(s);
+	p.author = authorVar.value(s);
+	p.authorEmail = authorEmail.value(s);
+	p.content = descrVar.value(s);
 	p.time = boost::posix_time::second_clock::local_time();
 	p.guid = todoAdapter().fetch(s,postname).guid;
 	p.score = 0;
@@ -283,7 +263,7 @@ void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 void todoIndexWriteHtmlFetch( session& s, 
 			      const boost::filesystem::path& pathname )
 {
-    todoliner shortline(s.out());
+    oneliner shortline(s.out());
     byScore order(s.out(),shortline);
     mailParser parser(order,true);
     parser.fetch(s,pathname);
@@ -380,8 +360,10 @@ void todoVoteSuccessFetch( session& s,
 
     /* move temporary back to original */
     if( score > 0 ) {
-	boost::filesystem::remove(postname);
-	boost::filesystem::rename(tmpname,postname);
+	using namespace boost::filesystem;
+	/* boost::filesystem::rename does not work accross filesystem. */
+	copy_file(path(tmpname),postname,copy_option::overwrite_if_exists);
+	remove(tmpname);
 	s.out() << html::p() << "Your vote for item " 
 		  << tag << " has been registered. Thank you." 
 		  << html::p::end;
@@ -411,7 +393,7 @@ void todoMeta( session& s, const boost::filesystem::path& pathname )
      that initializes s[varname] by default to "document"? */
     ifstream strm;
     std::string line;
-    openfile(strm,pathname);
+    s.openfile(strm,pathname);
     std::getline(strm,line);  // skip first line "From  ..." (see mbox)
     while( !strm.eof() ) {
 	boost::smatch m;

@@ -47,7 +47,7 @@ public:
 };
 
 
-class todoFilter : public postFilter {
+class todoFilter : public passThruFilter {
 public:
 
     /** Pattern used to select directories containing todo items. 
@@ -63,7 +63,7 @@ public:
 	: modifs(m) {}
 
     todoFilter( const boost::filesystem::path& m, postFilter* n  ) 
-	: postFilter(n), modifs(m) {}
+	: passThruFilter(n), modifs(m) {}
 
     std::string asPath( const std::string& tag );
 };

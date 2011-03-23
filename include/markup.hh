@@ -163,6 +163,17 @@ namespace html {
 	}
     };
 
+    /** HTML body markup
+     */
+    class body : public detail::markup {    
+    public:  
+	static const char* name;
+	static const detail::nodeEnd end;
+    
+	body() : markup(name,NULL,NULL,0,true) {}
+    };
+
+
     /** HTML caption markup
      */
     class caption : public detail::markup {    
@@ -237,6 +248,15 @@ namespace html {
 	}
     };
 
+    /** HTML head markup
+     */
+    class head : public detail::markup {    
+    public:  
+	static const char* name;
+	static const detail::nodeEnd end;
+    
+	head() : markup(name,NULL,NULL,0,true) {}
+    };
 
     /** img markup
      */
@@ -725,8 +745,14 @@ template<typename charT, typename traitsT>
 std::basic_ostream<charT,traitsT>& 
 writelink( std::basic_ostream<charT,traitsT>& ostr,
 	   const boost::filesystem::path& base,
-	   const boost::filesystem::path& leaf ) {
-    ostr << html::a().href((base / leaf).string()) << leaf << html::a::end;
+	   const boost::filesystem::path& leaf,
+	   const std::string& ext = "" ) {    
+    if( !ext.empty() ) {
+	ostr << html::a().href((base / (leaf.string() + ext)).string());
+    } else {
+	ostr << html::a().href((base / leaf).string());
+    }
+    ostr << leaf << html::a::end;
     return ostr;
 }
 

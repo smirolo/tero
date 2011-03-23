@@ -27,6 +27,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include "project.hh"
+#include "revsys.hh"
 
 /** Pages related to projects
 
@@ -132,6 +133,8 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 {
     using namespace rapidxml;
     using namespace boost::filesystem;
+
+    s.check(pathname);
 
     std::string projdir = pathname.parent_path().filename();
     slice<char> text = s.loadtext(pathname);
@@ -272,7 +275,7 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 
 
 bool projfiles::selects( const boost::filesystem::path& pathname ) const {
-    return dispatchDoc::instance->select("check",pathname.string()) != NULL;
+    return dispatchDoc::instance()->select("check",pathname.string()) != NULL;
 }
 
 

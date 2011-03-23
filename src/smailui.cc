@@ -58,10 +58,10 @@ public:
     }
 };
 
+char docPage[] = "document";
 
 int main( int argc, char *argv[] )
 {
-    using namespace std;
     using namespace boost::program_options;
     using namespace boost::filesystem;
 
@@ -80,15 +80,35 @@ int main( int argc, char *argv[] )
 	visible.add(genOptions);
 	session::addSessionVars(opts,visible);
 	authAddSessionVars(opts,visible);
-
 	s.restore(argc,argv,opts);
 
-	todoModifFilter modif(".");
-	if( !std::cin.eof() ) {
-	    mailParser parser(modif);
-	    parser.walk(s,std::cin,"cin");
-	}
-    } catch( exception& e ) {
+#if 1
+	std::stringstream msg;
+	std::copy(std::istream_iterator<char>(std::cin),
+		  std::istream_iterator<char>(),
+		  std::ostream_iterator<char>(msg));
+	std::cout << "message read:" << std::endl
+		  << "\"" << msg.str() << "\"" << std::endl;
+#else
+	char filename[] = "/tmp/fileXXXXXX";
+	int fd;
+	fd = mkstemp(filename);
+	if( fd ) {
+	    std::cerr << "write message in " << filename << std::endl;
+	    while( !std::cin.eof() ) {
+		std::string line;
+		std::getline(std::cin,line);
+		::write(fd,line.c_str(),line.size());
+		::write(fd,"\n",1);
+	    }
+	    close(fd);
+	} 
+#endif
+#if 0
+	void textMeta<document>(s,filename);
+#endif
+
+    } catch( std::exception& e ) {
 	std::cerr << "!!! exception: " << e.what() << std::endl;
     }
 

@@ -29,72 +29,42 @@
 #include "mail.hh"
 #include "post.hh"
 
-/* Feeds can be generated out of repository commits or directories,
-   aggregated together and presented as HTML or RSS.
+/* Feeds are used to bundle and present a set of posts together.
+   The aggregate function is used to populate a feed from different
+   sources selected through the toplevel *dispatchDoc*.
+   The ordered and page retained post filters are usually used 
+   together to display an ordered subset of posts (example: the latest
+   commits).
+   The summurize and oneline pass-thru filters implement alternative
+   outputs to the default (html, rss, etc.) writers. The summurize
+   filter is particularly useful to produce rss feeds that only contain
+   the first paragraph of a post. The oneline filter is used to generate
+   rows of a table, for example a list of todo items.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-/** regular expression pattern that matches all files.
- */
-extern char allFilesPat[];
 
-
-/** Index of post entries
-
-    By default present feed posts in a specific block [base,length[
-    where base is an index and length is a number of entries.
- */
-class feedIndex : public postFilter {
+/** On flush (i.e. provide), the feedOrdered retained filter will sort 
+    its posts using the *cmp* operator and pass it to the next filter 
+    down in sorted order. */
+template<typename cmp>
+class feedOrdered : public retainedFilter {
 public:
-    typedef std::vector<post> indexSet;
-    typedef indexSet::const_iterator const_iterator;
-    typedef indexSet::iterator iterator;
-
+    typedef retainedFilter super;
     typedef std::iterator_traits<iterator>::difference_type difference_type;
 
-    static indexSet indices;
-
-protected:
-
-    static iterator first;
-    static iterator last;
-
-public:
-    feedIndex() {}
-
-    explicit feedIndex( postFilter *n ) 
-	: postFilter(n) {}
-
-    const_iterator begin() const { return first; }
-
-    const_iterator end() const { return last; }
-
-    iterator begin() { return first; }
-
-    iterator end() { return last; }
-    
-    virtual void filters( const post& p );
-    
     virtual void provide();
 
-    virtual void flush();
+public:
+    feedOrdered() {}
+    explicit feedOrdered( postFilter *n ) : super(n) {}    
 };
 
 
-template<typename cmp>
-class feedOrdered : public feedIndex {
-public:
-    typedef feedIndex super;
-
-public:
-    explicit feedOrdered( postFilter *n ) 
-	: feedIndex(n) {}
-
-    void provide();
-};
-
-
+/** feedPage is a filter decorator that constraint the flush of its 
+    parent class filter (feedBase) to a single page of posts.
+*/
 template<typename feedBase>
 class feedPage : public feedBase {
 public:
@@ -105,13 +75,15 @@ public:
     static const difference_type maxLength;
 
 protected:
-    /** index in [first,last[ of the first post displayed
+    /** index of the first post displayed (i.e. pageNum * pageLength)
      */
     const difference_type base;
 
-    /** numer of posts displayed from base.
+    /** numer of posts displayed per page
      */
     const difference_type length;
+
+    virtual void provide();
 
 public:
     feedPage() : base(0), length(maxLength) {}
@@ -119,109 +91,84 @@ public:
     explicit feedPage( const feedBase& b ) 
 	: super(b), base(0), length(maxLength) {}
 
-    feedPage( const feedBase& b, size_t s, int l ) 
-	: super(b), base(s), length(l) {}
-    
-    virtual void provide();
+    feedPage( const feedBase& b, size_t pageLength ) 
+	: super(b), base(0), length(pageLength) {}
+
+    feedPage( const feedBase& b, size_t pageLength, size_t pageNum ) 
+	: super(b), base(pageNum * pageLength), length(pageLength) {}
 };
 
 
-template<typename next>
-class summarize : public next {
+/** Filter to shorten the content of a post to the first N characters.
+ */
+class summarize : public passThruFilter {
+protected:
+    size_t length;
+
 public:
-    explicit summarize( std::ostream& o ) : next(o) {}
+    summarize() : length(100) {}
+    explicit summarize( postFilter *n ) : passThruFilter(n), length(100) {}
+    summarize( postFilter *n, size_t l ) : passThruFilter(n), length(l) {}
 
-    virtual void filters( const post& v ) {
-	post p = v;
-	/* \todo picks up first 100 character right now. */
-	p.descr = p.descr.substr(0,std::min((size_t)100,p.descr.size()));
-	next::filters(p);
-    }
+    virtual void filters( const post& p );
 };
 
 
-extern postFilter *globalFeeds;
+/** Write an html table row with author, title and score.
+ */
+class oneliner : public ostreamWriter {
+public:
+    explicit oneliner( std::ostream& o ) : ostreamWriter(o) {}
 
-void feedWriterFetch( session& s, const boost::filesystem::path& pathname );
+    virtual void filters( const post& );
+};
 
 
 /** Aggregate feeds
 
- *varname* variable used to match pattern. We cannot use document
- else the catch-all forbids recursive descent through directories.
+    Use the toplevel *dispatchDoc* to fetch callback *varname*, for a file 
+    basename(pathname) in all sub-directories in dirname(pathname).
+
+    This function uses dispatchDoc::fetch and thus potentially might be 
+    invoked recursively. All posts are passed through the global s.feeds 
+    so it remains to insure s.feeds is not intempestively updated.
+    We thus only initialized s.feeds to defaultWriter and later call 
+    s.feeds.flush when it is null entering the function.
 */
-template<typename postWriter,const char*varname>
-void feedAggregateFetch( session& s, const boost::filesystem::path& pathname );
+template<typename defaultWriter, const char* varname>
+void feedAggregate( session& s, const boost::filesystem::path& pathname );
 
 
-/** Feed of text file content from a directory
+/** regular expression pattern that matches all files.
  */
-class feedContent {
-};
+extern char allFilesPat[];
 
-/** *filePat* we cannot use boost::regex because it is not a valid type for a template constant parameter. */
-template<typename postWriter, const char* filePat >
-void feedContentFetch( session& s, const boost::filesystem::path& pathname );
-
-
-class htmlContent : public feedContent {
-protected:
-    typedef feedContent super;
-};
-
-void htmlContentFetch( session& s, const boost::filesystem::path& pathname );
-
-
-class rssContent : public feedContent {
-protected:
-    typedef feedContent super;
-};
-
-void rssContentFetch( session& s, const boost::filesystem::path& pathname );
+/** Generate a feed of all files matching *filePat* in pathname.
+ */
+template<typename defaultWriter, const char* filePat>
+void feedContent( session& s, const boost::filesystem::path& pathname );
 
 
 /** Feed of summaries for files in a directory.
     The summary is based on the first N lines of the file 
     or the filename when there are no assiated presentation.
  */
-#if 0
-template<typename postWriter>
-class feedSummary : public feedContent {
-protected:
-    typedef feedContent super;
+template<typename defaultWriter, const char* filePat>
+void feedSummary( session& s, const boost::filesystem::path& pathname );
 
-public:
-    explicit feedSummary( const boost::regex& pat = boost::regex(".*") )
-	: super(pat) {}
-};
-#endif
-
-template<typename postWriter>
-void feedSummaryFetch( session& s, const boost::filesystem::path& pathname );
-
-
-/** Feed from a repository commits
-    
-    class feedRepository : public feedWriter 
-*/
-void feedRepositoryPopulate( session& s, 
-			     const boost::filesystem::path& pathname );
-
-template<typename postWriter>
-void feedRepository( session& s, const boost::filesystem::path& pathname );
 
 
 /* class feedLatestPosts : public feedAggregate<postWriter> */
-template<typename postWriter, const char*varname>
-void feedLatestPostsFetch( session& s, const boost::filesystem::path& pathname );
+template<typename defaultWriter, const char* varname>
+void feedLatestPosts( session& s, const boost::filesystem::path& pathname );
 
 
 /** Aggregate over time with a fixed number of posts. 
     Most suitable for site feeds. */
-template<const char*varname>
+template<const char* varname>
 void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname );
 
-template<const char*varname>
+template<const char* varname>
 void rssSiteAggregate( session& s, const boost::filesystem::path& pathname );
 
 

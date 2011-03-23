@@ -29,65 +29,30 @@
 #include <boost/system/error_code.hpp>
 #include "document.hh"
 #include "markup.hh"
+#include <sys/stat.h>
+#include <pwd.h>
 
-/** Base document classes
+/** Base document functions
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-void createfile( boost::filesystem::ofstream& strm, 
-		 const boost::filesystem::path& pathname ) {
-    using namespace boost::system;
-    using namespace boost::filesystem;
+dispatchDoc *dispatchDoc::singleton = NULL;
 
-    strm.open(pathname,std::ios_base::out | std::ios_base::trunc);
-    if( strm.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-	   std::string("unable to create file"),
-	   pathname, 
-	   error_code()));
+
+dispatchDoc::dispatchDoc( fetchEntry* e, size_t n )
+    : entries(e), nbEntries(n) {
+    singleton = this;
+    fetchEntry* prev = NULL;
+    for( fetchEntry* first = entries; first != &entries[nbEntries]; ++first ) {
+	if( prev ) {
+	    if( strcmp(prev->name,first->name) > 0  ) {
+		std::cerr << "entries are not sorted (" << prev->name 
+			  << " and " << first->name << ")" << std::endl;
+	    }
+	}
+	prev = first;
     }
-}
-
-
-void openfile( boost::filesystem::ifstream& strm, 
-		     const boost::filesystem::path& pathname ) {
-    using namespace boost::system::errc;
-    using namespace boost::filesystem;
-    if( is_regular_file(pathname) ) {
-	strm.open(pathname);
-	if( !strm.fail() ) return;
-    }
-    /* \todo figure out how to pass iostream error code in exception. */
-    boost::throw_exception(
-        basic_filesystem_error<path>(std::string("file not found"),
-			        pathname, 
-			       	make_error_code(no_such_file_or_directory)));
-}
-
-
-dispatchDoc *dispatchDoc::instance = NULL;
-
-
-dispatchDoc::dispatchDoc() {
-    instance = this;
-}
-
-void dispatchDoc::add( const std::string& varname, 
-		       const boost::regex& r, 
-		       callFetchFunc f, 
-		       callFetchType b ) {
-    presentationSet::iterator aliases = views.find(varname);
-    if( aliases == views.end() ) {
-	/* first pattern we are adding for the variable */
-	views[varname] = aliasSet();
-	aliases = views.find(varname);
-    }
-    fetchEntry entry;
-    entry.pat = r;
-    entry.behavior = b;
-    entry.callback = f;
-    aliases->second.push_back(entry);
 }
 
 
@@ -112,23 +77,14 @@ bool dispatchDoc::fetch( session& s,
 	std::cerr << "behavior: " << doc->behavior << " " << p << std::endl;
 #endif
 	switch( doc->behavior ) {
+	case whenFileExist:
+	    s.check(p);
 	case always:
 	    doc->callback(s,p);
 	    break;
-	case whenFileExist: {	   
-	    if( boost::filesystem::exists(p) ) {
-		doc->callback(s,p);	
-	    } else {
-		using namespace boost::system::errc;
-		using namespace boost::filesystem;
-		boost::throw_exception(
-		   basic_filesystem_error<path>(std::string("file not found"),
-			        pathname, 
-			       	make_error_code(no_such_file_or_directory)));
-	    }
-	} break;
 	case whenNotCached:
 	    /* Not yet implemented. */
+	    std::cerr << "Not yet implemented" << std::endl;
 	    break;
 	}	
     }
@@ -140,27 +96,26 @@ bool dispatchDoc::fetch( session& s,
 
 const fetchEntry* 
 dispatchDoc::select( const std::string& name, const std::string& value ) const {
-    presentationSet::const_iterator view = views.find(name);
-#if 0
-    std::cerr << "select(\"" << name << "\"," << value << ")" << std::endl;
-#endif
-    if( view != views.end() ) {
-	const aliasSet& aliases = view->second;
-	for( aliasSet::const_iterator alias = aliases.begin(); 
-	     alias != aliases.end(); ++alias ) {
+    fetchEntry cmp;
+    cmp.name = name.c_str();
+    fetchEntry *lastEntry = &entries[nbEntries];
+    fetchEntry *first = std::lower_bound(entries,lastEntry,cmp);
+    fetchEntry *last = std::upper_bound(entries,lastEntry,cmp);	
+    if( first != lastEntry ) {
+	for( fetchEntry *start = first; start != last; ++start ) {
 	    boost::smatch m;
-#if 0
-	    std::cerr << "- match(" << value << "," << alias->pat << ")?" << std::endl;
-#endif
-	    if( regex_match(value,m,alias->pat) ) {
-#if 0
-		std::cerr << "found " << alias->pat << " for "
-			  << value << std::endl;
-#endif		
-		return &(*alias);
+	    if( regex_match(value,m,start->pat) ) {
+		return start;
 	    }
 	}
     }
+#if 0
+    std::cerr << "select(\"" << name << "\"," << value 
+	      << ") does not match any of " << std::endl;
+    for( fetchEntry *start = first; start != last; ++start ) {
+	std::cerr << "- (" << value << "," << start->pat << ")" << std::endl;
+    }
+#endif
     return NULL;
 }
 
@@ -177,14 +132,14 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
 	    if( !is_directory(*entry) 
 		&& boost::regex_match(entry->string(),m,filematch) ) {		
 		boost::filesystem::ifstream infile;
-		openfile(infile,*entry);
+		s.openfile(infile,*entry);
 		walk(s,infile,entry->string());
 		infile.close();
 	    }
 	}
     } else {
 	boost::filesystem::ifstream infile;
-	openfile(infile,pathname);
+	s.openfile(infile,pathname);
 	walk(s,infile,pathname.string());
 	infile.close();
     }
@@ -420,9 +375,7 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::filesystem; 
 
     ifstream strm;
-    openfile(strm,pathname);
-
-    if( !header.empty() ) s.out() << header;
+    s.openfile(strm,pathname);
 
     if( leftDec ) {
 	if( leftDec->formated() ) s.out() << code();
@@ -460,4 +413,32 @@ void formattedFetch( session& s, const boost::filesystem::path& pathname ) {
     linkLight rightFormatedText(s);
     text formatedText(leftFormatedText,rightFormatedText);
     formatedText.fetch(s,pathname);
+}
+
+void metaLastTime( session& s, const boost::filesystem::path& pathname ) {    
+    std::time_t lwt = last_write_time(pathname);
+    boost::posix_time::ptime time = boost::posix_time::from_time_t(lwt);
+    std::stringstream strm;
+    strm << time;
+    s.insert("time",strm.str());
+    s.out() << time;
+}
+
+void metaFileOwner( session& s, const boost::filesystem::path& pathname ) {
+    using namespace boost::filesystem;
+
+    std::string author("anonymous");
+    std::string authorEmail("info");
+    struct stat statbuf;
+    if( stat(pathname.string().c_str(),&statbuf) == 0 ) {
+	struct passwd *pwd = getpwuid(statbuf.st_uid);
+	if( pwd != NULL ) {
+	    authorEmail =pwd->pw_name;
+	    author = pwd->pw_gecos;
+	}
+    }
+    authorEmail += std::string("@") + domainName.value(s).string();
+    s.insert("author",author);
+    s.insert("authorEmail",authorEmail);
+    s.out() << author;
 }

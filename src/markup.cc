@@ -158,6 +158,9 @@ namespace html {
 	return *this;
     }
 
+    const char* body::name = "body";
+    const detail::nodeEnd body::end(body::name,true);
+
     const char* caption::name = "caption";
     const detail::nodeEnd caption::end(caption::name,true);
 
@@ -182,6 +185,9 @@ namespace html {
 	"class",
 	"method"
     };
+
+    const char* head::name = "head";
+    const detail::nodeEnd head::end(head::name,true);
 
     const char* img::name = "img";
     const detail::nodeEnd img::end(img::name);

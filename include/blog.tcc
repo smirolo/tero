@@ -38,22 +38,29 @@ void blogInterval<cmp>::provide()
 
     /* sorted from decreasing order most recent to oldest. */
     super::first = std::lower_bound(super::first,super::last,bottom,c);
-    if( super::first == super::indices.end() ) {
-	super::first = super::indices.begin();
+    if( super::first == super::posts.end() ) {
+	super::first = super::posts.begin();
     }
     super::last = std::upper_bound(super::first,super::last,top,c);
 }
 
 
-template<typename cmp>
-void blogByIntervalFetch( session& s, const boost::filesystem::path& pathname ) {
-    htmlwriter writer(s.out());
+template<typename defaultWriter, const char* varname, const char* filePat, 
+	 typename cmp>
+void blogByInterval( session& s, const boost::filesystem::path& pathname )
+{
+    defaultWriter writer(s.out());
     blogInterval<cmp> feeds(&writer,pathname);
-    postFilter *prev = globalFeeds;
-    globalFeeds = &feeds;
-    feedContentFetch<cmp,allFilesPat>(s,pathname);
-    globalFeeds->flush();
-    globalFeeds = prev;
+    if( !s.feeds ) {
+	s.feeds = &feeds;
+    }
+    
+    feedContent<defaultWriter,filePat>(s,pathname);
+
+    if( s.feeds == &feeds ) {
+	s.feeds->flush();
+	s.feeds = NULL;
+    }
 }
 
 
@@ -102,21 +109,26 @@ void bySet<cmp>::flush()
 template<typename cmp, const char *filePat>
 void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
 {
-    boost::filesystem::path blogroot = s.root(s.abspath(pathname),"blog") / "blog";
+    boost::filesystem::path blogroot 
+	= s.root(s.abspath(pathname),"blog") / "blog";
     bySet<cmp> filter(s.out(),s.subdirpart(siteTop.value(s),blogroot));
 
-    postFilter *prev = globalFeeds;
-    globalFeeds = &filter;
-    
+    if( !s.feeds ) {
+	s.feeds = &filter;
+    }
+
     /* workaround Ubuntu/gcc-4.4.3 is not happy with boost::regex(filePat) 
        passed as parameter to parser. */
     boost::regex pat(filePat);
-    mailParser parser(pat,*globalFeeds,false);
+    mailParser parser(pat,*s.feeds,false);
     parser.fetch(s,blogroot);
-    globalFeeds->flush();
 
-    globalFeeds = prev; 
+    if( s.feeds == &filter ) {
+	s.feeds->flush();
+	s.feeds = NULL;
+    }
 }
+
 
 template<const char *filePat>
 void blogDateLinks( session& s, const boost::filesystem::path& pathname ) {

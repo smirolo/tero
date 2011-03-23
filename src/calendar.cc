@@ -145,7 +145,7 @@ void calendarFetch( session& s, const boost::filesystem::path& pathname ) {
 
     if( boost::filesystem::exists(pathname) ) {
 	boost::filesystem::ifstream input;
-	openfile(input,pathname);
+	s.openfile(input,pathname);
 	calendar c;
 	c.parse(s,input);
 	input.close();

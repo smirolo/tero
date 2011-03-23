@@ -26,6 +26,8 @@
 #include <cstdio>
 #include "changelist.hh"
 #include "markup.hh"
+#include "project.hh"
+#include "revsys.hh"
 
 /** Pages related to changes
 
@@ -96,7 +98,7 @@ void changeFetch(  session& s, const boost::filesystem::path& pathname )
 	}
 
 	ofstream file;
-	createfile(file,docName);
+	s.createfile(file,docName);
 	file << text->second.value;
 	file.close();
 
@@ -104,13 +106,7 @@ void changeFetch(  session& s, const boost::filesystem::path& pathname )
 	/* \todo wiki-like edits are not currently working */
 	/* add entry in the changelist */
 	path changesPath(s.userPath().string() + std::string("/changes"));
-	ofstream changes(changesPath,std::ios::app);
-	if( file.fail() ) {
-	    boost::throw_exception(basic_filesystem_error<path>(
-		std::string("unable to open file"),
-		changesPath, 
-		error_code()));
-	}
+	s.appendfile(changes,changesPath);
 	file << docName;
 	file.close();
 #endif
@@ -142,7 +138,7 @@ void changediff( session& s, const boost::filesystem::path& pathname,
 	s.out() << html::tr::end;
 
 	boost::filesystem::ifstream input;
-	openfile(input,docname);
+	s.openfile(input,docname);
 
 	/* \todo the session is not a parameter to between files... */	
 	::text doc(*primary,*secondary);
@@ -174,5 +170,50 @@ changehistoryFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
+void changeShowDetails( session& s, const boost::filesystem::path& pathname ) {
+    revisionsys *rev = revisionsys::findRev(s,pathname);
+    if( rev ) {
+	std::string commit = boost::filesystem::basename(pathname);
+	std::cerr << "[showDetails] commit " << commit << std::endl;
+	rev->showDetails(s.out(),commit);
+    }
+}
+
+
+void feedRepositoryPopulate( session& s, 
+			    const boost::filesystem::path& pathname )
+{
+    revisionsys *rev = revisionsys::findRev(s,pathname);
+    if( rev && s.feeds ) {
+	history hist;
+	boost::filesystem::path base =  boost::filesystem::path("/") 
+	    / s.subdirpart(siteTop.value(s),rev->rootpath);
+	boost::filesystem::path projname = projectName(s,rev->rootpath);	
+	s.insert("title",projname.string());
+	rev->checkins(hist,s,pathname);
+	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
+	     ci != hist.checkins.end(); ++ci ) {
+	    ci->normalize();
+	    std::stringstream strm;
+	    strm << html::p();
+	    strm << projname << " &nbsp;&mdash;&nbsp; ";
+	    writelink(strm,base,ci->guid,".commit");
+	    strm << "<br />";
+	    strm << ci->content;
+	    strm << html::p::end;
+	    strm << html::pre();
+	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
+		 file != ci->files.end(); ++file ) {
+		/* \todo link to diff with previous revision */
+		writelink(strm,base,*file);
+		strm << std::endl;
+	    }
+	    strm << html::pre::end;
+	    post p(*ci);
+	    p.content = strm.str();
+	    s.feeds->filters(p);
+	}	
+    }
+}
 
 

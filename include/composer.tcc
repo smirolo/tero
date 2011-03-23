@@ -23,8 +23,18 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+/** Embed content associated to *variable* in the output stream.
+
+    Implementation note:
+
+    *embed* is referenced from the template function *composeh* so a prototype 
+    has to be available before its implementation.
+ */
+void embed( session& s, const std::string& variable );
+
+
 template<const char *layout>
-void composerFetch( session& s, const boost::filesystem::path& pathname )
+void compose( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost;
     using namespace boost::system;
@@ -37,7 +47,7 @@ void composerFetch( session& s, const boost::filesystem::path& pathname )
     ifstream strm;
     path fixed(themeDir.value(s)
 	       / (std::string(layout) + ".template"));
-    openfile(strm,fixed.empty() ? pathname : fixed);
+    s.openfile(strm,fixed.empty() ? pathname : fixed);
 
     skipOverTags(s,strm);
     while( !strm.eof() ) {
@@ -64,16 +74,9 @@ void composerFetch( session& s, const boost::filesystem::path& pathname )
 	    embed(s,m.str(1));					    
 	    s.out() << m.suffix() << std::endl;
 	} else if( regex_search(line,m,tmplinc) ) {
-	    /* \todo fetch another template. This code should
-	     really call to the dispatcher once we can sort
-	     out varnames and pathnames... */
 	    path incpath((fixed.empty() ? pathname.parent_path() 
 			  : fixed.parent_path()) / m.str(1));
-	    const fetchEntry* doc 
-		= dispatchDoc::instance->select("document",incpath.string());
-	    if( doc != NULL ) {
-		doc->callback(s,incpath);
-	    }
+	    dispatchDoc::instance()->fetch(s,"document",incpath.string());
 	    found = true;
 	}
 	if( !found ) {

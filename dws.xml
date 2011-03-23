@@ -6,6 +6,7 @@
       Semilla is a web presentation engine to manage software projects that supports the Common Gateway Interface (CGI). A major feature not found in other related tools is that you can crosslink easily between documents, source code and build results (ex. look comment in include/auth.hh).
     </description>
     <maintainer name="Sebastien Mirolo" email="smirolo@fortylines.com" />
+    <metainfo name="section">devel</metainfo>
     <repository>
       <pathname name="semillaConfFile">
 	<description>
@@ -87,5 +88,11 @@
 	</alternate>
       </alternates>
     </repository>
+    <package>
+      <tag>Ubuntu</tag>
+      <dep name="git-core">
+	<bin>git</bin>
+      </dep>
+    </package>
   </project>
 </projects>

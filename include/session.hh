@@ -37,6 +37,9 @@
 /**
    Session Manager.
 
+   A session manager is responsible to keep application state
+   over http state-less transactions.
+
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
@@ -51,6 +54,7 @@ public:
 };
 
 // forward declaration
+class postFilter;
 class session;
 
 class sessionVariable {
@@ -211,10 +215,12 @@ public:
 
     /** number of errors encountered while generating a page. */
     unsigned int nErrs;
-    
+
+    postFilter *feeds;
+
     session( const std::string& sn,
 	     std::ostream& o ) 
-	: sessionId(""), ostr(&o), nErrs(0) {	
+	: sessionId(""), ostr(&o), nErrs(0), feeds(NULL) {	
 	sessionName = sn;
     }
 
@@ -231,6 +237,31 @@ public:
     bool exists() const { return !sessionId.empty(); }
 
     void filters( variables& results, sourceType source ) const;
+
+    /** Throws an exception if *pathname* does not exists.
+     */
+    void check( const boost::filesystem::path& pathname ) const;
+
+    /** Append to a file. 
+
+	This function throws an exception if there is any error. 
+    */
+    void appendfile( boost::filesystem::ofstream& strm,
+		     const boost::filesystem::path& pathname );
+
+    /** Create a file (override it if it already exists). 
+
+	This function throws an exception if there is any error. 
+    */
+    void createfile( boost::filesystem::ofstream& strm,
+		     const boost::filesystem::path& pathname );
+    
+    /** Open a file for reading. 
+
+	This function throws an exception if there is any error. 
+    */
+    void openfile( boost::filesystem::ifstream& strm, 
+		   const boost::filesystem::path& pathname );
     
     void 
     loadsession( const boost::program_options::options_description& opts ) {
