@@ -233,7 +233,7 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 			  << html::p::end;
 		s.out() << html::pre()
 			<< "http://" << domainName.value(s) 
-			<< "/" << projhref(s,projdir) << "/.git"
+			<< "/reps/" << projhref(s,projdir) << "/.git"
 			<< html::pre::end;
 		s.out() << html::p() << "The following prerequisites are "
 		    "necessary to build the project from source: ";

@@ -88,8 +88,8 @@ void retainedFilter::provide() {
 
 void retainedFilter::flush()
 {
-    provide();
     if( next ) {
+	provide();
 	for( const_iterator p = first; p != last  ; ++p ) {
 	    next->filters(*p);
 	}

@@ -270,9 +270,10 @@ basic_cgi_parser::run() {
     long len;
     char *lenstr = getenv("CONTENT_LENGTH");
     if( lenstr != NULL && sscanf(lenstr,"%ld",&len) == 1 ) {
+	char *buffer;
 	char input[len];
-	fgets(input, len + 1, stdin);
-	parseCGILine(query,input,len);
+	buffer = fgets(input, len + 1, stdin);
+	parseCGILine(query,buffer,len);
     }
 
     /* initialize matching options */

@@ -35,7 +35,9 @@ void feedOrdered<cmp>::provide()
     cmp c;
     super::provide();
     std::sort(first,last,c);   
+    iterator p = first;
 }
+
 
 template<typename feedBase>
 const typename feedPage<feedBase>::difference_type 
@@ -45,13 +47,14 @@ feedPage<feedBase>::maxLength = ~((int)1 << ((sizeof(int) << 3) - 1));
 template<typename feedBase>
 void feedPage<feedBase>::provide() {
     super::provide();
-    if( std::distance(super::first,super::last) >= base ) {
+    typename super::postSet::iterator second = super::first;   
+    if( std::distance(second,super::last) >= base ) {
 	std::advance(super::first,base);
     }
-    typename super::postSet::iterator second = super::first;
+    second = super::first;
     if( std::distance(second,super::last) >= length ) {
-	std::advance(second,length);
-	super::last = second;
+	super::last = super::first;
+	std::advance(super::last,length);	
     }
 }
 
@@ -156,14 +159,14 @@ void feedLatestPosts( session& s,
 {
     defaultWriter writer(s.out());
     feedOrdered<orderByTime<post> > latests(&writer);
-    feedPage<feedOrdered<orderByTime<post> > > feeds(latests,0,5); 
+    feedPage<feedOrdered<orderByTime<post> > > feeds(latests,5,0); 
     if( !s.feeds ) {
-	s.feeds = &writer;
+	s.feeds = &feeds;
     }
 
     feedAggregate<defaultWriter,varname>(s,pathname);
 
-    if( s.feeds == &writer ) {
+    if( s.feeds == &feeds ) {
 	s.feeds->flush();
 	s.feeds = NULL;
     }
@@ -173,7 +176,7 @@ void feedLatestPosts( session& s,
 template<const char*varname>
 void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname ) 
 {
-    feedLatestPosts<htmlwriter,varname>(s,s.abspath("/index.feed"));
+    feedLatestPosts<htmlwriter,varname>(s,siteTop.value(s) / "index.feed");
 }
 
 

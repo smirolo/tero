@@ -62,8 +62,9 @@ bool dispatchDoc::fetch( session& s, const std::string& varname ) {
     session::variables::const_iterator look = s.find(varname);
     if( !s.found(look) ) {    
 	s.insert(varname,document.value(s).string());
+	look = s.find(varname);
     }
-    return fetch(s,varname,s.valueAsPath(document.name));
+    return fetch(s,varname,look->second.value);
 }
 
 
@@ -109,7 +110,7 @@ dispatchDoc::select( const std::string& name, const std::string& value ) const {
 	    }
 	}
     }
-#if 0
+#if 1
     std::cerr << "select(\"" << name << "\"," << value 
 	      << ") does not match any of " << std::endl;
     for( fetchEntry *start = first; start != last; ++start ) {

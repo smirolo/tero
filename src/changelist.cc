@@ -174,8 +174,12 @@ void changeShowDetails( session& s, const boost::filesystem::path& pathname ) {
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
 	std::string commit = boost::filesystem::basename(pathname);
-	std::cerr << "[showDetails] commit " << commit << std::endl;
+	htmlEscaper escaper;
+	s.out() << code();
+	escaper.attach(s.out());
 	rev->showDetails(s.out(),commit);
+	escaper.detach();
+	s.out() << html::pre::end;
     }
 }
 

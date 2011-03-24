@@ -175,8 +175,9 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*"), whenFileExist, textFetch },
 
     /* homepage */
-    { "feed", boost::regex(".*\\.git/index\\.feed"), always, feedRepositoryPopulate },
-    { "feed", boost::regex("/"),always, htmlSiteAggregate<feed> },
+    { "feed", boost::regex(".*\\.git/index\\.feed"), always, feedRepository<htmlwriter> },
+    { "feed", boost::regex(".*/index\\.feed"), always, feedAggregate<htmlwriter,feed> },
+    { "feed", boost::regex("/"), always, htmlSiteAggregate<feed> },
 
     { "history", boost::regex(".*dws\\.xml"), always, feedRepository<htmlwriter> },
     /* Widget to display the history of a file under revision control
@@ -202,7 +203,7 @@ fetchEntry entries[] = {
     { "title", boost::regex(".*\\.todo"), whenFileExist, todoMeta },
     { "title", boost::regex(".*\\.template"), whenFileExist, textMeta<title> },
     { "title", boost::regex(".*dws\\.xml"), whenFileExist, projectTitle },
-    { "title", boost::regex(".*"), whenFileExist,metaFetch<title> },
+    { "title", boost::regex(".*"), always, metaFetch<title> },
 
 #if 0
     { "view", boost::regex("/cancel"), always, cancelFetch },
@@ -340,7 +341,7 @@ int main( int argc, char *argv[] )
 	}
 
 	/* by default bring the index page */
-	if( (document.value(s).empty() || document.value(s) == "/") 
+	if( document.value(s) == siteTop.value(s)
 	    && boost::filesystem::exists(siteTop.value(s) 
 					 / std::string("index.html")) ) {
 	    cout << httpHeaders.location(url("index.html"));		       

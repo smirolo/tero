@@ -74,6 +74,7 @@ boost::filesystem::path pathVariable::value( const session& s ) const
 {
     using namespace boost::filesystem;
 
+#if 0
     path absolute = s.abspath(sessionVariable::value(s));
 #if 0
     /* if we do that, we cannot generate dynamic pages. On the other
@@ -88,6 +89,11 @@ boost::filesystem::path pathVariable::value( const session& s ) const
     }
 #endif
     return absolute;
+#else
+    /* We cannot return an absolute path here, else it will mess up 
+       the dispatch pattern matcher. */
+    return sessionVariable::value(s);
+#endif
 }
 
 boost::posix_time::ptime timeVariable::value( const session& s ) const 

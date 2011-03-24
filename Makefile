@@ -76,8 +76,7 @@ semilla.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@
 	echo "siteTop=/var/www" >> $@
 	echo "srcTop=/var/www/reps" >> $@
-	echo "remoteIndexFile=$(remoteIndexFile)" >> $@
-	echo "themeDir=$(shareDir)/semilla/default" >> $@
+	echo "themeDir=/usr/share/semilla/themes/default" >> $@
 
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 

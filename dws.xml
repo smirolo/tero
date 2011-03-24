@@ -93,6 +93,9 @@
       <dep name="git-core">
 	<bin>git</bin>
       </dep>
+      <dep name="libc6">
+	<lib>c</lib>
+      </dep>
     </package>
   </project>
 </projects>

@@ -339,6 +339,7 @@ void todoVoteSuccessFetch( session& s,
 
     /* read/copy with score update */
     uint32_t score = 0;
+    ssize_t written;
     boost::interprocess::file_lock f_lock(postname.string().c_str());
     f_lock.lock();
     boost::filesystem::ifstream infile(postname);
@@ -350,9 +351,9 @@ void todoVoteSuccessFetch( session& s,
 	    std::stringstream s;
 	    score = atoi(line.substr(7).c_str()) + 1;
 	    s << "Score: " << score << std::endl;	    
-	    write(fildes,s.str().c_str(),s.str().size());
+	    written = write(fildes,s.str().c_str(),s.str().size());
 	} else {
-	    write(fildes,line.c_str(),line.size());
+	    written = write(fildes,line.c_str(),line.size());
 	}
     }
     infile.close();
