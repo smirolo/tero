@@ -161,7 +161,7 @@ void text::showSideBySide( session& s,
     std::stringstream left, right;
     size_t leftLine = 1;
     bool areDiffBlocks = false;
-    int nbLeftLinesAhead, nbRightLinesAhead;
+    int nbLeftLinesAhead = 0, nbRightLinesAhead = 0;
     char leftMarker = inputIsLeftSide ? '-' : '+';
     char rightMarker = inputIsLeftSide ? '+' : '-';
     

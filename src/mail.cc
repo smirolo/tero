@@ -77,7 +77,7 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
     bool first = true;
     size_t lineCount = 0;
     std::stringstream descr;
-    parseState state;
+    parseState state = startParse;
 
     p.score = 0;
     p.filename = boost::filesystem::path(name);
