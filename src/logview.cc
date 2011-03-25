@@ -130,7 +130,8 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	"obtained by running the following command on a local machine:" 
 	      << html::p::end;
     s.out() << html::pre() << html::a().href("/resources/dws") 
-	    << "dws" << html::a::end << " build " 
+	    << "dws" << html::a::end << " build "
+	    << "http://" << domainName.value(s) 
 	    << s.asUrl(indexFile.parent_path() / ".git")
 	    << html::pre::end;
     s.out() << html::p() << "dws, the inter-project dependency tool "
