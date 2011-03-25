@@ -342,7 +342,7 @@ int main( int argc, char *argv[] )
 	}
 
 	/* by default bring the index page */
-	if( document.value(s) == siteTop.value(s)
+	if( document.value(s) == "/"
 	    && boost::filesystem::exists(siteTop.value(s) 
 					 / std::string("index.html")) ) {
 	    cout << httpHeaders.location(url("index.html"));		       
