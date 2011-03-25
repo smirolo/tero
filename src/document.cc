@@ -106,6 +106,10 @@ dispatchDoc::select( const std::string& name, const std::string& value ) const {
 	for( fetchEntry *start = first; start != last; ++start ) {
 	    boost::smatch m;
 	    if( regex_match(value,m,start->pat) ) {
+#if 0
+		std::cerr << "select(\"" << name << "\"," << value 
+			  << ") matches " << start->pat << std::endl;
+#endif		
 		return start;
 	    }
 	}

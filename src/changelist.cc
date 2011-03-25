@@ -194,7 +194,8 @@ void feedRepositoryPopulate( session& s,
 	    / s.subdirpart(siteTop.value(s),rev->rootpath);
 	boost::filesystem::path projname = projectName(s,rev->rootpath);	
 	s.insert("title",projname.string());
-	rev->checkins(hist,s,pathname);
+	rev->checkins(s,pathname,*s.feeds);
+#if 0
 	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
 	     ci != hist.checkins.end(); ++ci ) {
 	    ci->normalize();
@@ -217,6 +218,7 @@ void feedRepositoryPopulate( session& s,
 	    p.content = strm.str();
 	    s.feeds->filters(p);
 	}	
+#endif
     }
 }
 

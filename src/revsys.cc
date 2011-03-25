@@ -67,9 +67,9 @@ public:
 
     void commit( const std::string& msg );
 
-    void checkins( ::history& hist,
-		   const session& s,
-		   const boost::filesystem::path& pathname );
+    void checkins( const session& s,
+		   const boost::filesystem::path& pathname,
+		   postFilter& filter );
 
     void diff( std::ostream& ostr, 
 	       const std::string& leftCommit, 
@@ -401,15 +401,19 @@ void gitcmd::history( std::ostream& ostr,
 }
 
 
-void gitcmd::checkins( ::history& hist,
-		       const session& s,
-		       const boost::filesystem::path& pathname ) {    
+void gitcmd::checkins( const session& s,
+		       const boost::filesystem::path& pathname,
+		       postFilter& filter ) {
+    using namespace boost::filesystem;
     /* The git command needs to be issued from within a directory 
        where .git can be found by walking up the tree structure. */ 
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
 
     boost::filesystem::path project = projectName(s,rootpath);
+
+    boost::filesystem::path base =  boost::filesystem::path("/") 
+	/ s.subdirpart(siteTop.value(s),rootpath);
 
     /* shows only the last 2 commits */
     std::stringstream sstm;
@@ -419,24 +423,31 @@ void gitcmd::checkins( ::history& hist,
     FILE *summary = popen(sstm.str().c_str(),"r");
     assert( summary != NULL );
         
+    bool firstFile = true;
     bool itemStarted = false;
     bool descrStarted = false;
-    checkin *ci = NULL;
+    post ci;
     std::stringstream descr, title;
     while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
 	std::string line(lcstr);
 	if( strncmp(lcstr,"commit",6) == 0 ) {
 	    if( descrStarted ) {		
-		ci->title = title.str();
-		ci->content = descr.str();		
+		if( !firstFile ) descr << html::pre::end;
+		ci.title = title.str();
+		ci.content = descr.str();
+		ci.normalize();
+		filter.filters(ci);
 		descrStarted = false;
 	    }
+	    firstFile = true;
 	    itemStarted = true;	    
-	    ci = hist.add();
+	    ci = post();
 	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
 	    title.str("");
-	    ci->guid = line.substr(7);
-	    
+	    std::stringstream guid;
+	    guid << base << strip(line.substr(7)) << ".commit";
+	    ci.guid = guid.str();
+
 	} else if ( line.compare(0,7,"Author:") == 0 ) {
 	    /* The author field is formatted as "First Last <emailAddress>". */
 	    size_t first = 7;
@@ -444,11 +455,11 @@ void gitcmd::checkins( ::history& hist,
 	    while( last < line.size() ) {
 		switch( line[last] ) {
 		case '<':
-		    ci->author = line.substr(first,last - first);
+		    ci.author = line.substr(first,last - first);
 		    first = last + 1;
 		    break;
 		case '>':
-		    ci->authorEmail = line.substr(first,last - first);
+		    ci.authorEmail = line.substr(first,last - first);
 		    first = last + 1;
 		    break;
 		}
@@ -457,7 +468,7 @@ void gitcmd::checkins( ::history& hist,
 
 	} else if ( line.compare(0,5,"Date:") == 0 ) {
 	    try {
-		ci->time = from_mbox_string(line.substr(5));
+		ci.time = from_mbox_string(line.substr(5));
 	    } catch( std::exception& e ) {
 		std::cerr << "!!! exception " << e.what() << std::endl; 
 	    }
@@ -465,14 +476,19 @@ void gitcmd::checkins( ::history& hist,
 	} else {
 	    /* more description */
 	    if( !descrStarted ) {		
-		descr.str("");		
+		descr.str("");				
+		descr << project << " &nbsp;&mdash;&nbsp; ";
+		descr << html::a().href(ci.guid) << basename(path(ci.guid)) << html::a::end << "<br />";
 		descrStarted = true;
 	    }
 	    if( !isspace(line[0]) ) {
 		/* We are dealing with a file that was part of this commit. */
-		std::stringstream hrefs;
-		hrefs << s.asUrl(boost::filesystem::path(strip(line)));
-		ci->addFile(hrefs.str());
+		if( firstFile ) {
+		    descr << html::pre();
+		    firstFile = false;
+		}
+		writelink(descr,base,boost::filesystem::path(strip(line)));
+		descr << std::endl;
 	    } else {
 		size_t maxTitleLength = 80;
 		if( title.str().size() < maxTitleLength ) {
@@ -489,8 +505,11 @@ void gitcmd::checkins( ::history& hist,
     }
     pclose(summary);
     if( descrStarted ) {
-	ci->title = title.str();
-	ci->content = descr.str();
+	if( !firstFile ) descr << html::pre::end;
+	ci.title = title.str();
+	ci.content = descr.str();
+	ci.normalize();
+	filter.filters(ci);
 	descrStarted = false;
     }
     boost::filesystem::current_path(boost::filesystem::initial_path());

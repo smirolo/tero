@@ -152,13 +152,12 @@ void rsswriter::filters( const post& p ) {
     *ostr << item();
     *ostr << title() << p.title << title::end;
 
-    *ostr << description();
-    esc.attach(*ostr);
-    *ostr << html::p() << p.author << ":" << html::p::end;
-    *ostr << p.content;
-    ostr->flush();
-    esc.detach();
-    *ostr << description::end;
+    *ostr << rsslink() << p.guid << rsslink::end;
+
+    *ostr << description() << "<![CDATA[";
+    *ostr << html::p() << p.author << ":" << "<br />";
+    *ostr << p.content << html::p::end;
+    *ostr << "]]>" << description::end;
 
     *ostr << author();
     esc.attach(*ostr);

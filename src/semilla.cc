@@ -136,6 +136,7 @@ fetchEntry entries[] = {
        to be declared before any of the todoFilter::viewPat 
        (i.e. todos/.+) since an rss feed exists for todo items
        as well. */	    
+    { "document", boost::regex("/index\\.rss"), always, rssSiteAggregate<docPage> },
     { "document", boost::regex(".*\\.git/index\\.rss"), always,
       feedRepository<rsswriter> },
     { "document", boost::regex(".*/index\\.rss"), always,

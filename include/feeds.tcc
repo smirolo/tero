@@ -183,7 +183,7 @@ void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname )
 template<const char*varname>
 void rssSiteAggregate( session& s, const boost::filesystem::path& pathname )
 {
-    feedLatestPosts<rsswriter,varname>(s,pathname);    
+    feedLatestPosts<rsswriter,varname>(s,siteTop.value(s) / pathname.leaf());
 }
 
 

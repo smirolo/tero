@@ -70,10 +70,10 @@ public:
 			  const session& s, 
 			  const boost::filesystem::path& pathname,
 			  historyref& r ) = 0;
-    
-    virtual void checkins( ::history& hist,
-			   const session& s, 
-			   const boost::filesystem::path& pathname ) = 0;
+
+    virtual void checkins( const session& s,
+			   const boost::filesystem::path& pathname,
+			   postFilter& filter ) = 0;
 
     virtual void showDetails( std::ostream& ostr,			
 			      const std::string& commit ) = 0;
