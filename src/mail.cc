@@ -29,7 +29,11 @@
 #include "mail.hh"
 #include "markup.hh"
 
-/** Mail parser
+/** Parser for mailboxes
+
+    references: 
+      http://en.wikipedia.org/wiki/Mbox
+      see also rfc2822tok.cc
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
@@ -55,6 +59,56 @@ void mailthread::flush() {
 	 idx != indexes.end(); ++idx ) {
 	*ostr << idx->first << "(" << idx->second << ")" << std::endl;
     }
+}
+
+
+void mailAsPost::newline(const char *line, int first, int last )
+{
+}
+
+
+void mailAsPost::token( rfc2822Token token, const char *line, 
+			int first, int last, bool fragment )
+{
+    switch( token ) {
+    case rfc2822FieldName:
+	field = rfc2822Err;
+	if( strncmp(&line[first],"Date",last - first) == 0 ) {
+	    field = rfc2822Time;
+	} else if( strncmp(&line[first],"From",last - first) == 0 ) {
+	    field = rfc2822AuthorEmail;
+	} else if( strncmp(&line[first],"Subject",last - first) == 0 ) {
+	    field = rfc2822Title;
+	}
+	break;
+    case rfc2822FieldBody: {
+	std::string value = strip(std::string(&line[first],last - first));
+	switch( field ) {
+	case rfc2822Time:
+	    try {
+		constructed.time = from_mbox_string(value);
+	    } catch( std::exception& e ) {
+	    }
+	    break;
+	case rfc2822AuthorEmail:
+	    constructed.authorEmail = value;
+	    break;
+	case rfc2822Title:
+	    constructed.title = value;
+	    break;
+	default:
+	    /* to stop gcc from complaining */
+	    break;
+	}
+    } break;
+    case rfc2822MessageBody:
+	constructed.content = std::string(&line[first],&line[last]);
+	std::cerr << "\"" << constructed.content << "\"" << std::endl;
+	break;
+    default:
+	/* to stop gcc from complaining */
+	break;
+    }    
 }
 
 

@@ -77,6 +77,15 @@ public:
 };
 
 
+class intVariable : public sessionVariable {
+public:
+    intVariable( const char *name, const char *descr )
+	: sessionVariable(name,descr) {}
+
+    int value( const session& s ) const;
+};
+
+
 class pathVariable : public sessionVariable {
 public:
     pathVariable( const char *name, const char *descr )
@@ -84,6 +93,7 @@ public:
 
     boost::filesystem::path value( const session& s ) const;
 };
+
 
 class timeVariable : public sessionVariable {
 public:
@@ -183,6 +193,9 @@ protected:
     /** Unique identifier for the session */
     std::string sessionId;
 
+    /** IP address of the client making the request */
+    std::string remoteAddr;
+
     /** Initialize the session instance from the content of a file.
 
 	The source *st* should either be *sessionfile* or *configfile*.
@@ -200,6 +213,8 @@ protected:
 
     friend class sessionVariable;
 
+    /* \todo protected comments.cc use of "href" */
+public:
     /** returns the value of a variable
      */
     const std::string& valueOf( const std::string& name ) const;
@@ -305,6 +320,10 @@ public:
 
     const std::string& id() const {
 	return sessionId;
+    }
+
+    const std::string& client() const {
+	return remoteAddr;
     }
 
     void insert( const std::string& name, const std::string& value,

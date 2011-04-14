@@ -41,6 +41,26 @@ commentAddSessionVars( boost::program_options::options_description& all,
 		       boost::program_options::options_description& visible );
 
 
+/** Create the comments file if it does not exists and then append
+    the comment at the end of the comments file.
+ */
+class appendCommentToFile : public passThruFilter {
+protected:
+    session* mySession;
+    boost::filesystem::path postname;
+
+public:
+   appendCommentToFile( session& s, const boost::filesystem::path& p ) 
+       : mySession(&s), postname(p) {}
+
+    appendCommentToFile( session& s, const boost::filesystem::path& p, 
+			 postFilter* n ) 
+	: passThruFilter(n), mySession(&s), postname(p) {}
+
+    virtual void filters( const post& );
+};
+
+
 
 /** Display comments on a page
  */

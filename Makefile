@@ -28,8 +28,8 @@
 include $(shell dws context)
 include $(makeHelperDir)/prefix.mk
 
-bins 		:=	semilla
-#bins 		:=	semilla smailui
+#bins 		:=	semilla
+bins 		:=	semilla smailui
 etcs		:=	semilla.conf
 libs		:=	libsemilla.a libpayproc.a
 # \todo documentation specific to the project is currently broken. 
@@ -37,7 +37,7 @@ libs		:=	libsemilla.a libpayproc.a
 #shares		:=	semilla.pdf
 
 semillaConfFile		?=	/etc/semilla.conf
-semillaSessionDir	?=	/var/semilla
+sessionDir		?=	/var/semilla
 
 #CPPFLAGS	+=	-DREADONLY
 
@@ -46,7 +46,8 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			cppfiles.o cpptok.o \
 			docbook.o document.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o \
-			post.o session.o shfiles.o shtok.o todo.o webserve.o \
+			post.o rfc2822tok.o session.o shfiles.o \
+			shtok.o todo.o webserve.o \
 			xmlesc.o xmltok.o
 
 libpayprocObjs	:=	aws.o payment.o paypal.o	
@@ -62,15 +63,15 @@ LDFLAGS		+=	-ldl
 semilla: semilla.cc libsemilla.a libpayproc.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
-		-lboost_filesystem -lboost_system
-	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(semillaSessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
+		-lboost_filesystem -lboost_system -lPocoNet
+	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
 
 smailui: smailui.cc libsemilla.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
-		-lboost_filesystem -lboost_system
-	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(semillaSessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
+		-lboost_filesystem -lboost_system -lPocoNet
+	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
 semilla.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@

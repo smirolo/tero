@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2011, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,121 +23,89 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardcpptok
-#define guardcpptok
+#ifndef guardrf2822tok
+#define guardrf2822tok
 
 #include <iterator>
 
 /**
-   C++ text tokenizer.
+   tokenizer for the Internet Message Format (http://tools.ietf.org/html/rfc2822)
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 
-enum cppToken {
-    cppErr,
-    cppBooleanLiteral,
-    cppCharacterLiteral,
-    cppFloatingLiteral,
-    cppDecimalLiteral,
-    cppOctalLiteral,
-    cppHexadecimalLiteral,
-    cppIdentifier,
-    cppIncorrectIdentifier,
-    cppKeyword,
-    cppOperator,
-    cppPunctuator,
-    cppComment,
-    cppSpace,
-    cppTabSpace,
-    cppPreprocessing,
-    cppStringLiteral
+enum rfc2822Token {
+    rfc2822Err,
+    rfc2822FieldName,
+    rfc2822Colon,
+    rfc2822FieldBody,
+    rfc2822MessageBody
 };
 
-extern const char *cppTokenTitles[];
+extern const char *rfc2822TokenTitles[];
 
 template<typename ch, typename tr>
 inline std::basic_ostream<ch, tr>&
-operator<<( std::basic_ostream<ch, tr>& ostr, cppToken v ) {
-    return ostr << cppTokenTitles[v];
+operator<<( std::basic_ostream<ch, tr>& ostr, rfc2822Token v ) {
+    return ostr << rfc2822TokenTitles[v];
 }
 
 
 /** Interface for callbacks from the cppTokenizer
  */
-class cppTokListener {
+class rfc2822TokListener {
 public:
-    cppTokListener() {}
+    rfc2822TokListener() {}
     
     virtual void newline(const char *line, 
 			  int first, int last ) = 0;
     
-    virtual void token( cppToken token, const char *line, 
+    virtual void token( rfc2822Token token, const char *line, 
 			int first, int last, bool fragment ) = 0;
 };
 
 
-class xmlCppTokListener : public cppTokListener {
-protected:
-    std::ostream *ostr;
-    
-public:
-    explicit xmlCppTokListener( std::ostream& o ) : ostr(&o) {}
-    
-    void token( cppToken token, const char *line, 
-		int first, int last, bool fragment ) {
-	*ostr << '<' << cppTokenTitles[token];
-	if( fragment ) *ostr << " fragment=\"" << fragment << "\"";
-	*ostr << " text=\"[" << first << "," << last << "]\">";
-	std::copy(&line[first],&line[last],std::ostream_iterator<char>(*ostr));
-	*ostr << "</" << cppTokenTitles[token] << ">";
-    }
-};
-
-
 template<typename charT, typename traitsT = std::char_traits<charT> >
-class htmlCppTokListener : public cppTokListener {
+class htmlrfc2822TokListener : public rfc2822TokListener {
 protected:
 	std::basic_ostream<charT,traitsT> *ostr;
 	
 public:
-    explicit htmlCppTokListener( std::basic_ostream<charT,traitsT>& o ) 
+    explicit htmlrfc2822TokListener( std::basic_ostream<charT,traitsT>& o ) 
 	: ostr(&o) {}
     
 public:
-    void token( cppToken token, const char *line, 
+    void newline(const char *line, int first, int last ) {
+	*ostr << std::endl;
+    }
+
+    void token( rfc2822Token token, const char *line, 
 		int first, int last, bool fragment ) {
-	*ostr << "<span class=\"" << cppTokenTitles[token] << "\">";
+	*ostr << "<span class=\"" << rfc2822TokenTitles[token] << "\">";
 	std::copy(&line[first],&line[last],
 		  std::ostream_iterator<charT>(*ostr));
 	*ostr << "</span>";
     }
-    
-    void endl() {
-	*ostr << std::endl;
-    }
 };
 
 
-/** Tokenizer for C/C++ source files
+/** Tokenizer for rfc2822 
  */
-class cppTokenizer {
+class rfc2822Tokenizer {
 protected:
 	void *state;
-	cppToken tok;
-	int hexQuads;
-	char expects;
-	cppTokListener *listener;
+	rfc2822Token tok;
+	rfc2822TokListener *listener;
 
 public:
-    cppTokenizer() 
-		: state(NULL), tok(cppErr), listener(NULL) {}
+    rfc2822Tokenizer() 
+	: state(NULL), tok(rfc2822Err), listener(NULL) {}
 	
-    explicit cppTokenizer( cppTokListener& l ) 
-	: state(NULL), tok(cppErr), listener(&l) {}
+    explicit rfc2822Tokenizer( rfc2822TokListener& l ) 
+	: state(NULL), tok(rfc2822Err), listener(&l) {}
     
-    void attach( cppTokListener& l ) { listener = &l; }
+    void attach( rfc2822TokListener& l ) { listener = &l; }
     
     size_t tokenize( const char *line, size_t n );
 };

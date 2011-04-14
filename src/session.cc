@@ -29,6 +29,7 @@
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/regex.hpp>
 #include "session.hh"
 #include <uriparser/Uri.h>
 #include "markup.hh"
@@ -67,6 +68,12 @@ sessionVariable::option() {
 std::string sessionVariable::value( const session& s ) const
 {
     return s.valueOf(name);
+}
+
+
+int intVariable::value( const session& s ) const
+{
+    return atoi(s.valueOf(name).c_str());
 }
 
 
@@ -453,6 +460,16 @@ void session::restore( int argc, char *argv[],
     /* We assume that if SCRIPT_FILENAME is defined
        we are running as a cgi. */
     ascgi = ( getenv("SCRIPT_FILENAME") != NULL );
+
+    remoteAddr = "unknown";
+    char *_remoteAddr = getenv("REMOTE_ADDR");
+    if( _remoteAddr ) {
+	boost::smatch m;
+	if( regex_match(std::string(_remoteAddr),m,
+			       boost::regex("\\d+\\.\\d+\\.\\d+\\.\\d+")) ) {
+	    remoteAddr = _remoteAddr;
+	}
+    }
 
     positional_options_description pd;     
     pd.add(document.name, 1);

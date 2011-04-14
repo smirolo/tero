@@ -25,6 +25,8 @@
 
 #include "auth.hh"
 #include "todo.hh"
+#include "comments.hh"
+#include "rfc2822tok.hh"
 
 #ifndef CONFIG_FILE
 #error "CONFIG_FILE should be defined when compiling this file"
@@ -37,26 +39,19 @@ const char* session::configFile = CONFIG_FILE;
 const char* session::sessionDir = SESSION_DIR;
 
 
-class todoModifFilter : public todoFilter {
+class commentAction : public mailAsPost {
 public:
-    explicit todoModifFilter( const boost::filesystem::path& m )
-	: todoFilter(m) {}
 
-    todoModifFilter( const boost::filesystem::path& m, postFilter* n  ) 
-	: todoFilter(m,n) {}
-
-    virtual void filters( const post& p ) {
-	static const boost::regex 
-	    guidPat("(\\[([a-z]|\\d){8}-([a-z]|\\d){4}-([a-z]|\\d){4}-([a-z]|\\d){4}-([a-z]|\\d){12}\\])");
-
-	boost::smatch m;
-	if( boost::regex_search(p.title,m,guidPat) ) {
-	    std::cerr << "comment on " << m.str(1) << "..." << std::endl;
-	} else {
-	    std::cerr << "create..." << std::endl;
+    boost::filesystem::path filename() const {
+	boost::filesystem::path result;
+	if( constructed.title.compare(0,11,"Comment on ") == 0 ) {		
+	    result = boost::filesystem::path(constructed.title.substr(11));
 	}
+	return result;
     }
+
 };
+
 
 char docPage[] = "document";
 
@@ -80,30 +75,33 @@ int main( int argc, char *argv[] )
 	visible.add(genOptions);
 	session::addSessionVars(opts,visible);
 	authAddSessionVars(opts,visible);
+	commentAddSessionVars(opts,visible);
 	s.restore(argc,argv,opts);
 
-#if 1
 	std::stringstream msg;
+#if 0
 	std::copy(std::istream_iterator<char>(std::cin),
 		  std::istream_iterator<char>(),
 		  std::ostream_iterator<char>(msg));
-	std::cout << "message read:" << std::endl
-		  << "\"" << msg.str() << "\"" << std::endl;
 #else
-	char filename[] = "/tmp/fileXXXXXX";
-	int fd;
-	fd = mkstemp(filename);
-	if( fd ) {
-	    std::cerr << "write message in " << filename << std::endl;
-	    while( !std::cin.eof() ) {
-		std::string line;
-		std::getline(std::cin,line);
-		::write(fd,line.c_str(),line.size());
-		::write(fd,"\n",1);
-	    }
-	    close(fd);
-	} 
+	while( !std::cin.eof() ) {
+	    std::string line;
+	    std::getline(std::cin,line);
+	    msg << line << std::endl;
+	}
 #endif
+	commentAction action;
+	rfc2822Tokenizer tok(action);
+	tok.tokenize(msg.str().c_str(),msg.str().size());
+
+	boost::filesystem::path commented = action.filename();
+	if( commented.empty() ) {	
+	    std::cerr << "error: commented url is not specified!" << std::endl;
+	    return 1;
+	}
+	appendCommentToFile comments(s,commented);
+	comments.filters(action.unserialized());
+       
 #if 0
 	void textMeta<document>(s,filename);
 #endif

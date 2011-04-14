@@ -249,7 +249,13 @@ void parseCGILine( std::map<std::string,std::string>& query,
 boost::program_options::basic_parsed_options<char> 
 basic_cgi_parser::run() {
     using namespace boost::program_options;
-    
+
+#if 0
+    extern char **environ;
+    for( char **env = environ; *env != NULL; ++env ) {
+	std::cerr << "[env] " << *env << std::endl;
+    }
+#endif    
     char *cookie = getenv("HTTP_COOKIE");
     if( cookie != NULL ) {
 	parseCookieLine(query,cookie,strlen(cookie));

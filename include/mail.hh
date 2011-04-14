@@ -27,6 +27,7 @@
 #define guardmail
 
 #include "document.hh"
+#include "rfc2822tok.hh"
 #include "post.hh"
 
 /**
@@ -54,6 +55,33 @@ public:
     virtual void filters( const post& );
     virtual void flush();
 };
+
+
+/** Unserialize a post instance out of a rfc2822 e-mail stored as text.
+ */
+class mailAsPost : public rfc2822TokListener {
+protected:
+    enum {
+	rfc2822Err,
+	rfc2822Time,
+	rfc2822Content,
+	rfc2822AuthorEmail,
+	rfc2822Title
+    } field;
+
+    post constructed;
+    
+public:
+    mailAsPost() { constructed.score = 0; }
+
+    void newline(const char *line, int first, int last );
+
+    void token( rfc2822Token token, const char *line, 
+		int first, int last, bool fragment );
+
+    const post& unserialized() const { return constructed; }
+};
+
 
 
 class mailParser : public dirwalker {

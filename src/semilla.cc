@@ -225,7 +225,9 @@ fetchEntry entries[] = {
        is present in the theme directory, let's use it
        as a composer. */
     { "view", boost::regex(".*\\.todo"), always, compose<todoExt> },
+#if 0
     { "view", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
+#endif
     { "view", boost::regex(".*\\.corp"), always, compose<corpExt> },
     { "view", boost::regex(".*\\.rss"), always, compose<rssExt> },
     { "view", boost::regex(".*\\.blog"), always, compose<blogExt> },
@@ -250,7 +252,7 @@ fetchEntry entries[] = {
     { "view", boost::regex(".*todos/.+"), always, compose<todos> },
 
     /* comments */
-    { "view", boost::regex(std::string(".*/comment")), always, commentPage },
+    { "view", boost::regex(std::string("/comments/create")), always, commentPage },
 
     /* blog presentation */ 
     { "view", boost::regex(".*/blog/.*"), always, compose<blogExt> },

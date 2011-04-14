@@ -24,10 +24,22 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <Poco/Net/SMTPClientSession.h>
+#include <Poco/Net/MailMessage.h>
 #include "comments.hh"
 
 pathVariable commentTop("commentTop",
 			"root of the tree where comments are stored");
+sessionVariable recipient("commentRecipient",
+			  "e-mail address comments are sent to");
+urlVariable smtpDomain("smtpDomain",
+		       "domain to connect to in order to send comments");
+intVariable smtpPort("smtpPort",
+			 "port to connect to in order to send comments");
+sessionVariable smtpLogin("smtpLogin",
+			  "login to the smtp server");
+sessionVariable smtpPassword("smtpPassword",
+			     "password to the smtp server");
 
 void 
 commentAddSessionVars( boost::program_options::options_description& opts,
@@ -37,45 +49,24 @@ commentAddSessionVars( boost::program_options::options_description& opts,
 
     options_description localOptions("comments");
     localOptions.add(commentTop.option());
+    localOptions.add(recipient.option());
+    localOptions.add(smtpDomain.option());
+    localOptions.add(smtpPort.option());
+    localOptions.add(smtpLogin.option());
+    localOptions.add(smtpPassword.option());
     opts.add(localOptions);
 }
 
 
-/** Create the comments file if it does not exists and then append
-    the comment at the end of the comments file.
- */
-class appendPostToFile : public passThruFilter {
-protected:
-    boost::filesystem::path commentTop;
-    boost::filesystem::path postname;
-
-public:
-   appendPostToFile( const boost::filesystem::path& top,
-		     const boost::filesystem::path& p ) 
-       : commentTop(top), postname(p) {}
-
-    appendPostToFile( const boost::filesystem::path& top,
-		     const boost::filesystem::path& p, 
-		     postFilter* n ) 
-	: passThruFilter(n), commentTop(top), postname(p) {}
-
-    virtual void filters( const post& );
-};
-
-
-void appendPostToFile::filters( const post& p ) {
+void appendCommentToFile::filters( const post& p ) {
     using namespace boost::system::errc;
     using namespace boost::filesystem;
 
     boost::filesystem::ofstream file;
-    boost::filesystem::path comments = commentTop / postname;
+    boost::filesystem::path comments 
+	= commentTop.value(*mySession) / (postname.string() + ".comments");
 
-#if 0
-    /* \todo How do this? pass session to filter? 
-       append and pass stream to filter? */
-    s.appendfile(file,comments);
-#endif
-
+    mySession->appendfile(file,comments);
     boost::interprocess::file_lock f_lock(comments.string().c_str());
     f_lock.lock();    
     mailwriter writer(file);
@@ -91,12 +82,12 @@ void appendPostToFile::filters( const post& p ) {
  */
 class sendPostToSMTP : public passThruFilter {
 protected:
-    std::string recipient;
+    const session* mySession;
 
 public:
-    explicit sendPostToSMTP( const std::string& r ) : recipient(r) {}
-    sendPostToSMTP( const std::string& r, postFilter *n ) 
-	: passThruFilter(n), recipient(r) {}
+    explicit sendPostToSMTP( const session& s ) : mySession(&s) {}
+    sendPostToSMTP( const session& s, postFilter *n ) 
+	: passThruFilter(n), mySession(&s) {}
 
     virtual void filters( const post& );
 };
@@ -105,38 +96,31 @@ public:
 void sendPostToSMTP::filters( const post& p ) {
     using namespace boost::system::errc;
     using namespace boost::filesystem;
- 
-    /* Format the post to be sent as an email. */
-    std::stringstream msg;
-    mailwriter mail(msg);
-    mail.filters(p);
- 
-    /* \todo For now, execute the sendmail shell command. Later,
-             it might be better to communicate with the MTA directly.
-    */
-    std::stringstream cmd;
-    cmd << "sendmail " << recipient;
-    FILE *f = popen(cmd.str().c_str(),"rw");
-    if( f == NULL ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-	    std::string("executing"),
-	    cmd.str(), 
-	    make_error_code(no_such_file_or_directory)));
-    }
-    fwrite(msg.str().c_str(),msg.str().size(),1,f);
-    int err = pclose(f);
-    if( err ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-	    std::string("exiting"),
-	    cmd.str(), 
-	    make_error_code(no_such_file_or_directory)));
-    }
+
+    Poco::Net::MailMessage message;    
+    message.addRecipient(Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT,recipient.value(*mySession)));
+    message.setSubject(p.title);
+    message.setSender(p.authorEmail);
+    message.setContent(p.content,Poco::Net::MailMessage::ENCODING_QUOTED_PRINTABLE);
+#if 0
+    message.setContentType(const std::string& mediaType);
+    message.setDate(const Poco::Timestamp& dateTime);
+#endif
+    Poco::Net::SMTPClientSession session(smtpDomain.value(*mySession).string(),
+					 smtpPort.value(*mySession));
+    session.login(Poco::Net::SMTPClientSession::AUTH_LOGIN,
+		  smtpLogin.value(*mySession),smtpPassword.value(*mySession));
+    session.sendMessage(message);
+    session.close();
 }
 
 
 void pageCommentsFetch( session& s, 
 			  const boost::filesystem::path& pathname ) 
 {
+    htmlwriter writer(s.out()); 
+    mailParser parser(writer);
+    parser.fetch(s,pathname);
 }
 
 
@@ -144,20 +128,19 @@ void commentPage( session& s,
 		  const boost::filesystem::path& pathname )
 {
     boost::filesystem::path docname(pathname.parent_path());
+    if( !s.valueOf("href").empty() ) {
+	docname = s.valueOf("href");
+    }
+
     url	postname(s.asUrl(docname));
 
-#if 0
-    appendPostToFile comment(commentTop.value(s),postname.string());
-#else
-    /* \todo Still in testing, we send to info@domainName but the address
-       might be worth a toplevel variable... */
-    std::stringstream recipient;
-    recipient << "info@" << domainName.value(s);
-    sendPostToSMTP comment(recipient.str());
-#endif
+    sendPostToSMTP comment(s);
 
     post p;
-    p.authorEmail = authorVar.value(s);
+    std::stringstream sender;
+    sender << authorVar.value(s) 
+	   << " <" << s.client() << "@" << domainName.value(s) << ">";
+    p.authorEmail = sender.str();
     std::stringstream title;
     title << "Comment on " << postname;
     p.title = title.str();
