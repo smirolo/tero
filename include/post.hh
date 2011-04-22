@@ -119,6 +119,11 @@ public:
 
     std::string tag;
 
+    /** stores extra (name,value) pairs that not specific fields. 
+     */
+    typedef std::map<std::string,std::string> headersMap;
+    headersMap moreHeaders;
+
     /** remove non meaningful whitespaces in the various text fields. 
      */
     void normalize();

@@ -79,6 +79,8 @@ void mailAsPost::token( rfc2822Token token, const char *line,
 	    field = rfc2822AuthorEmail;
 	} else if( strncmp(&line[first],"Subject",last - first) == 0 ) {
 	    field = rfc2822Title;
+	} else {
+	    name = std::string(&line[first],last - first);
 	}
 	break;
     case rfc2822FieldBody: {
@@ -96,9 +98,15 @@ void mailAsPost::token( rfc2822Token token, const char *line,
 	case rfc2822Title:
 	    constructed.title = value;
 	    break;
-	default:
-	    /* to stop gcc from complaining */
-	    break;
+	default: {
+	    post::headersMap::iterator header 
+		= constructed.moreHeaders.find(name);
+	    if( header != constructed.moreHeaders.end() ) {
+		header->second += std::string(",") + value;
+	    } else {
+		constructed.moreHeaders[name] = value;
+	    }
+	} break;
 	}
     } break;
     case rfc2822MessageBody:

@@ -68,7 +68,8 @@ protected:
 	rfc2822AuthorEmail,
 	rfc2822Title
     } field;
-
+    
+    std::string name;
     post constructed;
     
 public:

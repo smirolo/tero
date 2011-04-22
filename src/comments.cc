@@ -24,6 +24,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/date_time.hpp>
+#include <boost/date_time/date_facet.hpp>
 #include <Poco/Net/SMTPClientSession.h>
 #include <Poco/Net/MailMessage.h>
 #include "comments.hh"
@@ -98,6 +100,13 @@ void sendPostToSMTP::filters( const post& p ) {
     using namespace boost::filesystem;
 
     Poco::Net::MailMessage message;    
+
+    std::stringstream received;
+    received << "from unknown (unknown [" << mySession->client() << "])	by "
+	     << domainName.value(*mySession) << " (smailui) with SMTP id "
+	     << "XXXXXXXXXXX for <" << recipient.value(*mySession) << ">;"
+	     << p.time;
+    message.set("Received",received.str());
     message.addRecipient(Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT,recipient.value(*mySession)));
     message.setSubject(p.title);
     message.setSender(p.authorEmail);

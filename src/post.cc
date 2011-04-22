@@ -138,8 +138,13 @@ void mailwriter::filters( const post& p ) {
     }
     *ostr << "Date: " << p.time << std::endl;
     *ostr << "From: " << p.authorEmail << std::endl;    
-
     *ostr << "Score: " << p.score << std::endl;
+
+    for( post::headersMap::const_iterator header = p.moreHeaders.begin();
+	 header != p.moreHeaders.end(); ++header ) {
+	*ostr << header->first << ": " << header->second << std::endl;
+    }
+
     *ostr << std::endl << std::endl;
     /* \todo avoid description starting with "From " */
     *ostr << p.content << std::endl << std::endl;

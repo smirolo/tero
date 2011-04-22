@@ -75,6 +75,10 @@
 	    <include>(uriparser)/Uri.h</include>
 	    <lib>uriparser</lib>
 	  </dep>
+	  <dep name="libpoco-dev">
+	    <include>(Poco)/Net/SMTPClientSession.h</include>
+	    <lib>PocoNet</lib>
+	  </dep>
 	</alternate>
 	<alternate>
 	  <tag>Darwin</tag>
