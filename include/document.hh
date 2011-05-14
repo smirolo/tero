@@ -28,6 +28,7 @@
 
 #include "session.hh"
 #include "decorator.hh"
+#include "markup.hh" 
 
 /**
    Basic functions to display the content of a "document".
@@ -208,8 +209,13 @@ void textMeta( session& s, const boost::filesystem::path& pathname )
 	if( boost::regex_search(line,m,valueEx) ) {
 	    if( m.str(1) == std::string("Subject") ) {
 		s.insert("title",m.str(2));
+	    } else if( m.str(1) == std::string("From") ) {
+		s.insert("author",extractName(m.str(2)));
+		s.insert("authorEmail",extractEmailAddress(m.str(2)));
 	    } else {
-		s.insert(m.str(1),m.str(2));
+		std::string name = m.str(1);
+		name[0] = tolower(name[0]);
+		s.insert(name,m.str(2));
 	    }
 	} else break;
     }

@@ -131,6 +131,22 @@ public:
     /** returns true if the required fields have been initialized.
      */
     bool valid() const;
+
+#if 1
+    post() {}
+
+    post( const post& p ) :
+	author(p.author),
+	time(p.time),
+	content(p.content),
+	authorEmail(p.authorEmail),
+	title(p.title),
+	guid(p.guid),
+	filename(p.filename),
+	score(p.score),
+	tag(p.tag),
+	moreHeaders(p.moreHeaders) {}
+#endif
 };
 
 
@@ -207,7 +223,9 @@ public:
     retainedFilter() {}
     explicit retainedFilter( postFilter *n ) : postFilter(n) {}
 
-    virtual void filters( const post& p ) { posts.push_back(p); }
+    virtual void filters( const post& p ) { 
+	posts.push_back(p); 
+    }
 
     /** The default implementation of flush is to call provide 
 	and push all posts in [first,last[ to the next filter.
@@ -235,10 +253,19 @@ public:
     explicit ostreamWriter( std::ostream& o ) : ostr(&o) {}
 };
 
+/** Write post content as formatted html.
+ */
+class contentHtmlwriter : public ostreamWriter {
+public:
+    explicit contentHtmlwriter( std::ostream& o ) : ostreamWriter(o) {}
+
+    virtual void filters( const post& );
+};
+
 
 /** Write posts as formatted html.
  */
-class htmlwriter : public ostreamWriter {
+class htmlwriter : public contentHtmlwriter {
 protected:
 
     /** The counter of posts that have been written so far is used
@@ -248,7 +275,7 @@ protected:
     size_t postNum;
 
 public:
-    explicit htmlwriter( std::ostream& o ) : ostreamWriter(o), postNum(0) {}
+    explicit htmlwriter( std::ostream& o ) : contentHtmlwriter(o), postNum(0) {}
 
     virtual void filters( const post& );
 };
@@ -382,7 +409,7 @@ struct orderByTag : public std::binary_function<vT, vT, bool> {
 };
 
 template<typename vT>
-const char* orderByTag<vT>::name = "tags";
+const char* orderByTag<vT>::name = "Tags";
 
 
 

@@ -125,6 +125,11 @@ std::string normalize( const std::string& s );
 
 boost::posix_time::ptime from_mbox_string( const std::string& s );
 
+std::string extractEmailAddress( const std::string& line );
+
+std::string extractName( const std::string& );
+
+
 namespace html {
 
     /** HTML a (href) markup

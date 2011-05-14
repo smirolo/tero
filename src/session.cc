@@ -327,6 +327,22 @@ url session::asUrl( const boost::filesystem::path& p ) const
 }
 
 
+url session::asAbsUrl( const url& u, const boost::filesystem::path& base ) const
+{
+    url result = u;
+    if( u.protocol.empty() ) {
+	result.protocol = "http";
+    }
+    if( u.host.empty() ) {
+	result.host = domainName.value(*this).string();
+    }
+    if( !u.pathname.is_complete() ) {
+	result.pathname = base / u.pathname;
+    }
+    return result;
+}
+
+
 void session::filters( variables& results, sourceType source ) const
 {
     for( variables::const_iterator p = vars.begin();

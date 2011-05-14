@@ -514,13 +514,28 @@ void docbook::linkEnd( session& s, const rapidxml::xml_node<>& node ) const {
 void docbook::linkStart( session& s, const rapidxml::xml_node<>& node ) const {
     if( !info ) {
 	rapidxml::xml_attribute<> *href = node.first_attribute("xlink:href");
-	if( href == NULL ) {	
-	    href = node.first_attribute("linkend");
-	}
 	if( href != NULL ) {
 	    s.out() << html::a().href(href->value());
 	} else {
-	    s.out() << html::a();
+	    href = node.first_attribute("linkend");
+	    if( href != NULL ) {
+		/* works for both fop and semilla but validbook complains 
+		   /Volumes/Home/smirolo/workspace/fortylines/dev/reps/whitepapers/doc/glossary.book:18: validity error : xml:id : attribute value glossary.book#localMachine is not an NCName
+		   <glossentry xml:id="glossary.book#localMachine">
+		*/
+		url u(href->value());
+		url h = u;
+		std::string name(boost::filesystem::basename(u.pathname) + std::string(".book"));
+		std::string ext = boost::filesystem::extension(u.pathname);
+		if( !ext.empty() ) {
+		    ext[0] = '#';
+		    name += ext;
+		}
+		h.pathname = name;
+		s.out() << html::a().href(h.string());
+	    } else {
+		s.out() << html::a();
+	    }
 	}
     }
 }

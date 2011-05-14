@@ -34,6 +34,21 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+/**
+   Splat a field by the number of comma separated values.
+*/
+template<typename cmp>
+class blogSplat : public passThruFilter {
+public:
+    typedef passThruFilter super;
+
+public:
+    explicit blogSplat( postFilter* n ) 
+	: super(n) {}
+
+    virtual void filters( const post& );
+};
+
 
 /** Present blog entries in a specific interval [first,last[
     where first and last are based on *cmp*.
@@ -41,14 +56,17 @@
 template<typename cmp>
 class blogInterval : public feedOrdered<cmp> {
 protected:
-    const boost::filesystem::path pathname;
+    const typename cmp::valueType bottom;
+    const typename cmp::valueType top;
 
 public:
     typedef feedOrdered<cmp> super;
 
 public:
-    explicit blogInterval( postFilter* n, const boost::filesystem::path& p ) 
-	: super(n), pathname(p) {}
+    explicit blogInterval( postFilter* n, 
+			   const typename cmp::valueType& lower,
+			   const typename cmp::valueType& upper ) 
+	: super(n), bottom(lower), top(upper) {}
 
     void provide();
 };
@@ -58,10 +76,14 @@ template<typename defaultWriter, const char* varname, const char* filePat,
 	 typename cmp>
 void blogByInterval( session& s, const boost::filesystem::path& pathname );
 
+template<const char* varname, const char* filePat>
 void blogByIntervalDate( session& s, const boost::filesystem::path& pathname );
+
+template<const char* varname, const char* filePat>
 void blogByIntervalTags( session& s, const boost::filesystem::path& pathname );
 
 
+/** */
 template<typename cmp>
 class bySet : public retainedFilter {
 protected:

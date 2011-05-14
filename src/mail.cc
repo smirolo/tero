@@ -90,10 +90,12 @@ void mailAsPost::token( rfc2822Token token, const char *line,
 	    try {
 		constructed.time = from_mbox_string(value);
 	    } catch( std::exception& e ) {
+		std::cerr << "unable to reconstruct time from " << value << std::endl;
 	    }
 	    break;
 	case rfc2822AuthorEmail:
-	    constructed.authorEmail = value;
+	    constructed.author = extractName(value);
+	    constructed.authorEmail = extractEmailAddress(value);	    
 	    break;
 	case rfc2822Title:
 	    constructed.title = value;
@@ -111,7 +113,6 @@ void mailAsPost::token( rfc2822Token token, const char *line,
     } break;
     case rfc2822MessageBody:
 	constructed.content = std::string(&line[first],&line[last]);
-	std::cerr << "\"" << constructed.content << "\"" << std::endl;
 	break;
     default:
 	/* to stop gcc from complaining */
@@ -131,121 +132,32 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 
     /** tags associated to a post. 
      */
-    tagSet tags;
-
-    static const boost::regex metainfo("^(\\S+):(.+)");
-
-    post p;
-    bool first = true;
     size_t lineCount = 0;
-    std::stringstream descr;
-    parseState state = startParse;
-
-    p.score = 0;
-    p.filename = boost::filesystem::path(name);
-    p.guid = std::string("/") + s.subdirpart(siteTop.value(s),name).string();
-    descr << html::pre();
-
+    mailAsPost listener;
+    rfc2822Tokenizer tok(listener);
+    std::stringstream mailtext;
     while( !ins.eof() ) {
-	boost::smatch m;
 	std::string line;
 	std::getline(ins,line);
 	++lineCount;
 
 	if( line.compare(0,5,"From ") == 0 ) {
 	    /* Beginning of new message
-	       http://en.wikipedia.org/wiki/Mbox */	    
-	    if( !first ) {
-		if( stopOnFirst ) break;
-		descr << html::pre::end;
-		p.content = descr.str();
-		descr.str("");
-		descr << html::pre();
-		p.normalize();
-		if( tags.empty() ) {
-		    filter->filters(p);
-		} else {
-		    for( tagSet::const_iterator t = tags.begin(); t != tags.end(); ++t ) {
-			p.tag = *t;
-			filter->filters(p);
-		    }
-		}
-		tags.clear();
-	    }
-	    p = post();
-	    p.filename = boost::filesystem::path(name);
-	    p.guid = std::string("/") 
-		+ s.subdirpart(siteTop.value(s),name).string();
-	    p.score = 0;
-	    first = false;
-	    state = startParse;
-
-	} else if( line.compare(0,5,"Date:") == 0 ) {
-	    try {
-		p.time = from_mbox_string(line.substr(5));
-	    } catch( std::exception& e ) {
-	    }
-	    state = dateParse;
-	} else if( line.compare(0,5,"From:") == 0 ) {
-	    p.authorEmail = line.substr(5);
-	    /* \todo As long as we donot parse name separately. */
-	    p.author = line.substr(5);
-	    state = authorParse;
-	} else if( line.compare(0,9,"Subject: ") == 0 ) {
-	    p.title = line.substr(9);
-	    state = titleParse;
-	} else if( line.compare(0,7,"Score: ") == 0 ) {
-	    p.score = atoi(line.substr(7).c_str());
-
-	} else if( line.compare(0,6,"Tags: ") == 0 ) {
-	    size_t first = 6, last = 6;
-	    while( last != line.size() ) {
-		if( line[last] == ',' ) {
-		    std::string s = strip(line.substr(first,last-first));
-		    if( ! s.empty() ) tags.insert(s);
-		    first = last + 1;
-		}
-		++last;
-	    }
-	    std::string s = strip(line.substr(first,last-first));
-	    if( ! s.empty() ) tags.insert(s);
-
-	} else if( regex_match(line,m,metainfo) ) {
-	    /* This is more meta information we donot interpret */
-
-	} else if( line.size() > 0 
-		   && ((line[0] == ' ') | (line[0] == '\t')) ) {
-	    /* field spans multiple lines */
-	    switch( state ) {
-	    case startParse:
-		break;
-	    case dateParse:
-		break;
-	    case authorParse:
-		p.authorEmail += line;
-		break;
-	    case titleParse:
-		p.title += line;
-		break;
+	       http://en.wikipedia.org/wiki/Mbox */
+	    if( !mailtext.str().empty() ) {
+		/* First line of file introduces first e-mail. */
+		if( stopOnFirst ) break;	    
+		tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
+		filter->filters(listener.unserialized());
+		mailtext.str("");
 	    }
 	} else {
-	    descr << line << std::endl;
-	    state = startParse;
+	    mailtext << line << std::endl;
 	}
     }
-    descr << html::pre::end;
-    p.content = descr.str();
-    descr.str("");
-    p.normalize();
-    if( tags.empty() ) {
-	filter->filters(p);
-    } else {
-	for( tagSet::const_iterator t = tags.begin(); t != tags.end(); ++t ) {
-	    p.tag = *t;
-	    filter->filters(p);
-	}
-    }
-    tags.clear();
+    tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
+    filter->filters(listener.unserialized());
+    mailtext.str("");    
 }
 
 

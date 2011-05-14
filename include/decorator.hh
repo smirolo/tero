@@ -220,14 +220,22 @@ protected:
     } state;
     
     session* context;
-    
+
+    /** returns true if the orginal text needs to be copied to the output
+	stream and false if the method replaced the text already. */
+    virtual bool decorate( const url& u );
+
+public:
+    typedef std::set<url> linkSet;
+    static linkSet links;
+
 public:
     explicit basicLinkLight( session& s ) 
 	: super(false), context(&s) { 
 	super::tokenizer.attach(*this); 
     }
     
-    explicit basicLinkLight(  session& s, std::basic_ostream<charT,traitsT>& o )
+    basicLinkLight(  session& s, std::basic_ostream<charT,traitsT>& o )
 	: super(o,false), context(&s) { super::tokenizer.attach(*this); }
     
     void newline( const char *line, int first, int last ) {
@@ -240,6 +248,29 @@ public:
 };
 
 typedef basicLinkLight<char> linkLight;
+
+
+/** \brief Transforms all <a href="..."> links to absolute urls.
+ */
+template<typename charT, typename traitsT = std::char_traits<charT> >
+class absUrlDecoratorBase : public basicLinkLight<charT, traitsT> {
+protected:
+    typedef basicLinkLight<charT, traitsT> super;
+
+    boost::filesystem::path base;
+
+    virtual bool decorate( const url& u );
+
+public:
+    absUrlDecoratorBase( const boost::filesystem::path& b, session& s ) 
+	: super(s), base(b) {}
+    
+    absUrlDecoratorBase( const boost::filesystem::path& b, 
+		     session& s, std::basic_ostream<charT,traitsT>& o )
+	: super(s,o), base(b) {}
+};
+
+typedef absUrlDecoratorBase<char> absUrlDecorator;
 
 
 /** \brief Decorate a text with href links to pathnames. 

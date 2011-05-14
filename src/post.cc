@@ -90,11 +90,16 @@ void retainedFilter::flush()
 {
     if( next ) {
 	provide();
-	for( const_iterator p = first; p != last  ; ++p ) {
+	for( const_iterator p = first; p != last; ++p ) {
 	    next->filters(*p);
 	}
 	next->flush();
     }
+}
+
+
+void contentHtmlwriter::filters( const post& p ) {
+    *ostr << p.content;
 }
 
 
@@ -117,7 +122,7 @@ void htmlwriter::filters( const post& p ) {
 
     /* body of the post */
     *ostr << html::div().classref("postBody");    
-    *ostr << p.content;
+    contentHtmlwriter::filters(p);
     *ostr << html::div::end;
     
     *ostr << html::div::end;    

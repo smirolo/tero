@@ -129,7 +129,8 @@ boost::posix_time::time_duration stop( session& s ) {
 
 
 boost::filesystem::path contributorLog( const session& s ) {
-    return contribTop.value(s) / boost::filesystem::path("hours");
+    return contribTop.value(s) 
+	/ username.value(s) / boost::filesystem::path("hours");
 }
 
 

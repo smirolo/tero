@@ -131,15 +131,24 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 		p.author = content.str();
 		p.authorEmail = authorEmail.value(s);
 		content.str("");
-		if( !dispatchDoc::instance()->fetch(s,"time",filename)) {
+		if( !dispatchDoc::instance()->fetch(s,"date",filename)) {
 		    metaLastTime(s,filename);
 		}
-		p.time = boost::posix_time::time_from_string(content.str());
+		try {
+		    p.time = from_mbox_string(content.str());
+		} catch( std::exception& e ) {
+		    std::cerr << "unable to reconstruct time from \"" << content.str() << '"' << std::endl;
+		}
 		content.str("");
+		/* \todo Be careful here, if there are no *.blog pattern
+		   but there is a /blog/.* pattern in the dispatch table,
+		   this will create an infinite loop that only stops when
+		   the system runs out of file descriptor. I am not sure
+		   how to avoid or pop an error for this case yet. */
 		if( !dispatchDoc::instance()->fetch(s,"document",filename)) {
 		    content << s.asUrl(filename);
 		}    
-		p.content = content.str();
+		p.content = content.str();		
 		s.feeds->filters(p);
 	    }
 	}
@@ -183,7 +192,10 @@ void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname )
 template<const char*varname>
 void rssSiteAggregate( session& s, const boost::filesystem::path& pathname )
 {
+    absUrlDecorator d(pathname,s);
+    d.attach(s.out());
     feedLatestPosts<rsswriter,varname>(s,siteTop.value(s) / pathname.leaf());
+    d.detach();
 }
 
 

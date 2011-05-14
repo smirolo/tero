@@ -158,13 +158,38 @@ void basicHtmlEscaper<charT,traitsT>::token( xmlEscToken token,
     }
 }
 
+template<typename charT, typename traitsT>
+typename basicLinkLight<charT,traitsT>::linkSet 
+basicLinkLight<charT,traitsT>::links;
+
+template<typename charT, typename traitsT>   
+bool basicLinkLight<charT,traitsT>::decorate( const url& u )
+{
+    super::nextBuf->sputc('"');
+    super::nextBuf->sputn(u.string().c_str(),u.string().size());
+    super::nextBuf->sputc('"');	
+    links.insert(u);
+    if( u.absolute() ) {
+	std::string absolute(" class=\"outside\"");
+	super::nextBuf->sputn(absolute.c_str(),absolute.size());
+    } else {
+	boost::filesystem::path f = context->abspath(u.pathname);
+	if( f.empty() ) {
+	    std::string absolute(" class=\"new\"");
+	    super::nextBuf->sputn(absolute.c_str(),absolute.size());
+	}
+    }    
+    return false;
+}
+
 
 template<typename charT, typename traitsT>   
 void basicLinkLight<charT,traitsT>::token( xmlToken token, 
 					   const char *line, 
 					   int first, int last, 
 					   bool fragment ) {
-    super::nextBuf->sputn(&line[first],last - first);
+    bool needPut = true;
+    
     switch( token ) {
     case xmlElementStart:
     case xmlElementEnd:
@@ -181,24 +206,26 @@ void basicLinkLight<charT,traitsT>::token( xmlToken token,
 	/* Categorize link */ 
 	if( state == linkWaitAttState ) {
 	    std::string name(&line[first + 1],last - first - 2);
-	    url u(name);
-	    if( u.absolute() ) {
-		std::string absolute(" class=\"outside\"");
-		super::nextBuf->sputn(absolute.c_str(),absolute.size());
-	    } else {
-		boost::filesystem::path f = context->abspath(name);
-		if( f.empty() ) {
-		    std::string absolute(" class=\"new\"");
-		    super::nextBuf->sputn(absolute.c_str(),absolute.size());
-		}
-	    }
+	    needPut = decorate(url(name));
 	}
 	state = linkStartState;
 	break;
     default:
 	/* Nothing to do except prevent gcc from complaining. */
 	break;
-    }	
+    }
+    if( needPut ) super::nextBuf->sputn(&line[first],last - first);
+}
+
+
+template<typename charT, typename traitsT>   
+bool absUrlDecoratorBase<charT,traitsT>::decorate( const url& u )
+{
+    url a = super::context->asAbsUrl(u,base);
+    super::nextBuf->sputc('"');
+    super::nextBuf->sputn(a.string().c_str(),a.string().size());
+    super::nextBuf->sputc('"');	
+    return false;
 }
 
 

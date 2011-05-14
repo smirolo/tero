@@ -25,16 +25,43 @@
 
 #include "markup.hh" 
 
+
+template<typename cmp>
+void blogSplat<cmp>::filters( const post& v ) {
+    post p = v;
+    post::headersMap::const_iterator tags 
+	= p.moreHeaders.find(cmp::name);
+    if( tags != p.moreHeaders.end() ) {
+	size_t first = 0, last = 0;
+	while( last != tags->second.size() ) {
+	    if( tags->second[last] == ',' ) {
+		std::string s 
+		    = strip(tags->second.substr(first,last-first));
+		if( !s.empty() ) {
+		    p.tag = s;
+		    next->filters(p);
+		}
+		first = last + 1;
+	    }
+	    ++last;
+	}
+	std::string s 
+	    = strip(tags->second.substr(first,last-first));
+	if( !s.empty() ) {
+	    p.tag = s;
+	    next->filters(p);
+	}
+    } else {
+	next->filters(p);
+    }
+}
+
+
 template<typename cmp>
 void blogInterval<cmp>::provide()
 {
-    super::provide();
- 
     cmp c;
-    std::string firstName = boost::filesystem::basename(pathname);
-
-    typename cmp::valueType bottom = c.first(firstName);
-    typename cmp::valueType top = c.last(firstName);
+    super::provide();
 
     /* sorted from decreasing order most recent to oldest. */
     super::first = std::lower_bound(super::first,super::last,bottom,c);
@@ -42,6 +69,14 @@ void blogInterval<cmp>::provide()
 	super::first = super::posts.begin();
     }
     super::last = std::upper_bound(super::first,super::last,top,c);
+
+#if 0
+    std::cerr << "[blogInterval] provide:" << std::endl;
+    for( typename super::const_iterator f = super::first; 
+	 f != super::last; ++f ) {
+	std::cerr << f->time << " " << f->title << std::endl;
+    }
+#endif
 }
 
 
@@ -49,8 +84,23 @@ template<typename defaultWriter, const char* varname, const char* filePat,
 	 typename cmp>
 void blogByInterval( session& s, const boost::filesystem::path& pathname )
 {
-    defaultWriter writer(s.out());
-    blogInterval<cmp> feeds(&writer,pathname);
+    cmp c;
+    defaultWriter writer(s.out());    
+    typename cmp::valueType lower, upper;
+    try {
+	std::string firstName = boost::filesystem::basename(pathname);	
+	lower = c.first(firstName);
+	upper = c.last(firstName);
+    } catch( std::exception& e ) {
+	lower = c.first();
+	upper = c.last();
+    }
+#if 0
+    std::cerr << "[blogByInterval] from " << lower.time << " to " << upper.time
+	      << std::endl;
+#endif
+    blogInterval<cmp> interval(&writer,lower,upper);
+    blogSplat<cmp> feeds(&interval);
     if( !s.feeds ) {
 	s.feeds = &feeds;
     }
@@ -61,6 +111,18 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
 	s.feeds->flush();
 	s.feeds = NULL;
     }
+}
+
+template<const char* varname, const char* filePat>
+void blogByIntervalDate( session& s, const boost::filesystem::path& pathname )
+{
+    blogByInterval<htmlwriter,varname,filePat,orderByTime<post> >(s,pathname);
+}
+
+template<const char* varname, const char* filePat>
+void blogByIntervalTags( session& s, const boost::filesystem::path& pathname )
+{
+    blogByInterval<htmlwriter,varname,filePat,orderByTag<post> >(s,pathname);
 }
 
 
@@ -111,10 +173,12 @@ void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
 {
     boost::filesystem::path blogroot 
 	= s.root(s.abspath(pathname),"blog") / "blog";
-    bySet<cmp> filter(s.out(),s.subdirpart(siteTop.value(s),blogroot));
+
+    bySet<cmp> count(s.out(),s.subdirpart(siteTop.value(s),blogroot));
+    blogSplat<cmp> feeds(&count);
 
     if( !s.feeds ) {
-	s.feeds = &filter;
+	s.feeds = &feeds;
     }
 
     /* workaround Ubuntu/gcc-4.4.3 is not happy with boost::regex(filePat) 
@@ -123,7 +187,7 @@ void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
     mailParser parser(pat,*s.feeds,false);
     parser.fetch(s,blogroot);
 
-    if( s.feeds == &filter ) {
+    if( s.feeds == &feeds ) {
 	s.feeds->flush();
 	s.feeds = NULL;
     }

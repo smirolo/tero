@@ -31,37 +31,16 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-namespace {
-
-    char docPage[] = "document";
-
-} // anonymous namespace
-
-
-void blogByIntervalDate( session& s, const boost::filesystem::path& pathname )
-{
-    blogByInterval<htmlwriter,docPage,allFilesPat,orderByTime<post> >(s,pathname);
-}
-
-
-void blogByIntervalTags( session& s, const boost::filesystem::path& pathname )
-{
-    blogByInterval<htmlwriter,docPage,allFilesPat,orderByTag<post> >(s,pathname);
-}
-
 
 void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
 {
-    htmlwriter writer(s.out());
-    if( !s.feeds ) {
-	s.feeds = &writer;
-    }
-
-    mailParser parser(boost::regex(".*\\.blog"),*s.feeds,true);
+    /* We print the post directly onto s.out() and not pass it through
+       the s.feeds filter otherwise the post would be added twice (differently)
+       to the aggregated filter through feedContent(). Content for docbooks,
+       sources, etc. is free form so we have to modify the code here and not
+       in feedContent(). */
+    /* Use contentHtmlWriter to avoid embeding duplicate "by... on..." */
+    contentHtmlwriter writer(s.out());
+    mailParser parser(boost::regex(".*\\.blog"),writer,true);
     parser.fetch(s,s.abspath(pathname));
-
-    if( s.feeds == &writer ) {
-	s.feeds->flush();
-	s.feeds = NULL;
-    }
 }

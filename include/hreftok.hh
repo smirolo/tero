@@ -28,8 +28,8 @@
 
 #include <iterator>
 
-/** The href tokenizer recognizes filenames in a text. The decorators
-    can then thus generate hypertext links out of them.
+/** The href tokenizer attempts to recognize filenames in a text. 
+    The decorators can then thus generate hypertext links out of them.
 
     \todo extend to recognize urls.
 

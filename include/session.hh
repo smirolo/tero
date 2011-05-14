@@ -247,6 +247,9 @@ public:
 	the file through an HTTP connection. */
     url asUrl( const boost::filesystem::path& p ) const;
 
+    /** Transforms a url into an absolute url including protocol and domain */
+    url asAbsUrl( const url& u, const boost::filesystem::path& base ) const;
+
     bool errors() const { return nErrs > 0; }
     
     bool exists() const { return !sessionId.empty(); }

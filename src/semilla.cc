@@ -76,8 +76,10 @@ char todos[] = "todos";
 char blogPat[] = ".*\\.blog";
 char except[] = "exception";
 char indexPage[] = "index";
+char author[] = "author";
 char feed[] = "feed";
 char source[] = "source";
+char date[] = "date";
 char title[] = "title";
 char buildView[] = "Build View";
 
@@ -88,6 +90,8 @@ std::string active("contrib/todos/active/");
    generic order since the matcher will apply each the first
    one that yields a positive match. */
 fetchEntry entries[] = {
+    { "author", boost::regex(".*\\.blog"), always, textMeta<author> },
+    
     { "check", boost::regex(".*\\.c"), whenFileExist, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.h"), whenFileExist, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.cc"), whenFileExist, checkfileFetch<cppChecker> },
@@ -102,6 +106,7 @@ fetchEntry entries[] = {
        source files in the absence of a more restrictive pattern. */
     { "checkstyle", boost::regex(".*"), always, checkstyleFetch },
 
+    { "date", boost::regex(".*\\.blog"), always, textMeta<date> },
     { "dates", boost::regex(".*/blog/.*"), always, blogDateLinks<blogPat> },
 
     /* The build "document" gives an overview of the set 
@@ -150,9 +155,13 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*\\.todo/voteAbandon"), always, todoVoteAbandonFetch },
     { "document", boost::regex(".*\\.todo/voteSuccess"), always, todoVoteSuccessFetch },
 
-    { "document", boost::regex(".*/blog/tags/.*"), always, blogByIntervalTags },
-    { "document", boost::regex(".*/blog/archive/.*"), always, blogByIntervalDate },
-    { "document", boost::regex(".*/blog/.*"), always, blogByIntervalDate },
+    { "document", boost::regex(".*\\.blog"), always, blogEntryFetch },
+    { "document", boost::regex(".*/blog/tags/.*"), 
+      always, blogByIntervalTags<docPage,blogPat> },
+    { "document", boost::regex(".*/blog/archive/.*"), 
+      always, blogByIntervalDate<docPage,blogPat> },
+    { "document", boost::regex(".*/blog/.*"), 
+      always, blogByIntervalDate<docPage,blogPat> },
 
     /* contribution */
     { "document", boost::regex(".*contrib/"), always, contribIdxFetch },
@@ -199,6 +208,7 @@ fetchEntry entries[] = {
 
     /* Load title from the meta tags in a text file. */
     { "title", boost::regex(".*/log/"),   always, consMeta<buildView> },
+    { "title", boost::regex(".*\\.blog"), whenFileExist, textMeta<title> },
     { "title", boost::regex(".*\\.book"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.corp"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.todo"), whenFileExist, todoMeta },
@@ -353,12 +363,28 @@ int main( int argc, char *argv[] )
 	    dispatchDoc docs(entries,sizeof(entries)/sizeof(entries[0]));
 	    docs.fetch(s,document.name);
 	    if( s.runAsCGI() ) {
-		std::cout << httpHeaders
+		cout << httpHeaders
 		    .contentType()
 		    .status(s.errors() ? 404 : 0);
 	    }
-	    std::cout << mainout.str();
+#if 0
+	    linkLight successors(s);
+	    successors.attach(cout);
+#endif
+	    cout << mainout.str();
+#if 0
+	    successors.detach();
+#endif
 	}
+
+#if 0
+	/* \todo add href decorator on std::cout. */
+	std::cerr << "list of url links in page:" << std::endl;
+	for( linkLight::linkSet::const_iterator l = linkLight::links.begin();
+	     l != linkLight::links.end(); ++l ) {
+	    std::cerr << *l << std::endl;
+	}
+#endif
 
     } catch( exception& e ) {
 	try {

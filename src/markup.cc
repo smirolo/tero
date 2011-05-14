@@ -134,6 +134,23 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
     return t;
 }
 
+std::string extractEmailAddress( const std::string& line ) {
+    size_t estart = line.find('<');
+    size_t efinish = line.rfind('>');
+    if( estart < efinish ) {
+	return line.substr(estart + 1,efinish - 1);
+    }
+    return line;
+}
+
+std::string extractName( const std::string& line ) {
+    size_t estart = line.find('<');
+    if( estart != std::string::npos ) {
+	return strip(line.substr(0,estart));
+    }
+    return line;
+}
+
 
 namespace html {
 
