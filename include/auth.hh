@@ -29,7 +29,7 @@
 #include <exception>
 #include "document.hh"
 
-/* Contributors are <a href="/tero/doc/access.book">authenticated</a> before
+/* Contributors are <a href="/reps/whitepapers/doc/access.book">authenticated</a> before
    any write operation is performed. 
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>

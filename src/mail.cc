@@ -148,7 +148,9 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 		/* First line of file introduces first e-mail. */
 		if( stopOnFirst ) break;	    
 		tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
-		filter->filters(listener.unserialized());
+		post p = listener.unserialized();
+		p.guid = s.asUrl(name).string();
+		filter->filters(p);
 		mailtext.str("");
 	    }
 	} else {
@@ -156,7 +158,9 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 	}
     }
     tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
-    filter->filters(listener.unserialized());
+    post p = listener.unserialized();
+    p.guid = s.asUrl(name).string();
+    filter->filters(p);
     mailtext.str("");    
 }
 
