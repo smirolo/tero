@@ -281,7 +281,7 @@ void deauthFetch(  session& s, const boost::filesystem::path& pathname ) {
 	for( directory_iterator entry 
 		 = directory_iterator(s.stateDir()); 
 	     entry != directory_iterator(); ++entry ) {
-	    path filename(entry->filename());
+	    path filename(*entry);
 	    s.id(boost::filesystem::basename(filename));
 	    s.restore(0,NULL,boost::program_options::options_description());
 	    break;

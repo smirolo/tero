@@ -157,9 +157,8 @@ void session::load( const boost::program_options::options_description& opts,
 	ifstream istr(p);
 	if( istr.fail() ) {
 	    boost::throw_exception(
-		basic_filesystem_error<path>(std::string("file not found"),
-					     p, 
-					     boost::system::error_code()));
+				   system_error(error_code(),
+						std::string("file not found")+ p.string()));
 	}
 
 	boost::program_options::store(parse_config_file(istr,opts,true),
@@ -182,10 +181,8 @@ void session::check( const boost::filesystem::path& pathname ) const
 	using namespace boost::system::errc;
 	using namespace boost::filesystem;
  
-	boost::throw_exception(basic_filesystem_error<path>(
-	    std::string("[checkfile]"),
-	    pathname, 
-	    make_error_code(no_such_file_or_directory)));	
+	boost::throw_exception(boost::system::system_error(
+	       make_error_code(no_such_file_or_directory),pathname.string()));	
     }
 }
 
@@ -201,10 +198,8 @@ void session::appendfile( boost::filesystem::ofstream& strm,
 
 	strm.open(pathname,std::ios_base::out | std::ios_base::app);
 	if( strm.fail() ) {
-	    boost::throw_exception(basic_filesystem_error<path>(
-		std::string("[appendfile]"),
-		pathname, 
-		make_error_code(no_such_file_or_directory)));
+	    boost::throw_exception(boost::system::system_error(
+	       make_error_code(no_such_file_or_directory),pathname.string()));	
 	}
     }
 }
@@ -219,11 +214,8 @@ void session::createfile( boost::filesystem::ofstream& strm,
     strm.open(pathname,std::ios_base::out | std::ios_base::trunc);
     if( strm.fail() ) {
 	using namespace boost::system::errc;
-
-	boost::throw_exception(basic_filesystem_error<path>(
-	   std::string("[createfile]"),
-	   pathname, 
-	   make_error_code(no_such_file_or_directory)));
+	boost::throw_exception(boost::system::system_error(
+	       make_error_code(no_such_file_or_directory),pathname.string()));	
     }
 }
 
@@ -239,10 +231,8 @@ void session::openfile( boost::filesystem::ifstream& strm,
     if( !strm.fail() ) return;
     
     /* \todo figure out how to pass iostream error code in exception. */
-    boost::throw_exception(basic_filesystem_error<path>(
-	std::string("[openfile]"),
-	pathname, 
-	make_error_code(no_such_file_or_directory)));
+    boost::throw_exception(boost::system::system_error(
+	       make_error_code(no_such_file_or_directory),pathname.string()));	
 }
 
 
@@ -274,7 +264,7 @@ slice<char> session::loadtext( const boost::filesystem::path& p )
 }
 
 
-rapidxml::xml_document<>*
+RAPIDXML::xml_document<>*
 session::loadxml( const boost::filesystem::path& p )
 {
     xmlMap::const_iterator found = xmls.find(p);
@@ -286,7 +276,7 @@ session::loadxml( const boost::filesystem::path& p )
     std::cerr << "loadxml(" << p << "):" << std::endl;
     std::cerr << "\"" << buffer.begin() << "\"" << std::endl;
 #endif
-    rapidxml::xml_document<> *doc = new rapidxml::xml_document<>();
+    RAPIDXML::xml_document<> *doc = new RAPIDXML::xml_document<>();
     try {
 	doc->parse<0>(buffer.begin());
 	xmls[p] = doc;
@@ -438,10 +428,10 @@ session::abspath( const boost::filesystem::path& relative ) const {
 
     path fromSiteTop(valueOf("siteTop"));
     if( fromSiteTop.empty() ) {
-	boost::throw_exception(
-	    basic_filesystem_error<path>(std::string("siteTop not found"),
-					 fromSiteTop, 
-					 boost::system::error_code()));
+	using namespace boost::system::errc;
+	boost::throw_exception(boost::system::system_error(
+	    make_error_code(no_such_file_or_directory),
+	    std::string("siteTop not found") + fromSiteTop.string()));
     }
     if( relative.string().compare(0,fromSiteTop.string().size(),
 				  fromSiteTop.string()) == 0 ) {
@@ -587,10 +577,9 @@ session::root( const boost::filesystem::path& leaf,
 	dirname.remove_leaf();
 	if( dirname.string().empty() ) {
 	    using namespace boost::system::errc;
-	    boost::throw_exception(basic_filesystem_error<path>(
-			std::string("no trigger from path up"),
-			leaf, 
-			make_error_code(no_such_file_or_directory))); 
+	    boost::throw_exception(boost::system::system_error(
+		make_error_code(no_such_file_or_directory),
+		leaf.string())); 
 	}
 	foundProject = boost::filesystem::exists(dirname.string() / trigger);
     }
@@ -628,10 +617,10 @@ void session::store() {
     /* 1. open session file based on session id. */
     ofstream sessions(stateFilePath());
     if( sessions.fail() ) {
-	boost::throw_exception(basic_filesystem_error<path>(
-			       std::string("error opening file"),
-			       stateFilePath(), 
-			       error_code()));
+	using namespace boost::system::errc;
+	boost::throw_exception(boost::system::system_error(
+	    make_error_code(no_such_file_or_directory),
+	    stateFilePath().string()));
     }
     /* 2. write session information */
     for( variables::const_iterator v = vars.begin(); v != vars.end(); ++v ) {

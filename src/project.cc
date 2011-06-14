@@ -100,9 +100,8 @@ void projCreateFetch( session& s, const boost::filesystem::path& pathname )
     path projectDir(s.valueAsPath("srcTop") / projectname);
 
     if( exists(projectDir) ) {
-	throw basic_filesystem_error<path>(std::string("already exists"),
-					   projectDir, 
-					   error_code());
+	throw system_error(error_code(),std::string("already exists") +
+			   projectDir.string());
     }
 
     /* \todo HACK: force group to true to run projCreateTest 
@@ -131,12 +130,12 @@ void projCreateFetch( session& s, const boost::filesystem::path& pathname )
 
 void projindexFetch( session& s, const boost::filesystem::path& pathname )
 {
-    using namespace rapidxml;
+    using namespace RAPIDXML;
     using namespace boost::filesystem;
 
     s.check(pathname);
 
-    std::string projdir = pathname.parent_path().filename();
+    path projdir = pathname.parent_path().filename();
     slice<char> text = s.loadtext(pathname);
     xml_document<> doc;    // character type defaults to char
     doc.parse<0>(text.begin());     // 0 means default parse flags
@@ -204,9 +203,10 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 		if( boost::filesystem::exists(dirname) ) {
 		    for( directory_iterator entry = directory_iterator(dirname); 
 			 entry != directory_iterator(); ++entry ) {
-			if( entry->string().compare(0,prefix.string().size(),
+			path p(*entry);
+			if( p.string().compare(0,prefix.string().size(),
 						    prefix.string()) == 0 ) {
-			    candidates.push_back(path("/") / path(*d) / entry->filename());
+			    candidates.push_back(path("/") / path(*d) / *entry);
 			}
 		    }
 		}
@@ -233,7 +233,7 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 			  << html::p::end;
 		s.out() << html::pre()
 			<< "http://" << domainName.value(s) 
-			<< "/reps/" << projhref(s,projdir) << "/.git"
+			<< "/reps/" << projhref(s,projdir.string()) << "/.git"
 			<< html::pre::end;
 		s.out() << html::p() << "The following prerequisites are "
 		    "necessary to build the project from source: ";

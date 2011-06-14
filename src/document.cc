@@ -134,11 +134,12 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
 	for( directory_iterator entry = directory_iterator(pathname); 
 	     entry != directory_iterator(); ++entry ) {
 	    boost::smatch m;
+	    path p = *entry;
 	    if( !is_directory(*entry) 
-		&& boost::regex_match(entry->string(),m,filematch) ) {	
+		&& boost::regex_match(p.string(),m,filematch) ) {	
 		boost::filesystem::ifstream infile;
 		s.openfile(infile,*entry);
-		walk(s,infile,entry->string());
+		walk(s,infile,p.string());
 		infile.close();
 	    }
 	}

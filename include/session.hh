@@ -34,6 +34,12 @@
 #include "webserve.hh"
 #include "slice.hh"
 
+#if BOOST_VERSION > 104600
+#define RAPIDXML     boost::property_tree::detail::rapidxml
+#else
+#define RAPIDXML     rapidxml
+#endif
+
 /**
    Session Manager.
 
@@ -180,7 +186,7 @@ protected:
 
     typedef std::map<boost::filesystem::path,slice<char> > textMap;
     typedef std::map<boost::filesystem::path,
-		      rapidxml::xml_document<>* > xmlMap;
+		      RAPIDXML::xml_document<>* > xmlMap;
 
     /** Set of all text files currently cached in memory. 
      */
@@ -291,7 +297,7 @@ public:
      */
     slice<char> loadtext( const boost::filesystem::path& p );
 
-    rapidxml::xml_document<> *loadxml( const boost::filesystem::path& p );
+    RAPIDXML::xml_document<> *loadxml( const boost::filesystem::path& p );
 
     /** \brief Value of a variable as an absolute pathname
 	

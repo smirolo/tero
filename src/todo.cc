@@ -163,11 +163,11 @@ void todocommentor::filters( const post& p ) {
     f_lock.lock();
     file.open(postname,std::ios_base::out | std::ios_base::app);
     if( file.fail() ) {
+	using namespace boost::system::errc;
 	f_lock.unlock();
-	boost::throw_exception(basic_filesystem_error<path>(
-	   std::string("unable to open file"),
-	   postname, 
-	   error_code()));
+	boost::throw_exception(boost::system::system_error(
+	   make_error_code(no_such_file_or_directory),
+	   postname.string()));
     }
 
     mailwriter writer(file);

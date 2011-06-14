@@ -132,9 +132,7 @@ void gitcmd::shellcmd( const std::string& cmdline )
     using namespace boost::filesystem;
     FILE *f = popen(cmdline.c_str(),"r");
     if( f == NULL ) {
-	throw basic_filesystem_error<path>(std::string("executing"),
-					   cmdline, 
-					   error_code());
+	throw system_error(1,system_category(),cmdline);
     }
     char line[256];
     while( fgets(line,sizeof(line),f) != NULL ) {
@@ -142,9 +140,7 @@ void gitcmd::shellcmd( const std::string& cmdline )
     }
     int err = pclose(f);
     if( err ) {
-	throw basic_filesystem_error<path>(std::string("exiting"),
-					   cmdline, 
-					   error_code());
+	throw system_error(err,system_category(),cmdline);
     }
 }
 

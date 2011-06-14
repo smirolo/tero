@@ -75,7 +75,7 @@ void feedAggregate( session& s,
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	if( is_directory(*entry) ) {	
-	    path trackname(dirname / entry->filename() / track);
+	    path trackname(dirname / *entry / track);
 	    dispatchDoc::instance()->fetch(s,varname,trackname);
 	}
     }
@@ -109,7 +109,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 	for( directory_iterator entry = directory_iterator(base); 
 	     entry != directory_iterator(); ++entry ) {
 	    boost::smatch m;	    
-	    path filename(base / entry->filename());
+	    path filename(base / *entry);
 	    if( is_regular_file(filename) 
 		&& boost::regex_search(filename.string(),
 				       m,boost::regex(filePat)) ) {

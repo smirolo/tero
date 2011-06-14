@@ -30,13 +30,12 @@ include $(makeHelperDir)/prefix.mk
 
 #bins 		:=	semilla
 bins 		:=	semilla smailui
-etcs		:=	semilla.conf
 libs		:=	libsemilla.a libpayproc.a
 # \todo documentation specific to the project is currently broken. 
 #       It needs to be written up anyway :).
 #shares		:=	semilla.pdf
 
-semillaConfFile		?=	/etc/semilla.conf
+semillaConfFile		?=	/etc/semilla/default.conf
 sessionDir		?=	/var/semilla
 
 #CPPFLAGS	+=	-DREADONLY
@@ -73,7 +72,7 @@ smailui: smailui.cc libsemilla.a \
 		-lboost_filesystem -lboost_system -lPocoNet
 	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
-semilla.conf: $(shell dws context)
+default.conf: $(shell dws context)
 	echo "binDir=/var/www/cgi-bin" > $@
 	echo "siteTop=/var/www" >> $@
 	echo "srcTop=/var/www/reps" >> $@
@@ -95,3 +94,7 @@ install:: $(wildcard $(srcDir)/data/themes/default/*)
 install:: $(srcDir)/src/semilla.pam
 	$(installDirs) $(etcDir)/pam.d
 	$(installFiles) $^ $(etcDir)/pam.d/$(basename $(notdir $^))
+
+install:: default.conf
+	$(installDirs) $(dirname $(semillaConfFile))
+	$(if $(findstring /etc/semilla,$(semillaConfFile)),$(installFiles) $< $(semillaConfFile))

@@ -38,7 +38,7 @@
 void logviewFetch( session& s, const boost::filesystem::path& pathname ) 
 {
 
-    using namespace rapidxml;
+    using namespace RAPIDXML;
     using namespace boost::filesystem;
 
     /* remove the '/log' command tag and add the project dependency info 
@@ -89,8 +89,8 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	for( directory_iterator entry = directory_iterator(dirname); 
 	     entry != directory_iterator(); ++entry ) {
 	    boost::smatch m;
-	    path filename(entry->filename());	
-	    if( boost::regex_search(entry->filename(),m,logPat) ) {
+	    path filename(*entry);	
+	    if( boost::regex_search(filename.string(),m,logPat) ) {
 		xml_document<> *doc = s.loadxml(*entry);
 		if ( doc ) {
 		    /* If there was an error loading the XML file, don't bother. */
@@ -196,13 +196,13 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 
 void regressionsFetch( session& s, const boost::filesystem::path& pathname )
 {
-    using namespace rapidxml;
+    using namespace RAPIDXML;
     using namespace boost::filesystem;
 
     boost::filesystem::path regressname
 	= siteTop.value(s) 
 	/ boost::filesystem::path("log/tests")
-	/ (document.value(s).parent_path().filename() 
+	/ (document.value(s).parent_path().filename().string()
 	   + std::string("-test/regression.log"));
 
     if( !boost::filesystem::exists(regressname) ) {

@@ -59,7 +59,7 @@ void embed( session& s, const std::string& value ) {
     std::ostream& prevDisp = s.out();
     try {
 	dispatchDoc::instance()->fetch(s,value);
-    } catch( const basic_filesystem_error<path>& e ) {
+    } catch( const std::runtime_error& e ) {
 	s.out(prevDisp);
 	++s.nErrs;
 	std::cerr << "[embed of '" << value << "'] " 

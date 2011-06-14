@@ -34,8 +34,8 @@ pathVariable commentTop("commentTop",
 			"root of the tree where comments are stored");
 sessionVariable recipient("commentRecipient",
 			  "e-mail address comments are sent to");
-urlVariable smtpDomain("smtpDomain",
-		       "domain to connect to in order to send comments");
+urlVariable smtpHost("smtpHost",
+		       "host to connect to in order to send comments");
 intVariable smtpPort("smtpPort",
 			 "port to connect to in order to send comments");
 sessionVariable smtpLogin("smtpLogin",
@@ -52,7 +52,7 @@ commentAddSessionVars( boost::program_options::options_description& opts,
     options_description localOptions("comments");
     localOptions.add(commentTop.option());
     localOptions.add(recipient.option());
-    localOptions.add(smtpDomain.option());
+    localOptions.add(smtpHost.option());
     localOptions.add(smtpPort.option());
     localOptions.add(smtpLogin.option());
     localOptions.add(smtpPassword.option());
@@ -115,7 +115,7 @@ void sendPostToSMTP::filters( const post& p ) {
     message.setContentType(const std::string& mediaType);
     message.setDate(const Poco::Timestamp& dateTime);
 #endif
-    Poco::Net::SMTPClientSession session(smtpDomain.value(*mySession).string(),
+    Poco::Net::SMTPClientSession session(smtpHost.value(*mySession).string(),
 					 smtpPort.value(*mySession));
     session.login(Poco::Net::SMTPClientSession::AUTH_LOGIN,
 		  smtpLogin.value(*mySession),smtpPassword.value(*mySession));
