@@ -221,7 +221,7 @@ void todoCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
     boost::filesystem::path 
 	dirname(boost::filesystem::exists(pathname) ? 
-		pathname : s.abspath(pathname.parent_path()));
+		pathname : pathname.parent_path());
     
 
     todoCreateFeedback fb(s.out());
@@ -297,7 +297,7 @@ void todoVoteSuccessFetch( session& s,
 #else    
     boost::filesystem::path 
 	asPath(boost::filesystem::exists(pathname) ? 
-	       pathname : s.abspath(pathname.parent_path()));
+	       pathname : pathname.parent_path());
 #endif
 
     /* The pathname is set to the *todoVote* action name when we get here

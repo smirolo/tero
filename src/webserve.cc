@@ -175,6 +175,11 @@ std::string url::string() const {
 }
 
 
+url url::operator/( const boost::filesystem::path& right ) const {
+    return url(protocol,host,port,pathname / right);
+}
+
+
 int fromHexDigit( char c ) {
     if( (c >= 'A') & (c <= 'F') ) return ((int)c - 'A') + 10;
     if( (c >= 'a') & (c <= 'f') ) return ((int)c - 'a') + 10;

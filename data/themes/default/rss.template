@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version='2.0'>
 <channel>
-	<title><!-- tmpl_var name='title' --></title>
-	<link>http://<!-- tmpl_name 'domainName' --></link>
-	<description><!-- tmpl_var name='title' --></description>
+	<title><!-- widget 'title' --></title>
+	<link>http://<!-- widget 'print' name='domainName' --></link>
+	<description><!-- widget 'title' --></description>
         <language>en-us</language>
 	<!--
 	<pubDate></pubDate>
 	<lastBuildDate></lastBuildDate>
 	-->
-	<!-- tmpl_var name='document' -->
+	<!-- widget 'document' -->
 </channel>
 </rss>

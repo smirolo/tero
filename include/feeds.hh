@@ -28,6 +28,7 @@
 
 #include "mail.hh"
 #include "post.hh"
+#include "decorator.hh"
 
 /* Feeds are used to bundle and present a set of posts together.
    The aggregate function is used to populate a feed from different

@@ -34,13 +34,34 @@
 
 void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
 {
-    /* We print the post directly onto s.out() and not pass it through
-       the s.feeds filter otherwise the post would be added twice (differently)
-       to the aggregated filter through feedContent(). Content for docbooks,
-       sources, etc. is free form so we have to modify the code here and not
-       in feedContent(). */
+    /* At first, we removed the usual code found in other top level feed 
+       functions.
+       ... feeds;
+       if( !s.feeds ) {
+           s.feeds = &feeds;
+       }
+       ...
+       if( s.feeds == &feeds ) {
+	   s.feeds->flush();
+	   s.feeds = NULL;
+       }
+
+      and wrote the posts directly on s.out(). This enabled to write both
+      free form (docbook, C++ source, etc.) documents and blog posts through
+      feedContent(). The issue then is that tags and other parsed attributes
+      were discareded. feedContent() only reads basic attributes and format
+      the content.
+    */
+
     /* Use contentHtmlWriter to avoid embeding duplicate "by... on..." */
-    contentHtmlwriter writer(s.out());
-    mailParser parser(boost::regex(".*\\.blog"),writer,true);
-    parser.fetch(s,s.abspath(pathname));
+    contentHtmlwriter feeds(s.out());
+    if( !s.feeds ) {
+	s.feeds = &feeds;
+    }
+    mailParser parser(boost::regex(".*\\.blog"),*s.feeds,true);
+    parser.fetch(s,pathname);
+    if( s.feeds == &feeds ) {
+	s.feeds->flush();
+	s.feeds = NULL;
+    }
 }

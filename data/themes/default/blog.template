@@ -5,38 +5,38 @@
 
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- tmpl_var name='title' --></title>
+<title><!-- widget 'title' --></title>
 <link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
 </head>
 
 <body>
   <div id="wrap">
-    <!-- tmpl_include name='header.template' -->
+    <!-- widget 'document' value='header.template' -->
 
   <div id="document">
     <table>
       <tr>
 	<td id="sidebar">
-	  <!-- tmpl_include name='topMenu.template' -->
+	  <!-- widget 'document' value='topMenu.template' -->
 	  <div class="MenuWidget">
 	    <h1>By Date</h1>
-	    <p><!-- tmpl_var name='dates' --></p>
+	    <p><!-- widget 'dates' --></p>
 	  </div>
 	  <div class="MenuWidget">
 	    <h1>By Tags</h1>	    
-	    <p><!-- tmpl_var name='tags' --></p>  
+	    <p><!-- widget 'tags' --></p>  
 	  </div>
 	</td>
 	<td id="entry">	  
 	  <div id="title">
-	    <h1><!-- tmpl_var name='title' -->	      
+	    <h1><!-- widget 'title' -->	      
 	      <a href="index.rss">
 		<img class="imgrss"
 		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
 	      </a>
 	    </h1>
 	  </div>	  
-	  <!-- tmpl_var name='document' -->	  
+	  <!-- widget 'document' -->	  
 	</td>
 
       </tr>
@@ -44,7 +44,7 @@
   </div>
   </div>
 
-  <!-- tmpl_include name='footer.template' -->
+  <!-- widget 'document' value='footer.template' -->
 
 </body>
 </html>

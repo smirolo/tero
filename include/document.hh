@@ -27,7 +27,6 @@
 #define guarddocument
 
 #include "session.hh"
-#include "decorator.hh"
 #include "markup.hh" 
 
 /**
@@ -35,6 +34,11 @@
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+// forward declaration
+template<typename charT, typename traitsT >
+class basicDecorator;
+typedef basicDecorator<char,std::char_traits<char> > decorator;
 
 
 /* When the dispatcher has found a matching pattern (and associated 
@@ -101,20 +105,13 @@ public:
 	return singleton;
     }
 
-    /** Invoke the callback associated with *varname* and the matching
-	pattern for the value associated to *varname* in the session *s*.
+    /** Invoke the callback associated with *widget* and the matching
+	pattern for *value*.
 	
 	This method returns true when a callback has been invoked.
     */
-    bool fetch( session& s, const std::string& varname );
-
-    /** Invoke the callback associated with *varname* and the matching
-	pattern for *pathname*.
-	
-	This method returns true when a callback has been invoked.
-    */
-    bool fetch( session& s, const std::string& varname,
-		const boost::filesystem::path& pathname );
+    bool fetch( session& s, 
+		const std::string& widget, const url& value );
 
     /** Returns the entry associated with *name* and those pattern
 	matches *value* or NULL if no entries could be found.
@@ -171,17 +168,21 @@ void metaLastTime( session& s, const boost::filesystem::path& pathname );
 void metaFileOwner( session& s, const boost::filesystem::path& pathname );
 
 
+/** Prints *pathname* on the session output.
+ */
+void metaValue( session& s, const boost::filesystem::path& pathname );
+
 /** Prints the content of *varname* or the relative url to *pathname*
     when *varname* cannot be found in the session.
- */
+*/
 template<const char *varname>
 void metaFetch( session& s, const boost::filesystem::path& pathname )
 {
     session::variables::const_iterator look = s.find(varname);
     if( s.found(look) ) {    
-	s.out() << look->second.value;
+       s.out() << look->second.value;
     } else {
-	s.out() << s.subdirpart(siteTop.value(s),pathname);
+       s.out() << s.subdirpart(siteTop.value(s),pathname);
     }
 }
 

@@ -27,6 +27,8 @@
 #include "todo.hh"
 #include "comments.hh"
 #include "rfc2822tok.hh"
+#include <Poco/Net/MailMessage.h>
+#include <Poco/Net/PartHandler.h>
 
 #ifndef CONFIG_FILE
 #error "CONFIG_FILE should be defined when compiling this file"
@@ -50,6 +52,38 @@ public:
 	return result;
     }
 
+};
+
+class DetachHandler : public Poco::Net::PartHandler {
+public:
+    session& s;
+
+    explicit DetachHandler( session& _s ) : s(_s) {}
+
+    virtual void handlePart(const Poco::Net::MessageHeader& header, std::istream& stream) {
+	std::cerr << "handlePart with Content-Disposition:" 
+		  << header["Content-Disposition"] << std::endl;
+	std::string value;
+	Poco::Net::NameValueCollection parameters;
+	header.splitParameters(header["Content-Disposition"],value,parameters);
+	std::cerr << "value:" << value << std::endl;
+	std::cerr << "parameters:" << std::endl;
+	for(Poco::Net::NameValueCollection::ConstIterator 
+		nv = parameters.begin(); nv != parameters.end(); ++nv ) {
+	    std::cerr << "\t(" << nv->first << "," << nv->second << ")" << std::endl;
+	}
+	if( value == "attachment" ) {
+	    std::cerr << "detach " << parameters["filename"] << "..." << std::endl;
+	    boost::filesystem::ofstream o;
+	    s.createfile(o,parameters["filename"]);	    
+	    std::string line;
+	    while( !stream.eof() ) {
+		std::getline(stream,line);
+		o << line << std::endl;		
+	    }	    
+	    o.close();
+	}
+    }
 };
 
 
@@ -78,18 +112,18 @@ int main( int argc, char *argv[] )
 	commentAddSessionVars(opts,visible);
 	s.restore(argc,argv,opts);
 
-	std::stringstream msg;
-#if 0
-	std::copy(std::istream_iterator<char>(std::cin),
-		  std::istream_iterator<char>(),
-		  std::ostream_iterator<char>(msg));
+#if 1
+	DetachHandler handler(s);
+	Poco::Net::MailMessage msg;
+	msg.read(std::cin,handler);
+
 #else
+	std::stringstream msg;
 	while( !std::cin.eof() ) {
 	    std::string line;
 	    std::getline(std::cin,line);
 	    msg << line << std::endl;
 	}
-#endif
 	commentAction action;
 	rfc2822Tokenizer tok(action);
 	tok.tokenize(msg.str().c_str(),msg.str().size());
@@ -101,9 +135,6 @@ int main( int argc, char *argv[] )
 	}
 	appendCommentToFile comments(s,commented);
 	comments.filters(action.unserialized());
-       
-#if 0
-	void textMeta<document>(s,filename);
 #endif
 
     } catch( std::exception& e ) {

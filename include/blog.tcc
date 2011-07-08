@@ -72,9 +72,13 @@ void blogInterval<cmp>::provide()
 
 #if 0
     std::cerr << "[blogInterval] provide:" << std::endl;
-    for( typename super::const_iterator f = super::first; 
-	 f != super::last; ++f ) {
-	std::cerr << f->time << " " << f->title << std::endl;
+    for( typename super::const_iterator f = super::posts.begin(); 
+	 f != super::posts.end(); ++f ) {	
+	std::cerr << f->time << ": " << f->tag << ": " << f->title;
+	if( c(*super::first,*f) && c(*f,*super::last) ) {
+	    std::cerr << " *";
+	}
+	std::cerr << std::endl;
     }
 #endif
 }
@@ -88,7 +92,16 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
     defaultWriter writer(s.out());    
     typename cmp::valueType lower, upper;
     try {
-	std::string firstName = boost::filesystem::basename(pathname);	
+	boost::smatch m;	    
+#if 0
+	std::string firstName = boost::filesystem::basename(pathname);
+#else
+	std::string firstName;
+	if( boost::regex_search(pathname.string(),m,
+				boost::regex(std::string(c.name) + "-(.*)")) ) {
+	    firstName = m.str(1);
+	}
+#endif			
 	lower = c.first(firstName);
 	upper = c.last(firstName);
     } catch( std::exception& e ) {
@@ -97,6 +110,7 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
     }
 #if 0
     std::cerr << "[blogByInterval] from " << lower.time << " to " << upper.time
+	      << "(from " << lower.tag << " to " << upper.tag << ")"
 	      << std::endl;
 #endif
     blogInterval<cmp> interval(&writer,lower,upper);
@@ -151,7 +165,6 @@ void bySet<cmp>::flush()
     time_facet* facet(new time_facet("%b %Y"));
     time_facet* linkfacet(new time_facet("%Y-%m-01"));    
 
-    cmp c;
     std::stringstream strm;
     strm.imbue(std::locale(strm.getloc(), linkfacet));
     ostr->imbue(std::locale(ostr->getloc(), facet));
@@ -160,8 +173,8 @@ void bySet<cmp>::flush()
     for( typename linkSet::const_iterator link = links.begin();
 	 link != links.end(); ++link ) {
 	strm.str("");
-	strm << "/" << root << "/" << c.name << "/" << link->first;       
-	*ostr << html::a().href(strm.str()) 
+	strm << "-" << link->first;
+	*ostr << html::a().href(root.string() + strm.str())
 		<< link->first << " (" << link->second << ")"
 		<< html::a::end << html::linebreak;
     }
@@ -174,7 +187,7 @@ void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
     boost::filesystem::path blogroot 
 	= s.root(s.abspath(pathname),"blog") / "blog";
 
-    bySet<cmp> count(s.out(),s.subdirpart(siteTop.value(s),blogroot));
+     bySet<cmp> count(s.out(),s.asUrl(blogroot));
     blogSplat<cmp> feeds(&count);
 
     if( !s.feeds ) {

@@ -4,32 +4,32 @@
                           http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- tmpl_var name='title' --></title>
+<title><!-- widget 'title' --></title>
 <link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
 </head>
 
 <body>
   <div id="wrap">
-    <!-- tmpl_include name='header.template' -->
+    <!-- widget 'document' value='header.template' -->
 
     <!-- middle -->
     <div id="document">
     <table>
       <tr>	
 	<td id="sidebar">
-	  <!-- tmpl_include name='topMenu.template' -->
+	  <!-- widget 'document' value='topMenu.template' -->
 	</td>
 
 	<td id="entry">
-	  <div id="title"><h1><!-- tmpl_var name='title' --></h1></div>
-	  <!-- tmpl_var name='document' -->
+	  <div id="title"><h1><!-- widget 'title' --></h1></div>
+	  <!-- widget 'document' -->
 	</td>
       </tr>
     </table>
   </div>
   </div>
 
-  <!-- tmpl_include name='footer.template' -->
+  <!-- widget 'document' value='footer.template' -->
 
 </body>
 </html>

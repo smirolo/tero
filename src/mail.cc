@@ -81,6 +81,7 @@ void mailAsPost::token( rfc2822Token token, const char *line,
 	    field = rfc2822Title;
 	} else {
 	    name = std::string(&line[first],last - first);
+	    name[0] = std::tolower(name[0]);
 	}
 	break;
     case rfc2822FieldBody: {

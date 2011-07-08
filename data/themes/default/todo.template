@@ -5,31 +5,31 @@
 
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- tmpl_var name='title' --></title>
+<title><!-- widget 'title' --></title>
 <link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
 </head>
 
 <body>
   <div id="wrap">
-    <!-- tmpl_include name='header.template' -->
+    <!-- widget 'document' value='header.template' -->
 
   <div id="document">
     <table>
       <tr>
 	<td id="sidebar">
-	  <!-- tmpl_include name='topMenu.template' -->
+	  <!-- widget 'document' value='topMenu.template' -->
 	</td>
 	<td id="entry">	  
 	  <div id="title">
-	    <h1><!-- tmpl_var name='title' -->	      
+	    <h1><!-- widget 'title' -->	      
 	      <a href="index.rss">
 		<img class="imgrss"
 		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
 	      </a>
 	    </h1>
 	  </div>
-	  <p><i>If you deeply care about a todo item, you have the opportunity to make a $1 contribution to it. The complete list of todo items is ordered by contributions and, of course, work always start with the begining of the list.</i></p><div id="paybutton"><!-- tmpl_var name='aws' --></div>
-	  <!-- tmpl_var name='document' -->
+	  <p><i>If you deeply care about a todo item, you have the opportunity to make a $1 contribution to it. The complete list of todo items is ordered by contributions and, of course, work always start with the begining of the list.</i></p><div id="paybutton"><!-- widget 'aws' --></div>
+	  <!-- widget 'document' -->
 	  <div>
 	    <form method="post" class="post" action="/todoComment">
 	      <fieldset>       
@@ -59,7 +59,7 @@
   </div>
   </div>
 
-  <!-- tmpl_include name='footer.template' -->
+  <!-- widget 'document' value='footer.template' -->
 
 </body>
 </html>

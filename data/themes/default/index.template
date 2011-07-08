@@ -4,23 +4,23 @@
                           http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- tmpl_var name='title' --></title>
+<title><!-- widget 'title' --></title>
 <link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
 </head>
 
 <body>
   <div id="wrap">
-    <!-- tmpl_include name='header.template' -->
+    <!-- widget 'document' value='header.template' -->
     
     <div id="document">
       <!-- live news feed -->	 
       <h2 class="whatTitle"><a href="/resources/index.rss"><img src="/resources/feed-icon-14x14.png" alt="RSS feed" title="RSS feed"/></a>&nbsp;What's new?</h2>      
-      <!-- tmpl_var name='feed' -->
+      <!-- widget 'feed' -->
     </div>
     
   </div>
   
-  <!-- tmpl_include name='footer.template' -->
+  <!-- widget 'document' value='footer.template' -->
 
 </body>
 </html>

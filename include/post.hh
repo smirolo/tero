@@ -409,7 +409,7 @@ struct orderByTag : public std::binary_function<vT, vT, bool> {
 };
 
 template<typename vT>
-const char* orderByTag<vT>::name = "Tags";
+const char* orderByTag<vT>::name = "tags";
 
 
 

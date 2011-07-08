@@ -23,61 +23,63 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/** Embed content associated to *variable* in the output stream.
 
-    Implementation note:
+/** Replace all <!-- widget ... --> statements in a template file
+    by the appropriate html.
 
-    *embed* is referenced from the template function *composeh* so a prototype 
-    has to be available before its implementation.
- */
-void embed( session& s, const std::string& variable );
+   Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+*/
 
-
-template<const char *layout>
+template<const char *layoutPtr>
 void compose( session& s, const boost::filesystem::path& pathname )
 {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem;
 
-    static const boost::regex tmplname("<!-- tmpl_name '(\\S+)' -->");
-    static const boost::regex tmplvar("<!-- tmpl_var name='(\\S+)' -->");
-    static const boost::regex tmplinc("<!-- tmpl_include name='(\\S+)' -->");
+    static const boost::regex tmpl("<!-- widget '(\\S+)'(\\s+name='(\\S+)')?(\\s+value='(\\S+)')? -->");
 
     ifstream strm;
-    path fixed(themeDir.value(s)
-	       / (std::string(layout) + ".template"));
-    s.openfile(strm,fixed.empty() ? pathname : fixed);
+    std::string layout(layoutPtr);
+    path fixed(themeDir.value(s) / (!layout.empty() ? (layout + ".template")
+				    : pathname.filename()));
 
+    s.openfile(strm,fixed);
     skipOverTags(s,strm);
     while( !strm.eof() ) {
 	smatch m;
 	std::string line;
 	bool found = false;
 	std::getline(strm,line);
-	if( regex_search(line,m,tmplname) ) {
-	    std::string varname = m.str(1);
-	    session::variables::const_iterator v = s.find(varname);
+	if( regex_search(line,m,tmpl) ) {
+	    std::string widget = m.str(1);
+	    std::string name = m.str(3);
+	    if( name.empty() ) name = widget;	    
+	    std::string value = m.str(5);
+	    if( value.empty() ) {
+		/* By default if a variable does not have a value, use the value
+		   of "document". */
+		session::variables::const_iterator look = s.find(name);
+		if( !s.found(look) ) {    
+		    s.insert(name,document.value(s).string());
+		    look = s.find(name);
+		}
+		value = look->second.value;
+	    }
+
+	    found = true;
 	    s.out() << m.prefix();
-	    if( s.found(v) ) {		
-		s.out() << v->second.value;		
-	    } else {
-		s.out() << varname << " not found!";
+	    std::ostream& prevDisp = s.out();
+	    try {
+		dispatchDoc::instance()->fetch(s,widget,url(value));
+	    } catch( const std::runtime_error& e ) {
+		s.out(prevDisp);
+		++s.nErrs;
+		std::cerr << "[embed of '" << value << "'] " 
+			  << e.what() << std::endl;	
+		s.out() << "<p>" << e.what() << "</p>" << std::endl;
 	    }
 	    s.out() << m.suffix() << std::endl;
-	    found = true;
-	}
-
-	if( regex_search(line,m,tmplvar) ) {
-	    found = true;
-	    s.out() << m.prefix();
-	    embed(s,m.str(1));					    
-	    s.out() << m.suffix() << std::endl;
-	} else if( regex_search(line,m,tmplinc) ) {
-	    path incpath((fixed.empty() ? pathname.parent_path() 
-			  : fixed.parent_path()) / m.str(1));
-	    dispatchDoc::instance()->fetch(s,"document",incpath.string());
-	    found = true;
 	}
 	if( !found ) {
 	    s.out() << line << std::endl;

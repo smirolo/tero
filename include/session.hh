@@ -121,9 +121,10 @@ public:
 /** name of the document (extended to commands) requested through 
     the positional argument on the executable command line.
 */
-extern pathVariable document;
+extern urlVariable document;
 extern urlVariable domainName;
 extern pathVariable siteTop;
+extern pathVariable cacheTop;
 extern timeVariable startTime;
 
 /** A session instance is used to store a set of (name,value) pairs
@@ -181,6 +182,9 @@ public:
     };
 
     typedef std::map<std::string,valT> variables;
+
+    typedef std::vector<boost::filesystem::path> inputfilesType;
+    inputfilesType inputfiles;
 
 protected:
 
@@ -314,6 +318,9 @@ public:
     boost::filesystem::path 
     abspath( const boost::filesystem::path& name ) const;
 
+    boost::filesystem::path 
+    abspath( const url& name ) const;
+
     session::variables::const_iterator find( const std::string name ) const {
 	return vars.find(name);
     }
@@ -345,6 +352,15 @@ public:
 	ostr = &o;
 	return *prev;
     }    
+
+    /** Remove all (name,value) pairs which were not set at the time
+	the session was restored from command-line, session file, etc.
+	Technically this functionality could be implemented by clearing
+	the set of variables and restoring the session passing the same
+	config arguments. This special-purpose implementation should
+	be much more efficient.
+     */
+    void reset();
 
     /** (name,value) will be stored into the session file and thus 
 	persistent accross execution. */
@@ -389,7 +405,7 @@ public:
 
     /** \brief Display debug information for the session
      */
-    void show( std::ostream& ostr );
+    void show( std::ostream& ostr ) const;
     
     /** Store session information into persistent storage 
      */
@@ -410,6 +426,18 @@ public:
     /* Returns the value of a variable as an absolute pathname. 
      */
     boost::filesystem::path valueAsPath( const std::string& name ) const;
+
+    /** returns a cached url href from an url *href*. The directory portion
+	of the *href* remains unchanged. A relative url will be converted
+	to an equivalent cached url. An absolute url will be converted to
+	an equivalent cached url.
+     */
+    url cacheName( const url& href ) const;
+
+    /** returns an absolute path from a relative or absolute url *href*.
+     */
+    boost::filesystem::path absCacheName( const url& link ) const;
+
 };
 
 

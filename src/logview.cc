@@ -82,8 +82,8 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	    }
 	}
     
-	path dirname(s.abspath(is_directory(pathname) ?
-			       pathname : siteTop.value(s) / "log"));
+	path dirname(is_directory(pathname) ?
+		     pathname : siteTop.value(s) / "log");
 
 	std::string logBase;
 	for( directory_iterator entry = directory_iterator(dirname); 
@@ -202,7 +202,7 @@ void regressionsFetch( session& s, const boost::filesystem::path& pathname )
     boost::filesystem::path regressname
 	= siteTop.value(s) 
 	/ boost::filesystem::path("log/tests")
-	/ (document.value(s).parent_path().filename().string()
+	/ (document.value(s).pathname.parent_path().filename().string()
 	   + std::string("-test/regression.log"));
 
     if( !boost::filesystem::exists(regressname) ) {

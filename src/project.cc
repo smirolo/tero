@@ -28,6 +28,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include "project.hh"
 #include "revsys.hh"
+#include "decorator.hh"
 
 /** Pages related to projects
 

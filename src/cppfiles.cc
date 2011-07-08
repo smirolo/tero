@@ -25,6 +25,7 @@
 
 #include "cppfiles.hh"
 #include "changelist.hh"
+#include "decorator.hh"
 
 void cppFetch( session& s, const boost::filesystem::path& pathname ) 
 {

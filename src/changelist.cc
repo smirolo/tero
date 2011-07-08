@@ -28,6 +28,7 @@
 #include "markup.hh"
 #include "project.hh"
 #include "revsys.hh"
+#include "decorator.hh"
 
 /** Pages related to changes
 

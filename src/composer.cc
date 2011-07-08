@@ -54,18 +54,3 @@ composerAddSessionVars( boost::program_options::options_description& opts,
 }
 
 
-void embed( session& s, const std::string& value ) {
-    using namespace boost::filesystem;
-    std::ostream& prevDisp = s.out();
-    try {
-	dispatchDoc::instance()->fetch(s,value);
-    } catch( const std::runtime_error& e ) {
-	s.out(prevDisp);
-	++s.nErrs;
-	std::cerr << "[embed of '" << value << "'] " 
-		  << e.what() << std::endl;	
-	s.out() << "<p>" << e.what() << "</p>" << std::endl;
-    }
-}
-
-

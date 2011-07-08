@@ -72,10 +72,11 @@ void feedAggregate( session& s,
 
     path dirname(pathname.parent_path());
     path track(pathname.filename());
+
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	if( is_directory(*entry) ) {	
-	    path trackname(dirname / *entry / track);
+	    url trackname(s.asUrl(*entry / track));
 	    dispatchDoc::instance()->fetch(s,varname,trackname);
 	}
     }
@@ -84,6 +85,9 @@ void feedAggregate( session& s,
 	s.feeds = NULL;
     }
 }
+
+/* \todo see next HACK! */
+void blogEntryFetch( session& s, const boost::filesystem::path& pathname );
 
 
 template<typename defaultWriter, const char* filePat>
@@ -104,12 +108,11 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
     }
 
     if( !base.empty() ) {
-	std::stringstream content;
-	std::ostream& prevDisp = s.out(content);
 	for( directory_iterator entry = directory_iterator(base); 
 	     entry != directory_iterator(); ++entry ) {
 	    boost::smatch m;	    
-	    path filename(base / *entry);
+	    path filename(*entry);
+	    url link(s.asUrl(*entry));
 	    if( is_regular_file(filename) 
 		&& boost::regex_search(filename.string(),
 				       m,boost::regex(filePat)) ) {
@@ -118,41 +121,51 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 		   page through a composer. In case there is no default 
 		   clause, we will pick-up which either information we 
 		   can from the filesystem. */
-		post p;
-		content.str("");
-		if( !dispatchDoc::instance()->fetch(s,"title",filename)) {
-		    content << s.asUrl(filename);
+		const fetchEntry* e 
+		    = dispatchDoc::instance()->select("document",filename.string());
+		if( e->callback == blogEntryFetch ) {
+		    /* \todo HACK! to insures *tags* are set correctly
+		       and non blog files are generated as posts. */
+		    dispatchDoc::instance()->fetch(s,"document",link);
+		} else {	       
+		    std::stringstream content;
+		    std::ostream& prevDisp = s.out(content);
+		    post p;
+		    content.str("");
+		    if( !dispatchDoc::instance()->fetch(s,"title",link)) {
+			content << s.asUrl(filename);
+		    }
+		    p.title = content.str();
+		    content.str("");
+		    if( !dispatchDoc::instance()->fetch(s,"author",link)) {
+			metaFileOwner(s,filename);
+		    }
+		    p.author = content.str();
+		    p.authorEmail = authorEmail.value(s);
+		    content.str("");
+		    if( !dispatchDoc::instance()->fetch(s,"date",link)) {
+			metaLastTime(s,filename);
+		    }
+		    try {
+			p.time = from_mbox_string(content.str());
+		    } catch( std::exception& e ) {
+			std::cerr << "unable to reconstruct time from \"" << content.str() << '"' << std::endl;
+		    }
+		    content.str("");
+		    /* \todo Be careful here, if there are no *.blog pattern
+		       but there is a /blog/.* pattern in the dispatch table,
+		       this will create an infinite loop that only stops when
+		       the system runs out of file descriptor. I am not sure
+		       how to avoid or pop an error for this case yet. */
+		    if( !dispatchDoc::instance()->fetch(s,"document",link)) {
+			content << s.asUrl(filename);
+		    }    
+		    p.content = content.str();		
+		    s.out(prevDisp);
+		    s.feeds->filters(p);
 		}
-		p.title = content.str();
-		content.str("");
-		if( !dispatchDoc::instance()->fetch(s,"author",filename)) {
-		    metaFileOwner(s,filename);
-		}
-		p.author = content.str();
-		p.authorEmail = authorEmail.value(s);
-		content.str("");
-		if( !dispatchDoc::instance()->fetch(s,"date",filename)) {
-		    metaLastTime(s,filename);
-		}
-		try {
-		    p.time = from_mbox_string(content.str());
-		} catch( std::exception& e ) {
-		    std::cerr << "unable to reconstruct time from \"" << content.str() << '"' << std::endl;
-		}
-		content.str("");
-		/* \todo Be careful here, if there are no *.blog pattern
-		   but there is a /blog/.* pattern in the dispatch table,
-		   this will create an infinite loop that only stops when
-		   the system runs out of file descriptor. I am not sure
-		   how to avoid or pop an error for this case yet. */
-		if( !dispatchDoc::instance()->fetch(s,"document",filename)) {
-		    content << s.asUrl(filename);
-		}    
-		p.content = content.str();		
-		s.feeds->filters(p);
 	    }
-	}
-	s.out(prevDisp);
+	}	
     }
 
     if( s.feeds == &writer ) {

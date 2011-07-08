@@ -160,7 +160,52 @@ void basicHtmlEscaper<charT,traitsT>::token( xmlEscToken token,
 
 template<typename charT, typename traitsT>
 typename basicLinkLight<charT,traitsT>::linkSet 
-basicLinkLight<charT,traitsT>::links;
+basicLinkLight<charT,traitsT>::allLinks;
+
+template<typename charT, typename traitsT>
+typename basicLinkLight<charT,traitsT>::linkSet 
+basicLinkLight<charT,traitsT>::currs;
+
+template<typename charT, typename traitsT>
+typename basicLinkLight<charT,traitsT>::linkSet 
+basicLinkLight<charT,traitsT>::nexts;
+
+
+template<typename charT, typename traitsT>
+typename basicLinkLight<charT,traitsT>::linkClass 
+basicLinkLight<charT,traitsT>::add( const url& u ) {
+#if 0
+    std::cerr << "consider " << u;
+#endif
+    if( u.host.empty() || u.host == domainName.value(*context).host ) {
+	url f = context->asUrl(context->abspath(u));
+	const fetchEntry* e = dispatchDoc::instance()->select("view",u.string());
+	if( e->behavior != always ) {
+	    if( allLinks.find(f) == allLinks.end() 
+		&& currs.find(f) == currs.end() ) {	
+		/* we have never seen that vertex before (i.e. white)
+		   so let's add it to the list of successors to process. */
+#if 0
+		std::cerr << ", add " << f;
+#endif
+		nexts.insert(f);
+	    }
+#if 0
+	    std::cerr << std::endl;
+#endif
+	    return localFileExists;
+	}
+#if 0
+	std::cerr << std::endl;
+#endif
+	return localLinkGenerated;		
+    }
+#if 0
+    std::cerr << std::endl;
+#endif
+    return remoteLink; 
+}
+
 
 template<typename charT, typename traitsT>   
 bool basicLinkLight<charT,traitsT>::decorate( const url& u )
@@ -168,17 +213,20 @@ bool basicLinkLight<charT,traitsT>::decorate( const url& u )
     super::nextBuf->sputc('"');
     super::nextBuf->sputn(u.string().c_str(),u.string().size());
     super::nextBuf->sputc('"');	
-    links.insert(u);
-    if( u.absolute() ) {
+
+    switch( add(u) ) {
+    case localFileExists:
+	break;
+    case localLinkGenerated: {
+	std::string absolute(" class=\"new\"");
+	super::nextBuf->sputn(absolute.c_str(),absolute.size());
+    } break;
+    case remoteLink: {
 	std::string absolute(" class=\"outside\"");
 	super::nextBuf->sputn(absolute.c_str(),absolute.size());
-    } else {
-	boost::filesystem::path f = context->abspath(u.pathname);
-	if( f.empty() ) {
-	    std::string absolute(" class=\"new\"");
-	    super::nextBuf->sputn(absolute.c_str(),absolute.size());
-	}
-    }    
+    } break;
+    }
+
     return false;
 }
 
@@ -225,6 +273,25 @@ bool absUrlDecoratorBase<charT,traitsT>::decorate( const url& u )
     super::nextBuf->sputc('"');
     super::nextBuf->sputn(a.string().c_str(),a.string().size());
     super::nextBuf->sputc('"');	
+    return false;
+}
+
+
+template<typename charT, typename traitsT>   
+bool cachedUrlBase<charT,traitsT>::decorate( const url& u )
+{
+    super::nextBuf->sputc('"');
+    switch( super::add(u) ) {
+    case super::localFileExists: {
+	url cached(super::context->cacheName(u));
+	super::nextBuf->sputn(cached.string().c_str(),cached.string().size());
+    } break;
+    default:
+	super::nextBuf->sputn(u.string().c_str(),u.string().size());
+	break;
+    }    
+    super::nextBuf->sputc('"');	
+
     return false;
 }
 

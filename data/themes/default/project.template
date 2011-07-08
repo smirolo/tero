@@ -4,51 +4,51 @@
                           http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- tmpl_var name='title' --></title>
+<title><!-- widget 'title' --></title>
 <link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
 </head>
 
 <body>
   <div id="wrap">
-    <!-- tmpl_include name='header.template' -->
+    <!-- widget 'document' value='header.template' -->
 
   <div id="document">
     <table>
       <tr>
 	<td id="sidebar">
-	  <!-- tmpl_include name='topMenu.template' -->
-	  <!-- tmpl_var name='projfiles' -->
+	  <!-- widget 'document' value='topMenu.template' -->
+	  <!-- widget 'projfiles' -->
 	</td>
 	<td id="entry">	  
 	  <div id="title">
-	    <h1><!-- tmpl_var name='title' -->
+	    <h1><!-- widget 'title' -->
 	      <a href="index.rss">
 		<img class="imgrss"
 		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
 	      </a>
 	    </h1>
 	  </div>
-	  <!-- tmpl_var name='document' -->
+	  <!-- widget 'document' -->
 	  <h1>History</h1>
 	  <table width="100%">
 	    <!-- <tr><th>date</th><th>author</th><th>title</th></tr> -->
-	    <!-- tmpl_var name='history' -->	      
+	    <!-- widget 'history' -->	      
 	  </table>
 	  <h1>Quality Results</h1>
 	  <p>The following sections present the up-to-date results for <a href="/reps/whitepapers/doc/quality.book">runtime tests and static code analyses</a>.</p>
 	  <h2>Regressions for runtime tests</h2>
 	  <p>Regression views tie a change in behavior to a specific source revision and or system. Regression views will thus be most useful to contributors investigating why a previously passing test started to fail.</p>
-	  <!-- tmpl_var name='regressions' -->
+	  <!-- widget 'regressions' -->
 	  <h2>Checkstyle reports</h2>
 	  <p>Checkstyle reports contain the result of static code analyses such as code conventions, compilation warnings, etc.</p>
-	  <!-- tmpl_var name='checkstyle' -->
+	  <!-- widget 'checkstyle' -->
 	</td>
       </tr>
     </table>
   </div>
   </div>
 
-  <!-- tmpl_include name='footer.template' -->
+  <!-- widget 'document' value='footer.template' -->
 
 </body>
 </html>

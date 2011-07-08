@@ -72,7 +72,7 @@ public:
 	if( u.absolute() ) ostr << u.protocol << ':';
 	if( !u.host.empty() ) ostr << "//" << u.host;
 	if( u.port > 0 ) ostr << ':' << u.port;
-	ostr << u.pathname;
+	ostr << u.pathname.string();
 	return ostr;
     }	
 
@@ -110,6 +110,8 @@ public:
     bool empty() const {
 	return string().empty();
     }
+
+    url operator/( const boost::filesystem::path& right ) const;
 
     std::string string() const;
 };

@@ -26,10 +26,10 @@
 # -*- Makefile -*-
 
 include $(shell dws context)
-include $(makeHelperDir)/prefix.mk
+include $(shareBuildDir)/dws/prefix.mk
 
-#bins 		:=	semilla
-bins 		:=	semilla smailui
+bins 		:=	semcache
+#bins 		:=	semilla semcache smailui
 libs		:=	libsemilla.a libpayproc.a
 # \todo documentation specific to the project is currently broken. 
 #       It needs to be written up anyway :).
@@ -59,11 +59,17 @@ libpayproc.a: $(libpayprocObjs)
 # This is not the case on Ubuntu lucid.
 LDFLAGS		+=	-ldl
 
-semilla: semilla.cc libsemilla.a libpayproc.a \
+semilla: semilla.cc semtable.o libsemilla.a libpayproc.a \
 		-lcryptopp -luriparser -lpam \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system -lPocoNet
-	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
+	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
+
+semcache: semcache.cc semtable.o libsemilla.a libpayproc.a \
+		-lcryptopp -luriparser -lpam \
+		-lboost_date_time -lboost_regex -lboost_program_options \
+		-lboost_filesystem -lboost_system -lPocoNet
+	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
 
 smailui: smailui.cc libsemilla.a \
@@ -80,7 +86,7 @@ default.conf: $(shell dws context)
 
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 
-include $(makeHelperDir)/suffix.mk
+include $(shareBuildDir)/dws/suffix.mk
 
 # the installation of this executable is special because we need
 # to dynamically change ownership in order to execute admin commands.

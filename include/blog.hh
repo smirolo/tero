@@ -92,11 +92,11 @@ protected:
 
     linkSet links;
     std::ostream *ostr;
-    boost::filesystem::path root;
+    url root;
 
 public:
-    bySet( std::ostream& o, const boost::filesystem::path& r ) 
-	: ostr(&o), root(r) {}
+    bySet( std::ostream& o, const url& r ) 
+	: ostr(&o), root(r / boost::filesystem::path(cmp::name)) {}
 
     virtual void filters( const post& p );
     

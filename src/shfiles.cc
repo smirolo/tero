@@ -25,6 +25,7 @@
 
 #include "shfiles.hh"
 #include "changelist.hh"
+#include "decorator.hh"
 
 void shFetch( session& s, const boost::filesystem::path& pathname ) 
 {

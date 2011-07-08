@@ -31,6 +31,7 @@
 #include "markup.hh"
 #include <sys/stat.h>
 #include <pwd.h>
+#include "decorator.hh"
 
 /** Base document functions
 
@@ -56,27 +57,19 @@ dispatchDoc::dispatchDoc( fetchEntry* e, size_t n )
 }
 
 
-bool dispatchDoc::fetch( session& s, const std::string& varname ) {
-    /* By default if a variable does not have a value, use the value
-       of "document". */
-    session::variables::const_iterator look = s.find(varname);
-    if( !s.found(look) ) {    
-	s.insert(varname,document.value(s).string());
-	look = s.find(varname);
-    }
-    return fetch(s,varname,look->second.value);
-}
-
-
 bool dispatchDoc::fetch( session& s, 
 			 const std::string& varname,
-			 const boost::filesystem::path& pathname ) {
-    const fetchEntry *doc = select(varname,pathname.string());
+			 const url& value ) {    
+    using namespace boost::filesystem;
+
+    const fetchEntry *doc = select(varname,value.string());
     if( doc != NULL ) {
-	boost::filesystem::path p(s.abspath(pathname));
+	path p(s.abspath(value));
 #if 0
 	std::cerr << "behavior: " << doc->behavior << " " << p << std::endl;
 #endif
+	path prev = current_path();
+	current_path(is_directory(p) ? p : p.parent_path());
 	switch( doc->behavior ) {
 	case whenFileExist:
 	    s.check(p);
@@ -84,10 +77,10 @@ bool dispatchDoc::fetch( session& s,
 	    doc->callback(s,p);
 	    break;
 	case whenNotCached:
-	    /* Not yet implemented. */
-	    std::cerr << "Not yet implemented" << std::endl;
+	    doc->callback(s,p);
 	    break;
 	}	
+	current_path(prev);
     }
     return ( doc != NULL );
 }
@@ -429,6 +422,12 @@ void metaLastTime( session& s, const boost::filesystem::path& pathname ) {
     s.insert("time",strm.str());
     s.out() << time;
 }
+
+void metaValue( session& s, const boost::filesystem::path& pathname )
+{
+    s.out() << pathname;
+}
+
 
 void metaFileOwner( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::filesystem;

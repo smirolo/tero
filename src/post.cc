@@ -26,6 +26,7 @@
 #include "mail.hh"
 #include "markup.hh"
 #include <boost/date_time/date_facet.hpp>
+#include "decorator.hh"
 
 /** Posts.
 

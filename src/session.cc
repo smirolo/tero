@@ -26,6 +26,7 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -39,9 +40,11 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-pathVariable document("view","document to be displayed");
+urlVariable document("view","document to be displayed");
 
 pathVariable siteTop("siteTop","root directory that contains the web site");
+
+pathVariable cacheTop("cacheTop","root directory that contains the cached pages");
 
 /* \todo Unless we communicate a callback to another site,
          we should be clean of requiring domainName... 
@@ -79,29 +82,28 @@ int intVariable::value( const session& s ) const
 
 boost::filesystem::path pathVariable::value( const session& s ) const
 {
-    using namespace boost::filesystem;
+    using namespace boost::filesystem;    
+    using namespace boost::system::errc;
 
-#if 0
-    path absolute = s.abspath(sessionVariable::value(s));
-#if 0
-    /* if we do that, we cannot generate dynamic pages. On the other
-     hand using sessionVariable instead of pathVariable for *document*
-     will not check it is an actual pathname. */
-    if( !boost::filesystem::exists(absolute) ) {
-	using namespace boost::system::errc;
-	boost::throw_exception(			       
-	  basic_filesystem_error<path>(std::string("path not found"),
-				absolute, 
-			       	make_error_code(no_such_file_or_directory)));
+    /* This code creates a lot of trouble with the matching dispatch patterns
+       as well as generating dynamic pages when *document* is a pathVariable
+       instead of an urlVariable. */
+    path pathname = sessionVariable::value(s);
+    if( pathname.is_complete() ) {
+	pathname = s.abspath(pathname);	   
+	if( !boost::filesystem::exists(pathname) ) {
+	    boost::throw_exception(boost::system::system_error(
+	      make_error_code(no_such_file_or_directory),pathname.string()));
+	}
+    } else {
+	std::stringstream msg;
+	msg << pathname << " is not an absolute path";
+	boost::throw_exception(boost::system::system_error(
+	    make_error_code(no_such_file_or_directory),msg.str()));
     }
-#endif
-    return absolute;
-#else
-    /* We cannot return an absolute path here, else it will mess up 
-       the dispatch pattern matcher. */
-    return sessionVariable::value(s);
-#endif
+    return pathname;
 }
+
 
 boost::posix_time::ptime timeVariable::value( const session& s ) const 
 {
@@ -134,12 +136,14 @@ session::addSessionVars( boost::program_options::options_description& all,
 	(sessionName.c_str(),value<std::string>(),"name of the session id variable (or cookie)");
     localOptions.add(domainName.option());
     localOptions.add(siteTop.option());
+    localOptions.add(cacheTop.option());
     all.add(localOptions);
     visible.add(localOptions);
 
     options_description hiddenOptions("hidden");
     hiddenOptions.add(startTime.option());
-    hiddenOptions.add(document.option());
+    hiddenOptions.add_options()
+	(document.name,value<std::vector<boost::filesystem::path> >(),"input files");
     all.add(hiddenOptions);
 }
 
@@ -309,9 +313,9 @@ boost::filesystem::path session::stateFilePath() const
 url session::asUrl( const boost::filesystem::path& p ) const
 {
     boost::filesystem::path name = p;
-    boost::filesystem::path siteTop = valueOf("siteTop");
-    if( prefix(siteTop,p) ) {
-	name = boost::filesystem::path("/") / subdirpart(siteTop,p);
+    if( prefix(siteTop.value(*this),p) ) {
+	name = boost::filesystem::path("/") 
+	    / subdirpart(siteTop.value(*this),p);
     }
     return url("","",name);
 }
@@ -353,6 +357,22 @@ void session::insert( const std::string& name, const std::string& value,
     }
 }
 
+
+void session::reset()
+{
+    typedef std::list<variables::iterator> eraseSet;
+
+    eraseSet erased;
+    for( variables::iterator  nv = vars.begin();
+	 nv != vars.end(); ++nv ) {
+	if( nv->second.source >= unknown ) {
+	    erased.push_back(nv);
+	}
+    }
+    for( eraseSet::const_iterator e = erased.begin(); e != erased.end(); ++e ) {
+	vars.erase(*e);
+    }
+}
 
 void session::state( const std::string& name, const std::string& value ) 
 {    
@@ -407,51 +427,62 @@ static std::string nullString("");
 
 
 const std::string& session::valueOf( const std::string& name ) const {
-    variables::const_iterator iter = vars.find(name);
-    if( iter == vars.end() ) {
-	return nullString;
-    }
-    return iter->second.value;
+    variables::const_iterator iter = find(name);
+    if( found(iter) ) {
+	return iter->second.value;
+    }	
+    return nullString;
 }
-
 
 boost::filesystem::path 
 session::abspath( const boost::filesystem::path& relative ) const {
     using namespace boost::filesystem;
 
-    /* In CGI mode, we interpret paths relative to siteTop,
-       otherwise in command-line mode, we use the usual convention
-       of paths relative to current directory. */
-    if( !runAsCGI() ) {
-	return relative.is_complete() ? relative : (current_path() / relative);
+    char rpath[FILENAME_MAX];
+    if( !relative.is_complete() ) {
+	/* If *relative* is not yet an absolute path, we prefix it 
+	   with the current directory which is assumed to exits. */
+	realpath(current_path().string().c_str(),rpath);
+	return path(rpath) / relative;
+    } else if( boost::filesystem::exists(relative) ) {
+	/* If *relative* is not already an exiting absolute path, 
+	   we return a realpath. session::subdir works with text
+	   strings and thus links have to resolved and pathnames
+	   normalized. */
+	realpath(relative.string().c_str(),rpath);
+	return path(rpath);
+    }
+    /* If *relative* is an absolute path with no physical existance
+       in the filesystem at this point, we return it "as is". */
+    return relative;
+}
+
+
+boost::filesystem::path 
+session::abspath( const url& relative ) const {
+    using namespace boost::filesystem;
+
+    path top(siteTop.value(*this));
+    if( relative.pathname.is_complete() ) {
+	return top / relative.pathname;
+    } else {
+	char rpath[FILENAME_MAX];
+	realpath(current_path().string().c_str(),rpath);
+	path docname = path(rpath) / relative.pathname;
+	if( docname.string().compare(0,top.string().size(),
+				     top.string()) != 0 ) {	
+	    using namespace boost::system::errc;
+	    std::stringstream msg;
+	    msg << docname << " is not inside " << top;
+	    boost::throw_exception(boost::system::system_error(
+	      make_error_code(no_such_file_or_directory),msg.str()));
+	}    	    
+	return docname;
     }
 
-    path fromSiteTop(valueOf("siteTop"));
-    if( fromSiteTop.empty() ) {
-	using namespace boost::system::errc;
-	boost::throw_exception(boost::system::system_error(
-	    make_error_code(no_such_file_or_directory),
-	    std::string("siteTop not found") + fromSiteTop.string()));
-    }
-    if( relative.string().compare(0,fromSiteTop.string().size(),
-				  fromSiteTop.string()) == 0 ) {
-	fromSiteTop = relative;
-    } else {
-	/* avoid to keep prepending siteTop in case the file does not exist.
-	 */
-	fromSiteTop /= relative;
-    }
-    
-    /* We used to throw an exception at this point. That does
-       not sit very well with dispatch::fetch() because
-       the value of a "document" might not be an actual file.
-       Since the relative path of "document" will initialy 
-       be derived from the web server request uri, it is 
-       the most appropriate to return the path from siteTop
-       in case the document could not be found.
-       \todo We have to return from srcTop because that is how
-       the website is configured for rss feeds. */
-    return fromSiteTop;
+    /* We should have returned an absolute path before getting here but gcc
+       might not believe us. */
+    return relative.pathname;
 }
 
 
@@ -478,7 +509,7 @@ void session::restore( int argc, char *argv[],
     }
 
     positional_options_description pd;     
-    pd.add(document.name, 1);
+    pd.add(document.name, -1);
 
     /* 1. The command-line arguments are added to the session. */
     {
@@ -488,12 +519,17 @@ void session::restore( int argc, char *argv[],
 	parser.positional(pd);    
 	boost::program_options::store(parser.run(),params);  
 	for( variables_map::const_iterator param = params.begin(); 
-	     param != params.end(); ++param ) {	    
-	    /* Without the strip(), there is a ' ' appended to the command
-	       line on Linux apache2. */
-	    std::string s = strip(param->second.as<std::string>());
-	    if( !s.empty() ) {
-		insert(param->first,s,cmdline);
+	     param != params.end(); ++param ) {
+	    if( param->first == document.name ) {
+		inputfiles = param->second.as<std::vector<boost::filesystem::path> >();
+		insert(document.name,inputfiles[0].string());
+	    } else {
+		/* Without the strip(), there is a ' ' appended to the command
+		   line on Linux apache2. */
+		std::string s = strip(param->second.as<std::string>());
+		if( !s.empty() ) {
+		    insert(param->first,s,cmdline);
+		}
 	    }
 	}
     }
@@ -559,6 +595,13 @@ void session::restore( int argc, char *argv[],
 	}
 	insert(document.name,docname + '/',source);
     }
+
+    if( valueOf(cacheTop.name).empty() ) {
+	/* does not use cacheTop.value(*this) in order to avoid throwing
+	   an exception. Use cmdline such that reset() does not remove it. */
+	insert(cacheTop.name,
+	       boost::filesystem::current_path().string(),cmdline);
+    }
 }
 
 
@@ -587,14 +630,14 @@ session::root( const boost::filesystem::path& leaf,
 }
 
 
-void session::show( std::ostream& ostr ) {
+void session::show( std::ostream& ostr ) const {
 
     static const char *sourceTypeNames[] = {
-	"unknown",
-	"queryenv",
 	"cmdline",
+	"configfile",
 	"sessionfile",
-	"configfile"
+	"queryenv",
+	"unknown"
     };
 
     if( exists() ) {
@@ -639,8 +682,34 @@ void session::remove() {
 
 
 boost::filesystem::path 
-session::subdirpart( const boost::filesystem::path& root,
-		     const boost::filesystem::path& leaf ) const {
+session::subdirpart( const boost::filesystem::path& rootp,
+		     const boost::filesystem::path& leafp ) const {
+    using namespace boost::filesystem;
+
+    char realp[FILENAME_MAX];
+    path root, leaf;
+    if( boost::filesystem::exists(rootp) ) {
+	realpath(rootp.string().c_str(),realp);
+	root = path(realp);
+    } else {
+	root = rootp;
+    }
+    if( boost::filesystem::exists(leafp) ) {
+	realpath(leafp.string().c_str(),realp);
+	if( boost::filesystem::is_directory(leafp) ) {
+	    /* realpath() will remove the trailing '/' on directory names.
+	       We need to keep it through if we want to generate accurate urls.
+	    */
+	    size_t len = strlen(realp);
+	    if( len + 1 < FILENAME_MAX ) {
+		realp[len] = '/';
+		realp[len + 1] = '\0';		
+	    }
+	}
+	leaf = path(realp);
+    } else {
+	leaf = leafp;
+    }
     if( leaf.string().compare(0,root.string().size(),root.string()) != 0 ) {
 	boost::throw_exception(std::runtime_error(root.string() 
 		+ " is not a prefix of " + leaf.string()));
@@ -660,4 +729,44 @@ session::valueAsPath( const std::string& name ) const {
     boost::filesystem::path absolute 
 	= abspath(boost::filesystem::path(iter->second.value));
     return absolute;
+}
+
+url 
+session::cacheName( const url& href ) const
+{
+    /* If we were to blindly add a .html extension to all cached url,
+       we could never generate cached versions of index.rss, etc.
+       We only append an .html extension to cached files which correspond
+       to regular files on the sites. If we were to mark generated
+       files such as index.rss as "always" in the dispatch table, we would
+       not generate them at all. They thus are marked as "whenNotCached"
+       and a late file exists test is done here. */
+    boost::filesystem::path name(href.pathname);
+    boost::filesystem::path result = name;
+    boost::filesystem::path absname = abspath(href);
+    if( boost::filesystem::is_directory(absname) ) {
+	result = name / "index.html";
+    } else if( boost::filesystem::is_regular_file(absname) ) {
+	std::set<boost::filesystem::path> softs;
+	softs.insert(".blog");
+	if( softs.find(name.extension()) != softs.end() ) {
+	    result.replace_extension(".html");
+	} else {
+	    result = name.string() + ".html";
+	}
+    } else if( name.extension().empty() ) {
+	/* need to add .html to "dates", "tags" but not index.rss. */
+	result = name.string() + ".html";
+    }
+    return url(href.protocol,href.host,href.port,result);
+}
+
+
+boost::filesystem::path 
+session::absCacheName( const url& href ) const
+{    
+    url cached = cacheName(url(href.protocol,href.host,href.port,
+		   boost::filesystem::path("/") 
+		   / subdirpart(siteTop.value(*this),abspath(href))));
+    return cacheTop.value(*this) / cached.pathname;
 }
