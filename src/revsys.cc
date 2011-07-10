@@ -441,7 +441,7 @@ void gitcmd::checkins( const session& s,
 	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
 	    title.str("");
 	    std::stringstream guid;
-	    guid << base << strip(line.substr(7)) << ".commit";
+	    guid << base.string() << strip(line.substr(7)) << ".commit";
 	    ci.guid = guid.str();
 
 	} else if ( line.compare(0,7,"Author:") == 0 ) {

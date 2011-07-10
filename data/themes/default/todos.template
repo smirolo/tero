@@ -11,13 +11,13 @@
 
 <body>
   <div id="wrap">
-    <!-- widget 'document' value='header.template' -->
+    <!-- widget 'template' value='header.template' -->
 
   <div id="document">
     <table class="document">
       <tr>
 	<td id="sidebar">
-	  <!-- widget 'document' value='topMenu.template' -->
+	  <!-- widget 'template' value='topMenu.template' -->
 	</td>
 	<td id="entry">	  
 	  <div id="title">
@@ -72,7 +72,7 @@
   </div>
   </div>
 
-  <!-- widget 'document' value='footer.template' -->
+  <!-- widget 'template' value='footer.template' -->
 
 </body>
 </html>

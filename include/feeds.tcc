@@ -59,7 +59,7 @@ void feedPage<feedBase>::provide() {
 }
 
 
-template<typename defaultWriter, const char* varname>
+template<typename defaultWriter, const char* varname, const char *filePat>
 void feedAggregate( session& s, 
 		    const boost::filesystem::path& pathname )
 {
@@ -69,17 +69,26 @@ void feedAggregate( session& s,
     if( !s.feeds ) {
 	s.feeds = &writer;
     }
-
     path dirname(pathname.parent_path());
     path track(pathname.filename());
 
+    bool subdirs = false;
     for( directory_iterator entry = directory_iterator(dirname); 
 	 entry != directory_iterator(); ++entry ) {
 	if( is_directory(*entry) ) {	
+	    subdirs = true;
 	    url trackname(s.asUrl(*entry / track));
-	    dispatchDoc::instance()->fetch(s,varname,trackname);
+	    dispatchDoc::instance()->fetch(s,varname,trackname);	    
 	}
     }
+#if 0
+    /* \todo fix tokenizers */
+    if( !subdirs ) {
+	/* \todo find out how to handle commit posts and blog posts
+	   without duplicates, picking the appropriate one. */
+	feedContent<defaultWriter,filePat>(s,dirname);
+    }
+#endif
     if( s.feeds == &writer ) {
 	s.feeds->flush();
 	s.feeds = NULL;
@@ -182,11 +191,11 @@ void feedLatestPosts( session& s,
     defaultWriter writer(s.out());
     feedOrdered<orderByTime<post> > latests(&writer);
     feedPage<feedOrdered<orderByTime<post> > > feeds(latests,5,0); 
-    if( !s.feeds ) {
+    if( !s.feeds ) {	
 	s.feeds = &feeds;
     }
 
-    feedAggregate<defaultWriter,varname>(s,pathname);
+    feedAggregate<defaultWriter,varname,allFilesPat>(s,pathname);
 
     if( s.feeds == &feeds ) {
 	s.feeds->flush();

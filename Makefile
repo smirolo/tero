@@ -28,7 +28,7 @@
 include $(shell dws context)
 include $(shareBuildDir)/dws/prefix.mk
 
-bins 		:=	semcache
+bins 		:=	semilla
 #bins 		:=	semilla semcache smailui
 libs		:=	libsemilla.a libpayproc.a
 # \todo documentation specific to the project is currently broken. 

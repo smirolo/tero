@@ -113,6 +113,8 @@ protected:
     void titleStart( session& s, const RAPIDXML::xml_node<>& node ) const;
     void trEnd( session& s, const RAPIDXML::xml_node<>& node ) const;
     void trStart( session& s, const RAPIDXML::xml_node<>& node ) const;
+    void xiincludeStart( session& s, const RAPIDXML::xml_node<>& node ) const;
+    void xiincludeEnd( session& s, const RAPIDXML::xml_node<>& node ) const;
     void xrefEnd( session& s, const RAPIDXML::xml_node<>& node ) const;
     void xrefStart( session& s, const RAPIDXML::xml_node<>& node ) const;
 

@@ -58,18 +58,25 @@ dispatchDoc::dispatchDoc( fetchEntry* e, size_t n )
 
 
 bool dispatchDoc::fetch( session& s, 
-			 const std::string& varname,
+			 const std::string& name,
 			 const url& value ) {    
     using namespace boost::filesystem;
 
-    const fetchEntry *doc = select(varname,value.string());
+    const fetchEntry *doc = select(name,value.string());
     if( doc != NULL ) {
 	path p(s.abspath(value));
-#if 0
+#if 0	
 	std::cerr << "behavior: " << doc->behavior << " " << p << std::endl;
 #endif
+	path dir = p;
 	path prev = current_path();
-	current_path(is_directory(p) ? p : p.parent_path());
+	while( !is_directory(dir) ) {
+	    /* boost is returning root/log as the parent path 
+	       for root/log/ (note the trailing backslash). 
+	       Of course it isn't what we expected here. */
+	    dir.remove_leaf();
+	}
+	current_path(dir);
 	switch( doc->behavior ) {
 	case whenFileExist:
 	    s.check(p);
@@ -418,9 +425,9 @@ void metaLastTime( session& s, const boost::filesystem::path& pathname ) {
     std::time_t lwt = last_write_time(pathname);
     boost::posix_time::ptime time = boost::posix_time::from_time_t(lwt);
     std::stringstream strm;
-    strm << time;
+    mbox_string(strm,time);
     s.insert("time",strm.str());
-    s.out() << time;
+    s.out() << strm.str();
 }
 
 void metaValue( session& s, const boost::filesystem::path& pathname )

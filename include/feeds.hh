@@ -136,7 +136,7 @@ public:
     We thus only initialized s.feeds to defaultWriter and later call 
     s.feeds.flush when it is null entering the function.
 */
-template<typename defaultWriter, const char* varname>
+template<typename defaultWriter, const char* varname, const char *filePat>
 void feedAggregate( session& s, const boost::filesystem::path& pathname );
 
 

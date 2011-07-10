@@ -61,7 +61,7 @@ changelistAddSessionVars( boost::program_options::options_description& all,
 url diffref::asUrl( const boost::filesystem::path& doc, 
 		       const std::string& rev ) const {
     std::stringstream hrefs;
-    hrefs << doc
+    hrefs << doc.string()
 	  << "/diff?right=" << rev; 
     return url(hrefs.str());
 }
@@ -69,7 +69,7 @@ url diffref::asUrl( const boost::filesystem::path& doc,
 url checkinref::asUrl( const boost::filesystem::path& doc, 
 		       const std::string& rev ) const {
     std::stringstream hrefs;
-    hrefs << doc
+    hrefs << doc.string()
 	  << "/checkin?revision=" << rev; 
     return  url(hrefs.str());
 }

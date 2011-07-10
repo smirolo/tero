@@ -134,6 +134,7 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
     using namespace RAPIDXML;
     using namespace boost::filesystem;
 
+    std::cerr << "[projindexFetch] " << pathname << std::endl;
     s.check(pathname);
 
     path projdir = pathname.parent_path().filename();
@@ -145,9 +146,11 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
     if( root != NULL ) {
 	xml_attribute<> *projname = NULL;
 	for( xml_node<> *project = root->first_node("project");
-	     project != NULL; project = project->next_sibling() ) {
+	     project != NULL; project = project->next_sibling("project") ) {
 
 	    projname = project->first_attribute("name");
+	    
+	    std::cerr << "projname=" << projname << std::endl;
 
 	    /* Description of the project */
 	    hrefLight dec(s);

@@ -744,6 +744,20 @@ public:
 };
 
 
+template<typename ch, typename tr>
+std::basic_ostream<ch, tr>&
+mbox_string( std::basic_ostream<ch, tr>& ostr, 
+	     const boost::posix_time::ptime& time ) {
+    using namespace boost::gregorian;
+    using namespace boost::posix_time;
+    
+    time_facet* facet(new time_facet(pubDate::format));
+    ostr.imbue(std::locale(ostr.getloc(), facet));
+    ostr << time;
+    return ostr;
+}
+
+
 /** Write a pathname *base* / *leaf* as an html href link in an output stream *ostr*. 
  */
 template<typename charT, typename traitsT>
@@ -753,7 +767,7 @@ writelink( std::basic_ostream<charT,traitsT>& ostr,
 	   const boost::filesystem::path& leaf,
 	   const std::string& ext = "" ) {    
     if( !ext.empty() ) {
-	ostr << html::a().href((base / (leaf.string() + ext)).string());
+	ostr << html::a().href((base / leaf).string() + ext);
     } else {
 	ostr << html::a().href((base / leaf).string());
     }

@@ -11,13 +11,13 @@
 
 <body>
   <div id="wrap">
-    <!-- widget 'document' value='header.template' -->
+    <!-- widget 'template' value='header.template' -->
     
   <div id="document">
     <table>
       <tr>
 	<td id="sidebar">
-	  <!-- widget 'document' value='topMenu.template' -->
+	  <!-- widget 'template' value='topMenu.template' -->
 
 	  <div class="MenuWidget">	    
 	    <h1>History<a href="index.rss">
@@ -40,7 +40,7 @@
   </div>
   </div>
 
-  <!-- widget 'document' value='footer.template' -->
+  <!-- widget 'template' value='footer.template' -->
 
 </body>
 </html>

@@ -74,6 +74,8 @@ void compose( session& s, const boost::filesystem::path& pathname )
 		dispatchDoc::instance()->fetch(s,widget,url(value));
 	    } catch( const std::runtime_error& e ) {
 		s.out(prevDisp);
+		s.feeds = NULL; /* ok here since those objects were
+				 allocated on the stack. */
 		++s.nErrs;
 		std::cerr << "[embed of '" << value << "'] " 
 			  << e.what() << std::endl;	

@@ -51,6 +51,7 @@ char todoExt[] = "todo";
 char corpExt[] = "corp";
 char rssExt[] = "rss";
 char blogExt[] = "blog";
+char blogIndex[] = "blogindex";
 char project[] = "project";
 char docPage[] = "document";
 char todos[] = "todos";
@@ -94,6 +95,9 @@ fetchEntry entries[] = {
        the stability of the whole as a release candidate. */
     { "document", boost::regex(".*/log/"), whenNotCached, logviewFetch },
 
+    /* need this for tero.template */
+    { "document", boost::regex(".*\\.template"), whenFileExist, formattedFetch },
+
     { "document", boost::regex(".*\\.c"), whenFileExist, cppFetch },
     { "document", boost::regex(".*\\.h"), whenFileExist, cppFetch },
     { "document", boost::regex(".*\\.cc"), whenFileExist, cppFetch },
@@ -125,7 +129,7 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*\\.git/index\\.rss"), always,
       feedRepository<rsswriter> },
     { "document", boost::regex(".*/index\\.rss"), always,
-      feedAggregate<rsswriter,docPage> },
+      feedLatestPosts<rsswriter,docPage> },
 
     { "document", boost::regex(std::string(".*") + active), always,
       todoIndexWriteHtmlFetch },
@@ -140,8 +144,11 @@ fetchEntry entries[] = {
       whenNotCached, blogByIntervalTags<docPage,blogPat> },
     { "document", boost::regex(".*/blog/archive-.*"), 
       whenNotCached, blogByIntervalDate<docPage,blogPat> },
-    { "document", boost::regex(".*/blog/.*"), 
+
+#if 0
+    { "document", boost::regex(".*/blog/"), 
       whenNotCached, feedLatestPosts<htmlwriter,docPage> },
+#endif
 
     /* contribution */
     { "document", boost::regex(".*contrib/"), always, contribIdxFetch },
@@ -159,16 +166,11 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*\\.book"), whenFileExist, docbookFetch },
     { "document", boost::regex(".*\\.corp"), whenFileExist, docbookFetch },
 
-    /* use always instead of whenFileExist here because the composer
-       is looking for template files into a themeDir and not the local
-       directory. */
-    { "document", boost::regex(".*\\.template"), always, compose<none> },
-
     { "document", boost::regex(".*"), whenFileExist, textFetch },
 
     /* homepage */
     { "feed", boost::regex(".*\\.git/index\\.feed"), always, feedRepository<htmlwriter> },
-    { "feed", boost::regex(".*/index\\.feed"), always, feedAggregate<htmlwriter,feed> },
+    { "feed", boost::regex(".*/index\\.feed"), always, feedLatestPosts<htmlwriter,feed> },
     { "feed", boost::regex("/"), always, htmlSiteAggregate<feed> },
 
     { "history", boost::regex(".*dws\\.xml"), always, feedRepository<htmlwriter> },
@@ -190,6 +192,13 @@ fetchEntry entries[] = {
     { "regressions", boost::regex(".*dws\\.xml"), whenFileExist, regressionsFetch },
 
     { "tags", boost::regex(".*/blog/.*"), whenNotCached, blogTagLinks<blogPat> },
+
+    /* use always instead of whenFileExist here because the composer
+       is looking for template files into a themeDir and not the local
+       directory. 
+       This is special, we cannot label them as 'document' nor 'view'
+       otherwise it creates infinite loops on feed fetches. */
+    { "template", boost::regex(".*\\.template"), always, compose<none> },
 
     /* Load title from the meta tags in a text file. */
     { "title", boost::regex(".*/log/"),   always, consMeta<buildView> },
@@ -250,6 +259,7 @@ fetchEntry entries[] = {
     { "view", boost::regex(std::string("/comments/create")), always, commentPage },
 
     /* blog presentation */ 
+    { "view", boost::regex(".*/blog/"), whenNotCached, compose<blogIndex> },
     { "view", boost::regex(".*/blog/.*"), whenNotCached, compose<blogExt> },
     
     /* Source code "document" files are syntax-highlighted 

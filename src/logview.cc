@@ -89,7 +89,8 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	for( directory_iterator entry = directory_iterator(dirname); 
 	     entry != directory_iterator(); ++entry ) {
 	    boost::smatch m;
-	    path filename(*entry);	
+	    path filename(*entry);
+	    filename = filename.filename();	
 	    if( boost::regex_search(filename.string(),m,logPat) ) {
 		xml_document<> *doc = s.loadxml(*entry);
 		if ( doc ) {
@@ -101,7 +102,7 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 			for( xml_node<> *project 
 				 = root->first_node("section");
 			     project != NULL; 
-			     project = project->next_sibling() ) {
+			     project = project->next_sibling("section") ) {
 			    xml_attribute<> *name 
 				= project->first_attribute("id");
 			    if( name != NULL ) {
@@ -152,7 +153,7 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
 	    s.out() << html::th() 
-		    << html::a().href(col->string())
+		    << html::a().href((boost::filesystem::path("/log") / *col).string())
 		    << *col << html::a::end << html::th::end;
 	}
 	s.out() << html::tr::end;
@@ -234,7 +235,7 @@ void regressionsFetch( session& s, const boost::filesystem::path& pathname )
 	
 	xml_node<> *ref = root->first_node("reference");
 	if( ref ) {
-	    for( ; ref != NULL; ref = ref->next_sibling() ) {
+	    for( ; ref != NULL; ref = ref->next_sibling("reference") ) {
 		xml_attribute<> *id = ref->first_attribute("id");
 		if( id != NULL ) {		
 		    s.out() << html::th() << id->value() << html::th::end;
@@ -251,7 +252,7 @@ void regressionsFetch( session& s, const boost::filesystem::path& pathname )
 
 	xml_node<>* cols[colmap.size() + 1];
 	for( xml_node<> *test = root->first_node("test");
-	     test != NULL; test = test->next_sibling() ) {
+	     test != NULL; test = test->next_sibling("test") ) {
 	    s.out() << html::tr();
 	    memset(cols,0,sizeof(cols));
 	    xml_attribute<> *name = test->first_attribute("name");

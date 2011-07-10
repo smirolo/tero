@@ -422,6 +422,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "volumenum", &docbook::any, &docbook::any },
     { "warning", &docbook::any, &docbook::any },
     { "wordasword", &docbook::any, &docbook::any },
+    { "xi:include", &docbook::xiincludeStart, &docbook::xiincludeEnd },
     { "xref", &docbook::xrefStart, &docbook::xrefEnd },
     { "year", &docbook::any, &docbook::any }
 };
@@ -464,23 +465,36 @@ void docbook::emphasisStart( session& s, const RAPIDXML::xml_node<>& node ) cons
 }
 
 void docbook::imagedataEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
-    if( !info ) {
-	s.out() << html::img::end;
-    }
 }
 
 void docbook::imagedataStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
 	RAPIDXML::xml_attribute<> *fileref = node.first_attribute("fileref");
 	RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
-	if( fileref != NULL ) {	
-	    if( role != NULL ) {
-		s.out() << html::img().src(url(fileref->value())).classref(role->value());
-	    } else {
-		s.out() << html::img().src(url(fileref->value()));
+	RAPIDXML::xml_attribute<> *format = node.first_attribute("format");
+	if( format != NULL && strncmp(format->value(),"SVG",3) == 0 ) {
+	    if( fileref != NULL ) {	
+		s.out() << "<embed src=\"" << fileref->value()
+			<< "\" type=\"image/svg+xml\""
+#if 0
+		    /* Potentially useful attributes: */
+ 			<< " width=\"300\" height=\"100\""
+			<< " pluginspage=\"http://www.adobe.com/svg/viewer/install/\" "
+#endif
+			<< " />" << std::endl;
 	    }
 	} else {
-	    s.out() << html::img();
+	    if( fileref != NULL ) {	
+		if( role != NULL ) {
+		    s.out() << html::img().src(url(fileref->value())).classref(role->value())
+			    << html::img::end;
+		} else {
+		    s.out() << html::img().src(url(fileref->value()))
+			    << html::img::end;
+		}
+	    } else {
+		s.out() << html::img() << html::img::end;
+	    }
 	}
     }
 }
@@ -706,12 +720,31 @@ void docbook::trStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     }
 }
 
+void 
+docbook::xiincludeEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
+    linkEnd(s,node);
+}
+
+
+void 
+docbook::xiincludeStart( session& s, const RAPIDXML::xml_node<>& node ) const {
+    if( !info ) {
+	s.out() << "<li>";
+	linkStart(s,node);
+	RAPIDXML::xml_attribute<> *href = node.first_attribute("xlink:href");
+	if( href != NULL ) {
+	    /* \todo load file title. */
+	}
+    }
+}
+
 
 void docbook::xrefEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
 	s.out() << html::a::end;
     }
 }
+
 
 void docbook::xrefStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
@@ -725,6 +758,7 @@ void docbook::xrefStart( session& s, const RAPIDXML::xml_node<>& node ) const {
 	}
     }
 }
+
 
 void docbook::walk( session& s, const RAPIDXML::xml_node<>& node ) const {
     using namespace RAPIDXML;
