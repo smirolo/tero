@@ -26,7 +26,7 @@
 # -*- Makefile -*-
 
 include $(shell dws context)
-include $(shareBuildDir)/dws/prefix.mk
+include $(buildTop)/share/dws/prefix.mk
 
 bins 		:=	semilla
 #bins 		:=	semilla semcache smailui
@@ -86,7 +86,7 @@ default.conf: $(shell dws context)
 
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 
-include $(shareBuildDir)/dws/suffix.mk
+include $(buildTop)/share/dws/suffix.mk
 
 # the installation of this executable is special because we need
 # to dynamically change ownership in order to execute admin commands.
