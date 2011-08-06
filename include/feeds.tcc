@@ -39,6 +39,17 @@ void feedOrdered<cmp>::provide()
 }
 
 
+template<typename cmp>
+void feedSelect<cmp>::filters( const post& p )
+{
+    cmp c;
+    typename cmp::keyType k = c.key(p);
+    if( matchKeys.find(k) != matchKeys.end() ) {
+        super::next->filters(p);
+    }
+}
+
+
 template<typename feedBase>
 const typename feedPage<feedBase>::difference_type 
 feedPage<feedBase>::maxLength = ~((int)1 << ((sizeof(int) << 3) - 1));

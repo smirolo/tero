@@ -116,6 +116,9 @@ void htmlwriter::filters( const post& p ) {
 
     /* caption for the post */
     *ostr << html::div().classref("postCaption");    
+	if( !p.title.empty() ) {
+		*ostr << html::h(1) << p.title << html::h(1).end() << std::endl;
+	}
     *ostr << "by " << html::a().href(std::string("mailto:") + p.authorEmail)
 	  << p.author << html::a::end
 	  << " on " << p.time;
@@ -182,4 +185,10 @@ void rsswriter::filters( const post& p ) {
     *ostr << guid() << p.guid << guid::end;
     *ostr << pubDate(p.time);
     *ostr << item::end;
+}
+
+
+void subjectWriter::filters( const post& p ) {
+    *ostr << html::a().href(p.guid) << p.title << html::a::end 
+		  << "<br/>" << std::endl;
 }

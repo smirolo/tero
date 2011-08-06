@@ -758,6 +758,30 @@ mbox_string( std::basic_ostream<ch, tr>& ostr,
 }
 
 
+/** insert a comma separated list stored as a string into a set of strings. 
+ */
+template<typename charIter, typename outIter>
+outIter insertItems( charIter first, charIter last, outIter outs ) {
+	charIter base = first;
+	while( first != last ) {
+	    if( *first == ',' ) {
+			std::string s = strip(std::string(base,first - base));
+			if( !s.empty() ) {
+				*outs++ = s;
+			}
+			base = first;
+			++base;
+	    }
+	    ++first;
+	}
+	std::string s = strip(std::string(base,first - base));
+	if( !s.empty() ) {
+		*outs++ = s;
+	}
+	return outs;
+}
+
+
 /** Write a pathname *base* / *leaf* as an html href link in an output stream *ostr*. 
  */
 template<typename charT, typename traitsT>

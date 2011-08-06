@@ -116,11 +116,12 @@ void blogDateLinks( session& s, const boost::filesystem::path& pathname );
 template<const char *filePat>
 void blogTagLinks( session& s, const boost::filesystem::path& pathname );
 
+template<const char *filePat>
+void blogRelatedSubjects( session& s, const boost::filesystem::path& pathname );
 
-/**
-class blogEntry : public feedWriter {
-*/
 void blogEntryFetch( session& s, const boost::filesystem::path& pathname );
+
+void blogByIntervalTitle( session& s, const boost::filesystem::path& pathname );
 
 #include "blog.tcc"
 

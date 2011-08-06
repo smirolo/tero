@@ -309,6 +309,17 @@ public:
 };
 
 
+/** Write the post subject
+ */
+class subjectWriter : public ostreamWriter {
+public:
+	explicit subjectWriter( std::ostream& o ) 
+		: ostreamWriter(o) {}
+
+    virtual void filters( const post& );
+};
+
+
 
 /** Comparaison functor based on a post's score.
  */

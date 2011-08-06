@@ -48,6 +48,16 @@ void feedIndex::flush()
 }
 #endif
 
+void feedCompact::filters( const post& p )
+{
+	if( !prevInit || p.guid != prev ) {
+		super::next->filters(p);
+		prevInit = true;
+		prev = p.guid;
+	}
+}
+
+
 
 void summarize::filters( const post& v )
 {

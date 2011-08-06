@@ -63,6 +63,40 @@ public:
 };
 
 
+/** Select a subset of posts. */
+template<typename cmp>
+class feedSelect : public passThruFilter {
+public:
+    typedef passThruFilter super;
+    typedef std::set<typename cmp::keyType> matchKeySet;
+    matchKeySet matchKeys;
+
+public:
+    feedSelect() {}
+    explicit feedSelect( const matchKeySet& keys ) : matchKeys(keys) {}
+    feedSelect( postFilter *n, const matchKeySet& keys )
+        : super(n), matchKeys(keys) {}
+
+    virtual void filters( const post& );  
+};
+
+
+/** Compact consecutive posts that share the same guid.
+ */
+class feedCompact : public passThruFilter {
+public:
+    typedef passThruFilter super;
+	std::string prev;
+	bool prevInit;
+
+public:
+    feedCompact() : prevInit(false) {}
+    explicit feedCompact( postFilter *n ) : super(n), prevInit(false) {}
+
+    virtual void filters( const post& );  
+};
+
+
 /** feedPage is a filter decorator that constraint the flush of its 
     parent class filter (feedBase) to a single page of posts.
 */

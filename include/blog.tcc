@@ -35,13 +35,13 @@ void blogSplat<cmp>::filters( const post& v ) {
 	size_t first = 0, last = 0;
 	while( last != tags->second.size() ) {
 	    if( tags->second[last] == ',' ) {
-		std::string s 
-		    = strip(tags->second.substr(first,last-first));
-		if( !s.empty() ) {
-		    p.tag = s;
-		    next->filters(p);
-		}
-		first = last + 1;
+			std::string s 
+				= strip(tags->second.substr(first,last-first));
+			if( !s.empty() ) {
+				p.tag = s;
+				next->filters(p);
+			}
+			first = last + 1;
 	    }
 	    ++last;
 	}
@@ -52,7 +52,7 @@ void blogSplat<cmp>::filters( const post& v ) {
 	    next->filters(p);
 	}
     } else {
-	next->filters(p);
+		next->filters(p);
     }
 }
 
@@ -92,21 +92,21 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
     defaultWriter writer(s.out());    
     typename cmp::valueType lower, upper;
     try {
-	boost::smatch m;	    
+		boost::smatch m;	    
 #if 0
-	std::string firstName = boost::filesystem::basename(pathname);
+		std::string firstName = boost::filesystem::basename(pathname);
 #else
-	std::string firstName;
-	if( boost::regex_search(pathname.string(),m,
-				boost::regex(std::string(c.name) + "-(.*)")) ) {
-	    firstName = m.str(1);
-	}
+		std::string firstName;
+		if( boost::regex_search(pathname.string(),m,
+								boost::regex(std::string(c.name) + "-(.*)")) ) {
+			firstName = m.str(1);
+		}
 #endif			
-	lower = c.first(firstName);
-	upper = c.last(firstName);
+		lower = c.first(firstName);
+		upper = c.last(firstName);
     } catch( std::exception& e ) {
-	lower = c.first();
-	upper = c.last();
+		lower = c.first();
+		upper = c.last();
     }
 #if 0
     std::cerr << "[blogByInterval] from " << lower.time << " to " << upper.time
@@ -116,14 +116,14 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
     blogInterval<cmp> interval(&writer,lower,upper);
     blogSplat<cmp> feeds(&interval);
     if( !s.feeds ) {
-	s.feeds = &feeds;
+		s.feeds = &feeds;
     }
     
     feedContent<defaultWriter,filePat>(s,pathname);
 
     if( s.feeds == &feeds ) {
-	s.feeds->flush();
-	s.feeds = NULL;
+		s.feeds->flush();
+		s.feeds = NULL;
     }
 }
 
@@ -217,5 +217,77 @@ void blogTagLinks( session& s, const boost::filesystem::path& pathname ) {
     blogSetLinksFetch<orderByTag<post>,filePat>(s,pathname);
 }
 
+
+template<const char *filePat>
+void blogRelatedSubjects( session& s, const boost::filesystem::path& pathname )
+{
+	using namespace boost::filesystem;
+
+    boost::filesystem::path blogroot 
+	= s.root(s.abspath(pathname),"blog") / "blog";
+
+	boost::filesystem::path related = pathname;
+	if( !is_regular_file(pathname) ) {
+		/* If *pathname* is not a regular file, we will build a list 
+		   of posts related to the most recent post. */
+		bool firstTime = true;
+		boost::posix_time::ptime mostRecent;
+		for( directory_iterator entry = directory_iterator(blogroot); 
+			 entry != directory_iterator(); ++entry ) {
+			boost::smatch m;	    
+			path filename(*entry);
+			if( is_regular_file(filename) 
+				&& boost::regex_search(filename.string(),
+									   m,boost::regex(filePat)) ) {
+				boost::posix_time::ptime time 
+					= boost::posix_time::from_time_t(last_write_time(filename));
+				if( firstTime || time > mostRecent ) {
+					mostRecent = time;
+					related = filename;
+					firstTime = false;
+				}
+			}
+		}
+	}
+
+    slice<char> text = s.loadtext(related);
+    mailAsPost listener;
+    rfc2822Tokenizer tok(listener);
+    tok.tokenize(text.begin(),text.size());
+    post p = listener.unserialized();
+
+    typename feedSelect<orderByTag<post> >::matchKeySet tags;
+	insertItems(p.moreHeaders["tags"].begin().base(),
+				p.moreHeaders["tags"].end().base(),
+				std::inserter(tags,tags.begin()));
+
+#if 0
+	std::cerr << "tags=" << std::endl;
+	for( typename feedSelect<orderByTag<post> >::matchKeySet::const_iterator 
+			 mki = tags.begin(); mki != tags.end(); ++mki ) {
+		std::cerr << "\t" << *mki << std::endl;
+	}
+#endif
+
+    subjectWriter writer(s.out());
+	feedCompact distincts(&writer);
+    feedSelect<orderByTag<post> > selects(&distincts,tags);
+	blogSplat<orderByTag<post> > feeds(&selects);
+
+    if( !s.feeds ) {
+        s.feeds = &feeds;
+    }
+
+    /* workaround Ubuntu/gcc-4.4.3 is not happy with boost::regex(filePat) 
+       passed as parameter to parser. */
+    boost::regex pat(filePat);
+    mailParser parser(pat,*s.feeds,false);
+    parser.fetch(s,blogroot);
+
+    if( s.feeds == &feeds ) {
+        s.feeds->flush();
+        s.feeds = NULL;
+    }
+}
 
 

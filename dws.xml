@@ -36,10 +36,10 @@
 	<default>comments</default>
       </pathname>
       <dep name="build-essential">
-	<bin>g++</bin>
+		<bin>g++</bin>
       </dep>
       <dep name="git-core">
-	<bin>git</bin>
+		<bin>git</bin>
       </dep>      
       <dep name="drop">
 	<bin>dws</bin>

@@ -303,12 +303,12 @@ projfiles::addDir( session& s, const boost::filesystem::path& dir ) const {
     }
     if( boost::filesystem::exists(dir / std::string("dws.xml")) ) {
 	s.out() << html::a().href(href) 
-		  << html::h(2)
-		  << dir.leaf() 
-		  << html::h(2).end()
-		  << html::a::end;
+			<< html::h(2)
+			<< dir.leaf().string()
+			<< html::h(2).end()
+			<< html::a::end;
     } else {
-	s.out() << html::h(2) << dir.leaf() << html::h(2).end();
+		s.out() << html::h(2) << dir.leaf() << html::h(2).end();
     }
     s.out() << html::p();
 }
@@ -322,8 +322,8 @@ projfiles::addFile( session& s, const boost::filesystem::path& file ) const {
 	state = toplevelFiles;
     }
     s.out() << html::a().href(s.asUrl(file).string()) 
-	      << file.leaf() 
-	      << html::a::end << "<br />" << std::endl;
+			<< file.leaf().string()
+			<< html::a::end << "<br />" << std::endl;
 }
 
 

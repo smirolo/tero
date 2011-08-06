@@ -729,12 +729,21 @@ docbook::xiincludeEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
 void 
 docbook::xiincludeStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << "<li>";
-	linkStart(s,node);
-	RAPIDXML::xml_attribute<> *href = node.first_attribute("xlink:href");
-	if( href != NULL ) {
-	    /* \todo load file title. */
-	}
+		s.out() << "<li>";
+		linkStart(s,node);
+		RAPIDXML::xml_attribute<> *href = node.first_attribute("xlink:href");
+		if( href != NULL ) {
+			/* \todo load file title. */
+			RAPIDXML::xml_document<> *doc = s.loadxml(s.abspath(href->value()));
+			if( !doc ) return;
+			RAPIDXML::xml_node<> *section = doc->first_node();
+			if( !section ) return;
+			RAPIDXML::xml_node<> *info = section->first_node("info");
+			if( !info ) return;
+			RAPIDXML::xml_node<> *title = info->first_node("title");
+			if( !title ) return;
+			s.out() << title->value();
+		}
     }
 }
 

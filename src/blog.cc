@@ -25,11 +25,23 @@
 
 #include "blog.hh"
 #include "mail.hh"
+#include <boost/regex.hpp>
 
 /** Pages related to blog posts.
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+void blogByIntervalTitle( session& s, const boost::filesystem::path& pathname )
+{
+	using namespace boost;
+
+	smatch m;
+	if( regex_search(pathname.string(),m,boost::regex(".*-(\\w+)$")) ) {
+	    std::string name = m.str(1);
+		s.out() << "Posts for " << name << std::endl;
+	}
+}
 
 
 void blogEntryFetch( session& s, const boost::filesystem::path& pathname )

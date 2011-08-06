@@ -216,14 +216,14 @@ bool basicLinkLight<charT,traitsT>::decorate( const url& u )
 
     switch( add(u) ) {
     case localFileExists:
-	break;
+		break;
     case localLinkGenerated: {
-	std::string absolute(" class=\"new\"");
-	super::nextBuf->sputn(absolute.c_str(),absolute.size());
+		std::string absolute(" class=\"new\"");
+		super::nextBuf->sputn(absolute.c_str(),absolute.size());
     } break;
     case remoteLink: {
-	std::string absolute(" class=\"outside\"");
-	super::nextBuf->sputn(absolute.c_str(),absolute.size());
+		std::string absolute(" class=\"outside\"");
+		super::nextBuf->sputn(absolute.c_str(),absolute.size());
     } break;
     }
 

@@ -191,6 +191,7 @@ fetchEntry entries[] = {
        a project "view". */
     { "regressions", boost::regex(".*dws\\.xml"), whenFileExist, regressionsFetch },
 
+    { "relates", boost::regex(".*/blog/.*"), whenNotCached, blogRelatedSubjects<blogPat> },
     { "tags", boost::regex(".*/blog/.*"), whenNotCached, blogTagLinks<blogPat> },
 
     /* use always instead of whenFileExist here because the composer
@@ -203,6 +204,8 @@ fetchEntry entries[] = {
     /* Load title from the meta tags in a text file. */
     { "title", boost::regex(".*/log/"),   always, consMeta<buildView> },
     { "title", boost::regex(".*\\.blog"), whenFileExist, textMeta<title> },
+    { "title", boost::regex(".*/blog/tags-.*"), 
+      whenNotCached, blogByIntervalTitle },
     { "title", boost::regex(".*\\.book"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.corp"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.todo"), whenFileExist, todoMeta },
