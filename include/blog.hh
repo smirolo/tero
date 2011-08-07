@@ -121,6 +121,10 @@ void blogRelatedSubjects( session& s, const boost::filesystem::path& pathname );
 
 void blogEntryFetch( session& s, const boost::filesystem::path& pathname );
 
+void mostRecentBlogFetch( session& s, const boost::filesystem::path& pathname );
+
+void mostRecentBlogTitle( session& s, const boost::filesystem::path& pathname );
+
 void blogByIntervalTitle( session& s, const boost::filesystem::path& pathname );
 
 #include "blog.tcc"

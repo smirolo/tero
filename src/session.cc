@@ -745,18 +745,19 @@ session::cacheName( const url& href ) const
     boost::filesystem::path result = name;
     boost::filesystem::path absname = abspath(href);
     if( boost::filesystem::is_directory(absname) ) {
-	result = name / "index.html";
+		result = name / "index.html";
     } else if( boost::filesystem::is_regular_file(absname) ) {
-	std::set<boost::filesystem::path> softs;
-	softs.insert(".blog");
-	if( softs.find(name.extension()) != softs.end() ) {
-	    result.replace_extension(".html");
-	} else {
-	    result = name.string() + ".html";
-	}
+		std::set<boost::filesystem::path> softs;
+		softs.insert(".blog");
+		softs.insert(".corp");
+		if( softs.find(name.extension()) != softs.end() ) {
+			result.replace_extension(".html");
+		} else {
+			result = name.string() + ".html";
+		}
     } else if( name.extension().empty() ) {
-	/* need to add .html to "dates", "tags" but not index.rss. */
-	result = name.string() + ".html";
+		/* need to add .html to "dates", "tags" but not index.rss. */
+		result = name.string() + ".html";
     }
     return url(href.protocol,href.host,href.port,result);
 }

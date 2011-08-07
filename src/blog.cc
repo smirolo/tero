@@ -32,6 +32,40 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+
+const boost::filesystem::path
+mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
+{
+	using namespace boost::filesystem;
+
+    boost::filesystem::path blogroot 
+	= s.root(s.abspath(pathname),"blog") / "blog";
+
+	boost::filesystem::path related = pathname;
+	/* If *pathname* is not a regular file, we will build a list 
+	   of posts related to the most recent post. */
+	bool firstTime = true;
+	boost::posix_time::ptime mostRecent;
+	for( directory_iterator entry = directory_iterator(blogroot); 
+		 entry != directory_iterator(); ++entry ) {
+		boost::smatch m;	    
+		path filename(*entry);
+		if( is_regular_file(filename) 
+			&& boost::regex_search(filename.string(),
+								   m,boost::regex(".*\\.blog")) ) {
+			boost::posix_time::ptime time 
+				= boost::posix_time::from_time_t(last_write_time(filename));
+			if( firstTime || time > mostRecent ) {
+				mostRecent = time;
+				related = filename;
+				firstTime = false;
+			}
+		}
+	}
+	return related;
+}
+
+
 void blogByIntervalTitle( session& s, const boost::filesystem::path& pathname )
 {
 	using namespace boost;
@@ -76,4 +110,23 @@ void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
 	s.feeds->flush();
 	s.feeds = NULL;
     }
+}
+
+void mostRecentBlogTitle( session& s, const boost::filesystem::path& pathname )
+{
+	boost::filesystem::path entry = mostRecentBlogEntry(s,pathname);
+
+    slice<char> text = s.loadtext(entry);
+    mailAsPost listener;
+    rfc2822Tokenizer tok(listener);
+    tok.tokenize(text.begin(),text.size());
+    post p = listener.unserialized();
+
+	s.out() << p.title;
+}
+
+
+void mostRecentBlogFetch( session& s, const boost::filesystem::path& pathname )
+{
+	blogEntryFetch(s,mostRecentBlogEntry(s,pathname));
 }

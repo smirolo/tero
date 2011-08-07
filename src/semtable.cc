@@ -144,11 +144,7 @@ fetchEntry entries[] = {
       whenNotCached, blogByIntervalTags<docPage,blogPat> },
     { "document", boost::regex(".*/blog/archive-.*"), 
       whenNotCached, blogByIntervalDate<docPage,blogPat> },
-
-#if 0
-    { "document", boost::regex(".*/blog/"), 
-      whenNotCached, feedLatestPosts<htmlwriter,docPage> },
-#endif
+    { "document", boost::regex(".*/blog/"), whenNotCached, mostRecentBlogFetch},
 
     /* contribution */
     { "document", boost::regex(".*contrib/"), always, contribIdxFetch },
@@ -206,6 +202,7 @@ fetchEntry entries[] = {
     { "title", boost::regex(".*\\.blog"), whenFileExist, textMeta<title> },
     { "title", boost::regex(".*/blog/tags-.*"), 
       whenNotCached, blogByIntervalTitle },
+    { "title", boost::regex(".*/blog/"), whenNotCached, mostRecentBlogTitle },
     { "title", boost::regex(".*\\.book"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.corp"), whenFileExist, docbookMeta },
     { "title", boost::regex(".*\\.todo"), whenFileExist, todoMeta },
@@ -235,7 +232,8 @@ fetchEntry entries[] = {
 #if 0
     { "view", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
 #endif
-    { "view", boost::regex(".*\\.corp"), whenFileExist, compose<corpExt> },
+	/* \todo we avoid to generate caches on the header menus for now. */
+    { "view", boost::regex(".*\\.corp"), always, compose<corpExt> },
     { "view", boost::regex(".*\\.rss"), whenNotCached, compose<rssExt> },
     { "view", boost::regex(".*\\.blog"), whenFileExist, compose<blogExt> },
 

@@ -78,31 +78,31 @@ void feedAggregate( session& s,
 
     defaultWriter writer(s.out());
     if( !s.feeds ) {
-	s.feeds = &writer;
+		s.feeds = &writer;
     }
     path dirname(pathname.parent_path());
     path track(pathname.filename());
 
     bool subdirs = false;
     for( directory_iterator entry = directory_iterator(dirname); 
-	 entry != directory_iterator(); ++entry ) {
-	if( is_directory(*entry) ) {	
-	    subdirs = true;
-	    url trackname(s.asUrl(*entry / track));
-	    dispatchDoc::instance()->fetch(s,varname,trackname);	    
-	}
+		 entry != directory_iterator(); ++entry ) {
+		if( is_directory(*entry) ) {	
+			subdirs = true;
+			url trackname(s.asUrl(*entry / track));
+			dispatchDoc::instance()->fetch(s,varname,trackname);	    
+		}
     }
 #if 0
     /* \todo fix tokenizers */
     if( !subdirs ) {
-	/* \todo find out how to handle commit posts and blog posts
-	   without duplicates, picking the appropriate one. */
-	feedContent<defaultWriter,filePat>(s,dirname);
+		/* \todo find out how to handle commit posts and blog posts
+		   without duplicates, picking the appropriate one. */
+		feedContent<defaultWriter,filePat>(s,dirname);
     }
 #endif
     if( s.feeds == &writer ) {
-	s.feeds->flush();
-	s.feeds = NULL;
+		s.feeds->flush();
+		s.feeds = NULL;
     }
 }
 
@@ -203,14 +203,14 @@ void feedLatestPosts( session& s,
     feedOrdered<orderByTime<post> > latests(&writer);
     feedPage<feedOrdered<orderByTime<post> > > feeds(latests,5,0); 
     if( !s.feeds ) {	
-	s.feeds = &feeds;
+		s.feeds = &feeds;
     }
 
     feedAggregate<defaultWriter,varname,allFilesPat>(s,pathname);
 
     if( s.feeds == &feeds ) {
-	s.feeds->flush();
-	s.feeds = NULL;
+		s.feeds->flush();
+		s.feeds = NULL;
     }
 }
 
