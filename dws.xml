@@ -9,17 +9,17 @@
     <metainfo name="section">devel</metainfo>
     <repository>
       <pathname name="semillaConfFile">
-	<description>
-	  The configuration file *semillaConfFile* contain paths used by semilla to find the source repositories, templates, etc.
-	</description>
-	<base>buildTop</base>
-	<default>dws.mk</default>
+		<description>
+		  The configuration file *semillaConfFile* contain paths used by semilla to find the source repositories, templates, etc.
+		</description>
+		<base>buildTop</base>
+		<default>dws.mk</default>
       </pathname>      
       <pathname name="sessionDir">
-	<description>
-	  The directory where session files are stored. Whenever semilla needs to keep state between two http requests, it will store (name,value) pairs into a session file.
-	</description>
-	<default>/var/semilla</default>
+		<description>
+		  The directory where session files are stored. Whenever semilla needs to keep state between two http requests, it will store (name,value) pairs into a session file.
+		</description>
+		<default>/var/semilla</default>
       </pathname>      
       <pathname name="themeDir">
 	<description>

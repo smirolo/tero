@@ -66,19 +66,20 @@ void blogInterval<cmp>::provide()
     /* sorted from decreasing order most recent to oldest. */
     super::first = std::lower_bound(super::first,super::last,bottom,c);
     if( super::first == super::posts.end() ) {
-	super::first = super::posts.begin();
+		super::first = super::posts.begin();
     }
     super::last = std::upper_bound(super::first,super::last,top,c);
 
 #if 0
     std::cerr << "[blogInterval] provide:" << std::endl;
     for( typename super::const_iterator f = super::posts.begin(); 
-	 f != super::posts.end(); ++f ) {	
-	std::cerr << f->time << ": " << f->tag << ": " << f->title;
-	if( c(*super::first,*f) && c(*f,*super::last) ) {
-	    std::cerr << " *";
-	}
-	std::cerr << std::endl;
+		 f != super::posts.end(); ++f ) {	
+		std::cerr << f->time << ": " << f->tag << ": " << f->title;
+		if( c(*super::first,*f) 
+			&& (super::last == super::posts.end() || c(*f,*super::last)) ) {
+			std::cerr << " *";
+		}
+		std::cerr << std::endl;
     }
 #endif
 }

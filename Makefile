@@ -35,7 +35,7 @@ libs		:=	libsemilla.a libpayproc.a
 #       It needs to be written up anyway :).
 #shares		:=	semilla.pdf
 
-semillaConfFile		?=	/etc/semilla/default.conf
+semillaConfFile	?=	/etc/semilla/default.conf
 sessionDir		?=	/var/semilla
 
 #CPPFLAGS	+=	-DREADONLY
@@ -102,5 +102,5 @@ install:: $(srcDir)/src/semilla.pam
 	$(installFiles) $^ $(etcDir)/pam.d/$(basename $(notdir $^))
 
 install:: default.conf
-	$(installDirs) $(dirname $(semillaConfFile))
+	$(if $(findstring /etc/semilla,$(semillaConfFile)),$(installDirs) $(dir $(semillaConfFile)))
 	$(if $(findstring /etc/semilla,$(semillaConfFile)),$(installFiles) $< $(semillaConfFile))

@@ -32,6 +32,12 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace {
+
+	const char *blogPat = ".*\\.blog";
+
+} // anonymous namespace
+
 
 const boost::filesystem::path
 mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
@@ -52,7 +58,7 @@ mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
 		path filename(*entry);
 		if( is_regular_file(filename) 
 			&& boost::regex_search(filename.string(),
-								   m,boost::regex(".*\\.blog")) ) {
+								   m,boost::regex(blogPat)) ) {
 			boost::posix_time::ptime time 
 				= boost::posix_time::from_time_t(last_write_time(filename));
 			if( firstTime || time > mostRecent ) {
@@ -80,37 +86,29 @@ void blogByIntervalTitle( session& s, const boost::filesystem::path& pathname )
 
 void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
 {
-    /* At first, we removed the usual code found in other top level feed 
-       functions.
-       ... feeds;
-       if( !s.feeds ) {
-           s.feeds = &feeds;
-       }
-       ...
-       if( s.feeds == &feeds ) {
-	   s.feeds->flush();
-	   s.feeds = NULL;
-       }
+    /* This code is called through two different contexts. If we remove
+	   the conditional assignment to s.feeds and write directly to s.out, 
+	   two things happen:
+	   - First, tags and other parsed attributes are discareded when called
+	   within a feedContent() context. Meta-data are not read from within
+	   the file but assigned to the default values set by feedContent() itself.
+	   - Second, "by *author* on *date*" lines are either duplicated 
+	   in the feedContent() context or not showing up in the stand-alone
+	   context.
+	*/
 
-      and wrote the posts directly on s.out(). This enabled to write both
-      free form (docbook, C++ source, etc.) documents and blog posts through
-      feedContent(). The issue then is that tags and other parsed attributes
-      were discareded. feedContent() only reads basic attributes and format
-      the content.
-    */
-
-    /* Use contentHtmlWriter to avoid embeding duplicate "by... on..." */
-    contentHtmlwriter feeds(s.out());
+	htmlwriter feeds(s.out());
     if( !s.feeds ) {
-	s.feeds = &feeds;
+		s.feeds = &feeds;
     }
-    mailParser parser(boost::regex(".*\\.blog"),*s.feeds,true);
+    mailParser parser(boost::regex(blogPat),*s.feeds,true);
     parser.fetch(s,pathname);
     if( s.feeds == &feeds ) {
-	s.feeds->flush();
-	s.feeds = NULL;
+		s.feeds->flush();
+		s.feeds = NULL;
     }
 }
+
 
 void mostRecentBlogTitle( session& s, const boost::filesystem::path& pathname )
 {

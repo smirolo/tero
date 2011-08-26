@@ -325,7 +325,7 @@ public:
  */
 struct orderByScore : public std::binary_function<post, post, bool> {
     bool operator()( const post& left, const post& right ) const {
-	return left.score > right.score;
+		return left.score > right.score;
     }
 };
 
@@ -337,50 +337,54 @@ struct orderByTime : public std::binary_function<vT,vT,bool> {
 
     static const char *name;
 
-    valueType first( const std::string& init = "" ) const {
-	using namespace boost::gregorian;
-	using namespace boost::posix_time;
-	valueType v;
-	if( init.empty() ) {
-	    v.time = second_clock::local_time();
-	} else {
-	    v.time = ptime(date(from_simple_string(init)));
-	}
-	/* decreasing order. */
-	v.time = ptime(v.time.date().end_of_month());
-	return v;
+    static valueType first( const std::string& init = "" ) {
+		using namespace boost::gregorian;
+		using namespace boost::posix_time;
+		valueType v;
+		if( init.empty() ) {
+			v.time = second_clock::local_time();
+		} else {
+			v.time = ptime(date(from_simple_string(init)));
+		}
+		/* decreasing order. */
+		v.time = ptime(v.time.date().end_of_month());
+		return v;
     }
 
-    valueType last( const std::string& init = "" ) const {
-	using namespace boost::gregorian;
-	using namespace boost::posix_time;
-	valueType v;
-	if( init.empty() ) {
-	    v.time =  second_clock::local_time();
-	} else {
-	    v.time = ptime(date(from_simple_string(init)));
-	}
-	/* decreasing order. */
-	v.time = ptime((v.time.date() 
-			- boost::gregorian::months(1)).end_of_month());
-	return v;
+    static valueType last( const std::string& init = "" ) {
+		using namespace boost::gregorian;
+		using namespace boost::posix_time;
+		valueType v;
+		if( init.empty() ) {
+#if 0
+			v.time =  second_clock::local_time();
+#else
+			v.time = ptime(date(1960,1,1));
+#endif
+		} else {
+			v.time = ptime(date(from_simple_string(init)));
+		}
+		/* decreasing order. */
+		v.time = ptime((v.time.date() 
+						- boost::gregorian::months(1)).end_of_month());
+		return v;
     }
     
     /** The key is made of year and month and used to group posts together.
      */ 
     keyType key( const valueType& p ) const {
-	using namespace boost::gregorian;
-	try {
-	    date d(date_from_tm(boost::posix_time::to_tm(p.time)));	
-	    return keyType(date(d.year(),d.month(),1));
-	} catch( const std::out_of_range& ) {
-	    /* in case it is not-a-date-time */
-	}
-	return keyType(not_a_date_time);
+		using namespace boost::gregorian;
+		try {
+			date d(date_from_tm(boost::posix_time::to_tm(p.time)));	
+			return keyType(date(d.year(),d.month(),1));
+		} catch( const std::out_of_range& ) {
+			/* in case it is not-a-date-time */
+		}
+		return keyType(not_a_date_time);
     }
 
     bool operator()( const valueType& left, const valueType& right ) const {
-	return left.time > right.time;
+		return left.time > right.time;
     }
 };
 
@@ -394,28 +398,28 @@ template<typename vT>
 struct orderByTag : public std::binary_function<vT, vT, bool> {
     typedef vT valueType;
     typedef std::string keyType;
-
+	
     static const char *name;
-
-    valueType first( const std::string& init = "" ) const {
-	valueType v;
-	v.tag = init;
-	return v;
+	
+    static valueType first( const std::string& init = "" ) {
+		valueType v = orderByTime<valueType>::first();
+		v.tag = init;
+		return v;
     }
 
-    valueType last( const std::string& init = "" ) const {
-	valueType v;
-	v.tag = init;
-	return v;
+    static valueType last( const std::string& init = "" ) {
+		valueType v = orderByTime<valueType>::last();
+		v.tag = init;
+		return v;
     }
 
     keyType key( const valueType& p ) const {
-	return p.tag;
+		return p.tag;
     }
 
     bool operator()( const valueType& left, const valueType& right ) const {
-	return left.tag > right.tag 
-	    || (left.tag > right.tag && left.time > right.time);
+		return left.tag > right.tag 
+			|| (left.tag == right.tag && left.time > right.time);
     }
 };
 
