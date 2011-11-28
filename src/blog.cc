@@ -42,6 +42,8 @@ namespace {
 const boost::filesystem::path
 mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
 {
+	/* \todo This should take into account the *date* inside the post,
+	   not just the timestamp on the file. */
 	using namespace boost::filesystem;
 
     boost::filesystem::path blogroot 

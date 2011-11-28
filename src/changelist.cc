@@ -186,41 +186,21 @@ void changeShowDetails( session& s, const boost::filesystem::path& pathname ) {
 
 
 void feedRepositoryPopulate( session& s, 
-			    const boost::filesystem::path& pathname )
+							 const boost::filesystem::path& pathname )
 {
-    revisionsys *rev = revisionsys::findRev(s,pathname);
-    if( rev && s.feeds ) {
-	history hist;
-	boost::filesystem::path base =  boost::filesystem::path("/") 
-	    / s.subdirpart(siteTop.value(s),rev->rootpath);
-	boost::filesystem::path projname = projectName(s,rev->rootpath);	
-	s.insert("title",projname.string());
-	rev->checkins(s,pathname,*s.feeds);
-#if 0
-	for( history::checkinSet::iterator ci = hist.checkins.begin(); 
-	     ci != hist.checkins.end(); ++ci ) {
-	    ci->normalize();
-	    std::stringstream strm;
-	    strm << html::p();
-	    strm << projname << " &nbsp;&mdash;&nbsp; ";
-	    writelink(strm,base,ci->guid,".commit");
-	    strm << "<br />";
-	    strm << ci->content;
-	    strm << html::p::end;
-	    strm << html::pre();
-	    for( checkin::fileSet::const_iterator file = ci->files.begin(); 
-		 file != ci->files.end(); ++file ) {
-		/* \todo link to diff with previous revision */
-		writelink(strm,base,*file);
-		strm << std::endl;
-	    }
-	    strm << html::pre::end;
-	    post p(*ci);
-	    p.content = strm.str();
-	    s.feeds->filters(p);
-	}	
-#endif
-    }
+	if( s.prefix(srcTop.value(s),pathname) ) {
+		/* *projectName* will try to extract a project name as the slice
+		   between *srcTop* and the repository identifier.
+		   We skip any repository feeds for projects which are not 
+		   in *srcTop*. This allow us to keep the website under revision
+		   control without commits to it popping up in the feed as check-ins.*/
+		revisionsys *rev = revisionsys::findRev(s,pathname);
+		if( rev && s.feeds ) {
+			boost::filesystem::path projname = projectName(s,rev->rootpath);	
+			s.insert("title",projname.string());
+			rev->checkins(s,pathname,*s.feeds);
+		}
+	}
 }
 
 

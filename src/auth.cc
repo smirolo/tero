@@ -192,7 +192,6 @@ void authAddSessionVars( boost::program_options::options_description& all,
 
 
 void authFetch( session& s, const boost::filesystem::path& pathname ) {
-
     /* This code is used to debug initial permission problems. */
     struct passwd *pw;
     struct group *grp;
@@ -276,34 +275,26 @@ void deauthFetch(  session& s, const boost::filesystem::path& pathname ) {
     if( iter != vars.end() ) iter->second.source = sessionfile;
 #endif
 
-    if( !s.exists() ) {
-	using namespace boost::filesystem;
-	for( directory_iterator entry 
-		 = directory_iterator(s.stateDir()); 
-	     entry != directory_iterator(); ++entry ) {
-	    path filename(*entry);
-	    s.id(boost::filesystem::basename(filename));
-	    s.restore(0,NULL,boost::program_options::options_description());
-	    break;
+	if( s.exists() ) {
+		time_duration logged = stop(s);
+		aggregate(s);
+		s.out() << "last session ran for ";
+		const char *sep = "";
+		if( logged.hours() > 0 ) {
+			s.out() << logged.hours() << " hours";
+			sep = " ";
+		}
+		if( logged.minutes() > 0 ) {
+			s.out() << sep << logged.minutes() << " mins";
+			sep = " ";
+		}
+		if( strlen(sep) == 0 ) {
+			s.out() << "less than a minute";
+		}
+		s.out() << "." << std::endl;
+	} else {
+		s.out() << "no active session" << std::endl;
 	}
-    }
-
-    time_duration logged = stop(s);
-    aggregate(s);
-    s.out() << "last session ran for ";
-    const char *sep = "";
-    if( logged.hours() > 0 ) {
-	s.out() << logged.hours() << " hours";
-	sep = " ";
-    }
-    if( logged.minutes() > 0 ) {
-	s.out() << sep << logged.minutes() << " mins";
-	sep = " ";
-    }
-    if( strlen(sep) == 0 ) {
-	s.out() << "less than a minute";
-    }
-    s.out() << "." << std::endl;
 }
 
 char logoutLayout[] = "logout.ui";

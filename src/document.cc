@@ -58,24 +58,26 @@ dispatchDoc::dispatchDoc( fetchEntry* e, size_t n )
 
 
 bool dispatchDoc::fetch( session& s, 
-			 const std::string& name,
-			 const url& value ) {    
-    using namespace boost::filesystem;
-
+						 const std::string& name,
+						 const url& value ) {
+#if 0
+	std::cerr << "!!! fetch " << name << ": " << value << std::endl;
+#endif
     const fetchEntry *doc = select(name,value.string());
     if( doc != NULL ) {
-	path p(s.abspath(value));
-#if 0	
-	std::cerr << "behavior: " << doc->behavior << " " << p << std::endl;
-#endif
-	path dir = p;
-	path prev = current_path();
-	while( !is_directory(dir) ) {
-	    /* boost is returning root/log as the parent path 
-	       for root/log/ (note the trailing backslash). 
-	       Of course it isn't what we expected here. */
-	    dir.remove_leaf();
+		fetch(s,doc,s.abspath(value));
 	}
+    return ( doc != NULL );
+}
+
+
+void dispatchDoc::fetch( session& s, 
+						 const fetchEntry *doc, 
+						 const boost::filesystem::path& p ) {
+    using namespace boost::filesystem;
+
+	path prev = current_path();
+	path dir = s.prefixdir(p);
 	current_path(dir);
 	switch( doc->behavior ) {
 	case whenFileExist:
@@ -88,11 +90,7 @@ bool dispatchDoc::fetch( session& s,
 	    break;
 	}	
 	current_path(prev);
-    }
-    return ( doc != NULL );
 }
-
-
 
 
 const fetchEntry* 
@@ -114,7 +112,7 @@ dispatchDoc::select( const std::string& name, const std::string& value ) const {
 	    }
 	}
     }
-#if 1
+#if 0
     std::cerr << "select(\"" << name << "\"," << value 
 	      << ") does not match any of " << std::endl;
     for( fetchEntry *start = first; start != last; ++start ) {
@@ -136,18 +134,18 @@ void dirwalker::fetch( session& s, const boost::filesystem::path& pathname )
 	    boost::smatch m;
 	    path p = *entry;
 	    if( !is_directory(*entry) 
-		&& boost::regex_match(p.string(),m,filematch) ) {	
-		boost::filesystem::ifstream infile;
-		s.openfile(infile,*entry);
-		walk(s,infile,p.string());
-		infile.close();
+			&& boost::regex_match(p.string(),m,filematch) ) {	
+			boost::filesystem::ifstream infile;
+			s.openfile(infile,*entry);
+			walk(s,infile,p.string());
+			infile.close();
 	    }
 	}
     } else {
-	boost::filesystem::ifstream infile;
-	s.openfile(infile,pathname);
-	walk(s,infile,pathname.string());
-	infile.close();
+		boost::filesystem::ifstream infile;
+		s.openfile(infile,pathname);
+		walk(s,infile,pathname.string());
+		infile.close();
     }
     last();
 }

@@ -86,6 +86,7 @@ void feedAggregate( session& s,
     bool subdirs = false;
     for( directory_iterator entry = directory_iterator(dirname); 
 		 entry != directory_iterator(); ++entry ) {
+		/* \todo include/exclude filtering should surely be done here. */
 		if( is_directory(*entry) ) {	
 			subdirs = true;
 			url trackname(s.asUrl(*entry / track));
@@ -124,68 +125,69 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
     path base(pathname);
     while( base.string().size() > siteTop.value(s).string().size()
 	   && !is_directory(base) ) {
-	base = base.parent_path();
+		base = base.parent_path();
     }
 
     if( !base.empty() ) {
-	for( directory_iterator entry = directory_iterator(base); 
-	     entry != directory_iterator(); ++entry ) {
-	    boost::smatch m;	    
-	    path filename(*entry);
-	    url link(s.asUrl(*entry));
-	    if( is_regular_file(filename) 
-		&& boost::regex_search(filename.string(),
-				       m,boost::regex(filePat)) ) {
-		/* We build-up a post from the different callbacks 
-		   that would be called to make up an regular html 
-		   page through a composer. In case there is no default 
-		   clause, we will pick-up which either information we 
-		   can from the filesystem. */
-		const fetchEntry* e 
-		    = dispatchDoc::instance()->select("document",filename.string());
-		if( e->callback == blogEntryFetch ) {
-		    /* \todo HACK! to insures *tags* are set correctly
-		       and non blog files are generated as posts. */
-		    dispatchDoc::instance()->fetch(s,"document",link);
-		} else {	       
-		    std::stringstream content;
-		    std::ostream& prevDisp = s.out(content);
-		    post p;
-		    content.str("");
-		    if( !dispatchDoc::instance()->fetch(s,"title",link)) {
-			content << s.asUrl(filename);
-		    }
-		    p.title = content.str();
-		    content.str("");
-		    if( !dispatchDoc::instance()->fetch(s,"author",link)) {
-			metaFileOwner(s,filename);
-		    }
-		    p.author = content.str();
-		    p.authorEmail = authorEmail.value(s);
-		    content.str("");
-		    if( !dispatchDoc::instance()->fetch(s,"date",link)) {
-			metaLastTime(s,filename);
-		    }
-		    try {
-			p.time = from_mbox_string(content.str());
-		    } catch( std::exception& e ) {
-			std::cerr << "unable to reconstruct time from \"" << content.str() << '"' << std::endl;
-		    }
-		    content.str("");
-		    /* \todo Be careful here, if there are no *.blog pattern
-		       but there is a /blog/.* pattern in the dispatch table,
-		       this will create an infinite loop that only stops when
-		       the system runs out of file descriptor. I am not sure
-		       how to avoid or pop an error for this case yet. */
-		    if( !dispatchDoc::instance()->fetch(s,"document",link)) {
-			content << s.asUrl(filename);
-		    }    
-		    p.content = content.str();		
-		    s.out(prevDisp);
-		    s.feeds->filters(p);
-		}
-	    }
-	}	
+		for( directory_iterator entry = directory_iterator(base); 
+			 entry != directory_iterator(); ++entry ) {
+			boost::smatch m;	    
+			path filename(*entry);
+			url link(s.asUrl(filename));
+
+			if( is_regular_file(filename) 
+				&& boost::regex_search(filename.string(),
+									   m,boost::regex(filePat)) ) {
+				/* We build-up a post from the different callbacks 
+				   that would be called to make up an regular html 
+				   page through a composer. In case there is no default 
+				   clause, we will pick-up which either information we 
+				   can from the filesystem. */
+				const fetchEntry* e 
+					= dispatchDoc::instance()->select("document",filename.string());
+				if( e->callback == blogEntryFetch ) {
+					/* \todo HACK! to insures *tags* are set correctly
+					   and non blog files are generated as posts. */
+					dispatchDoc::instance()->fetch(s,"document",link);
+				} else {	       
+					std::stringstream content;
+					std::ostream& prevDisp = s.out(content);
+					post p;
+					content.str("");
+					if( !dispatchDoc::instance()->fetch(s,"title",link)) {
+						content << s.asUrl(filename);
+					}
+					p.title = content.str();
+					content.str("");
+					if( !dispatchDoc::instance()->fetch(s,"author",link)) {
+						metaFileOwner(s,filename);
+					}
+					p.author = content.str();
+					p.authorEmail = authorEmail.value(s);
+					content.str("");
+					if( !dispatchDoc::instance()->fetch(s,"date",link)) {
+						metaLastTime(s,filename);
+					}
+					try {
+						p.time = from_mbox_string(content.str());
+					} catch( std::exception& e ) {
+						std::cerr << "unable to reconstruct time from \"" << content.str() << '"' << std::endl;
+					}
+					content.str("");
+					/* \todo Be careful here, if there are no *.blog pattern
+					   but there is a /blog/.* pattern in the dispatch table,
+					   this will create an infinite loop that only stops when
+					   the system runs out of file descriptor. I am not sure
+					   how to avoid or pop an error for this case yet. */
+					if( !dispatchDoc::instance()->fetch(s,"document",link)) {
+						content << s.asUrl(filename);
+					}    
+					p.content = content.str();		
+					s.out(prevDisp);
+					s.feeds->filters(p);
+				}
+			}
+		}	
     }
 
     if( s.feeds == &writer ) {
@@ -237,14 +239,14 @@ void feedSummary( session& s, const boost::filesystem::path& pathname ) {
     defaultWriter writer(s.out());
     summarize feeds(&writer);
     if( !s.feeds ) {
-	s.feeds = &feeds;
+		s.feeds = &feeds;
     }
-
+	
     feedContent<defaultWriter,filePat>(s,pathname);
-
+	
     if( s.feeds == &feeds ) {
-	s.feeds->flush();
-	s.feeds = NULL;
+		s.feeds->flush();
+		s.feeds = NULL;
     }
 }
 

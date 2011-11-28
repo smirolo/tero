@@ -148,18 +148,43 @@ httpHeaderSet httpHeaders;
 emptyParaHackType emptyParaHack;
 
 url::url( const std::string& name ) {
+#if 1
+    port = 0;
+	if( name.substr(0,7) == "file://" ) {
+		protocol = "file";
+		pathname = name.substr(7);
+	} else {
     boost::smatch m;
     boost::regex e("(\\S+:)?(//[^/]+)?(:[0-9]+)?(\\S+)?",
 		   boost::regex::normal | boost::regbase::icase);
-    port = 0;
     if( regex_search(name,m,e) ) {
-	if( !m.str(1).empty() ) { 
-	    protocol = m.str(1).substr(0, m.str(1).size() - 1);
-	}
-	if( !m.str(2).empty() ) host = m.str(2).substr(2);
-	port = atoi(m.str(3).c_str());
-	pathname = m.str(4);
+		if( !m.str(1).empty() ) { 
+			protocol = m.str(1).substr(0, m.str(1).size() - 1);
+		}
+		if( !m.str(2).empty() ) host = m.str(2).substr(2);
+		port = atoi(m.str(3).c_str());
+		if( m.str(4).size() > 2 && m.str(4)[0] == '/' &&  m.str(4)[1] == '/' ) {
+			pathname = m.str(4).substr(2);
+		} else {
+			pathname = m.str(4);
+		}
     }
+	}
+#else
+	uriUriA uri;
+	uriParserStateA state;
+	state.uri = &uri;
+	uriParseUriA(&state,name.begin(),name.end());
+	
+	protocol = std::string(uri.scheme.first,uri.scheme.afterLast);
+	host = std::string(uri.hostText.first,uri.hostText.afterLast);
+	port = atoi(uri.portText,uri.portText.afterLast);
+	for( uriPathSegmentA *part = uri.pathHead; 
+		 part != uri.pathTail; part = part->next ) {
+		pathname = pathname / std::string(part->text.first,part->text.afterLast);
+	}
+	uriFreeUriMembersA(uri);
+#endif
 }
 
 
@@ -307,4 +332,38 @@ basic_cgi_parser::run() {
     // Presense of parsed_options -> wparsed_options conversion
     // does the trick.
     return basic_parsed_options<char>(result);
+}
+
+
+void pathSeg( const char** first, const char **segAfterLast, 
+			  const char *afterLast ) {
+	const char *p = *first;
+	const char *last = p;
+
+ dirsep:
+	switch( *p ) {
+	case '/':
+		++p;
+		if( p != afterLast ) goto dirsep;
+	case '.':
+		++p;
+		if( p != afterLast ) goto selfref;			
+	default:
+		last = p;
+		while( last != afterLast && *last != '/' ) ++last;			
+	}
+	goto done;
+	
+ selfref:
+	if( *p == '/' ) {
+		++p;
+		if( p != afterLast ) goto dirsep;
+	}
+	last = p;
+	while( last != afterLast && *last != '/' ) ++last;
+	goto done;
+	
+ done:
+	*first = p;
+	*segAfterLast = last;
 }

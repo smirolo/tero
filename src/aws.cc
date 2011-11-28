@@ -272,12 +272,13 @@ bool awsStandardButton::checkReturn( const session& s,
     /* Read the public key out of the PEM certificate. */
     ByteQueue keyBytes;
     try {
-	GetPublicKeyFromCert(certificate.c_str(),keyBytes);
+		GetPublicKeyFromCert(certificate.c_str(),keyBytes);
     } catch( std::exception& ) {
-	std::cerr << 
-	    "Failed to extract the public key from the CA certificate." 
-		  << std::endl;
-	return false;
+		std::cerr 
+			<< "Failed to extract the public key from the CA certificate" 
+			<< " (" << certificate << ")."
+			<< std::endl;
+		return false;
     }
 
     /* Recreate the message that was signed. */

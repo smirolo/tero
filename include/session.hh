@@ -183,8 +183,8 @@ public:
 
     typedef std::map<std::string,valT> variables;
 
-    typedef std::vector<boost::filesystem::path> inputfilesType;
-    inputfilesType inputfiles;
+    typedef std::vector<url> inputsType;
+    inputsType inputs;
 
 protected:
 
@@ -283,7 +283,7 @@ public:
     */
     void createfile( boost::filesystem::ofstream& strm,
 		     const boost::filesystem::path& pathname );
-    
+
     /** Open a file for reading. 
 
 	This function throws an exception if there is any error. 
@@ -293,7 +293,7 @@ public:
     
     void 
     loadsession( const boost::program_options::options_description& opts ) {
-	load(opts,stateFilePath(),sessionfile);
+		load(opts,stateFilePath(),sessionfile);
     }
 
     /** Load and cache a text file in memory. Two back-to-back calls 
@@ -326,7 +326,7 @@ public:
     }
 
     bool found( session::variables::const_iterator p ) const {
-	return p != vars.end();
+		return p != vars.end();
     }
 
     /* \todo used in deauth. */
@@ -382,6 +382,11 @@ public:
      */
     bool prefix( const boost::filesystem::path& left, 
 		 const boost::filesystem::path& right ) const;
+
+	/** returns the longest prefix of path *p* which is also a directory 
+		that exists on the filesystem. */
+	boost::filesystem::path 
+	prefixdir( const boost::filesystem::path& p ) const;
     
     /** \brief Load a session from persistent storage 
      */

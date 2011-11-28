@@ -57,29 +57,32 @@ void compose( session& s, const boost::filesystem::path& pathname )
 	    if( name.empty() ) name = widget;	    
 	    std::string value = m.str(5);
 	    if( value.empty() ) {
-		/* By default if a variable does not have a value, use the value
-		   of "document". */
-		session::variables::const_iterator look = s.find(name);
-		if( !s.found(look) ) {    
-		    s.insert(name,document.value(s).string());
-		    look = s.find(name);
-		}
-		value = look->second.value;
+			/* By default if a variable does not have a value, use the value
+			   of "document". */
+			session::variables::const_iterator look = s.find(name);
+			if( !s.found(look) ) {    
+				s.insert(name,document.value(s).string());
+				look = s.find(name);
+			}
+			value = look->second.value;
 	    }
-
+		
 	    found = true;
 	    s.out() << m.prefix();
 	    std::ostream& prevDisp = s.out();
 	    try {
-		dispatchDoc::instance()->fetch(s,widget,url(value));
+			path prev = current_path();
+			current_path(s.prefixdir(fixed));
+			dispatchDoc::instance()->fetch(s,widget,url(value));
+			current_path(prev);
 	    } catch( const std::runtime_error& e ) {
-		s.out(prevDisp);
-		s.feeds = NULL; /* ok here since those objects were
-				 allocated on the stack. */
-		++s.nErrs;
-		std::cerr << "[embed of '" << value << "'] " 
-			  << e.what() << std::endl;	
-		s.out() << "<p>" << e.what() << "</p>" << std::endl;
+			s.out(prevDisp);
+			s.feeds = NULL; /* ok here since those objects were
+							   allocated on the stack. */
+			++s.nErrs;
+			std::cerr << "[embed of '" << value << "'] " 
+					  << e.what() << std::endl;	
+			s.out() << "<p>" << e.what() << "</p>" << std::endl;
 	    }
 	    s.out() << m.suffix() << std::endl;
 	}

@@ -87,6 +87,9 @@ protected:
 
     static dispatchDoc *singleton;
 
+    void fetch( session& s, 
+				const fetchEntry *doc, const boost::filesystem::path& value );
+
 public:
 
     /** Initialize the dispatcher with a set of (name,pattern,callback) 

@@ -74,103 +74,148 @@ int main( int argc, char *argv[] )
     using namespace std;
     using namespace boost::program_options;
     using namespace boost::filesystem;
-
+	
     std::stringstream mainout;
     session s("semillaId",mainout);
     s.privileged(false);
 
     try {
-	/* parse command line arguments */
-	options_description opts;
-	options_description visible;
-	options_description genOptions("general");
-	genOptions.add_options()
-	    ("help","produce help message");	
-	opts.add(genOptions);
-	visible.add(genOptions);
-	session::addSessionVars(opts,visible);
-	authAddSessionVars(opts,visible);
-	changelistAddSessionVars(opts,visible);
-	composerAddSessionVars(opts,visible);
-	postAddSessionVars(opts,visible);
-	projectAddSessionVars(opts,visible);
-	calendarAddSessionVars(opts,visible);
-	commentAddSessionVars(opts,visible);
-
-	s.restore(argc,argv,opts);
-	
-	if( !s.runAsCGI() ) {
-	    bool printHelp = false;
-	    if( argc <= 1 ) {
-		printHelp = true;
-	    } else {
-		for( int i = 1; i < argc; ++i ) {
-		    if( strncmp(argv[i],"--help",6) == 0 ) {
-			printHelp = true;
-		    }
+		/* parse command line arguments */
+		options_description opts;
+		options_description visible;
+		options_description genOptions("general");
+		genOptions.add_options()
+			("cache","produce a static cache out of the dynamic content")
+			("help","produce help message");	
+		opts.add(genOptions);
+		visible.add(genOptions);
+		session::addSessionVars(opts,visible);
+		authAddSessionVars(opts,visible);
+		changelistAddSessionVars(opts,visible);
+		composerAddSessionVars(opts,visible);
+		postAddSessionVars(opts,visible);
+		projectAddSessionVars(opts,visible);
+		calendarAddSessionVars(opts,visible);
+		commentAddSessionVars(opts,visible);
+		
+		s.restore(argc,argv,opts);
+		
+		bool printHelp = false;
+		bool genCache = false;
+		if( !s.runAsCGI() ) {
+			for( int i = 1; i < argc; ++i ) {
+				if( strncmp(argv[i],"--help",6) == 0 ) {
+					printHelp = true;
+				} else if( strncmp(argv[i],"--cache",7) == 0 ) {
+					genCache = true;
+				}
+			}
+			if( argc <= 1 ) {
+				printHelp = true;
+			}
+			if( printHelp ) {
+				boost::filesystem::path binname 
+					= boost::filesystem::basename(argv[0]);
+				cout << binname << "[options] pathname" << endl << endl
+					 << "Version" << endl
+					 << "  " << binname << " version " << VERSION << endl << endl;
+				cout << "Options" << endl
+					 << opts << endl;
+				cout << "Further Documentation" << endl
+					 << "Semilla relies on session variables (ex. *siteTop*)"
+					 << " to find relevent pieces of information to build"
+					 << " a page."
+					 << " Session variables can be defined as:\n"
+					 << "   * Arguments on the command-line\n"
+					 << "   * Name=Value pairs in a global configuration file\n"
+					 << "   * Parameters passed through CGI environment "
+					 << "variables\n"
+					 << "   * Name=Value pairs in a unique session file\n"
+					 << "When a variable is defined in more than one set, "
+					 << "command-line arguments have precedence over the global "
+					 << "configuration file which has precedence over"
+					 << " environment variables which in turn as precedence"
+					 << " over the session file." << endl;
+				return 0;
+			}
 		}
-	    }
-	    if( printHelp ) {
-		boost::filesystem::path binname 
-		    = boost::filesystem::basename(argv[0]);
-		cout << binname << "[options] pathname" << endl << endl
-		     << "Version" << endl
-		     << "  " << binname << " version " << VERSION << endl << endl;
-		cout << "Options" << endl
-		     << opts << endl;
-		cout << "Further Documentation" << endl
-		     << "Semilla relies on session variables (ex. *siteTop*)"
-		     << " to find relevent pieces of information to build"
-		     << " a page."
-		     << " Session variables can be defined as:\n"
-		     << "   * Arguments on the command-line\n"
-		     << "   * Name=Value pairs in a global configuration file\n"
-		     << "   * Parameters passed through CGI environment "
-		     << "variables\n"
-		     << "   * Name=Value pairs in a unique session file\n"
-		     << "When a variable is defined in more than one set, "
-		 << "command-line arguments have precedence over the global "
-		     << "configuration file which has precedence over"
-		     << " environment variables which in turn as precedence"
-		     << " over the session file." << endl;
-		return 0;
-	    }
-	}
-
-	/* by default bring the index page */
-	if( document.value(s).string() == "/"
-	    && boost::filesystem::exists(siteTop.value(s) 
-					 / std::string("index.html")) ) {
-	    cout << httpHeaders.location(url("index.html"));		       
-	    
-	} else {	  
-	    semDocs.fetch(s,document.name,document.value(s));
-	    if( s.runAsCGI() ) {
-		cout << httpHeaders
-		    .contentType()
-		    .status(s.errors() ? 404 : 0);
-	    }
-	    cout << mainout.str();
-	}
-
+		
+		if( genCache ) {
+			cachedUrlDecorator successors(s);
+			for( session::inputsType::const_iterator
+					 inp = s.inputs.begin(); inp != s.inputs.end(); ++inp ) {
+				linkLight::nexts.insert(*inp);
+			}
+			
+			while( !linkLight::empty() ) {
+				linkLight::clear();
+				for( linkLight::linkSet::const_iterator l = linkLight::begin();
+					 l != linkLight::end(); ++l ) {
+					try {
+						s.reset();
+						s.insert(document.name,l->string(),session::cmdline);
+						boost::filesystem::path cached 
+							= s.absCacheName(document.value(s));
+						cout << "generating " << cached << " (for " 
+							 << *l << ") ..." << endl;		
+						/* \todo view != document, need to clear all session
+						   variables except the ones loaded from config file. */
+						boost::filesystem::ofstream out;
+						s.createfile(out,cached);
+						successors.attach(out);
+						s.out(out);
+						semDocs.fetch(s,document.name,document.value(s));
+						successors.detach();
+						out.close();
+					} catch( exception& e ) {
+						cerr << "error: " << e.what() << endl;
+						++s.nErrs;
+					}
+				}
+			}
+		}  else {
+#if 0
+			/* by default bring the index page */
+			if( document.value(s).string() == "/"
+				&& boost::filesystem::exists(siteTop.value(s) 
+											 / std::string("index.html")) ) {
+				cout << httpHeaders.location(url("index.html"));		       
+				
+			} else {	 
+#endif
+				/* When we run as CGI, we will assume the path is a url relative
+				   to siteTop while running in shell command-line mode, we will 
+				   assume it is a regular filename. */
+				semDocs.fetch(s,document.name,document.value(s));	
+				if( s.runAsCGI() ) {
+					cout << httpHeaders
+						.contentType()
+						.status(s.errors() ? 404 : 0);
+				}
+				cout << mainout.str();
+#if 0
+			}
+#endif
+		}
+		
     } catch( exception& e ) {
-	try {
-	    std::cerr << e.what() << std::endl;
-	    s.insert("exception",e.what());
-	    compose<except>(s,document.name);
-	} catch( exception& e ) {
-	    /* Something went really wrong if we either get here. */
-	    cout << httpHeaders.contentType().status(404);
-	    cout << "<html>" << endl;
-	    cout << html::head() << endl
-		 << "<title>It is really bad news...</title>" << endl
-		 << html::head::end << endl;
-	    cout << html::body() << endl << html::p() << endl
-		 << "caught exception: " << e.what() << endl
-		 << html::p::end << endl << html::body::end << endl;
-	    cout << "</html>" << endl;
-	}
-	++s.nErrs;
+		try {
+			std::cerr << e.what() << std::endl;
+			s.insert("exception",e.what());
+			compose<except>(s,document.name);
+		} catch( exception& e ) {
+			/* Something went really wrong if we either get here. */
+			cout << httpHeaders.contentType().status(404);
+			cout << "<html>" << endl;
+			cout << html::head() << endl
+				 << "<title>It is really bad news...</title>" << endl
+				 << html::head::end << endl;
+			cout << html::body() << endl << html::p() << endl
+				 << "caught exception: " << e.what() << endl
+				 << html::p::end << endl << html::body::end << endl;
+			cout << "</html>" << endl;
+		}
+		++s.nErrs;
     }
 
     return s.errors();

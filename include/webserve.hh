@@ -69,11 +69,11 @@ public:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<(std::basic_ostream<ch, tr>& ostr, const url& u ) {
-	if( u.absolute() ) ostr << u.protocol << ':';
-	if( !u.host.empty() ) ostr << "//" << u.host;
-	if( u.port > 0 ) ostr << ':' << u.port;
-	ostr << u.pathname.string();
-	return ostr;
+		if( u.absolute() ) ostr << u.protocol << "://";
+		if( !u.host.empty() ) ostr << u.host;
+		if( u.port > 0 ) ostr << ':' << u.port;
+		ostr << u.pathname.string();
+		return ostr;
     }	
 
     friend bool operator<( const url& left, const url& right ) {
@@ -281,5 +281,13 @@ public:
 };
 
 typedef basic_cgi_parser cgi_parser;
+
+
+/** This function takes a range of characters [*first,afterLast[ and returns
+	the first segment between separators as [*first,*segAfterLast[.		
+ */
+void 
+pathSeg( const char** first, const char **segAfterLast, const char *afterLast );
+
 
 #endif
