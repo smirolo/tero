@@ -138,25 +138,25 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
     rfc2822Tokenizer tok(listener);
     std::stringstream mailtext;
     while( !ins.eof() ) {
-	std::string line;
-	std::getline(ins,line);
-	++lineCount;
-
-	if( line.compare(0,5,"From ") == 0 ) {
-	    /* Beginning of new message
-	       http://en.wikipedia.org/wiki/Mbox */
-	    if( !mailtext.str().empty() ) {
-		/* First line of file introduces first e-mail. */
-		if( stopOnFirst ) break;	    
-		tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
-		post p = listener.unserialized();
-		p.guid = s.asUrl(name).string();
-		filter->filters(p);
-		mailtext.str("");
-	    }
-	} else {
-	    mailtext << line << std::endl;
-	}
+		std::string line;
+		std::getline(ins,line);
+		++lineCount;
+		
+		if( line.compare(0,5,"From ") == 0 ) {
+			/* Beginning of new message
+			   http://en.wikipedia.org/wiki/Mbox */
+			if( !mailtext.str().empty() ) {
+				/* First line of file introduces first e-mail. */
+				if( stopOnFirst ) break;	    
+				tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
+				post p = listener.unserialized();
+				p.guid = s.asUrl(name).string();
+				filter->filters(p);
+				mailtext.str("");
+			}
+		} else {
+			mailtext << line << std::endl;
+		}
     }
     tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
     post p = listener.unserialized();

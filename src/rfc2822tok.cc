@@ -60,13 +60,13 @@ size_t rfc2822Tokenizer::tokenize( const char *line, size_t n )
 advancePointer:
     last = std::distance(line,p);
     if( *p == '\0' ) {
-	if( listener != NULL ) {
-	    listener->token(tok,line,first,p - line,false);
-	}
+		if( listener != NULL ) {
+			listener->token(tok,line,first,p - line,false);
+		}
     }
     if( last >= n ) {
-	state = trans;
-	return last;
+		state = trans;
+		return last;
     }
     ++p;
     goto *trans;

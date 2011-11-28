@@ -64,11 +64,11 @@ boost::filesystem::path
 projectName( const session& s, const boost::filesystem::path& p ) {
     boost::filesystem::path base(p);
     while( !base.string().empty() && !is_directory(base) ) {
-	base.remove_leaf();
+		base.remove_leaf();
     }
     std::string projname = s.subdirpart(srcTop.value(s),base).string();
     if( projname[projname.size() - 1] == '/' ) {
-	projname = projname.substr(0,projname.size() - 1);
+		projname = projname.substr(0,projname.size() - 1);
     }
     return projname;
 }
