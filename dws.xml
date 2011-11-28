@@ -5,8 +5,10 @@
     <description>
       Semilla is a web presentation engine to manage software projects that supports the Common Gateway Interface (CGI). A major feature not found in other related tools is that you can crosslink easily between documents, source code and build results (ex. look comment in include/auth.hh).
     </description>
-    <maintainer name="Sebastien Mirolo" email="smirolo@fortylines.com" />
-    <metainfo name="section">devel</metainfo>
+    <maintainer>
+	  <personname>Sebastien Mirolo</personname>
+	  <email>smirolo@fortylines.com</email>
+	</maintainer>
     <repository>
       <pathname name="semillaConfFile">
 		<description>
@@ -22,18 +24,18 @@
 		<default>/var/semilla</default>
       </pathname>      
       <pathname name="themeDir">
-	<description>
-	  themeDir is a directory containing templates and css for the site
-	</description>
-	<base>siteTop</base>
-	<default>theme</default>
+		<description>
+		  themeDir is a directory containing templates and css for the site
+		</description>
+		<base>siteTop</base>
+		<default>theme</default>
       </pathname>
       <pathname name="commentTop">
-	<description>
-	  commentTop is the root of where page comments are stored
-	</description>
-	<base>siteTop</base>
-	<default>comments</default>
+		<description>
+		  commentTop is the root of where page comments are stored
+		</description>
+		<base>siteTop</base>
+		<default>comments</default>
       </pathname>
       <dep name="build-essential">
 		<bin>g++</bin>
@@ -42,70 +44,68 @@
 		<bin>git</bin>
       </dep>      
       <dep name="drop">
-	<bin>dws</bin>
-	<share>(dws)/prefix.mk</share>
+		<bin>dws</bin>
+		<share>(dws)/prefix.mk</share>
       </dep>
       <dep name="contrib/boost">
-	<include>.*(boost)/version.hpp</include>
-	<lib>boost_date_time</lib>
-	<lib>boost_filesystem</lib>
-	<lib>boost_program_options</lib>
-	<lib>boost_regex</lib>
-	<lib>boost_system</lib>
+		<include>.*(boost)/version.hpp</include>
+		<lib>boost_date_time</lib>
+		<lib>boost_filesystem</lib>
+		<lib>boost_program_options</lib>
+		<lib>boost_regex</lib>
+		<lib>boost_system</lib>
       </dep>
       <!-- Ubuntu jaunty complains about the virtual package
 	   and requires to install libpam0g-dev directly -->
       <dep name="libpam-dev">
-	<include>(security)/pam_appl.h</include>
-	<lib>pam</lib>
+		<include>(security)/pam_appl.h</include>
+		<lib>pam</lib>
       </dep>
       <!-- zettair for search engine 
-	   http://www.seg.rmit.edu.au/zettair/ -->
+		   http://www.seg.rmit.edu.au/zettair/ -->
       <dep name="contrib/zettair">
-	<bin>zet</bin>
+		<bin>zet</bin>
       </dep>
       <alternates>
-	<alternate>
-	  <tag>Ubuntu</tag>
-	  <dep name="libcrypto++-dev">
-	    <include>(cryptopp)/hmac.h</include>
-	    <lib>cryptopp</lib>
-	  </dep>
-	  <dep name="liburiparser-dev">
-	    <include>(uriparser)/Uri.h</include>
-	    <lib>uriparser</lib>
-	  </dep>
-	  <dep name="libpoco-dev">
-	    <include>(Poco)/Net/SMTPClientSession.h</include>
-	    <lib>PocoNet</lib>
-	  </dep>
-	</alternate>
-	<alternate>
-	  <tag>Darwin</tag>
-	  <dep name="libcryptopp">
-	    <include>(cryptopp)/hmac.h</include>
-	    <lib>cryptopp</lib>
-	  </dep>
-	  <dep name="uriparser">
-	    <include>(uriparser)/Uri.h</include>
-	    <lib>uriparser</lib>
-	  </dep>
-	  <!-- POCO C++ for SMTP client 
-	       http://pocoproject.org/license.html -->
-	  <dep name="poco">
-	    <include>(Poco)/Net/SMTPClientSession.h</include>
-	    <lib>PocoNet</lib>
-	  </dep>
-	</alternate>
+		<alternate name="Ubuntu">
+		  <dep name="libcrypto++-dev">
+			<include>(cryptopp)/hmac.h</include>
+			<lib>cryptopp</lib>
+		  </dep>
+		  <dep name="liburiparser-dev">
+			<include>(uriparser)/Uri.h</include>
+			<lib>uriparser</lib>
+		  </dep>
+		  <dep name="libpoco-dev">
+			<include>(Poco)/Net/SMTPClientSession.h</include>
+			<lib>PocoNet</lib>
+		  </dep>
+		</alternate>
+		<alternate name="Darwin">
+		  <dep name="libcryptopp">
+			<include>(cryptopp)/hmac.h</include>
+			<lib>cryptopp</lib>
+		  </dep>
+		  <dep name="uriparser">
+			<include>(uriparser)/Uri.h</include>
+			<lib>uriparser</lib>
+		  </dep>
+		  <!-- POCO C++ for SMTP client 
+			   http://pocoproject.org/license.html -->
+		  <dep name="poco">
+			<include>(Poco)/Net/SMTPClientSession.h</include>
+			<lib>PocoNet</lib>
+		  </dep>
+		</alternate>
       </alternates>
     </repository>
-    <package>
-      <tag>Ubuntu</tag>
+    <package name="Ubuntu">
+	  <metainfo name="section">devel</metainfo>
       <dep name="git-core">
-	<bin>git</bin>
+		<bin>git</bin>
       </dep>
       <dep name="libc6">
-	<lib>c</lib>
+		<lib>c</lib>
       </dep>
     </package>
   </project>
