@@ -64,7 +64,7 @@ char date[] = "date";
 char title[] = "title";
 char buildView[] = "Build View";
 
-std::string active("contrib/todos/active/");
+std::string active("todos/active");
 
 
 /* The pattern need to be inserted in more specific to more 

@@ -68,8 +68,8 @@ public:
     void commit( const std::string& msg );
 
     void checkins( const session& s,
-		   const boost::filesystem::path& pathname,
-		   postFilter& filter );
+				   const boost::filesystem::path& pathname,
+				   postFilter& filter );
 
     void diff( std::ostream& ostr, 
 	       const std::string& leftCommit, 
@@ -398,8 +398,8 @@ void gitcmd::history( std::ostream& ostr,
 
 
 void gitcmd::checkins( const session& s,
-		       const boost::filesystem::path& pathname,
-		       postFilter& filter ) {
+					   const boost::filesystem::path& pathname,
+					   postFilter& filter ) {
     using namespace boost::filesystem;
     /* The git command needs to be issued from within a directory 
        where .git can be found by walking up the tree structure. */ 
@@ -423,90 +423,93 @@ void gitcmd::checkins( const session& s,
     bool itemStarted = false;
     bool descrStarted = false;
     post ci;
-    std::stringstream descr, title;
+    std::stringstream descr, link, title;
     while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
-	std::string line(lcstr);
-	if( strncmp(lcstr,"commit",6) == 0 ) {
-	    if( descrStarted ) {		
+		std::string line(lcstr);
+		if( strncmp(lcstr,"commit",6) == 0 ) {
+			if( descrStarted ) {
+				if( !firstFile ) descr << html::pre::end;
+				ci.link = link.str();
+				ci.title = title.str();
+				ci.content = descr.str();
+				ci.normalize();
+				filter.filters(ci);
+				descrStarted = false;
+			}
+			firstFile = true;
+			itemStarted = true;	    
+			ci = post();
+			lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
+			title.str("");
+			std::stringstream guid;
+			guid << base.string() << strip(line.substr(7)) << ".commit";
+			ci.guid = guid.str();
+			
+		} else if ( line.compare(0,7,"Author:") == 0 ) {
+			/* The author field is formatted as "First Last <emailAddress>". */
+			size_t first = 7;
+			size_t last = first;
+			while( last < line.size() ) {
+				switch( line[last] ) {
+				case '<':
+					ci.author = line.substr(first,last - first);
+					first = last + 1;
+					break;
+				case '>':
+					ci.authorEmail = line.substr(first,last - first);
+					first = last + 1;
+					break;
+				}
+				++last;
+			}	    
+			
+		} else if ( line.compare(0,5,"Date:") == 0 ) {
+			try {
+				ci.time = from_mbox_string(line.substr(5));
+			} catch( std::exception& e ) {
+				std::cerr << "!!! exception " << e.what() << std::endl; 
+			}
+			
+		} else {
+			/* more description */
+			if( !descrStarted ) {		
+				link.str("");
+				link << project << " &nbsp;&mdash;&nbsp; ";
+				link << html::a().href(ci.guid) << basename(path(ci.guid)) << html::a::end << "<br />";
+				descr.str("");
+				descrStarted = true;
+			}
+			if( !isspace(line[0]) ) {
+				/* We are dealing with a file that was part of this commit. */
+				if( firstFile ) {
+					descr << html::pre();
+					firstFile = false;
+				}
+				writelink(descr,base,boost::filesystem::path(strip(line)));
+				descr << std::endl;
+			} else {
+				size_t maxTitleLength = 80;
+				if( title.str().size() < maxTitleLength ) {
+					size_t remain = (maxTitleLength - title.str().size()); 
+					if( line.size() > remain ) {
+						title << strip(line.substr(0,remain)) << "...";
+					} else {
+						title << strip(line);
+					}
+				}
+				descr << lcstr;
+			}
+		}
+    }
+    pclose(summary);
+    if( descrStarted ) {
 		if( !firstFile ) descr << html::pre::end;
+		ci.link = link.str();
 		ci.title = title.str();
 		ci.content = descr.str();
 		ci.normalize();
 		filter.filters(ci);
 		descrStarted = false;
-	    }
-	    firstFile = true;
-	    itemStarted = true;	    
-	    ci = post();
-	    lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
-	    title.str("");
-	    std::stringstream guid;
-	    guid << base.string() << strip(line.substr(7)) << ".commit";
-	    ci.guid = guid.str();
-
-	} else if ( line.compare(0,7,"Author:") == 0 ) {
-	    /* The author field is formatted as "First Last <emailAddress>". */
-	    size_t first = 7;
-	    size_t last = first;
-	    while( last < line.size() ) {
-		switch( line[last] ) {
-		case '<':
-		    ci.author = line.substr(first,last - first);
-		    first = last + 1;
-		    break;
-		case '>':
-		    ci.authorEmail = line.substr(first,last - first);
-		    first = last + 1;
-		    break;
-		}
-		++last;
-	    }	    
-
-	} else if ( line.compare(0,5,"Date:") == 0 ) {
-	    try {
-		ci.time = from_mbox_string(line.substr(5));
-	    } catch( std::exception& e ) {
-		std::cerr << "!!! exception " << e.what() << std::endl; 
-	    }
-
-	} else {
-	    /* more description */
-	    if( !descrStarted ) {		
-		descr.str("");				
-		descr << project << " &nbsp;&mdash;&nbsp; ";
-		descr << html::a().href(ci.guid) << basename(path(ci.guid)) << html::a::end << "<br />";
-		descrStarted = true;
-	    }
-	    if( !isspace(line[0]) ) {
-		/* We are dealing with a file that was part of this commit. */
-		if( firstFile ) {
-		    descr << html::pre();
-		    firstFile = false;
-		}
-		writelink(descr,base,boost::filesystem::path(strip(line)));
-		descr << std::endl;
-	    } else {
-		size_t maxTitleLength = 80;
-		if( title.str().size() < maxTitleLength ) {
-		    size_t remain = (maxTitleLength - title.str().size()); 
-		    if( line.size() > remain ) {
-			title << strip(line.substr(0,remain)) << "...";
-		    } else {
-			title << strip(line);
-		    }
-		}
-		descr << lcstr;
-	    }
-	}
-    }
-    pclose(summary);
-    if( descrStarted ) {
-	if( !firstFile ) descr << html::pre::end;
-	ci.title = title.str();
-	ci.content = descr.str();
-	ci.normalize();
-	filter.filters(ci);
-	descrStarted = false;
     }
     boost::filesystem::current_path(boost::filesystem::initial_path());
 }

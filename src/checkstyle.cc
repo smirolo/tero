@@ -42,7 +42,7 @@ const char *licenseCodeTitles[] = {
 
 void checker::cache() {
     static const boost::regex 
-	bsdex("\\S?\\S?\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), (.*)\\s+"
+	bsdex("\\S?\\S?\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), ([^#]*)\\s+"
     "\\S?\\s*All rights reserved.\\s+"
 "\\S?\\s+"
 "\\S?\\s*Redistribution and use in source and binary forms, with or without\\s+"

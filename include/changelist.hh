@@ -149,14 +149,14 @@ template<typename defaultWriter>
 void feedRepository( session& s, const boost::filesystem::path& pathname ) {
     defaultWriter writer(s.out());
     if( !s.feeds ) {
-	s.feeds = &writer;
+		s.feeds = &writer;
     }
 
     feedRepositoryPopulate(s,pathname);
 
     if( s.feeds == &writer ) {
-	s.feeds->flush();
-	s.feeds = NULL;
+		s.feeds->flush();
+		s.feeds = NULL;
     }
 }
 

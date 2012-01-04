@@ -207,78 +207,94 @@ void regressionsFetch( session& s, const boost::filesystem::path& pathname )
 	   + std::string("-test/regression.log"));
 
     if( !boost::filesystem::exists(regressname) ) {
-	s.out() << html::p()
-		<< "There are no regression logs available for the unit tests."
-		<< html::p::end;
-	return;
+		s.out() << html::p()
+				<< "There are no regression logs available for the unit tests."
+				<< html::p::end;
+		return;
     }
 
     xml_document<> *doc = s.loadxml(regressname);
     xml_node<> *root = doc->first_node();
     if( root != NULL ) {
-	size_t col = 1;
+
+	std::set<std::string> headers;
+	for( xml_node<> *testcase = root->first_node("testcase");
+		 testcase != NULL; testcase = testcase->next_sibling("testcase") ) {
+	    xml_attribute<> *name = testcase->first_attribute("name");
+		assert( name != NULL );
+		headers.insert(name->value());
+	}
+
 	typedef std::map<std::string,size_t> colMap;
 	colMap colmap;	
+	size_t col = 0;
+
 	s.out() << html::p();
 	s.out() << html::table() << std::endl;
-	s.out() << html::tr();
-
-	s.out() << html::th();
-	xml_node<> *config = root->first_node("config");
-	if( config ) {
-	    xml_attribute<> *configName = config->first_attribute("name");
-	    if( configName ) {
-		s.out() << configName->value();
-	    }
-	}       
-	s.out() << " vs." << html::th::end;
-	
-	xml_node<> *ref = root->first_node("reference");
-	if( ref ) {
-	    for( ; ref != NULL; ref = ref->next_sibling("reference") ) {
-		xml_attribute<> *id = ref->first_attribute("id");
-		if( id != NULL ) {		
-		    s.out() << html::th() << id->value() << html::th::end;
-		    xml_attribute<> *name = ref->first_attribute("name");
-		    assert( name != NULL );
-		    colmap.insert(std::make_pair(name->value(),col++));
-		}
-	    }
-	} else {
-	    s.out() << html::th() << "No results to compare against."
-		      << html::th::end;
+	s.out() << html::tr();	
+	s.out() << html::th() << html::th::end;
+	for( std::set<std::string>::const_iterator header = headers.begin();
+		 header != headers.end(); ++header ) {
+		s.out() << html::th() << *header << html::th::end;
+		colmap.insert(std::make_pair(*header,col++));		
 	}
 	s.out() << html::tr::end;
 
-	xml_node<>* cols[colmap.size() + 1];
-	for( xml_node<> *test = root->first_node("test");
-	     test != NULL; test = test->next_sibling("test") ) {
-	    s.out() << html::tr();
-	    memset(cols,0,sizeof(cols));
-	    xml_attribute<> *name = test->first_attribute("name");
-	    if( name != NULL ) {
-		s.out() << html::td() << name->value() << html::td::end;
-	    }
-	    for( xml_node<> *compare = test->first_node("compare");
-		 compare != NULL; compare = compare->next_sibling("compare") ) {
-		xml_attribute<> *name = compare->first_attribute("name");
+	std::string current;
+	xml_node<>* cols[colmap.size()];
+	for( xml_node<> *test = root->first_node("testcase");
+	     test != NULL; test = test->next_sibling("testcase") ) {
+	    xml_attribute<> *name = test->first_attribute("classname");
+		if( name->value() != current ) {
+			if( !current.empty() ) {
+				s.out() << html::tr() << html::td() << current << html::td::end;
+				for( xml_node<> **c = cols; 
+					 c != &cols[colmap.size()]; ++c ) {
+					s.out() << html::td();
+					if( *c != NULL ) {
+						xml_node<> *error = (*c)->first_node("error");
+						if( error ) {
+							xml_attribute<> *type 
+								= error->first_attribute("type");
+							s.out() << type->value();
+						} else {
+							s.out() << "pass";
+						}
+					}
+					s.out() << html::td::end;
+				}
+				s.out() << html::tr::end;
+			}
+			current =  name->value();
+			memset(cols,0,sizeof(cols));
+		}
+		name = test->first_attribute("name");
 		if( name != NULL ) {
 		    colMap::const_iterator found = colmap.find(name->value());
 		    if( found != colmap.end() ) {
-			cols[found->second] = compare;
-		    } else {
-			cols[0] = compare;
+				cols[found->second] = test;
 		    }
 		}
-	    }
-	    for( xml_node<> **c = &cols[1]; 
-		 c != &cols[colmap.size() + 1]; ++c ) {
-		s.out() << html::td();
-		if( *c != NULL )
-		    s.out() << (*c)->value();
-		s.out() << html::td::end;
-      	    }
-	    s.out() << html::tr::end;
+	}
+	if( !current.empty() ) {
+		s.out() << html::tr() << html::td() << current << html::td::end;
+		for( xml_node<> **c = cols; 
+			 c != &cols[colmap.size()]; ++c ) {
+			s.out() << html::td();
+			if( *c != NULL ) {
+				xml_node<> *error = (*c)->first_node("error");
+				if( error ) {
+					xml_attribute<> *type = error->first_attribute("type");
+					s.out() << type->value();
+				} else {
+					s.out() << "pass";
+				}
+			}
+			s.out() << html::td::end;
+		}
+		s.out() << html::tr::end;
+	}
+
 #if 0
 	    /* display the actual ouput as an expandable row. */
 	    s.out() << html::tr();
@@ -310,7 +326,6 @@ void regressionsFetch( session& s, const boost::filesystem::path& pathname )
 	    }
 	    s.out() << html::tr::end;
 #endif
-	}	
 
 	s.out() << html::table::end << html::p::end;
     }   

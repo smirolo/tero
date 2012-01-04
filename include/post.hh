@@ -87,6 +87,14 @@ public:
      */
     std::string authorEmail;    
 
+	/** Depending on the post writer, links to the web version 
+		of the post will be displayed either in the caption (html) 
+		or the body (rss, email). 
+		By default if this field is not set, links are generated
+		from the *title* (text) and *guid* (href).
+	 */
+	std::string link;
+
     /** The title of the post will be displayed as header of pages
        and subject of e-mails. 
     */
@@ -140,6 +148,7 @@ public:
 	time(p.time),
 	content(p.content),
 	authorEmail(p.authorEmail),
+	link(p.link),
 	title(p.title),
 	guid(p.guid),
 	filename(p.filename),

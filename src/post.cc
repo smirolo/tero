@@ -115,8 +115,11 @@ void htmlwriter::filters( const post& p ) {
 				   "postEven" : "postOdd");
 
     /* caption for the post */
-    *ostr << html::div().classref("postCaption");    
-	if( !p.title.empty() ) {
+    *ostr << html::div().classref("postCaption");
+	if( !p.link.empty() ) {
+		*ostr << p.link << std::endl;
+		
+	} else if( !p.title.empty() ) {
 		*ostr << html::a().href(p.guid)
 			  << html::h(1) << p.title << html::h(1).end() 
 			  << html::a::end << std::endl;
@@ -145,7 +148,7 @@ void mailwriter::filters( const post& p ) {
 
     *ostr << "From " << p.authorEmail << std::endl;
     if( !p.title.empty() ) {
-	*ostr << "Subject: " << p.title << std::endl;
+		*ostr << "Subject: " << p.title << std::endl;
     }
     *ostr << "Date: " << p.time << std::endl;
     *ostr << "From: " << p.authorEmail << std::endl;    
@@ -153,10 +156,13 @@ void mailwriter::filters( const post& p ) {
 
     for( post::headersMap::const_iterator header = p.moreHeaders.begin();
 	 header != p.moreHeaders.end(); ++header ) {
-	*ostr << header->first << ": " << header->second << std::endl;
+		*ostr << header->first << ": " << header->second << std::endl;
     }
 
     *ostr << std::endl << std::endl;
+	if( !p.link.empty() ) {
+		*ostr << p.link << std::endl;
+	}
     /* \todo avoid description starting with "From " */
     *ostr << p.content << std::endl << std::endl;
 }
@@ -167,10 +173,12 @@ void rsswriter::filters( const post& p ) {
 
     *ostr << item();
     *ostr << title() << p.title << title::end;
-
     *ostr << rsslink() << p.guid << rsslink::end;
 
     *ostr << description() << "<![CDATA[";
+	if( !p.link.empty() ) {
+		*ostr << p.link << std::endl;
+	}
     *ostr << html::p() << p.author << ":" << "<br />";
     *ostr << p.content << html::p::end;
     *ostr << "]]>" << description::end;

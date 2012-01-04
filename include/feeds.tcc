@@ -227,7 +227,7 @@ void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname )
 template<const char*varname>
 void rssSiteAggregate( session& s, const boost::filesystem::path& pathname )
 {
-    absUrlDecorator d(pathname,s);
+    absUrlDecorator d(siteTop.value(s),s);
     d.attach(s.out());
     feedLatestPosts<rsswriter,varname>(s,siteTop.value(s) / pathname.leaf());
     d.detach();

@@ -504,12 +504,15 @@ void docbook::infoEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
 }
 
 void docbook::infoStart( session& s, const RAPIDXML::xml_node<>& node ) const {
-    info = true;
+	/* Assume top level node is a <section>. */
+	if( sectionLevel <= 1 ) {
+		info = true;
+	}
 }
 
 void docbook::informaltableEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::table::end;
+		s.out() << html::table::end;
     }
 }
 

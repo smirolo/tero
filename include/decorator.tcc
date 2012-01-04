@@ -177,12 +177,15 @@ basicLinkLight<charT,traitsT>::add( const url& u ) {
 #if 0
     std::cerr << "consider " << u;
 #endif
+	linkClass result = remoteLink;
     if( (u.host.empty() || u.host == domainName.value(*context).host)
 		&& u.pathname.extension() != ".html" ) {
+		result = localLinkGenerated;
 		url f = context->asUrl(context->abspath(u));
 		const fetchEntry* e 
 			= dispatchDoc::instance()->select("view",u.string());
 		if( e->behavior != always ) {
+			result = localFileExists;
 			if( allLinks.find(f) == allLinks.end() 
 				&& currs.find(f) == currs.end() ) {	
 				/* we have never seen that vertex before (i.e. white)
@@ -192,20 +195,12 @@ basicLinkLight<charT,traitsT>::add( const url& u ) {
 #endif
 				nexts.insert(f);
 			}
-#if 0
-			std::cerr << std::endl;
-#endif
-			return localFileExists;
 		}
-#if 0
-		std::cerr << std::endl;
-#endif
-		return localLinkGenerated;		
     }
 #if 0
     std::cerr << std::endl;
 #endif
-    return remoteLink; 
+    return result; 
 }
 
 

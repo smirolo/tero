@@ -833,8 +833,12 @@ session::cacheName( const url& href ) const
 		result = name / "index.html";
     } else if( boost::filesystem::is_regular_file(absname) ) {
 		std::set<boost::filesystem::path> softs;
+#if 0
+		/* Until we figure a reliable way to include soft extensions
+		   in Apache2 RewriteRule/RewriteCond, they are disabled. */
 		softs.insert(".blog");
 		softs.insert(".corp");
+#endif
 		if( softs.find(name.extension()) != softs.end() ) {
 			result.replace_extension(".html");
 		} else {

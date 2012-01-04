@@ -283,7 +283,7 @@ basic_cgi_parser::run() {
 #if 0
     extern char **environ;
     for( char **env = environ; *env != NULL; ++env ) {
-	std::cerr << "[env] " << *env << std::endl;
+		std::cerr << "[env] " << *env << std::endl;
     }
 #endif    
     char *cookie = getenv("HTTP_COOKIE");
