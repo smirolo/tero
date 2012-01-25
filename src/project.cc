@@ -253,11 +253,10 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 		    }
 		}	    
 		s.out() << '.';
-		s.out() << " The easiest way to install prerequisites,"
-			  << " download the source tree locally,"
-			  << " make and install the binaries is to issue"
-			  << " a global " << html::a().href("/log")
-			  << "build" << html::a::end << " command."; 
+		s.out() << " All the necessary steps to build and install from source"
+				<< " can also be executed in a single "
+				<< html::a().href("/log/") << "build" << html::a::end 
+				<< " command."; 
 		s.out() << html::p::end;
 		s.out() << html::p();
 		s.out() << "You can then later update the local copy"

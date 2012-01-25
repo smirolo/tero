@@ -633,13 +633,18 @@ void docbook::phraseStart( session& s, const RAPIDXML::xml_node<>& node ) const 
 
 void docbook::programlistingEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << code::end;
+		htmlesc.detach();
+		s.out() << code::end;
     }
 }
 
 void docbook::programlistingStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << code();
+		s.out() << code();
+		/* rapidxml will convert the &lt;, etc. into actual symbols
+		   so we need to re-escape them before printing any source 
+		   code. */
+		htmlesc.attach(s.out());
     }
 }
 

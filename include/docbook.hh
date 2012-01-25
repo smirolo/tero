@@ -74,6 +74,7 @@ protected:
     mutable bool info;
     mutable bool linebreak;
     mutable int sectionLevel;
+	mutable htmlEscaper htmlesc;
    
     void any( session& s, const RAPIDXML::xml_node<>& node ) const;
 
