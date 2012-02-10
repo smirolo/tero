@@ -173,13 +173,13 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 	    /* Information about the maintainer */
 	    xml_node<> *maintainer = project->first_node("maintainer");
 	    if( maintainer ) {
-		xml_attribute<> *name = maintainer->first_attribute("name");
-		xml_attribute<> *email = maintainer->first_attribute("email");
-		if( name ) {
-		    s.out() << html::p() << "maintainer: ";
-			s.out() << by(contrib::find(email->value()));
-		    s.out() << html::p::end;
-		}
+			xml_node<> *name = maintainer->first_node("personname");
+			xml_node<> *email = maintainer->first_node("email");
+			if( email ) {
+				s.out() << html::p() << "maintained ";
+				s.out() << by(contrib::find(email->value(),name->value()));
+				s.out() << html::p::end;
+			}
 	    }
 
 	    /* Shows the archives that can be downloaded. */

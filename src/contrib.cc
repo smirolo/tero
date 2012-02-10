@@ -42,14 +42,20 @@ contrib::pointer_type contrib::find( const std::string& email,
 
 
 std::ostream& operator<<( std::ostream& ostr, const by& v ) {
-	ostr << "By ";
+	ostr << "by ";
 	if( !v.ptr->email.empty() ) {
-		ostr << html::a().href(std::string("mailto:") + v.ptr->email)
-			 << v.ptr->name 
-			 << "<sup><img src=\"/resources/icon_email.png\"></sup>"
-			 << html::a::end;
-	} else {
+		ostr << html::a().href(std::string("mailto:") + v.ptr->email);
+	}
+	if( !v.ptr->name.empty() ) {
 		ostr << v.ptr->name;
+	} else if( !v.ptr->email.empty() ) {
+		ostr << v.ptr->email;
+	} else {
+		ostr << "anonymous";
+	}
+	if( !v.ptr->email.empty() ) {
+		ostr << "<sup><img src=\"/resources/icon_email.png\"></sup>"
+			 << html::a::end;
 	}
 	if( !v.ptr->google.empty() ) {
 		ostr << " <a rel=\"author\" href=\"https://profiles.google.com/"
