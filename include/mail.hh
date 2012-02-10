@@ -29,12 +29,20 @@
 #include "document.hh"
 #include "rfc2822tok.hh"
 #include "post.hh"
+#include <Poco/Net/MailMessage.h>
 
 /**
    Parses e-mail messages
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+void
+mailAddSessionVars( boost::program_options::options_description& opts,
+					boost::program_options::options_description& visible );
+
+
+void sendMail( const session& s, const Poco::Net::MailMessage& message );
 
 
 /* A *mailthread* filter attempts to gather all mails that appear 

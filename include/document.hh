@@ -43,18 +43,43 @@ typedef basicDecorator<char,std::char_traits<char> > decorator;
 
 /* When the dispatcher has found a matching pattern (and associated 
    callback) for a pathname, before it goes on to call the fetch method,
-   it will check the behavior of that document.
+   it will check if the document should be served regardless or only
+   when the underlying file exists.
    
    *always*          call fetch regardless of pathname
+   *notAFile*        call fetch regardless but does not transform pathname
+                     into an absolute path (for printing  metaValue).
    *whenFileExist*   call fetch only if *pathname* exists in siteTop.
    *whenNotCached*   call fetch only if there are no cached version
                      of *pathname*.
 */
 enum callFetchType {
-    always = 0,	
-    whenFileExist,
-    whenNotCached
+    always        = 0x0,	
+	notAFile      = 0x1,
+    whenFileExist = 0x2,
+    whenNotCached = 0x3
 };
+
+/** When the dispatcher has found a matching pattern (and associated 
+   callback) for a pathname, before it goes on to call the fetch method,
+   it will check if the document should be served to everyone or only
+   to authenticated users.
+*/
+enum authFetchType {
+	noAuth        = 0x0,
+	whenAuth      = 0x4
+};
+
+/** When the dispatcher has found a matching pattern (and associated 
+   callback) for a pathname, before it goes on to call the fetch method,
+   it will check if the document is the next step in a process pipeline
+   (ex. registration) or not and serve it accordingly.
+*/
+enum pipeFetchType {
+	noPipe        = 0x0,
+	whenPipe      = 0x8
+};
+
 
 /** Prototype for document callbacks
  */
@@ -67,7 +92,7 @@ void (*callFetchFunc)( session& s, const boost::filesystem::path& pathname );
 struct fetchEntry {
     const char *name;
     boost::regex pat;
-    callFetchType behavior;
+    uint8_t behavior;
     callFetchFunc callback;
 };
 
@@ -75,6 +100,14 @@ inline
 bool operator<( const fetchEntry& left, const fetchEntry& right ) {
     return strcmp(left.name,right.name) < 0;
 }
+
+
+extern urlVariable nextpage;
+
+/** Add session variables related to generic documents.
+ */
+void docAddSessionVars( boost::program_options::options_description& opts,
+						boost::program_options::options_description& visible );
 
    
 /* Pick the appropriate presentation entry (callback) based on regular 

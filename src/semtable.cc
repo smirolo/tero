@@ -134,7 +134,6 @@ fetchEntry entries[] = {
     { "document", boost::regex(std::string(".*") + active), always,
       todoIndexWriteHtmlFetch },
 
-    { "document", boost::regex(".*/todoCreate"), always, todoCreateFetch },
     { "document", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
     { "document", boost::regex(".*\\.todo/voteAbandon"), always, todoVoteAbandonFetch },
     { "document", boost::regex(".*\\.todo/voteSuccess"), always, todoVoteSuccessFetch },
@@ -175,7 +174,7 @@ fetchEntry entries[] = {
     { "history", boost::regex(".*"), always, changehistoryFetch },
 
     /* just print the value of *name* */
-    { "print", boost::regex(".*"), always, metaValue },
+    { "print", boost::regex(".*"), notAFile, metaValue },
 
     /* Widget to display a list of files which are part of a project.
        This widget is used through different "view"s to browse 
@@ -255,6 +254,11 @@ fetchEntry entries[] = {
 
     /* Composer and document for the todos index view */
     { "view", boost::regex(".*todos/.+"), always, compose<todos> },
+
+	/* We must do this through a "view" and not a "document" because 
+	   the feedback is different if the application is invoked from
+	   the command line or through the cgi interface. */
+    { "view", boost::regex(".*/todoCreate"), always, todoCreateFetch },
 
     /* comments */
     { "view", boost::regex(std::string("/comments/create")), always, commentPage },

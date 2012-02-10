@@ -35,6 +35,21 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+pathVariable indexFile("indexFile",
+					   "index file with projects dependencies information");
+
+void logAddSessionVars( boost::program_options::options_description& all,
+						boost::program_options::options_description& visible ) 
+{
+    using namespace boost::program_options;
+
+    options_description localOptions("log");
+    localOptions.add(indexFile.option());
+    all.add(localOptions);
+    visible.add(localOptions);
+}
+
+
 void logviewFetch( session& s, const boost::filesystem::path& pathname ) 
 {
 
@@ -43,7 +58,7 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 
     /* remove the '/log' command tag and add the project dependency info 
        (dws.xml). */
-    boost::filesystem::path indexFile = s.root(pathname,"dws.xml") / "dws.xml";
+    boost::filesystem::path indexFileName = indexFile.value(s);
 
     /* Each log contains the results gathered on a build server. We prefer
        to present one build results per column but need to write s.out()
@@ -65,7 +80,7 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 
     /* Populate the project names based on the projects specified
        in the index file. */
-    xml_document<> *doc = s.loadxml(indexFile);
+    xml_document<> *doc = s.loadxml(indexFileName);
     if ( doc ) {
 	/* Error loading the document, don't bother */
 	xml_node<> *root = doc->first_node();
@@ -131,10 +146,9 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 	"obtained by running the following command on a local machine:" 
 	      << html::p::end;
     s.out() << html::pre() << html::a().href("/resources/dws") 
-	    << "dws" << html::a::end << " build "
-	    << "http://" << domainName.value(s) 
-	    << s.asUrl(indexFile.parent_path() / ".git")
-	    << html::pre::end;
+			<< "dws" << html::a::end << " build "
+			<< s.asAbsUrl(url("","",indexFileName),"")
+			<< html::pre::end;
     s.out() << html::p() << "dws, the inter-project dependency tool "
 	"generates a build log file with XML markups as part of building "
 	"projects. That build log is then stamped with the local machine "

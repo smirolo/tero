@@ -69,12 +69,15 @@ public:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<(std::basic_ostream<ch, tr>& ostr, const url& u ) {
-		if( u.absolute() ) ostr << u.protocol << "://";
+		if( u.absolute() ) {
+			ostr << u.protocol << ':';
+			if( u.protocol != "mailto" ) ostr << "//";
+		}
 		if( !u.host.empty() ) ostr << u.host;
 		if( u.port > 0 ) ostr << ':' << u.port;
 		ostr << u.pathname.string();
 		return ostr;
-    }	
+    }
 
     friend bool operator<( const url& left, const url& right ) {
 	return left.string() < right.string();

@@ -29,6 +29,7 @@
 #include "project.hh"
 #include "revsys.hh"
 #include "decorator.hh"
+#include "contrib.hh"
 
 /** Pages related to projects
 
@@ -176,14 +177,7 @@ void projindexFetch( session& s, const boost::filesystem::path& pathname )
 		xml_attribute<> *email = maintainer->first_attribute("email");
 		if( name ) {
 		    s.out() << html::p() << "maintainer: ";
-		    if( email ) {
-			s.out() << html::a().href(std::string("mailto:") 
-						    + email->value());
-		    }
-		    s.out() << name->value();
-		    if( email ) {
-			s.out() << html::a::end;
-		    }
+			s.out() << by(contrib::find(email->value()));
 		    s.out() << html::p::end;
 		}
 	    }

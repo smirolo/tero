@@ -52,6 +52,8 @@ protected:
 
     static gitcmd _instance;
 
+	void loadconfig( session& s );
+
 public:
     gitcmd() : revisionsys(".git") {}
 
@@ -87,8 +89,18 @@ public:
 
 gitcmd gitcmd::_instance;
 
+const std::string nullString;
 
 revisionsys::revsSet revisionsys::revs;
+
+const std::string& revisionsys::configval( const std::string& key ) {
+	std::map<std::string,std::string>::const_iterator found = config.find(key);
+	if( found != config.end() ) {
+		return found->second;
+	}
+	return nullString;
+}
+
 
 revisionsys*
 revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
@@ -136,7 +148,7 @@ void gitcmd::shellcmd( const std::string& cmdline )
     }
     char line[256];
     while( fgets(line,sizeof(line),f) != NULL ) {
-	std::cerr << line;
+		std::cerr << line;
     }
     int err = pclose(f);
     if( err ) {
@@ -394,6 +406,25 @@ void gitcmd::history( std::ostream& ostr,
     pclose(summary);
     
     boost::filesystem::current_path(boost::filesystem::initial_path());
+}
+
+
+void gitcmd::loadconfig( session& s ) {
+	using namespace boost::filesystem;
+    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
+
+	path configPath(rootpath / ".git" / "config");
+	boost::filesystem::ifstream configFile;
+	s.openfile(configFile,configPath);
+    while( !configFile.eof() ) {
+		boost::smatch m;
+		std::string line;
+		std::getline(configFile,line);
+		if( !boost::regex_search(line,m,valueEx) ) {
+			config[m.str(1)] = m.str(2);
+		}
+	}
+	configFile.close();
 }
 
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Fortylines LLC
+/* Copyright (c) 2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -93,14 +93,14 @@ void feedAggregate( session& s,
 			dispatchDoc::instance()->fetch(s,varname,trackname);	    
 		}
     }
-#if 0
+
     /* \todo fix tokenizers */
     if( !subdirs ) {
 		/* \todo find out how to handle commit posts and blog posts
 		   without duplicates, picking the appropriate one. */
 		feedContent<defaultWriter,filePat>(s,dirname);
     }
-#endif
+
     if( s.feeds == &writer ) {
 		s.feeds->flush();
 		s.feeds = NULL;
@@ -117,7 +117,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 
     defaultWriter writer(s.out());
     if( !s.feeds ) {
-	s.feeds = &writer;
+		s.feeds = &writer;
     }
 
     /* Always generate the feed from a content directory even
@@ -199,7 +199,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 
 template<typename defaultWriter, const char* varname>
 void feedLatestPosts( session& s, 
-		      const boost::filesystem::path& pathname )
+					  const boost::filesystem::path& pathname )
 {
     defaultWriter writer(s.out());
     feedOrdered<orderByTime<post> > latests(&writer);

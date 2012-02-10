@@ -31,6 +31,46 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+contrib::pointer_type contrib::find( const std::string& email, 
+									 const std::string& name )
+{
+	pointer_type p(new contrib());
+	p->name = name;
+	p->email = email;
+	return p;
+}
+
+
+std::ostream& operator<<( std::ostream& ostr, const by& v ) {
+	ostr << "By ";
+	if( !v.ptr->email.empty() ) {
+		ostr << html::a().href(std::string("mailto:") + v.ptr->email)
+			 << v.ptr->name 
+			 << "<sup><img src=\"/resources/icon_email.png\"></sup>"
+			 << html::a::end;
+	} else {
+		ostr << v.ptr->name;
+	}
+	if( !v.ptr->google.empty() ) {
+		ostr << " <a rel=\"author\" href=\"https://profiles.google.com/"
+			 << v.ptr->google << "\">"
+			 << "<img src=\"http://ssl.gstatic.com/images/icons/gplus-16.png\" width=\"16\" height=\"16\">"
+			 << html::a::end;
+	}
+	return ostr;
+}
+
+
+std::ostream& operator<<( std::ostream& ostr, const from& v ) {
+	if( !v.ptr->name.empty() ) {
+		ostr << v.ptr->name << "<" << v.ptr->email << ">";
+	} else {
+		ostr << v.ptr->email;
+	}
+	return ostr;
+}
+
+
 void contribCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
     s.privileged(true);

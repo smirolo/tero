@@ -42,6 +42,8 @@ public:
     */
     const char* metadir;
 
+	std::map<std::string,std::string> config;
+
 public:
     explicit revisionsys( const char* m ) : metadir(m) {}
 
@@ -56,6 +58,8 @@ public:
     /** Add *pathname* to the changelist to be committed. 
      */
     virtual void add( const boost::filesystem::path& pathname ) = 0;
+
+	const std::string& configval( const std::string& key );
 
     /** Commit the default changelist.
      */

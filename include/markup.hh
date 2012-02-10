@@ -686,6 +686,7 @@ public:
     /** format string used for printing date_time 
      */
     static const char *format;
+	static const char *shortFormat;
 
     explicit pubDate( boost::posix_time::ptime t ) 
     : markup(name,NULL,NULL,0), time(t) {}
@@ -693,13 +694,13 @@ public:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<( std::basic_ostream<ch, tr>& ostr, const pubDate& v ) {
-	boost::posix_time::time_facet* 
-	  facet(new boost::posix_time::time_facet(format));
-	ostr.imbue(std::locale(ostr.getloc(), facet));
-	ostr << static_cast<const detail::markup&>(v)
-	     << v.time
-	     << end;
-	return ostr;
+		boost::posix_time::time_facet* 
+			facet(new boost::posix_time::time_facet(format));
+		ostr.imbue(std::locale(ostr.getloc(), facet));
+		ostr << static_cast<const detail::markup&>(v)
+			 << v.time
+			 << end;
+		return ostr;
     }
 
 

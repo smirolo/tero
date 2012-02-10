@@ -137,12 +137,18 @@ url urlVariable::value( const session& s ) const
 
 std::string session::sessionName;
 
+session::session( const std::string& sn,
+				  std::ostream& o ) 
+	: sessionId(""), ostr(&o), nErrs(0), feeds(NULL) {	
+	sessionName = sn;
 
-void 
-session::addSessionVars( boost::program_options::options_description& all,
-			 boost::program_options::options_description& visible ) 
-{
     using namespace boost::program_options;
+
+	options_description genOptions("general");
+	genOptions.add_options()
+		("help","produce help message");	
+	opts.add(genOptions);
+	visible.add(genOptions);
 
     options_description localOptions("session");
     localOptions.add_options()
@@ -152,14 +158,14 @@ session::addSessionVars( boost::program_options::options_description& all,
     localOptions.add(domainName.option());
     localOptions.add(siteTop.option());
     localOptions.add(cacheTop.option());
-    all.add(localOptions);
+    opts.add(localOptions);
     visible.add(localOptions);
 
     options_description hiddenOptions("hidden");
     hiddenOptions.add(startTime.option());
     hiddenOptions.add_options()
 	(document.name,value<std::vector<boost::filesystem::path> >(),"input files");
-    all.add(hiddenOptions);
+    opts.add(hiddenOptions);
 }
 
 
@@ -211,15 +217,15 @@ void session::appendfile( boost::filesystem::ofstream& strm,
     using namespace boost::filesystem;
 
     if( !boost::filesystem::exists(pathname) ) {
-	createfile(strm,pathname);
+		createfile(strm,pathname);
     } else {
-	using namespace boost::system::errc;
+		using namespace boost::system::errc;
 
-	strm.open(pathname,std::ios_base::out | std::ios_base::app);
-	if( strm.fail() ) {
-	    boost::throw_exception(boost::system::system_error(
-	       make_error_code(no_such_file_or_directory),pathname.string()));	
-	}
+		strm.open(pathname,std::ios_base::out | std::ios_base::app);
+		if( strm.fail() ) {
+			boost::throw_exception(boost::system::system_error(
+			  make_error_code(no_such_file_or_directory),pathname.string()));	
+		}
     }
 }
 
@@ -232,26 +238,35 @@ void session::createfile( boost::filesystem::ofstream& strm,
     create_directories(pathname.parent_path());
     strm.open(pathname,std::ios_base::out | std::ios_base::trunc);
     if( strm.fail() ) {
-	using namespace boost::system::errc;
-	boost::throw_exception(boost::system::system_error(
+		using namespace boost::system::errc;
+		boost::throw_exception(boost::system::system_error(
 	       make_error_code(no_such_file_or_directory),pathname.string()));	
     }
 }
 
 
-void session::openfile( boost::filesystem::ifstream& strm, 
-		     const boost::filesystem::path& pathname ) {
+int session::openfile( boost::filesystem::ifstream& strm, 
+						const boost::filesystem::path& pathname ) {
     using namespace boost::system::errc;
     using namespace boost::filesystem;
 
     check(pathname);
 
-    strm.open(pathname);
-    if( !strm.fail() ) return;
-    
-    /* \todo figure out how to pass iostream error code in exception. */
-    boost::throw_exception(boost::system::system_error(
-	       make_error_code(no_such_file_or_directory),pathname.string()));	
+    strm.open(pathname,std::ios_base::in|std::ios_base::binary);
+	if( strm.fail() ) {
+		/* \todo figure out how to pass iostream error code in exception. */
+		boost::throw_exception(boost::system::system_error(
+		  make_error_code(no_such_file_or_directory),pathname.string()));
+	}
+	char firstBytes[16];
+	int bytesRead = strm.readsome(firstBytes,16);
+	strm.seekg(0,std::ios_base::beg);
+	for( int i = 0; i < bytesRead; ++i ) {
+		if( !isprint(firstBytes[i]) ) {		
+			return std::ios_base::binary;
+		}
+	}
+	return 0;
 }
 
 
@@ -392,15 +407,15 @@ void session::state( const std::string& name, const std::string& value )
 {    
     vars[name] = valT(value,sessionfile);
     if( !exists() ) {
-	using namespace boost::posix_time;
-
-	std::stringstream s;
-	s << boost::uuids::random_generator()();
-	sessionId = s.str();
-
-	s.str("");
-	s << second_clock::local_time();
-	vars["startTime"] = valT(s.str(),sessionfile);
+		using namespace boost::posix_time;
+		
+		std::stringstream s;
+		s << boost::uuids::random_generator()();
+		sessionId = s.str();
+		
+		s.str("");
+		s << second_clock::local_time();
+		vars["startTime"] = valT(s.str(),sessionfile);
     }
 }
 
@@ -507,8 +522,7 @@ session::abspath( const url& relative ) const {
 }
 
 
-void session::restore( int argc, char *argv[],
-		       const boost::program_options::options_description& opts )
+void session::restore( int argc, char *argv[] )
 {
     using namespace boost;
     using namespace boost::system;
@@ -606,11 +620,15 @@ void session::restore( int argc, char *argv[],
 
     /* 5. If a "sessionName" and a derived file exists, the (name,value) pairs 
        in that session file are added to the session. */
-    cgi_parser::querySet::const_iterator sid 
-		= parser.query.find(sessionName);
-    if( sid != parser.query.end() ) {
-		sessionId = sid->second;
-    }
+	sessionId = valueOf(sessionName);
+	if( sessionId.empty() ) {
+		cgi_parser::querySet::const_iterator sid 
+			= parser.query.find(sessionName);
+		if( sid != parser.query.end() ) {
+			sessionId = sid->second;
+		}
+	}
+
     if( exists() ) {
 		load(opts,stateFilePath(),sessionfile);
     }
@@ -652,6 +670,43 @@ void session::restore( int argc, char *argv[],
 		insert(cacheTop.name,
 			   boost::filesystem::current_path().string(),cmdline);
     }
+
+	bool printHelp = false;
+	if( !runAsCGI() ) {
+		for( int i = 1; i < argc; ++i ) {
+			if( strncmp(argv[i],"--help",6) == 0 ) {
+				printHelp = true;
+			}
+		}
+		if( argc <= 1 ) {
+			printHelp = true;
+		}
+		if( printHelp ) {
+			using namespace std;
+			boost::filesystem::path binname 
+				= boost::filesystem::basename(argv[0]);
+			cout << binname << "[options] pathname" << endl << endl
+				 << "Version" << endl
+				 << "  " << binname << " version " /* \todo << VERSION */ << endl << endl;
+			cout << "Options" << endl
+				 << visible << endl;
+			cout << "Further Documentation" << endl
+				 << "Semilla relies on session variables (ex. *siteTop*)"
+				 << " to find relevent pieces of information to build"
+				 << " a page."
+				 << " Session variables can be defined as:\n"
+				 << "   * Arguments on the command-line\n"
+				 << "   * Name=Value pairs in a global configuration file\n"
+				 << "   * Parameters passed through CGI environment "
+				 << "variables\n"
+				 << "   * Name=Value pairs in a unique session file\n"
+				 << "When a variable is defined in more than one set, "
+				 << "command-line arguments have precedence over the global "
+				 << "configuration file which has precedence over"
+				 << " environment variables which in turn as precedence"
+				 << " over the session file." << endl;
+		}
+	}
 }
 
 

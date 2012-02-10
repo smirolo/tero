@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 #include "markup.hh"
 #include <boost/date_time/date_facet.hpp>
 #include "decorator.hh"
+#include "contrib.hh"
 
 /** Posts.
 
@@ -108,7 +109,7 @@ void htmlwriter::filters( const post& p ) {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-    time_facet* facet(new time_facet(pubDate::format));
+    time_facet* facet(new time_facet(pubDate::shortFormat));
     (*ostr).imbue(std::locale((*ostr).getloc(), facet));
 
     *ostr << html::div().classref( (postNum % 2 == 0) ? 
@@ -124,9 +125,7 @@ void htmlwriter::filters( const post& p ) {
 			  << html::h(1) << p.title << html::h(1).end() 
 			  << html::a::end << std::endl;
 	}
-    *ostr << "by " << html::a().href(std::string("mailto:") + p.authorEmail)
-	  << p.author << html::a::end
-	  << " on " << p.time;
+    *ostr << by(contrib::find(p.authorEmail,p.author)) << " on " << p.time;
     *ostr << html::div::end;    
 
     /* body of the post */
@@ -146,12 +145,11 @@ void mailwriter::filters( const post& p ) {
     time_facet* facet(new time_facet(pubDate::format));
     (*ostr).imbue(std::locale((*ostr).getloc(), facet));
 
-    *ostr << "From " << p.authorEmail << std::endl;
-    if( !p.title.empty() ) {
-		*ostr << "Subject: " << p.title << std::endl;
-    }
+    *ostr << "From " << from(contrib::find(p.authorEmail,p.author)) << std::endl;
+	*ostr << "Subject: " << (!p.title.empty() ? p.title : "(No Subject)") 
+		  << std::endl;
     *ostr << "Date: " << p.time << std::endl;
-    *ostr << "From: " << p.authorEmail << std::endl;    
+    *ostr << "From: " << from(contrib::find(p.authorEmail,p.author)) << std::endl;    
     *ostr << "Score: " << p.score << std::endl;
 
     for( post::headersMap::const_iterator header = p.moreHeaders.begin();
@@ -179,9 +177,10 @@ void rsswriter::filters( const post& p ) {
 	if( !p.link.empty() ) {
 		*ostr << p.link << std::endl;
 	}
-    *ostr << html::p() << p.author << ":" << "<br />";
-    *ostr << p.content << html::p::end;
-    *ostr << "]]>" << description::end;
+    *ostr << html::p() 
+		  << by(contrib::find(p.authorEmail,p.author)) << ":" << "<br />"
+		  << p.content << html::p::end
+		  << "]]>" << description::end;
 
     *ostr << author();
     esc.attach(*ostr);

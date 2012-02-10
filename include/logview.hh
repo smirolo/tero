@@ -34,6 +34,9 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+void logAddSessionVars( boost::program_options::options_description& all,
+						boost::program_options::options_description& visible );
+
 void logviewFetch( session& s, const boost::filesystem::path& pathname );
 
 /** Display test unit regressions as provided by a regression.log 

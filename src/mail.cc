@@ -26,6 +26,7 @@
 #include <string>
 #include <locale>
 #include <boost/date_time/local_time/local_time.hpp>
+#include <Poco/Net/SMTPClientSession.h>
 #include "mail.hh"
 #include "markup.hh"
 
@@ -37,6 +38,48 @@
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+
+urlVariable smtpHost("smtpHost",
+		       "host to connect to in order to send comments");
+intVariable smtpPort("smtpPort",
+			 "port to connect to in order to send comments");
+sessionVariable smtpLogin("smtpLogin",
+			  "login to the smtp server");
+sessionVariable smtpPassword("smtpPassword",
+			     "password to the smtp server");
+
+void
+mailAddSessionVars( boost::program_options::options_description& opts,
+					boost::program_options::options_description& visible )
+{
+    using namespace boost::program_options;
+
+    options_description localOptions("mail");
+    localOptions.add(smtpHost.option());
+    localOptions.add(smtpPort.option());
+    localOptions.add(smtpLogin.option());
+    localOptions.add(smtpPassword.option());
+    opts.add(localOptions);
+}
+
+
+void sendMail( const session& s, const Poco::Net::MailMessage& message )
+{
+	using namespace Poco::Net;
+
+	std::string hostname = smtpHost.value(s).string();
+	int port = smtpPort.value(s);
+
+	SMTPClientSession session(smtpHost.value(s).string(),
+							  smtpPort.value(s));
+    session.login(SMTPClientSession::AUTH_LOGIN,
+				  smtpLogin.value(s),
+				  smtpPassword.value(s));
+
+    session.sendMessage(message);
+    session.close();
+}
 
 
 void mailthread::filters( const post& p ) {

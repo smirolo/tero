@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -29,19 +29,12 @@
 #include <Poco/Net/SMTPClientSession.h>
 #include <Poco/Net/MailMessage.h>
 #include "comments.hh"
+#include "mail.hh"
 
 pathVariable commentTop("commentTop",
 			"root of the tree where comments are stored");
 sessionVariable recipient("commentRecipient",
 			  "e-mail address comments are sent to");
-urlVariable smtpHost("smtpHost",
-		       "host to connect to in order to send comments");
-intVariable smtpPort("smtpPort",
-			 "port to connect to in order to send comments");
-sessionVariable smtpLogin("smtpLogin",
-			  "login to the smtp server");
-sessionVariable smtpPassword("smtpPassword",
-			     "password to the smtp server");
 
 void 
 commentAddSessionVars( boost::program_options::options_description& opts,
@@ -52,10 +45,6 @@ commentAddSessionVars( boost::program_options::options_description& opts,
     options_description localOptions("comments");
     localOptions.add(commentTop.option());
     localOptions.add(recipient.option());
-    localOptions.add(smtpHost.option());
-    localOptions.add(smtpPort.option());
-    localOptions.add(smtpLogin.option());
-    localOptions.add(smtpPassword.option());
     opts.add(localOptions);
 }
 
@@ -115,12 +104,7 @@ void sendPostToSMTP::filters( const post& p ) {
     message.setContentType(const std::string& mediaType);
     message.setDate(const Poco::Timestamp& dateTime);
 #endif
-    Poco::Net::SMTPClientSession session(smtpHost.value(*mySession).string(),
-					 smtpPort.value(*mySession));
-    session.login(Poco::Net::SMTPClientSession::AUTH_LOGIN,
-		  smtpLogin.value(*mySession),smtpPassword.value(*mySession));
-    session.sendMessage(message);
-    session.close();
+	sendMail(*mySession,message);
 }
 
 

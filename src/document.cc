@@ -38,6 +38,21 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+
+urlVariable nextpage("q","next page in a process pipeline");
+
+
+void docAddSessionVars( boost::program_options::options_description& opts,
+						boost::program_options::options_description& visible )
+{
+    using namespace boost::program_options;
+    
+    options_description localOptions("document");
+    localOptions.add(nextpage.option());
+    opts.add(localOptions);
+}
+
+
 dispatchDoc *dispatchDoc::singleton = NULL;
 
 
@@ -48,8 +63,8 @@ dispatchDoc::dispatchDoc( fetchEntry* e, size_t n )
     for( fetchEntry* first = entries; first != &entries[nbEntries]; ++first ) {
 	if( prev ) {
 	    if( strcmp(prev->name,first->name) > 0  ) {
-		std::cerr << "entries are not sorted (" << prev->name 
-			  << " and " << first->name << ")" << std::endl;
+			std::cerr << "entries are not sorted (" << prev->name 
+					  << " and " << first->name << ")" << std::endl;
 	    }
 	}
 	prev = first;
@@ -65,7 +80,8 @@ bool dispatchDoc::fetch( session& s,
 #endif
     const fetchEntry *doc = select(name,value.string());
     if( doc != NULL ) {
-		fetch(s,doc,s.abspath(value));
+		fetch(s,doc,((doc->behavior & 0x3) == notAFile) ?
+			  value.pathname : s.abspath(value));
 	}
     return ( doc != NULL );
 }
@@ -76,20 +92,42 @@ void dispatchDoc::fetch( session& s,
 						 const boost::filesystem::path& p ) {
     using namespace boost::filesystem;
 
-	path prev = current_path();
-	path dir = s.prefixdir(p);
-	current_path(dir);
-	switch( doc->behavior ) {
-	case whenFileExist:
-	    s.check(p);
-	case always:
-	    doc->callback(s,p);
-	    break;
-	case whenNotCached:
-	    doc->callback(s,p);
-	    break;
-	}	
-	current_path(prev);
+	if(  doc->behavior & whenAuth ) {
+		/* \todo check we have an authenticated session */
+	    if( s.valueOf("mail").empty() ) {
+			/* \todo redirect to auth page with future redirect */
+			std::stringstream str;
+			str << "/login?q=" << p.string();
+			httpHeaders.refresh(0,url(str.str()));
+			return;
+		}
+	}
+	if( doc->behavior & whenPipe ) {
+	    boost::smatch m;
+	    if( !regex_match(nextpage.value(s).string(),m,doc->pat) ) {
+			/* This isn't right to directly access to a step in the pipeline
+			   without executing the previous step. */
+			throw std::runtime_error("misstep in pipeline");
+		}
+	}
+	if( (doc->behavior & 0x3) == notAFile ) {
+		doc->callback(s,p);
+	} else {
+		path prev = current_path();
+		path dir = s.prefixdir(p);
+		current_path(dir);
+		switch( doc->behavior & 0x3 ) {
+		case whenFileExist:
+			s.check(p);
+		case always:
+			doc->callback(s,p);
+			break;
+		case whenNotCached:
+			doc->callback(s,p);
+			break;
+		}	
+		current_path(prev);
+	}
 }
 
 
@@ -379,25 +417,28 @@ void text::fetch( session& s, const boost::filesystem::path& pathname ) {
     using namespace boost::filesystem; 
 
     ifstream strm;
-    s.openfile(strm,pathname);
+    if( s.openfile(strm,pathname) == std::ios_base::binary ) {
+		/* This is a binary file, we do nothing with it. */
+		strm.close();
+	}
 
     if( leftDec ) {
-	if( leftDec->formated() ) s.out() << code();
-	leftDec->attach(s.out());
+		if( leftDec->formated() ) s.out() << code();
+		leftDec->attach(s.out());
     }
 
     skipOverTags(s,strm);
 
     /* remaining lines */
     while( !strm.eof() ) {
-	std::string line;
-	std::getline(strm,line);
-	s.out() << line << std::endl;
+		std::string line;
+		std::getline(strm,line);
+		s.out() << line << std::endl;
     }
 
     if( leftDec ) {
-	leftDec->detach();
-	if( leftDec->formated() ) s.out() << html::pre::end;
+		leftDec->detach();
+		if( leftDec->formated() ) s.out() << html::pre::end;
     }
 
     strm.close();
@@ -430,7 +471,7 @@ void metaLastTime( session& s, const boost::filesystem::path& pathname ) {
 
 void metaValue( session& s, const boost::filesystem::path& pathname )
 {
-    s.out() << pathname;
+    s.out() << pathname.string();
 }
 
 

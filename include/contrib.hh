@@ -27,11 +27,49 @@
 #define guardcontrib
 
 #include "document.hh"
+#include <boost/tr1/memory.hpp>
 
 /** Pages related to contributors.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+class contrib {
+public:
+	typedef std::tr1::shared_ptr<contrib> pointer_type;
+
+public:
+	std::string email;
+	std::string name;
+	std::string google;
+	
+public:
+	static pointer_type find( const std::string& email, 
+							  const std::string& name = "" );
+};
+
+
+class by {
+protected:
+	const contrib::pointer_type& ptr;
+
+public:
+	friend std::ostream& operator<<( std::ostream&, const by& );
+
+	explicit by( const contrib::pointer_type& p ) : ptr(p) {}
+};
+
+class from {
+protected:
+	const contrib::pointer_type& ptr;
+
+public:
+	friend std::ostream& operator<<( std::ostream&, const from& );
+
+	explicit from( const contrib::pointer_type& p ) : ptr(p) {}
+};
+
+
 
 void contribCreateFetch( session& s, const boost::filesystem::path& pathname );
 

@@ -138,7 +138,7 @@ std::string extractEmailAddress( const std::string& line ) {
     size_t estart = line.find('<');
     size_t efinish = line.rfind('>');
     if( estart < efinish ) {
-	return line.substr(estart + 1,efinish - 1);
+		return line.substr(estart + 1,efinish - estart - 1);
     }
     return line;
 }
@@ -300,6 +300,7 @@ const detail::nodeEnd rsslink::end(rsslink::name);
 const char* pubDate::name = "pubDate";
 const detail::nodeEnd pubDate::end(pubDate::name);
 const char *pubDate::format = "%a, %e %b %Y %H:%M:%S UT";
+const char *pubDate::shortFormat = "%B %e, %Y";
 
 const char* rss::name = "rss";
 const detail::nodeEnd rss::end(rss::name);

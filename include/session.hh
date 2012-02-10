@@ -225,6 +225,9 @@ protected:
 
     /* \todo protected comments.cc use of "href" */
 public:
+	boost::program_options::options_description opts;
+	boost::program_options::options_description visible;
+
     /** returns the value of a variable
      */
     const std::string& valueOf( const std::string& name ) const;
@@ -243,15 +246,7 @@ public:
 
     postFilter *feeds;
 
-    session( const std::string& sn,
-	     std::ostream& o ) 
-	: sessionId(""), ostr(&o), nErrs(0), feeds(NULL) {	
-	sessionName = sn;
-    }
-
-    static void 
-    addSessionVars( boost::program_options::options_description& all,
-		     boost::program_options::options_description& visible );
+    session( const std::string& sn, std::ostream& o );
 
     /** Transforms the path *p* into a fully qualified URL to access
 	the file through an HTTP connection. */
@@ -286,15 +281,19 @@ public:
 
     /** Open a file for reading. 
 
-	This function throws an exception if there is any error. 
+		This function throws an exception if there is any error otherwise
+		it returns ios_base::binary if the file seems to be a binary file
+		and zero if it looks like a text file (analyzing first 16 bytes).
     */
-    void openfile( boost::filesystem::ifstream& strm, 
-		   const boost::filesystem::path& pathname );
+    int openfile( boost::filesystem::ifstream& strm, 
+				  const boost::filesystem::path& pathname );
     
+#if 0
     void 
     loadsession( const boost::program_options::options_description& opts ) {
 		load(opts,stateFilePath(),sessionfile);
     }
+#endif
 
     /** Load and cache a text file in memory. Two back-to-back calls 
 	will return the same null-terminated buffer.
@@ -390,8 +389,7 @@ public:
     
     /** \brief Load a session from persistent storage 
      */
-    void restore( int argc, char *argv[], 
-		  const boost::program_options::options_description& opts );
+    void restore( int argc, char *argv[] );
 
     /* look for a relative pathname *trigger* from *leaf* to the root
        of the filesystem and return the stem such that stem / *trigger*
