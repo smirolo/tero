@@ -42,7 +42,7 @@ sessionDir		?=	/var/semilla
 
 libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			checkstyle.o comments.o composer.o contrib.o \
-			cppfiles.o cpptok.o \
+			cppfiles.o cpptok.o coverage.o \
 			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o \
 			post.o rfc2822tok.o session.o shfiles.o \
