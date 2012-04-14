@@ -27,7 +27,7 @@
 #define guardcheckstyle
 
 #include "slice.hh"
-#include "cpptok.hh"
+#include "tokenize.hh"
 #include "shtok.hh"
 #include "project.hh"
 

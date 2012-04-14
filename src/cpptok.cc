@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 #include <algorithm>
 #include <iostream>
 #include <boost/regex.hpp>
-#include "cpptok.hh"
+#include "tokenize.hh"
 
 /** C++ tokenizer
 
@@ -204,20 +204,20 @@ size_t cppTokenizer::tokenize( const char *line, size_t n )
 advancePointer:
     switch( ((size_t)std::distance(line,p) >= n) ? '\0' : *p ) {
     case '\\': 
-	tmp = p;
-	while( *tmp == '\r' ) ++tmp; 
-	if( *tmp == '\n' ) goto exit;
-	break; 
+		tmp = p;
+		while( *tmp == '\r' ) ++tmp; 
+		if( *tmp == '\n' ) goto exit;
+		break; 
     case '\r':
-	tmp = p;
-	while( *tmp == '\r' ) ++tmp; 
-	assert( (*tmp == '\n') | (*tmp == '\0') );
+		tmp = p;
+		while( *tmp == '\r' ) ++tmp; 
+		assert( (*tmp == '\n') | (*tmp == '\0') );
     case '\n':  
     case '\0':  
-	/* In a multi line comment, end-of-line characters 
-	   are not classified as separators. */
-	if( !multiline ) trans = NULL; 
-	goto exit;		
+		/* In a multi line comment, end-of-line characters 
+		   are not classified as separators. */
+		if( !multiline ) trans = NULL; 
+		goto exit;		
     } 
     ++p;
     goto *trans;
@@ -225,24 +225,25 @@ advancePointer:
 charEnd:
     switch( *p ) {
     case '\'':
-	advance(token);
+		tok = cppCharacterLiteral;
+		advance(token);
     }
     goto error;
 
 charEscSeqTail:
     switch( *p ) {
     case '\'':
-    case '\"':
-    case '\?':
+    case '"':
+    case '?':
     case '\\':
-    case '\a':
-    case '\b':
-    case '\f':
-    case '\n':
-    case '\r':
-    case '\t':
-    case '\v':
-	advance(charEnd);
+    case 'a':
+    case 'b':
+    case 'f':
+    case 'n':
+    case 'r':
+    case 't':
+    case 'v':
+		advance(charEnd);
     case '0':
     case '1':
     case '2':
@@ -352,8 +353,9 @@ charHexQuad:
 charTail:
     switch( *p ) {
     case '\\':
-	/* simple-escape-sequence, octal-escape-sequence, hexadecimal-escape-sequence */
-	advance(charEscSeqTail);
+		/* simple-escape-sequence, octal-escape-sequence, 
+		   hexadecimal-escape-sequence */
+		advance(charEscSeqTail);
     }
     advance(charEnd);
 
@@ -406,15 +408,19 @@ decFloTail:
     case '7':
     case '8':
     case '9':
-	/* decimal-literal, floating-literal */
-	advance(decFloTail);
+		/* decimal-literal, floating-literal */
+		advance(decFloTail);
     case '.':
-	advance(fractionalConstantTail);
+		advance(fractionalConstantTail);
     case 'e':
     case 'E': 
-	advance(expTail);
+		advance(expTail);
     }
-    goto token;
+    if( isSeparator(*p) ) {
+		tok = cppDecimalLiteral;
+		goto token;
+	}
+    goto error;
 
 digitTail:
     switch( *p ) {
@@ -435,13 +441,13 @@ digitTail:
 divideTail:
     switch( *p ) {
     case '=':
-	advance(token);
+		advance(token);
     case '/':
-    tok = cppComment;
-	advance(lineCommentTail);
+		tok = cppComment;
+		advance(lineCommentTail);
     case '*':
-    tok = cppComment;
-	advance(multiLineCommentTail);
+		tok = cppComment;
+		advance(multiLineCommentTail);
     }
     goto token;
 
@@ -464,22 +470,22 @@ ellipsisTail:
     goto error;
 
 error:
-    /* skip until next space */
+    /* skip until next separator */
     if( isSeparator(*p) ) goto token; 
     advance(error);
 
 exit:
     last = std::distance(line,p);
     if( last - first > 0  && listener != NULL ) {
-	listener->token(tok,line,first,last,trans != NULL);
-	first = last;
+		listener->token(tok,line,first,last,trans != NULL);
+		first = last;
     }
     while( *p == '\r' ) ++p; 
     if( *p == '\n' ) {
-	++p;
-	last = std::distance(line,p);
-	listener->newline(line,first,last);
-	first = last;
+		++p;
+		last = std::distance(line,p);
+		listener->newline(line,first,last);
+		first = last;
     }
     state = trans;
     if( last >= n ) return last;
@@ -525,8 +531,8 @@ floHexOctTail:
     switch( *p ) {
     case 'x':
     case 'X':
-	/* hexadecimal-literal */
-	advance(hexTail);
+		/* hexadecimal-literal */
+		advance(hexTail);
     case '0':
     case '1':
     case '2':
@@ -555,28 +561,28 @@ floOctTail:
     case '5':
     case '6':
     case '7':
-	/* floating-literal, octal-literal */
-	advance(floOctTail);
+		/* floating-literal, octal-literal */
+		advance(floOctTail);
     case '8':
     case '9':
-	/* floating-literal */
-	advance(floTail);   
+		/* floating-literal */
+		advance(floTail);   
     case 'e':
     case 'E':
-	advance(expTail);   
+		advance(expTail);   
     case '.':	
-	advance(fractionalConstantTail);
+		advance(fractionalConstantTail);
     }
     goto token;
 
 floPrepOp:
     switch( *p ) {
     case '.':
-	tok = cppOperator;
-	advance(ellipsisTail);
+		tok = cppOperator;
+		advance(ellipsisTail);
     case '*':
-	tok = cppOperator;
-	advance(token);
+		tok = cppOperator;
+		advance(token);
     case '0':
     case '1':
     case '2':
@@ -587,8 +593,8 @@ floPrepOp:
     case '7':
     case '8':
     case '9':
-	tok = cppFloatingLiteral;
-	advance(fractionalConstantTail);
+		tok = cppFloatingLiteral;
+		advance(fractionalConstantTail);
     }
     goto token;
 
@@ -604,13 +610,13 @@ floTail:
     case '7':
     case '8':
     case '9':
-	/* floating-literal */
-	advance(floTail);   
+		/* floating-literal */
+		advance(floTail);   
     case 'e':
     case 'E':
-	advance(expTail);   
+		advance(expTail);   
     case '.':	
-	advance(fractionalConstantTail);
+		advance(fractionalConstantTail);
     }
     goto token;
  
@@ -626,22 +632,22 @@ fractionalConstantTail:
     case '7':
     case '8':
     case '9':
-	advance(fractionalConstantTail);
+		advance(fractionalConstantTail);
     case 'e':
     case 'E':
-	advance(expTail);
+		advance(expTail);
     case 'f':
     case 'l':
     case 'F':
     case 'L':
-	advance(token);
+		advance(token);
     }
     goto token;
        
 greaterThanEnd:
     switch( *p ) {
     case '=':
-	advance(token);
+		advance(token);
     }
     goto token;
 
@@ -669,9 +675,12 @@ hexTail:
     case 'D':
     case 'E':
     case 'F':
-	advance(hexTail);
+		advance(hexTail);
     }
-    if( isSeparator(*p) ) goto token;
+    if( isSeparator(*p) ) {
+		tok = cppHexadecimalLiteral;
+		goto token;
+	}
     goto error;
 
 identifierTail:
@@ -910,16 +919,22 @@ tabSpaceTail:
     goto token;
  
 token:
+	last = std::distance(line,p);
     if( trans != NULL ) {
-	if( tok == cppIdentifier ) {
-	    tok = identifierToken(std::string(&line[first],p - &line[first]));
-	}
-	if( listener != NULL ) {
-	    listener->token(tok,line,first,p - line,false);
-	}
+		if( tok == cppIdentifier ) {
+			tok = identifierToken(std::string(&line[first],p - &line[first]));
+		}
+		if( last - first > 0 && listener != NULL ) {
+#if 0
+			std::cerr << "[token] first=" << first << ", last=" << last
+					  << ", tok=" << tok << std::endl;
+#endif
+			listener->token(tok,line,first,last,false);
+		}
     }
     tok = cppErr;
-    first = p - line;
+	trans = NULL;
+	first = last;
 	switch( *p ) {
     case 'L':
 		/* character-literal, identifier, string-literal */
@@ -997,8 +1012,8 @@ token:
     case '7':
     case '8':
     case '9':
-	/* decimal-literal, floating-literal */
-	advance(decFloTail);
+		/* decimal-literal, floating-literal */
+		advance(decFloTail);
     case '\'':
 		/* character-literal */
 		advance(charTail);
@@ -1015,56 +1030,61 @@ token:
     case ')':
     case ';':
     case ',':
-	/* preprocessing-op-or-punc */
-	tok = cppPunctuator;
-	advance(token);
+		/* preprocessing-op-or-punc */
+		tok = cppPunctuator;
+		advance(token);
     case '#':
-	tok = cppPreprocessing;
-	expects = '#';
-	advance(duplicate);
+		tok = cppPreprocessing;
+		expects = '#';
+		advance(duplicate);
+	case '?':
+		tok = cppOperator;
+		advance(token);
     case '*':
     case '^':
     case '~':
     case '!':
     case '=':
-	tok = cppOperator;
-	expects = '=';
-	advance(duplicate);
+		tok = cppOperator;
+		expects = '=';
+		advance(duplicate);
     case ':':
-	tok = cppPunctuator;
-	advance(colonTail);
+		tok = cppPunctuator;
+		advance(colonTail);
     case '%':
-	tok = cppOperator;
-	advance(remainTail);
+		tok = cppOperator;
+		advance(remainTail);
     case '-':
-	tok = cppOperator;
-	advance(minusTail);
+		tok = cppOperator;
+		advance(minusTail);
     case '+':
     case '&':
     case '|':
-	tok = cppOperator;
-	expects = *p;
-	advance(duplicateOrEqual);
+		tok = cppOperator;
+		expects = *p;
+		advance(duplicateOrEqual);
     case '/':
-	/* comment, preprocessing-op-or-punc */
-	advance(divideTail);
+		/* comment, preprocessing-op-or-punc */
+		tok = cppOperator;
+		advance(divideTail);
     case '>':
-	tok = cppOperator;
-	advance(greaterThanEnd);
+		tok = cppOperator;
+		advance(greaterThanEnd);
     case '<':
-	/* header-name, preprocessing-op-or-punc */
-	tok = cppPreprocessing;
-	advance(lessThanTail);
+		/* header-name, preprocessing-op-or-punc */
+		tok = cppPreprocessing;
+		advance(lessThanTail);
     case '.':
-	/* floating-literal, preprocessing-op-or-punc */
-	tok = cppOperator;
-	advance(floPrepOp)   
+		/* floating-literal, preprocessing-op-or-punc */
+		tok = cppOperator;
+		advance(floPrepOp);
     case ' ':
-	tok = cppSpace;
-	advance(spaceTail);
+		tok = cppSpace;
+		advance(spaceTail);
     case '\t':
-	tok = cppTabSpace;
-	advance(tabSpaceTail);
+		tok = cppTabSpace;
+		advance(tabSpaceTail);
+	case '\r':
 	case '\n':
 	case '\0':
 	    /* empty lines */
@@ -1075,16 +1095,16 @@ token:
 wideCharTail:
     switch( *p ) {
     case '\'':
-	/* character-literal */
-	tok = cppCharacterLiteral;
-	advance(charTail);
+		/* character-literal */
+		tok = cppCharacterLiteral;
+		advance(charTail);
     case '"':
-	/* string-literal */
-	tok = cppStringLiteral;
-	advance(stringTail);
+		/* string-literal */
+		tok = cppStringLiteral;
+		advance(stringTail);
     default:
-	tok = cppIdentifier;
-	advance(identifierTail);
+		tok = cppIdentifier;
+		advance(identifierTail);
     }
     goto error;
 }

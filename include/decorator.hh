@@ -29,7 +29,7 @@
 #include <ostream>
 #include "session.hh"
 #include "document.hh"
-#include "cpptok.hh"
+#include "tokenize.hh"
 #include "xmltok.hh"
 #include "xmlesc.hh"
 #include "hreftok.hh"
@@ -181,18 +181,18 @@ class basicHtmlEscaper : public basicHighLight<xmlEscTokenizer, charT, traitsT>,
 			 public xmlEscTokListener {
 protected:
     typedef basicHighLight<xmlEscTokenizer, charT, traitsT> super;
-    
+
 public:
     basicHtmlEscaper() 
-	: super(true) { 
-	super::tokenizer.attach(*this); 
+		: super(true) { 
+		super::tokenizer.attach(*this);
     }
     
     explicit basicHtmlEscaper(  std::basic_ostream<charT,traitsT>& o )
 	: super(o,true) { super::tokenizer.attach(*this); }
     
     void newline( const char *line, int first, int last ) {
-	super::nextBuf->sputc('\n');
+		super::nextBuf->sputc('\n');
     }
     
     void token( xmlEscToken token, const char *line, 
