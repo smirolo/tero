@@ -65,7 +65,7 @@ public:
 
 /** extract the part of a path *p* that represents a project name.
  */
-boost::filesystem::path 
+std::string
 projectName( const session& s, const boost::filesystem::path& p );
 
 /** Sets title to project name.

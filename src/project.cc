@@ -61,13 +61,20 @@ projhref::projhref( const session& s, const std::string& n )
 }
 
 
-boost::filesystem::path 
+std::string
 projectName( const session& s, const boost::filesystem::path& p ) {
     boost::filesystem::path base(p);
     while( !base.string().empty() && !is_directory(base) ) {
 		base.remove_leaf();
     }
-    std::string projname = s.subdirpart(srcTop.value(s),base).string();
+	/* \todo use .git as marker in place of srcTop for project? */
+	boost::filesystem::path 
+		projRelativePath = s.subdirpart(srcTop.value(s),base);
+
+	std::string projname;
+	if( projRelativePath.begin() != projRelativePath.end() ) {
+		projname = (*projRelativePath.begin()).string();
+	}
     if( projname[projname.size() - 1] == '/' ) {
 		projname = projname.substr(0,projname.size() - 1);
     }
@@ -76,7 +83,7 @@ projectName( const session& s, const boost::filesystem::path& p ) {
 
 void projectTitle( session& s, const boost::filesystem::path& pathname )
 {
-    s.insert("title",projectName(s,pathname).string());
+    s.insert("title",projectName(s,pathname));
     session::variables::const_iterator look = s.find("title");
     if( s.found(look) ) {    
 	s.out() << look->second.value;
