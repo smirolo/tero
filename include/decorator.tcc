@@ -117,9 +117,9 @@ void basicHighLight<tokenizerT,charT,traitsT>::detach() {
 template<typename tokenizerT, typename charT, typename traitsT>
 int basicHighLight<tokenizerT,charT,traitsT>::sync() { 
     if( super::next != NULL ) {
-	assert( super::nextBuf != NULL );
-	scan(); 
-	return super::nextBuf->pubsync(); 
+		assert( super::nextBuf != NULL );
+		scan(); 
+		return super::nextBuf->pubsync(); 
     }
     return 0;
 }
@@ -379,3 +379,48 @@ void basicCppLight<charT,traitsT>::token( cppToken token,
     virtualLineBreak = fragment;
 }
 
+
+template<typename charT, typename traitsT>   
+void basicAnnotate<charT,traitsT>::newline(const char *line, int first, int last )
+{
+    super::nextBuf->sputc('\n');
+	++nbLines;
+}
+ 
+
+template<typename charT, typename traitsT>   
+void basicAnnotate<charT,traitsT>::token( xmlToken token, const char *line, 
+										  int first, int last, bool fragment )
+{
+	super::nextBuf->sputn(&line[first],last - first);
+}
+
+
+template<typename charT, typename traitsT>   
+void noteAnnotate<charT,traitsT>::newline(const char *line, int first, int last )
+{
+	super::newline(line,first,last);
+ 	annotationsType::const_iterator found = annotations.find(super::nbLines);
+	if( found != annotations.end() ) {
+		std::string begSpan("<span class=\"annotate\">");
+		super::nextBuf->sputn(begSpan.c_str(),begSpan.size());			
+		super::nextBuf->sputn(found->second.c_str(),found->second.size());
+		std::string endSpan("</span>");
+		super::nextBuf->sputn(endSpan.c_str(),endSpan.size());	
+	}
+}
+
+
+template<typename charT, typename traitsT>   
+void rangeAnnotate<charT,traitsT>::newline(const char *line, int first, int last )
+{
+	super::newline(line,first,last);
+
+	rangesType::iterator found 
+		= lower_bound(ranges.begin(),ranges.end(),super::nbLines);
+	int lowerb = std::distance(ranges.begin(),found); 
+	if( lowerb % 2 == 0 ) {
+		std::string begSpan("<span class=\"annotate\">|</span>");
+		super::nextBuf->sputn(begSpan.c_str(),begSpan.size());
+	}
+}

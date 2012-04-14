@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -363,6 +363,81 @@ public:
 		int first, int last, bool fragment );
 };
 
+
+/** Base Abstract class to add annotations on each line of a source file.
+
+	Implementation Note: we only need a EOL tokenizer to do that. 
+*/
+template<typename charT, typename traitsT = std::char_traits<charT> >
+class basicAnnotate  : public basicHighLight<xmlTokenizer, charT, traitsT>,
+		       public xmlTokListener {
+protected:
+    typedef basicHighLight<xmlTokenizer, charT, traitsT> super;
+	int nbLines;
+
+public:
+    basicAnnotate() 
+		: super(false), nbLines(0) { 
+		super::tokenizer.attach(*this); 
+    }
+    
+    basicAnnotate( std::basic_ostream<charT,traitsT>& o )
+		: super(o,false), nbLines(0) {
+		super::tokenizer.attach(*this); 
+	}
+
+    void newline(const char *line, int first, int last );
+    
+    void token( xmlToken token, const char *line, 
+		int first, int last, bool fragment );
+};
+
+/** Annotate source with static checks information
+ */
+template<typename charT, typename traitsT = std::char_traits<charT> >
+class noteAnnotate  : public basicAnnotate<charT,traitsT> {
+protected:
+    typedef basicAnnotate<charT, traitsT> super;
+	typedef std::map<int,std::string> annotationsType;
+	annotationsType annotations;
+
+public:
+    explicit noteAnnotate( const annotationsType& a ) 
+		: super(), annotations(a) {}
+    
+    noteAnnotate( const annotationsType& a, 
+				  std::basic_ostream<charT,traitsT>& o )
+		: super(o) {}
+
+   void newline(const char *line, int first, int last );
+ 
+};
+
+
+/* Annotate source with code coverage information
+ */
+template<typename charT, typename traitsT = std::char_traits<charT> >
+class rangeAnnotate  : public basicAnnotate<charT,traitsT> {
+public:
+	typedef std::vector<int> rangesType;
+
+protected:
+    typedef basicAnnotate<charT,traitsT> super;
+	rangesType ranges;
+
+public:
+    explicit rangeAnnotate( const rangesType& r ) 
+		: super(), ranges(r) { 
+    }
+    
+    rangeAnnotate( const rangesType& r, 
+				   std::basic_ostream<charT,traitsT>& o )
+		: super(o) {
+	}
+
+   void newline(const char *line, int first, int last );
+};
+
 #include "decorator.tcc"
 
 
@@ -374,5 +449,8 @@ typedef absUrlDecoratorBase<char> absUrlDecorator;
 typedef cachedUrlBase<char> cachedUrlDecorator;
 typedef basicHrefLight<char> hrefLight;
 typedef basicCppLight<char> cppLight;
+typedef noteAnnotate<char> noteDecorator;
+typedef rangeAnnotate<char> rangeDecorator;
+
 
 #endif
