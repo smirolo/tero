@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,38 +23,24 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* <a href="http://www.w3.org/TR/html5/">HTML5 Reference</a> */
-
-#include <cassert>
 #include "tokenize.hh"
 
-/** XML escape tokenizer
+/** Implementation of tokenizer for compiler error, warning, etc. messages.
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 
-const char *xmlEscTokenTitles[] = {
-    "escErr",
-    "escAmpEscape",
-    "escData",
-    "escGtEscape",
-    "escLtEscape",
-    "escQuotEscape"
-};
-
-
 #define advance(state) { trans = &&state; goto advancePointer; }
 
 
-size_t xmlEscTokenizer::tokenize( const char *line, size_t n )
+size_t errTokenizer::tokenize( const char *line, size_t n )
 {
-    const char *p = line;
-    size_t last = 0;
     size_t first = 0;
-
-    if( n == 0 ) return 0;
-    if( trans != NULL ) goto *trans; else goto token;
+    size_t last = first;
+    const char *p = line;
+    if( n == 0 ) return n;
+    if( trans != NULL ) goto *trans; else goto filename;
 
 advancePointer:
 	last = (size_t)std::distance(line,p);
@@ -84,6 +70,7 @@ advancePointer:
     }
 	++p;
     goto *trans;
+
 
  eolAdvancePointer:
 	last = (size_t)std::distance(line,p);
@@ -133,46 +120,51 @@ advancePointer:
 	first = last;
 	trans = savedtrans;
 	savedtrans = NULL;
-	goto token;
+	goto begofline;
+	
+ begofline:
+	if( *p == ' ' ) advance(message);
+	advance(filename);
 
-	/* specialized tokenizer */
-       
- data:
-    switch( *p ) {
-    case '<':
-    case '>':
-    case '&':
-    case '"':
-	goto token;
-    }
-    advance(data);
-    
- token:
-    last = std::distance(line,p);
-    if( last > first && listener != NULL ) {
+ filename:
+	tok = errFilename;
+	while( *p != ':' ) advance(filename);
+	last = (size_t)std::distance(line,p);
+	if( last > first && listener != NULL ) {
 		listener->token(tok,line,first,last,false);
-		trans = NULL;
-    }
-    tok = escErr;
-    first = last;
-    switch( *p ) {
-    case '<':
-	tok = escLtEscape;
-	advance(token);
-	break;
-    case '>':
-	tok = escGtEscape;
-	advance(token);
-	break;
-    case '&':
-	tok = escAmpEscape;
-	advance(token);
-	break;	
-    case '"':
-	tok = escQuotEscape;
-	advance(token);
-	break;	
-    }
-    tok = escData;
-    advance(data);
+	}
+	first = last;
+	advance(filenameSep);
+
+ filenameSep:
+	tok = errSeparator;
+	last = (size_t)std::distance(line,p);
+	if( last > first && listener != NULL ) {
+		listener->token(tok,line,first,last,false);
+	}
+	first = last;
+	advance(linenum);
+
+ linenum:
+	tok = errLineNum;
+	while( *p != ':' ) advance(linenum);
+	last = (size_t)std::distance(line,p);
+	if( last > first && listener != NULL ) {
+		listener->token(tok,line,first,last,false);
+	}
+	first = last;
+	advance(linenumSep);
+
+linenumSep:
+	tok = errSeparator;
+	last = (size_t)std::distance(line,p);
+	if( last > first && listener != NULL ) {
+		listener->token(tok,line,first,last,false);
+	}
+	first = last;
+	advance(message);
+
+ message:
+	tok = errMessage;
+	advance(message);
 }

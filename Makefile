@@ -43,7 +43,7 @@ sessionDir		?=	/var/semilla
 libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			checkstyle.o comments.o composer.o contrib.o \
 			cppfiles.o cpptok.o \
-			docbook.o document.o feeds.o hreftok.o revsys.o \
+			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o \
 			post.o rfc2822tok.o session.o shfiles.o \
 			shtok.o todo.o webserve.o \
@@ -64,13 +64,6 @@ semilla: semilla.cc semtable.o libsemilla.a libpayproc.a \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system -lPocoNet
 	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
-
-semcache: semcache.cc semtable.o libsemilla.a libpayproc.a \
-		-lcryptopp -luriparser -lpam \
-		-lboost_date_time -lboost_regex -lboost_program_options \
-		-lboost_filesystem -lboost_system -lPocoNet
-	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
-
 
 smailui: smailui.cc libsemilla.a \
 		-lcryptopp -luriparser -lpam \

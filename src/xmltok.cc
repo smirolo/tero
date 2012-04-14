@@ -24,8 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cassert>
-#include <iostream>
-#include "xmltok.hh"
+#include "tokenize.hh"
 
 /** XML tokenizer
 
@@ -62,9 +61,7 @@ bool nameChar( int c ) {
 
 size_t xmlTokenizer::tokenize( const char *line, size_t n )
 {
-    void *trans = state;
     const char *p = line;
-    bool newline = false;
     int last;
     first = 0;
 
@@ -72,30 +69,85 @@ size_t xmlTokenizer::tokenize( const char *line, size_t n )
     if( trans != NULL ) goto *trans; else goto token;
     
 advancePointer:
-    ++p;
-    last = std::distance(line,p);
-    switch( ((size_t)last >= n) ? '\0' : *p ) {
-    case '\r': 
-	while( *p == '\r' ) ++p; 
-	assert( (*p == '\n') | (*p == '\0') );
+	last = (size_t)std::distance(line,p);
+	if( last >= n ) {
+		if( last > first && listener != NULL ) {
+			listener->token(tok,line,first,last,true);
+		}
+		return last;
+	}
+    switch( *p ) {
+    case '\\':
+		savedtrans = trans;	
+		trans = &&esceol;
+		goto eolAdvancePointer;
+    case '\r':
+		/* windows and internet protocols */
+		savedtrans = trans;
+		trans = &&eolmacwin;
+		goto eolAdvancePointer;
     case '\n':  
-	++p;
-	newline = true;
+		/* unix-like */
+		savedtrans = trans;
+		trans = &&eol;
+		goto eolAdvancePointer;
     case '\0':
-	if( *p == '\0' ) ++p;
-	if( last - first > 0 && listener != NULL ) {
-	    listener->token(tok,line,first,last,true);
-	    first = last;
-	}
-	last = std::distance(line,p);
-	if( newline && listener != NULL ) {
-	    listener->newline(line,first,last);
-	    first = last;
-	}
-	state = trans;	
-    } 
-    if( (size_t)last >= n ) return last;
+		goto eolAdvancePointer;
+    }
+	++p;
     goto *trans;
+
+ eolAdvancePointer:
+	last = (size_t)std::distance(line,p);
+	if( last >= n || *p == '\0' ) {
+		if( last > first && listener != NULL ) {
+			listener->token(tok,line,first,last,true);
+		}
+		return last;
+	}
+	++p;
+    goto *trans;
+	
+ esceol:
+	/* Escaped EOL character */
+	switch( *p ) {
+	case '\r':
+		/* windows and internet protocols */
+		trans = &&eolmacwin;
+		goto eolAdvancePointer;
+	case '\n':
+		/* unix-like */
+		trans = &&eol;
+		goto eolAdvancePointer;
+	}
+	/* not an escaped newline */
+	trans = savedtrans;
+	savedtrans = NULL;
+	goto *trans;
+
+ eolmacwin:
+	switch( *p ) {
+	case '\n':
+		trans = &&eol;
+		goto eolAdvancePointer;
+	}
+	goto eol;
+	
+ eol:
+	if( last > first && listener != NULL ) {
+		listener->token(tok,line,first,last,false);
+	}
+	first = last;
+	last = (size_t)std::distance(line,p);
+	if( last > first && listener != NULL ) {
+		listener->newline(line,first,last);
+	}
+	first = last;
+	trans = savedtrans;
+	savedtrans = NULL;
+	goto token;
+
+	/* specialized tokenizer */
 
 attValueDouble:
     /* AttValue ::= '"' ([^<&"] | Reference)* '"' */
@@ -182,8 +234,8 @@ startComment2:
     
  tag:
     if( (p - line) > first && listener != NULL ) {
-	listener->token(tok,line,first,p - line,false);
-	trans = NULL;
+		listener->token(tok,line,first,p - line,false);
+		trans = NULL;
     }
     tok = xmlErr;
     first = p - line;
@@ -220,15 +272,11 @@ startComment2:
  token:
     last = std::distance(line,p);
     if( last > first && listener != NULL ) {
-	listener->token(tok,line,first,last,false);
-	trans = NULL;
+		listener->token(tok,line,first,last,false);
+		trans = NULL;
     }
     tok = xmlErr;
     first = last;
-    if( (*p == '\n') | (*p == '\r') | (*p == '\0') ) {
-	--p;
-	advance(token);
-    }
     switch( *p ) {
 #if 0
 	/* \todo It was introduced for spaces after tag at end of line
@@ -239,7 +287,7 @@ startComment2:
 	advance(spacesBeforeContent);
 #endif
     case '<':
-	goto tag;
+		goto tag;
     }
     tok = xmlContent;
     advance(content);

@@ -30,9 +30,6 @@
 #include "session.hh"
 #include "document.hh"
 #include "tokenize.hh"
-#include "xmltok.hh"
-#include "xmlesc.hh"
-#include "hreftok.hh"
 
 /* Decorators are used to highjack the underlying buffer of an ostream
    in order to format the text sent to the ostream.
