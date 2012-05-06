@@ -234,6 +234,30 @@ div.MenuWidget > h1 {
     color: black;
 }
 
+/* Styles for annotations */
+div.annotate {
+	color: #f00;
+	display: inline;
+}
+
+div.annotate:hover {
+	cursor:pointer;
+}
+
+div.annotate span.lint { 
+	display: none;
+}
+
+div.annotate:active span.lint,
+div.annotate:focus span.lint { 
+	display: inline;
+}
+
+
+.coverage {
+	color: #f00;
+}
+
 /* Styles specific for highlighting C/C++ source code */
 .booleanLiteral { color: #101010; font-weight: bold; }
 .characterLiteral { color: #101010; font-style: italic; }

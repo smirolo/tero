@@ -374,12 +374,12 @@ protected:
 
 public:
     basicAnnotate() 
-		: super(false), nbLines(0) { 
+		: super(false), nbLines(1) { 
 		super::tokenizer.attach(*this); 
     }
     
     basicAnnotate( std::basic_ostream<charT,traitsT>& o )
-		: super(o,false), nbLines(0) {
+		: super(o,false), nbLines(1) {
 		super::tokenizer.attach(*this); 
 	}
 
@@ -399,11 +399,10 @@ protected:
 	annotationsType annotations;
 
 public:
-    explicit noteAnnotate( const annotationsType& a ) 
-		: super(), annotations(a) {}
-    
-    noteAnnotate( const annotationsType& a, 
-				  std::basic_ostream<charT,traitsT>& o )
+	noteAnnotate() 
+		: super() {}
+
+    noteAnnotate( std::basic_ostream<charT,traitsT>& o )
 		: super(o) {}
 
    void newline(const char *line, int first, int last );
@@ -423,12 +422,10 @@ protected:
 	rangesType ranges;
 
 public:
-    explicit rangeAnnotate( const rangesType& r ) 
-		: super(), ranges(r) { 
-    }
+	rangeAnnotate()
+		: super() {}
     
-    rangeAnnotate( const rangesType& r, 
-				   std::basic_ostream<charT,traitsT>& o )
+    rangeAnnotate( std::basic_ostream<charT,traitsT>& o )
 		: super(o) {
 	}
 

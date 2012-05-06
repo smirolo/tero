@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2011, Fortylines LLC
+# Copyright (c) 2009-2012, Fortylines LLC
 #   All rights reserved.
 #
 #   Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ libs		:=	libsemilla.a libpayproc.a
 #shares		:=	semilla.pdf
 
 semillaConfFile	?=	/etc/semilla/default.conf
-sessionDir		?=	/var/semilla
+sessionDir		?=	/var/db/semilla
 
 #CPPFLAGS	+=	-DREADONLY
 
@@ -46,7 +46,7 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o \
 			post.o rfc2822tok.o session.o shfiles.o \
-			shtok.o todo.o webserve.o \
+			todo.o webserve.o \
 			xmlesc.o xmltok.o
 
 libpayprocObjs	:=	aws.o payment.o paypal.o	
@@ -59,11 +59,13 @@ libpayproc.a: $(libpayprocObjs)
 # This is not the case on Ubuntu lucid.
 LDFLAGS		+=	-ldl
 
+registerDeps	:= -lpam 
+
 semilla: semilla.cc semtable.o libsemilla.a libpayproc.a \
-		-lcryptopp -luriparser -lpam \
+		-lcryptopp -luriparser $(registerDeps) \
 		-lboost_date_time -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system -lPocoNet
-	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
+	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@ -lldap
 
 smailui: smailui.cc libsemilla.a \
 		-lcryptopp -luriparser -lpam \

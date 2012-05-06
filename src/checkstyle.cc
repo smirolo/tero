@@ -34,6 +34,59 @@
 */
 
 
+namespace { 
+
+class errTokWriter : public errTokListener {
+public:
+	typedef std::map<int,std::string> annotationsType;
+	annotationsType& annotations;
+	boost::filesystem::path filename;
+	bool record;
+	int lineNum;
+	std::string frag;
+
+public:
+	explicit errTokWriter( annotationsType& a,
+						   const boost::filesystem::path& f ) 
+		: annotations(a), filename(f), record(false) {}
+
+    void newline( const char *line, int first, int last ) {
+    }
+    
+    void token( errToken token, const char *line, 
+				int first, int last, bool fragment ) {
+		if( fragment ) {
+			frag += std::string(&line[first],last - first);
+		} else {
+			std::string tokval;
+			if( !frag.empty() ) {
+				tokval = frag + std::string(&line[first],last - first);
+				frag = "";
+			} else {
+				tokval = std::string(&line[first],last - first);
+			}
+			switch( token ) {
+			case errFilename:
+				record = ( filename == boost::filesystem::path(tokval) );
+				break;;
+			case errLineNum:
+				if( record ) {				
+					lineNum = atoi(tokval.c_str());					
+				}
+				break;
+			case errMessage:
+				if( record ) {
+					annotations[lineNum] += tokval;
+				}
+				break;
+			}
+		}
+    }
+};
+
+}; // anonymous
+
+
 const char *licenseCodeTitles[] = {
     "unknown",
     "BSD"
@@ -221,3 +274,42 @@ void checkstyleFetch( session& s, const boost::filesystem::path& pathname )
     checkstyle p;
     p.fetch(s,pathname);
 }
+
+
+void lintAnnotate::init( session& s,
+						 const boost::filesystem::path& key,
+						 const boost::filesystem::path& infoPath )
+{
+	if( boost::filesystem::exists(infoPath) ) {
+		boost::filesystem::ifstream strm;
+		s.openfile(strm,infoPath);
+		
+		errTokWriter w(super::annotations,key);
+		errTokenizer tok(w);
+		
+		char buffer[4096];
+		while( !strm.eof() ) {
+			strm.read(buffer,4096);
+			tok.tokenize(buffer,strm.gcount());
+		}
+	}
+}
+
+
+lintAnnotate::lintAnnotate( session& s,
+							const boost::filesystem::path& key,
+							const boost::filesystem::path& infoPath ) 
+	: super() { 
+	init(s,key,infoPath);
+}
+
+    
+lintAnnotate::lintAnnotate( session& s,
+							const boost::filesystem::path& key,
+							const boost::filesystem::path& infoPath,
+							std::basic_ostream<char>& o )
+	: super(o) {
+	init(s,key,infoPath);
+}
+
+

@@ -925,10 +925,6 @@ token:
 			tok = identifierToken(std::string(&line[first],p - &line[first]));
 		}
 		if( last - first > 0 && listener != NULL ) {
-#if 0
-			std::cerr << "[token] first=" << first << ", last=" << last
-					  << ", tok=" << tok << std::endl;
-#endif
 			listener->token(tok,line,first,last,false);
 		}
     }

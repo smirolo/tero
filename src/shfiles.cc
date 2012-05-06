@@ -26,12 +26,47 @@
 #include "shfiles.hh"
 #include "changelist.hh"
 #include "decorator.hh"
+#include "tokenize.hh"
+#include "project.hh"
+#include "checkstyle.hh"
+#include "coverage.hh"
+
+
+boost::filesystem::path lintPath( session& s, const std::string& projectName ) {
+    return siteTop.value(s) 
+		/ boost::filesystem::path("log/tests")
+		/ (projectName + std::string("-test/lint.log"));
+}
+
+boost::filesystem::path covPath( session& s, const std::string& projectName ) {
+    return siteTop.value(s) 
+		/ boost::filesystem::path("log/tests")
+		/ (projectName + std::string("-test/coverage.bin"));
+}
+
 
 void shFetch( session& s, const boost::filesystem::path& pathname ) 
 {
+	std::string proj = projectName(s,pathname);
+
+	/* order of declaration is important here. */
+	coverageAnnotate coverage(pathname,covPath(s,proj));
+	lintAnnotate lint(s,s.subdirpart(srcTop.value(s) / proj,pathname),
+					  lintPath(s,proj));
     htmlEscaper leftLinkText;
+    decoratorChain leftChain;
+
+	if( !coverage.empty() ) {
+		leftChain.push_back(coverage);
+	}
+
+	if( !lint.empty() ) {
+		leftChain.push_back(lint);
+	}
+	leftChain.push_back(leftLinkText);
+
     htmlEscaper rightLinkText;
-    text sh(leftLinkText,rightLinkText);
+    text sh(leftChain,rightLinkText);
     sh.fetch(s,pathname);
 }
 

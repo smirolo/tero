@@ -383,8 +383,8 @@ void basicCppLight<charT,traitsT>::token( cppToken token,
 template<typename charT, typename traitsT>   
 void basicAnnotate<charT,traitsT>::newline(const char *line, int first, int last )
 {
-    super::nextBuf->sputc('\n');
 	++nbLines;
+    super::nextBuf->sputc('\n');
 }
  
 
@@ -402,12 +402,18 @@ void noteAnnotate<charT,traitsT>::newline(const char *line, int first, int last 
 	super::newline(line,first,last);
  	annotationsType::const_iterator found = annotations.find(super::nbLines);
 	if( found != annotations.end() ) {
-		std::string begSpan("<span class=\"annotate\">");
+		std::string begSpan("<span class=\"lint\">");
 		super::nextBuf->sputn(begSpan.c_str(),begSpan.size());			
 		super::nextBuf->sputn(found->second.c_str(),found->second.size());
-		std::string endSpan("</span>");
+		std::string endSpan("</span></div>");
 		super::nextBuf->sputn(endSpan.c_str(),endSpan.size());	
 	}
+	found = annotations.find(super::nbLines + 1);
+	if( found != annotations.end() ) {
+		std::string beg("<div class=\"annotate\">[lint] ");
+		super::nextBuf->sputn(beg.c_str(),beg.size());			
+	}
+
 }
 
 
@@ -416,11 +422,15 @@ void rangeAnnotate<charT,traitsT>::newline(const char *line, int first, int last
 {
 	super::newline(line,first,last);
 
+	std::stringstream ln;
+	ln << super::nbLines << " ";
+	super::nextBuf->sputn(ln.str().c_str(),ln.str().size());	
+
 	rangesType::iterator found 
 		= lower_bound(ranges.begin(),ranges.end(),super::nbLines);
 	int lowerb = std::distance(ranges.begin(),found); 
 	if( lowerb % 2 == 0 ) {
-		std::string begSpan("<span class=\"annotate\">|</span>");
+		std::string begSpan("<span class=\"coverage\">|</span>");
 		super::nextBuf->sputn(begSpan.c_str(),begSpan.size());
 	}
 }

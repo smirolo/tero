@@ -28,7 +28,7 @@
 
 #include "slice.hh"
 #include "tokenize.hh"
-#include "shtok.hh"
+#include "decorator.hh"
 #include "project.hh"
 
 /**
@@ -152,6 +152,32 @@ protected:
 
 
 void checkstyleFetch( session&s, const boost::filesystem::path& pathname );
+
+
+
+class lintAnnotate  : public noteDecorator {
+protected:
+    typedef noteDecorator super;
+
+	void init( session& s,
+			   const boost::filesystem::path& key,
+			   const boost::filesystem::path& coveragePath );
+
+public:
+	lintAnnotate( session& s,
+				  const boost::filesystem::path& key,
+				  const boost::filesystem::path& coveragePath );
+    
+    lintAnnotate( session& s,
+				  const boost::filesystem::path& key,
+				  const boost::filesystem::path& coveragePath,
+				  std::basic_ostream<char>& o );
+
+	bool empty() const {
+		return annotations.empty();
+	}
+};
+
 
 #include "checkstyle.tcc"
 

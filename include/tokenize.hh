@@ -238,6 +238,60 @@ public:
 };
 
 
+/** Shell like text tokenizer.
+
+    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+*/
+
+enum shToken {
+    shErr,
+    shComment,
+    shCode
+};
+
+extern const char *shTokenTitles[];
+
+template<typename ch, typename tr>
+inline std::basic_ostream<ch, tr>&
+operator<<( std::basic_ostream<ch, tr>& ostr, shToken v ) {
+    return ostr << shTokenTitles[v];
+}
+
+
+/** Interface for callbacks from the shTokenizer
+ */
+class shTokListener {
+public:
+    shTokListener() {}
+    
+    virtual void newline(const char *line, 
+			  int first, int last ) = 0;
+    
+    virtual void token( shToken token, const char *line, 
+			int first, int last, bool fragment ) = 0;
+};
+
+
+/** Tokenizer for shell-based (sh, python, Makefile) source files
+ */
+class shTokenizer {
+protected:
+	void *state;
+	shToken tok;
+	shTokListener *listener;
+
+public:
+    shTokenizer() 
+	: state(NULL), tok(shErr), listener(NULL) {}
+	
+    explicit shTokenizer( shTokListener& l ) 
+	: state(NULL), tok(shErr), listener(&l) {}
+    
+    void attach( shTokListener& l ) { listener = &l; }
+    
+    size_t tokenize( const char *line, size_t n );
+};
+
 
 /** Interface for callbacks from the xmlTokenizer
  */
