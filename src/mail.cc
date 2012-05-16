@@ -29,6 +29,7 @@
 #include <Poco/Net/SMTPClientSession.h>
 #include "mail.hh"
 #include "markup.hh"
+#include "composer.hh"
 
 /** Parser for mailboxes
 
@@ -41,13 +42,25 @@
 
 
 urlVariable smtpHost("smtpHost",
-		       "host to connect to in order to send comments");
+		       "host to connect to in order to send emails");
 intVariable smtpPort("smtpPort",
-			 "port to connect to in order to send comments");
+			 "port to connect to in order to send emails");
 sessionVariable smtpLogin("smtpLogin",
-			  "login to the smtp server");
+			  "login to the $smtpHost:$smtpPort");
 sessionVariable smtpPassword("smtpPassword",
-			     "password to the smtp server");
+			     "password $smtpHost:$smtpPort");
+
+namespace {
+
+	void validate( const session& s ) {
+		assert( !smtpHost.value(s).empty() );
+		assert( smtpPort.value(s) != 0);
+		assert( !smtpLogin.value(s).empty() );
+		assert( !smtpPassword.value(s).empty() );
+	}
+
+} // anonymous
+
 
 void
 mailAddSessionVars( boost::program_options::options_description& opts,
@@ -64,22 +77,51 @@ mailAddSessionVars( boost::program_options::options_description& opts,
 }
 
 
+std::string qualifiedMailAddress( const session& s, const std::string& uid ) {
+	std::stringstream qualified;
+	qualified << uid << '@' << domainName.value(s);
+	return qualified.str();
+}
+
+
 void sendMail( const session& s, const Poco::Net::MailMessage& message )
 {
 	using namespace Poco::Net;
-
-	std::string hostname = smtpHost.value(s).string();
-	int port = smtpPort.value(s);
+	validate(s);
 
 	SMTPClientSession session(smtpHost.value(s).string(),
 							  smtpPort.value(s));
     session.login(SMTPClientSession::AUTH_LOGIN,
 				  smtpLogin.value(s),
 				  smtpPassword.value(s));
-
     session.sendMessage(message);
     session.close();
 }
+
+
+char noTemplate[] = "";
+
+void sendMail( session& s,
+			   const std::string& recipient,
+			   const std::string& subject,
+			   const char *contentTemplate )
+{
+	using namespace Poco::Net;
+
+	std::ostream& prevDisp = s.out();
+	std::stringstream content;
+	s.out(content);
+	compose<noTemplate>(s,contentTemplate);
+	s.out(prevDisp);
+
+    MailMessage message;    
+    message.setSubject(subject);
+    message.setSender(qualifiedMailAddress(s,"no-reply"));
+    message.setContent(content.str(),MailMessage::ENCODING_QUOTED_PRINTABLE);
+    message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT,
+									   recipient));
+	sendMail(s, message);
+}	
 
 
 void mailthread::filters( const post& p ) {

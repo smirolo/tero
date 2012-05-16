@@ -45,7 +45,7 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			cppfiles.o cpptok.o coverage.o \
 			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o \
-			post.o rfc2822tok.o session.o shfiles.o \
+			post.o rfc2822tok.o session.o shfiles.o shtok.o \
 			todo.o webserve.o \
 			xmlesc.o xmltok.o
 
@@ -63,7 +63,7 @@ registerDeps	:= -lpam
 
 semilla: semilla.cc semtable.o libsemilla.a libpayproc.a \
 		-lcryptopp -luriparser $(registerDeps) \
-		-lboost_date_time -lboost_regex -lboost_program_options \
+		-lboost_date_time -lboost_random -lboost_regex -lboost_program_options \
 		-lboost_filesystem -lboost_system -lPocoNet
 	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@ -lldap
 

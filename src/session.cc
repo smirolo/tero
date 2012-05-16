@@ -84,7 +84,9 @@ sessionVariable::option() {
 
 std::string sessionVariable::value( const session& s ) const
 {
-    return s.valueOf(name);
+	std::string val = s.valueOf(name);
+	if( val.size() > 0 && val[0] == '"' ) return val.substr(1,val.size()-2);
+    return val;
 }
 
 
@@ -170,7 +172,7 @@ session::session( const std::string& sn,
 
 
 void session::load( const boost::program_options::options_description& opts,
-		    const boost::filesystem::path& p, sourceType st )
+					const boost::filesystem::path& p, sourceType st )
 {
     using namespace boost;
     using namespace boost::system;
@@ -186,6 +188,11 @@ void session::load( const boost::program_options::options_description& opts,
 						std::string("file not found")+ p.string()));
 	}
 
+	/* \todo Note: it seems we cannot set the style passed to parse_config_file,
+	   thus even if we mask out *allow_guessing* style to the command line
+	   parser, we will still trigger an ambiguous option error here for all
+	   options starting with the same prefix. 
+	We also get an ambiguous option when two options have the same name. */
 	boost::program_options::store(parse_config_file(istr,opts,true),
 				      params);
 	
@@ -196,6 +203,12 @@ void session::load( const boost::program_options::options_description& opts,
 	    }
 	}
     }
+}
+
+
+void session::loadsession( const std::string& id ) {
+	sessionId = id;
+	load(opts,stateFilePath(),sessionfile);
 }
 
 
@@ -450,13 +463,18 @@ void session::privileged( bool v ) {
 
        chmod 4755 semilla
        sudo chown root semilla
+
+  // This code is used to debug initial permission problems:
+    struct passwd *pw;
+    struct group *grp;
+  // real:
+    pw = getpwuid(getuid());
+    grp = getgrgid(getgid());
+  // effective:
+    pw = getpwuid(geteuid());
+    grp = getgrgid(getegid());
 */
     uid_t realId = getuid();
-#if 0
-    uid_t effectiveId = geteuid();
-    std::cerr << "!!! real_uid=" << realId << ", effective_uid="
-	      << effectiveId << std::endl;
-#endif
     uid_t newId = v ? 0 : realId;
     if( setuid(newId) < 0 ) {
 	std::cerr << "error: setuid to zero: " 
@@ -548,8 +566,8 @@ void session::restore( int argc, char *argv[] )
 
     /* 1. The command-line arguments are added to the session. */
     {
-	variables_map params;
-	command_line_parser parser(argc, argv);
+		variables_map params;
+		command_line_parser parser(argc, argv);
 	parser.options(opts);
 	parser.positional(pd);    
 	boost::program_options::store(parser.run(),params);  

@@ -29,7 +29,8 @@
 #include "document.hh"
 #include <boost/tr1/memory.hpp>
 
-/** Pages related to contributors.
+/** Pages related to contributors such as registration of new contributors,
+	profile management, password updates, etc.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
@@ -69,14 +70,43 @@ public:
 	explicit from( const contrib::pointer_type& p ) : ptr(p) {}
 };
 
+/** Add session variables related to auth module.
+ */
+void registerAddSessionVars( boost::program_options::options_description& opts,
+						 boost::program_options::options_description& visible );
 
-
-void contribCreateFetch( session& s, const boost::filesystem::path& pathname );
 
 /** Index the set of contribs and display an HTML row per contrib item
     that contains the date, author and title of the contrib item.
  */
 void contribIdxFetch( session& s, const boost::filesystem::path& pathname );
 
+
+/** Reply to POST request to create a new contributor account. It creates
+	a session identifier and sends an email to the contributor.
+ */
+void registerEnter( session& s, const boost::filesystem::path& pathname );
+
+
+/** Last stage in the creation a new contributor account.
+ */
+void registerConfirm( session& s, const boost::filesystem::path& pathname );
+
+
+/** Even if we delete a contributor's ability to log in, we still want
+	to keep all references to their name and email address in the repository
+	commits. */
+void unregisterEnter( session& s, const boost::filesystem::path& pathname );
+
+
+/** Reply to POST request to change a contributor's password.
+ */
+void passwdChange( session& s, const boost::filesystem::path& pathname );
+
+
+/** Modify a contributor's password to a randomly generated password
+	and e-mail that password to the contributor.
+*/
+void passwdReset( session& s, const boost::filesystem::path& pathname );
 
 #endif

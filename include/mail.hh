@@ -42,8 +42,16 @@ mailAddSessionVars( boost::program_options::options_description& opts,
 					boost::program_options::options_description& visible );
 
 
+/* return a fully qualified mail dddress for delivery to the local SMTP server.
+ */
+std::string qualifiedMailAddress( const session& s, const std::string& uid );
+
 void sendMail( const session& s, const Poco::Net::MailMessage& message );
 
+void sendMail( session& s,
+			   const std::string& recipient,
+			   const std::string& subject,
+			   const char *contentTemplate );
 
 /* A *mailthread* filter attempts to gather all mails that appear 
    to belong to the same thread together. */

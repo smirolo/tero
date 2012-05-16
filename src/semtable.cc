@@ -28,7 +28,6 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-#include "auth.hh"
 #include "feeds.hh"
 #include "changelist.hh"
 #include "composer.hh"
@@ -45,6 +44,7 @@
 #include "payment.hh"
 #include "cppfiles.hh"
 #include "shfiles.hh"
+#include "auth.hh"
 
 char none[] = "";
 char todoExt[] = "todo";
@@ -145,10 +145,17 @@ fetchEntry entries[] = {
       whenNotCached, blogByIntervalDate<docPage,blogPat> },
     { "document", boost::regex(".*/blog/"), whenNotCached, mostRecentBlogFetch},
 
-    /* contribution */
-    { "document", boost::regex(".*contrib/"), always, contribIdxFetch },
-    { "document", boost::regex(".*contrib/create"), always, contribCreateFetch },
+    /* contributors, accounts authentication */
+	{ "document", boost::regex(".*/accounts/login/"), always, loginFetch },
+	{ "document", boost::regex(".*/accounts/logout/"), always, logoutFetch },
+	{ "document", boost::regex(".*/accounts/password_change/"), always, passwdChange },
+	{ "document", boost::regex(".*/accounts/password_reset/"), always, passwdReset },
+    { "document", boost::regex(".*/accounts/register/complete/"), always, registerConfirm },
+	{ "document", boost::regex(".*/accounts/register/"), always, registerEnter },
+	{ "document", boost::regex(".*/accounts/unregister/"), always, unregisterEnter },
+    { "document", boost::regex(".*accounts/"), always, contribIdxFetch },
         
+	/* misc pages */
     { "document", boost::regex(".*\\.commit"), always, changeShowDetails },
     { "document", boost::regex(".*\\.eml"), always, mailParserFetch },
     { "document", boost::regex(".*\\.ics"), whenFileExist, calendarFetch },
@@ -208,22 +215,7 @@ fetchEntry entries[] = {
     { "title", boost::regex(".*\\.template"), whenFileExist, textMeta<title> },
     { "title", boost::regex(".*dws\\.xml"), whenFileExist, projectTitle },
     { "title", boost::regex(".*"), always, metaFetch<title> },
-
-#if 0
-    { "view", boost::regex("/cancel"), always, cancelFetch },
-    { "view", boost::regex("/edit"), always, compose<"edit.ui"> },
-    { "view", boost::regex("/login"),always, loginFetch },
-    { "view", boost::regex("/logout"),always, logoutFetch },
-    { "view", boost::regex("/save"),always, changeFetch },
-#endif
-
-    /* Login and Logout pages generates HTML to be displayed
-       in a web browser. It is very often convinient to quickly
-       start and stop recording worked hours from the command line.
-       In that case, "work" and "rest" can be used as substitute. */
-    { "view", boost::regex("work"), always, authFetch },
-    { "view", boost::regex("rest"), always, deauthFetch },
-    
+   
     /* If a template file matching the document's extension
        is present in the theme directory, let's use it
        as a composer. */

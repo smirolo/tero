@@ -83,6 +83,7 @@ bool dispatchDoc::fetch( session& s,
 		fetch(s,doc,((doc->behavior & 0x3) == notAFile) ?
 			  value.pathname : s.abspath(value));
 	}
+	/* \todo throw exception? */
     return ( doc != NULL );
 }
 
@@ -94,7 +95,7 @@ void dispatchDoc::fetch( session& s,
 
 	if(  doc->behavior & whenAuth ) {
 		/* \todo check we have an authenticated session */
-	    if( s.valueOf("mail").empty() ) {
+	    if( s.valueOf("uid").empty() ) {
 			/* \todo redirect to auth page with future redirect */
 			std::stringstream str;
 			str << "/login?q=" << p.string();

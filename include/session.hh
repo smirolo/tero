@@ -288,12 +288,7 @@ public:
     int openfile( boost::filesystem::ifstream& strm, 
 				  const boost::filesystem::path& pathname );
     
-#if 0
-    void 
-    loadsession( const boost::program_options::options_description& opts ) {
-		load(opts,stateFilePath(),sessionfile);
-    }
-#endif
+    void loadsession( const std::string& id );
 
     /** Load and cache a text file in memory. Two back-to-back calls 
 	will return the same null-terminated buffer.
@@ -347,9 +342,9 @@ public:
     std::ostream& out() { return *ostr; }
 
     std::ostream& out( std::ostream& o ) { 
-	std::ostream* prev = ostr;
-	ostr = &o;
-	return *prev;
+		std::ostream* prev = ostr;
+		ostr = &o;
+		return *prev;
     }    
 
     /** Remove all (name,value) pairs which were not set at the time

@@ -21,7 +21,7 @@
 		<description>
 		  The directory where session files are stored. Whenever semilla needs to keep state between two http requests, it will store (name,value) pairs into a session file.
 		</description>
-		<default>/var/semilla</default>
+		<default>/var/db/semilla</default>
       </pathname>      
       <pathname name="themeDir">
 		<description>
@@ -52,8 +52,13 @@
 		<lib>boost_date_time</lib>
 		<lib>boost_filesystem</lib>
 		<lib>boost_program_options</lib>
+		<lib>boost_random</lib>
 		<lib>boost_regex</lib>
 		<lib>boost_system</lib>
+      </dep>
+      <dep name="libldap-dev">
+		<include>ldap.h</include>
+		<lib>ldap</lib>
       </dep>
       <!-- Ubuntu jaunty complains about the virtual package
 	   and requires to install libpam0g-dev directly -->
