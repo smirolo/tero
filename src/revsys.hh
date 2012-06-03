@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 #define guardrevsys
 
 #include "post.hh"
+#include "changelist.hh"
 
 /** Base class definition for interacting with a source code control system.    
  */
@@ -46,6 +47,8 @@ public:
 
 public:
     explicit revisionsys( const char* m ) : metadir(m) {}
+
+    virtual void loadconfig( session& s ) = 0;
 
     /** Create a new repository from directory *pathname*. When *group*
 	is true, all users in the same group as the creator have permissions

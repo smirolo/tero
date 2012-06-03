@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,6 @@ protected:
 
     static gitcmd _instance;
 
-	void loadconfig( session& s );
-
 public:
     gitcmd() : revisionsys(".git") {}
 
@@ -61,6 +59,8 @@ public:
 	_instance.executable = binName;
 	return _instance;
     }
+
+	virtual void loadconfig( session& s );
 
     void create( const boost::filesystem::path& pathname,
 		 bool group = false );
@@ -94,29 +94,30 @@ const std::string nullString;
 revisionsys::revsSet revisionsys::revs;
 
 const std::string& revisionsys::configval( const std::string& key ) {
-	std::map<std::string,std::string>::const_iterator found = config.find(key);
-	if( found != config.end() ) {
-		return found->second;
-	}
-	return nullString;
+    std::map<std::string,std::string>::const_iterator found = config.find(key);
+    if( found != config.end() ) {
+        return found->second;
+    }
+    return nullString;
 }
 
 
 revisionsys*
 revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
     if( revs.empty() ) {
-	/* first time */
-	revs.push_back(&gitcmd::instance(binDir.value(s) / "git"));
+        /* first time */
+        revs.push_back(&gitcmd::instance(binDir.value(s) / "git"));
     }
 
     /* The pathname is absolute at this point. */
     boost::filesystem::path start(pathname);
     for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
-	boost::filesystem::path sccsRoot = s.root(start,(*r)->metadir);
-	if( !sccsRoot.empty() ) {
-	    (*r)->rootpath = sccsRoot;
-	    return *r;
-	}
+        boost::filesystem::path sccsRoot = s.root(start,(*r)->metadir);
+        if( !sccsRoot.empty() ) {
+            (*r)->rootpath = sccsRoot;
+            (*r)->loadconfig(s);
+            return *r;
+        }
     }
     return NULL;
 }
@@ -410,21 +411,21 @@ void gitcmd::history( std::ostream& ostr,
 
 
 void gitcmd::loadconfig( session& s ) {
-	using namespace boost::filesystem;
-    static const boost::regex valueEx("^(\\S+):\\s+(.*)");
+    using namespace boost::filesystem;
+    static const boost::regex valueEx("(\\S+)\\s*=\\s*(.*)");
 
-	path configPath(rootpath / ".git" / "config");
-	boost::filesystem::ifstream configFile;
-	s.openfile(configFile,configPath);
+    path configPath(rootpath / ".git" / "config");
+    boost::filesystem::ifstream configFile;
+    s.openfile(configFile,configPath);
     while( !configFile.eof() ) {
-		boost::smatch m;
-		std::string line;
-		std::getline(configFile,line);
-		if( !boost::regex_search(line,m,valueEx) ) {
-			config[m.str(1)] = m.str(2);
-		}
-	}
-	configFile.close();
+        boost::smatch m;
+        std::string line;
+        std::getline(configFile,line);
+        if( boost::regex_search(line,m,valueEx) ) {
+            config[m.str(1)] = m.str(2);
+        }
+    }
+    configFile.close();
 }
 
 

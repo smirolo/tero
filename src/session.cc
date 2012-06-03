@@ -728,26 +728,29 @@ void session::restore( int argc, char *argv[] )
 }
 
 
-boost::filesystem::path 
+boost::filesystem::path
 session::root( const boost::filesystem::path& leaf,
-	       const boost::filesystem::path& trigger ) const
+    const boost::filesystem::path& trigger ) const
 {
     using namespace boost::filesystem;
+    using namespace boost::system::errc;
+
     std::string srcTop = valueOf("srcTop");
+    if( leaf.string().compare(0,srcTop.size(),srcTop) != 0 ) {
+        /* *leaf* is not inside srcTop. */
+        boost::throw_exception(boost::system::system_error(
+                    make_error_code(no_such_file_or_directory),
+                    leaf.string()));
+    }
     path dirname = leaf;
     if( !is_directory(dirname) ) {
-	dirname = dirname.parent_path();
+        dirname = dirname.parent_path();
     }
     bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
     while( !foundProject && (dirname.string() != srcTop) ) {
-	dirname.remove_leaf();
-	if( dirname.string().empty() ) {
-	    using namespace boost::system::errc;
-	    boost::throw_exception(boost::system::system_error(
-		make_error_code(no_such_file_or_directory),
-		leaf.string())); 
-	}
-	foundProject = boost::filesystem::exists(dirname.string() / trigger);
+        dirname.remove_leaf();
+        assert( !dirname.string().empty() );
+        foundProject = boost::filesystem::exists(dirname.string() / trigger);
     }
     return foundProject ? dirname : path("");
 }

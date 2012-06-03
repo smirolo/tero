@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,19 @@
 #include "todo.hh"
 #include "markup.hh"
 #include "feeds.hh"
+#include "revsys.hh"
 
 /** Pages related to todo items.
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+static const char *todoExt = ".todo";
 
-article 
+article
 todoAdapter::fetch( session& s, const boost::filesystem::path& p ) {
     return article(boost::filesystem::basename(p.filename()),
-		   "vote for todo item",1);
+        "vote for todo item",1);
 }
 
 
@@ -49,7 +51,7 @@ const boost::regex todoFilter::viewPat(".*todos/.+");
 
 std::string todoFilter::asPath( const std::string& tag ) {
     std::stringstream s;
-    s << (modifs / tag) << ".todo";
+    s << (modifs / tag) << todoExt;
     return s.str();
 }
 
@@ -57,13 +59,13 @@ std::string todoFilter::asPath( const std::string& tag ) {
 class byScore : public retainedFilter {
 protected:
     typedef std::vector<post> indexSet;
-    
+
     indexSet indexes;
     std::ostream *ostr;
-    
+
 public:
     byScore( std::ostream& o, postFilter &n ) : retainedFilter(&n), ostr(&o) {}
-    
+
     virtual void filters( const post& );
     virtual void flush();
 };
@@ -86,8 +88,8 @@ protected:
     std::string posturl;
 
 public:
-    todoCommentFeedback( std::ostream& o, const std::string& p ) 
-	: ostr(&o), posturl(p) {}
+    todoCommentFeedback( std::ostream& o, const std::string& p )
+        : ostr(&o), posturl(p) {}
 
     virtual void filters( const post& );
 };
@@ -96,10 +98,10 @@ public:
 class todocreator : public todoFilter {
 public:
     explicit todocreator( const boost::filesystem::path& m )
-	: todoFilter(m) {}
+        : todoFilter(m) {}
 
-    todocreator( const boost::filesystem::path& m, postFilter* n  ) 
-	: todoFilter(m,n) {}
+    todocreator( const boost::filesystem::path& m, postFilter* n  )
+        : todoFilter(m,n) {}
 
     virtual void filters( const post& );
 };
@@ -110,23 +112,23 @@ protected:
     boost::filesystem::path postname;
 
 public:
-    todocommentor( const boost::filesystem::path& p, postFilter* n  ) 
-	: passThruFilter(n), postname(p) {}
+    todocommentor( const boost::filesystem::path& p, postFilter* n  )
+        : passThruFilter(n), postname(p) {}
 
     virtual void filters( const post& );
 };
 
 
 void todoCreateFeedback::filters( const post& p ) {
-    *ostr << html::p() << "item " << p.guid << " has been created." 
-	      << html::p::end;    
+    *ostr << html::p() << "item " << p.guid << " has been created."
+          << html::p::end;
 }
 
 
 void todocreator::filters( const post& v ) {
     post p = v;
     p.score = 0;
-    
+
     std::stringstream s;
     s << boost::uuids::random_generator()();
     p.guid = s.str();
@@ -139,13 +141,13 @@ void todocreator::filters( const post& v ) {
     createfile(file,asPath(p.guid));
 #endif
     mailwriter writer(file);
-    writer.filters(p);	
-    file.flush();    
-    file.close();    
+    writer.filters(p);
+    file.flush();
+    file.close();
 #else
     throw std::runtime_error("Todo item could not be created"
-	" because you do not have permissions to do so on this server."
-	" Sorry for the inconvienience.");
+        " because you do not have permissions to do so on this server."
+        " Sorry for the inconvienience.");
 #endif
 
     if( next ) next->filters(p);
@@ -163,23 +165,23 @@ void todocommentor::filters( const post& p ) {
     f_lock.lock();
     file.open(postname,std::ios_base::out | std::ios_base::app);
     if( file.fail() ) {
-	using namespace boost::system::errc;
-	f_lock.unlock();
-	boost::throw_exception(boost::system::system_error(
-	   make_error_code(no_such_file_or_directory),
-	   postname.string()));
+        using namespace boost::system::errc;
+        f_lock.unlock();
+        boost::throw_exception(boost::system::system_error(
+                make_error_code(no_such_file_or_directory),
+                postname.string()));
     }
 
     mailwriter writer(file);
-    writer.filters(p);	
+    writer.filters(p);
     file.flush();
-    
+
     file.close();
     f_lock.unlock();
 #else
     throw std::runtime_error("comment could not be created"
-	" because you do not have permissions to do so on this server."
-			     " Sorry for the inconvienience.");
+        " because you do not have permissions to do so on this server."
+        " Sorry for the inconvienience.");
 #endif
     if( next ) next->filters(p);
 }
@@ -201,38 +203,64 @@ void byScore::filters( const post& p )
 void byScore::flush()
 {
     if( indexes.empty() ) {
-	*ostr << html::tr()
-		  << html::td().colspan("4")
-		  << "no todo items present"
-		  << html::td::end
-		  << html::tr::end; 
+        *ostr << html::tr()
+              << html::td().colspan("4")
+              << "no todo items present"
+              << html::td::end
+              << html::tr::end;
     } else {
-	std::sort(indexes.begin(),indexes.end(),orderByScore());
-	for( indexSet::iterator idx = indexes.begin(); 
-	     idx != indexes.end(); ++idx ) {
-	    next->filters(*idx);
-	}
-	next->flush();
+        std::sort(indexes.begin(),indexes.end(),orderByScore());
+        for( indexSet::iterator idx = indexes.begin();
+             idx != indexes.end(); ++idx ) {
+            next->filters(*idx);
+        }
+        next->flush();
     }
 }
 
 
 void todoCreateFetch( session& s, const boost::filesystem::path& pathname )
 {
-    boost::filesystem::path 
-	dirname(boost::filesystem::exists(pathname) ? 
-		pathname : pathname.parent_path());
-    
-
-    todoCreateFeedback fb(s.out());
-    todocreator create(dirname,&fb);
-
     post p;
+    std::stringstream str;
+
+    str << boost::uuids::random_generator()();
+    p.guid = str.str();
+    p.time = boost::posix_time::second_clock::local_time();
     p.score = 0;
     p.title = titleVar.value(s);
+
     p.authorEmail = authorVar.value(s);
+    if( p.authorEmail.empty() ) {
+        revisionsys* rev = revisionsys::findRev(s,pathname);
+        if( rev ) {
+            p.authorEmail = rev->configval("email");
+        }
+    }
     p.content = descrVar.value(s);
-    create.filters(p);
+
+    boost::filesystem::ofstream file;
+    boost::filesystem::path
+        todoname(s.runAsCGI() ? (boost::filesystem::is_directory(pathname) ?
+                pathname : pathname.parent_path())
+            : boost::filesystem::current_path());
+    todoname /= p.guid;
+    todoname.replace_extension(todoExt);
+
+    s.createfile(file,todoname);
+    mailwriter writer(file);
+    writer.filters(p);
+    file.flush();
+    file.close();
+
+    if( s.runAsCGI() ) {
+        httpHeaders.refresh(0,s.asUrl(todoname / "edit"));
+    } else {
+        s.out() << "Todo item " << p.guid << " has been created."
+                << std::endl
+                << "Edit " << todoname << " with your favorite editor "
+                << "and commit it to the repository" << std::endl;
+    }
 }
 
 
@@ -244,24 +272,24 @@ void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 
 #if 0
     if( !istr->eof() ) {
-	mailParser parser(comment);
-	parser.walk(s,*istr); 	
-    } else 
+        mailParser parser(comment);
+        parser.walk(s,*istr);
+    } else
 #endif
-	{
-	post p;
-	p.author = authorVar.value(s);
-	p.authorEmail = authorEmail.value(s);
-	p.content = descrVar.value(s);
-	p.time = boost::posix_time::second_clock::local_time();
-	p.guid = todoAdapter().fetch(s,postname).guid;
-	p.score = 0;
-	comment.filters(p);
+    {
+        post p;
+        p.author = authorVar.value(s);
+        p.authorEmail = authorEmail.value(s);
+        p.content = descrVar.value(s);
+        p.time = boost::posix_time::second_clock::local_time();
+        p.guid = todoAdapter().fetch(s,postname).guid;
+        p.score = 0;
+        comment.filters(p);
    }
 }
 
-void todoIndexWriteHtmlFetch( session& s, 
-			      const boost::filesystem::path& pathname )
+void todoIndexWriteHtmlFetch( session& s,
+    const boost::filesystem::path& pathname )
 {
     oneliner shortline(s.out());
     byScore order(s.out(),shortline);
@@ -271,17 +299,17 @@ void todoIndexWriteHtmlFetch( session& s,
 }
 
 
-void todoVoteAbandonFetch( session& s, 
-			   const boost::filesystem::path& pathname ) {
-	s.out() << html::p() << "You have abandon the transaction and thus"
-		  << " your vote has not been registered."
-		  << " Thank you for your interest." 
-		  << html::p::end;
+void todoVoteAbandonFetch( session& s,
+    const boost::filesystem::path& pathname ) {
+    s.out() << html::p() << "You have abandon the transaction and thus"
+            << " your vote has not been registered."
+            << " Thank you for your interest."
+            << html::p::end;
 }
 
 
-void todoVoteSuccessFetch( session& s, 
-			   const boost::filesystem::path& pathname )
+void todoVoteSuccessFetch( session& s,
+    const boost::filesystem::path& pathname )
 {
 #if 0
     payment::checkReturn(s,returnPath);
@@ -292,34 +320,33 @@ void todoVoteSuccessFetch( session& s,
        url works well. */
     std::stringstream str;
     boost::filesystem::path modifs(s.valueOf("todoDir"));
-    str << (modifs / s.valueOf("referenceId")) << ".todo";
+    str << (modifs / s.valueOf("referenceId")) << todoExt;
     boost::filesystem::path asPath(str.str());
-#else    
-    boost::filesystem::path 
-	asPath(boost::filesystem::exists(pathname) ? 
-	       pathname : pathname.parent_path());
+#else
+    boost::filesystem::path
+        asPath(boost::filesystem::exists(pathname) ?
+            pathname : pathname.parent_path());
 #endif
 
     /* The pathname is set to the *todoVote* action name when we get here
        so we derive the document name from *href*. */
-    boost::filesystem::path 
-	postname(boost::filesystem::exists(pathname) ? 
-		 pathname : asPath);
+    boost::filesystem::path
+        postname(boost::filesystem::exists(pathname) ?
+            pathname : asPath);
 
     if( !boost::filesystem::is_regular_file(postname) ) {
-	/* If *postname* does not point to a regular file,
-	   the inputs were incorrect somehome. 
-	 */
-	s.out() << html::p() << postname 
-		  << " does not appear to be a regular file on the server"
-		  << " and thus your vote for it cannot be registered."
-	    " Please " << html::a().href("info@fortylines.com") << "contact us"
-		  << html::a::end << " about the issue."
-		  << " Sorry for the inconvienience."
-		  << html::p::end;
-	return;
-    } 
-
+        /* If *postname* does not point to a regular file,
+           the inputs were incorrect somehome.
+        */
+        s.out() << html::p() << postname
+                << " does not appear to be a regular file on the server"
+                << " and thus your vote for it cannot be registered."
+            " Please " << html::a().href("info@fortylines.com") << "contact us"
+                << html::a::end << " about the issue."
+                << " Sorry for the inconvienience."
+                << html::p::end;
+        return;
+    }
 
     std::string tag = todoAdapter().fetch(s,postname).guid;
 
@@ -327,14 +354,14 @@ void todoVoteSuccessFetch( session& s,
     char tmpname[FILENAME_MAX] = "/tmp/vote-XXXXXX";
     int fildes = mkstemp(tmpname);
     if( fildes == -1 ) {
-	s.out() << html::p() 
-		  << " Unable to create temporary file on the server"
-		  << " and thus your vote for it cannot be registered."
-	    " Please " << html::a().href("info@fortylines.com") << "contact us"
-		  << html::a::end << " about the issue."
-		  << " Sorry for the inconvienience."
-		  << html::p::end;
-	return;
+        s.out() << html::p()
+                << " Unable to create temporary file on the server"
+                << " and thus your vote for it cannot be registered."
+            " Please " << html::a().href("info@fortylines.com") << "contact us"
+                << html::a::end << " about the issue."
+                << " Sorry for the inconvienience."
+                << html::p::end;
+        return;
     }
 
     /* read/copy with score update */
@@ -344,35 +371,35 @@ void todoVoteSuccessFetch( session& s,
     f_lock.lock();
     boost::filesystem::ifstream infile(postname);
     while( !infile.eof() ) {
-	std::string line;
-	std::getline(infile,line);
-	line += '\n';
-	if( line.compare(0,7,"Score: ") == 0 ) {
-	    std::stringstream s;
-	    score = atoi(line.substr(7).c_str()) + 1;
-	    s << "Score: " << score << std::endl;	    
-	    written = write(fildes,s.str().c_str(),s.str().size());
-	} else {
-	    written = write(fildes,line.c_str(),line.size());
-	}
+        std::string line;
+        std::getline(infile,line);
+        line += '\n';
+        if( line.compare(0,7,"Score: ") == 0 ) {
+            std::stringstream s;
+            score = atoi(line.substr(7).c_str()) + 1;
+            s << "Score: " << score << std::endl;
+            written = write(fildes,s.str().c_str(),s.str().size());
+        } else {
+            written = write(fildes,line.c_str(),line.size());
+        }
     }
     infile.close();
     close(fildes);
 
     /* move temporary back to original */
     if( score > 0 ) {
-	using namespace boost::filesystem;
-	/* boost::filesystem::rename does not work accross filesystem. */
-	copy_file(path(tmpname),postname,copy_option::overwrite_if_exists);
-	remove(tmpname);
-	s.out() << html::p() << "Your vote for item " 
-		  << tag << " has been registered. Thank you." 
-		  << html::p::end;
+        using namespace boost::filesystem;
+        /* boost::filesystem::rename does not work accross filesystem. */
+        copy_file(path(tmpname),postname,copy_option::overwrite_if_exists);
+        remove(tmpname);
+        s.out() << html::p() << "Your vote for item "
+                << tag << " has been registered. Thank you."
+                << html::p::end;
     } else {
-	s.out() << html::p() << "There does not appear to have any"
-	    " score associated with item " << tag << " thus your"
-	    " vote cannot be registered. Sorry for the inconvienience."
-		  << html::p::end;
+        s.out() << html::p() << "There does not appear to have any"
+            " score associated with item " << tag << " thus your"
+            " vote cannot be registered. Sorry for the inconvienience."
+                << html::p::end;
     }
     f_lock.unlock();
 }
@@ -384,7 +411,7 @@ char titleMeta[] = "title";
 
 void todoMeta( session& s, const boost::filesystem::path& pathname )
 {
-    using namespace boost::filesystem; 
+    using namespace boost::filesystem;
     static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
     std::stringstream titles;
@@ -397,31 +424,31 @@ void todoMeta( session& s, const boost::filesystem::path& pathname )
     s.openfile(strm,pathname);
     std::getline(strm,line);  // skip first line "From  ..." (see mbox)
     while( !strm.eof() ) {
-	boost::smatch m;
-	std::getline(strm,line);
-	if( boost::regex_search(line,m,valueEx) ) {
-	    if( m.str(1) == std::string("Subject") ) {
-		titles << " - " << m.str(2);
-		s.insert("title",titles.str());
-	    } else {
-		s.insert(m.str(1),m.str(2));
-	    }
-	} else break;
+        boost::smatch m;
+        std::getline(strm,line);
+        if( boost::regex_search(line,m,valueEx) ) {
+            if( m.str(1) == std::string("Subject") ) {
+                titles << " - " << m.str(2);
+                s.insert("title",titles.str());
+            } else {
+                s.insert(m.str(1),m.str(2));
+            }
+        } else break;
     }
-    strm.close();    
+    strm.close();
 
-    /* 
+    /*
        std::time_t last_write_time( const path & ph );
-       To convert the returned value to UTC or local time, 
+       To convert the returned value to UTC or local time,
        use std::gmtime() or std::localtime() respectively. */
     metaFetch<titleMeta>(s,pathname);
 }
 
 
-void 
+void
 todoWriteHtmlFetch( session& s, const boost::filesystem::path& pathname )
 {
-    htmlwriter writer(s.out()); 
+    htmlwriter writer(s.out());
     mailParser parser(writer);
     parser.fetch(s,pathname);
 }
