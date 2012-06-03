@@ -88,9 +88,10 @@ void feedAggregate( session& s,
 		 entry != directory_iterator(); ++entry ) {
 		/* \todo include/exclude filtering should surely be done here. */
 		if( is_directory(*entry) ) {	
-			subdirs = true;
 			url trackname(s.asUrl(*entry / track));
-			dispatchDoc::instance()->fetch(s,varname,trackname);	    
+			if( !dispatchDoc::instance()->fetch(s,varname,trackname) ) {
+				subdirs = true;
+			}
 		}
     }
 
