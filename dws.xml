@@ -38,7 +38,8 @@
 		<default>comments</default>
       </pathname>
       <dep name="build-essential">
-		<bin>g++</bin>
+		<!-- + is a special character in regular expressions -->
+		<bin>g\+\+</bin>
       </dep>
       <dep name="git-core">
 		<bin>git</bin>

@@ -7,7 +7,7 @@
     <author><personname>Sebastien Mirolo</personname></author>
     <date>February 13th, 2010</date>
   </info>
-  <xi:include xlink:href="pengintro.book" />
-  <xi:include xlink:href="infodist.book" />
-  <xi:include xlink:href="views.book" />  
+  <section>
+  <para>The purpose of information distribution is to efficiently complete a project that require interaction of many individuals as well as tracking the status of a project and the contributions made so far to it. The most useful <link linkend="/reps/whitepapers/doc/infodist.book">features and technologies</link> have been integrated in <emphasis>semilla</emphasis>, a consistent web-frontend based on document-sensitive <link linkend="/reps/whitepapers/doc/views.book">views</link>.</para>
+  </section>
 </article>
