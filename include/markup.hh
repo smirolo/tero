@@ -478,11 +478,25 @@ namespace html {
     /** HTML table markup
      */
     class table : public detail::markup {    
-    public:  
+    public:
+	enum attributes {
+	    classAttr,
+	};
+
+	static const size_t attrLength = 1;
+	static const char *attrNames[];
+	std::string attrValues[attrLength];
+
 	static const char* name;
 	static const detail::nodeEnd end;
     
-	table() : markup(name,NULL,NULL,0,true) {}
+	table() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+	table& classref( const char *v ) {
+	    attrValues[classAttr] = v;
+	    return *this;
+	}	
+
     };
 
     /** td markup

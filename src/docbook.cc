@@ -676,7 +676,12 @@ void docbook::tableEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
 
 void docbook::tableStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::table();
+        RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
+        if( role != NULL ) {
+            s.out() << html::table().classref(role->value());
+        } else {
+            s.out() << html::table();
+        }
     }
 }
 

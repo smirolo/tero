@@ -253,6 +253,10 @@ namespace html {
 
     const char* table::name = "table";
     const detail::nodeEnd table::end(table::name,true);
+    const char *table::attrNames[] = {
+	"class"
+    };
+
 
     const char* td::name = "td";
     const detail::nodeEnd td::end(td::name,true);
