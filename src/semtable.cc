@@ -67,12 +67,12 @@ char buildView[] = "Build View";
 std::string active("todos/active");
 
 
-/* The pattern need to be inserted in more specific to more 
+/* The pattern need to be inserted in more specific to more
    generic order since the matcher will apply each the first
    one that yields a positive match. */
 fetchEntry entries[] = {
     { "author", boost::regex(".*\\.blog"), always, textMeta<author> },
-    
+
     { "check", boost::regex(".*\\.c"), whenFileExist, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.h"), whenFileExist, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.cc"), whenFileExist, checkfileFetch<cppChecker> },
@@ -83,15 +83,15 @@ fetchEntry entries[] = {
     { "check", boost::regex(".*\\.py"), whenFileExist, checkfileFetch<shChecker> },
     { "check", boost::regex(".*Makefile"), whenFileExist, checkfileFetch<shChecker> },
 
-    /* Widget to display status of static analysis of a project 
+    /* Widget to display status of static analysis of a project
        source files in the absence of a more restrictive pattern. */
     { "checkstyle", boost::regex(".*"), always, checkstyleFetch },
 
     { "date", boost::regex(".*\\.blog"), always, textMeta<date> },
     { "dates", boost::regex(".*/blog/.*"), whenNotCached, blogDateLinks<blogPat> },
 
-    /* The build "document" gives an overview of the set 
-       of all projects at a glance and can be used to assess 
+    /* The build "document" gives an overview of the set
+       of all projects at a glance and can be used to assess
        the stability of the whole as a release candidate. */
     { "document", boost::regex(".*/log/"), whenNotCached, logviewFetch },
 
@@ -121,10 +121,10 @@ fetchEntry entries[] = {
 
     { "document", boost::regex(".*dws\\.xml"),always, projindexFetch },
 
-    /* Widget to generate a rss feed. Attention: it needs 
-       to be declared before any of the todoFilter::viewPat 
+    /* Widget to generate a rss feed. Attention: it needs
+       to be declared before any of the todoFilter::viewPat
        (i.e. todos/.+) since an rss feed exists for todo items
-       as well. */	    
+       as well. */
     { "document", boost::regex("/index\\.rss"), always, rssSiteAggregate<docPage> },
     { "document", boost::regex(".*\\.git/index\\.rss"), always,
       feedRepository<rsswriter> },
@@ -139,32 +139,32 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*\\.todo/voteSuccess"), always, todoVoteSuccessFetch },
 
     { "document", boost::regex(".*\\.blog"), whenNotCached, blogEntryFetch },
-    { "document", boost::regex(".*/blog/tags-.*"), 
+    { "document", boost::regex(".*/blog/tags-.*"),
       whenNotCached, blogByIntervalTags<docPage,blogPat> },
-    { "document", boost::regex(".*/blog/archive-.*"), 
+    { "document", boost::regex(".*/blog/archive-.*"),
       whenNotCached, blogByIntervalDate<docPage,blogPat> },
     { "document", boost::regex(".*/blog/"), whenNotCached, mostRecentBlogFetch},
 
     /* contributors, accounts authentication */
-	{ "document", boost::regex(".*/accounts/login/"), always, loginFetch },
-	{ "document", boost::regex(".*/accounts/logout/"), always, logoutFetch },
-	{ "document", boost::regex(".*/accounts/password_change/"), always, passwdChange },
-	{ "document", boost::regex(".*/accounts/password_reset/"), always, passwdReset },
+    { "document", boost::regex(".*/accounts/login/"), always, loginFetch },
+    { "document", boost::regex(".*/accounts/logout/"), always, logoutFetch },
+    { "document", boost::regex(".*/accounts/password_change/"), always, passwdChange },
+    { "document", boost::regex(".*/accounts/password_reset/"), always, passwdReset },
     { "document", boost::regex(".*/accounts/register/complete/"), always, registerConfirm },
-	{ "document", boost::regex(".*/accounts/register/"), always, registerEnter },
-	{ "document", boost::regex(".*/accounts/unregister/"), always, unregisterEnter },
+    { "document", boost::regex(".*/accounts/register/"), always, registerEnter },
+    { "document", boost::regex(".*/accounts/unregister/"), always, unregisterEnter },
     { "document", boost::regex(".*accounts/"), always, contribIdxFetch },
-        
-	/* misc pages */
+
+    /* misc pages */
     { "document", boost::regex(".*\\.commit"), always, changeShowDetails },
     { "document", boost::regex(".*\\.eml"), always, mailParserFetch },
     { "document", boost::regex(".*\\.ics"), whenFileExist, calendarFetch },
     { "document", boost::regex(".*\\.todo"), whenFileExist, todoWriteHtmlFetch },
 
-    /* We transform docbook formatted text into HTML for .book 
-       and .corp "document" files and interpret all other unknown 
+    /* We transform docbook formatted text into HTML for .book
+       and .corp "document" files and interpret all other unknown
        extension files as raw text. In all cases we use a default
-       document.template interface "view" to present those files. */ 
+       document.template interface "view" to present those files. */
     { "document", boost::regex(".*\\.book"), whenFileExist, docbookFetch },
     { "document", boost::regex(".*\\.corp"), whenFileExist, docbookFetch },
 
@@ -177,19 +177,19 @@ fetchEntry entries[] = {
 
     { "history", boost::regex(".*dws\\.xml"), always, feedRepository<htmlwriter> },
     /* Widget to display the history of a file under revision control
-       in the absence of a more restrictive pattern. */	   
+       in the absence of a more restrictive pattern. */
     { "history", boost::regex(".*"), always, changehistoryFetch },
 
     /* just print the value of *name* */
     { "print", boost::regex(".*"), notAFile, metaValue },
 
     /* Widget to display a list of files which are part of a project.
-       This widget is used through different "view"s to browse 
+       This widget is used through different "view"s to browse
        the source repository. */
     { "projfiles", boost::regex(".*"), always, projfilesFetch },
 
     /* A project dws.xml "document" file show a description,
-       commits and unit test status of a single project through 
+       commits and unit test status of a single project through
        a project "view". */
     { "regressions", boost::regex(".*dws\\.xml"), whenFileExist, regressionsFetch },
 
@@ -198,7 +198,7 @@ fetchEntry entries[] = {
 
     /* use always instead of whenFileExist here because the composer
        is looking for template files into a themeDir and not the local
-       directory. 
+       directory.
        This is special, we cannot label them as 'document' nor 'view'
        otherwise it creates infinite loops on feed fetches. */
     { "template", boost::regex(".*\\.template"), always, compose<none> },
@@ -206,7 +206,7 @@ fetchEntry entries[] = {
     /* Load title from the meta tags in a text file. */
     { "title", boost::regex(".*/log/"),   always, consMeta<buildView> },
     { "title", boost::regex(".*\\.blog"), whenFileExist, textMeta<title> },
-    { "title", boost::regex(".*/blog/tags-.*"), 
+    { "title", boost::regex(".*/blog/tags-.*"),
       whenNotCached, blogByIntervalTitle },
     { "title", boost::regex(".*/blog/"), whenNotCached, mostRecentBlogTitle },
     { "title", boost::regex(".*\\.book"), whenFileExist, docbookMeta },
@@ -215,7 +215,7 @@ fetchEntry entries[] = {
     { "title", boost::regex(".*\\.template"), whenFileExist, textMeta<title> },
     { "title", boost::regex(".*dws\\.xml"), whenFileExist, projectTitle },
     { "title", boost::regex(".*"), always, metaFetch<title> },
-   
+
     /* If a template file matching the document's extension
        is present in the theme directory, let's use it
        as a composer. */
@@ -223,7 +223,7 @@ fetchEntry entries[] = {
 #if 0
     { "view", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
 #endif
-	/* \todo we avoid to generate caches on the header menus for now. */
+    /* \todo we avoid to generate caches on the header menus for now. */
     { "view", boost::regex(".*\\.corp"), always, compose<corpExt> },
     { "view", boost::regex(".*\\.rss"), whenNotCached, compose<rssExt> },
     { "view", boost::regex(".*\\.blog"), whenFileExist, compose<blogExt> },
@@ -247,20 +247,20 @@ fetchEntry entries[] = {
     /* Composer and document for the todos index view */
     { "view", boost::regex(".*todos/.+"), always, compose<todos> },
 
-	/* We must do this through a "view" and not a "document" because 
-	   the feedback is different if the application is invoked from
-	   the command line or through the cgi interface. */
+    /* We must do this through a "view" and not a "document" because
+       the feedback is different if the application is invoked from
+       the command line or through the cgi interface. */
     { "view", boost::regex(".*/todoCreate"), always, todoCreateFetch },
 
     /* comments */
     { "view", boost::regex(std::string("/comments/create")), always, commentPage },
 
-    /* blog presentation */ 
+    /* blog presentation */
     { "view", boost::regex(".*/blog/"), whenNotCached, compose<blogIndex> },
     { "view", boost::regex(".*/blog/.*"), whenNotCached, compose<blogExt> },
-    
-    /* Source code "document" files are syntax-highlighted 
-       and presented inside a source.template "view" */    
+
+    /* Source code "document" files are syntax-highlighted
+       and presented inside a source.template "view". */
     { "view", boost::regex(".*/diff"), always, compose<source> },
 
     { "view", boost::regex("/"), always, compose<indexPage> },
@@ -269,11 +269,6 @@ fetchEntry entries[] = {
        We use "always" here such that semcache will not generate .html
        versions of style.css, etc. */
     { "view",boost::regex(".*"), always, compose<docPage> },
-
-#if 0
-    /* button to Amazon payment */    
-    { "payproc", boost::regex(".*"), always, paymentFetch },
-#endif    
 };
 
 dispatchDoc semDocs(entries,sizeof(entries)/sizeof(entries[0]));
