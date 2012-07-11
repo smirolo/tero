@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,10 @@
 */
 
 pathVariable indexFile("indexFile",
-					   "index file with projects dependencies information");
+    "index file with projects dependencies information");
 
 void logAddSessionVars( boost::program_options::options_description& all,
-						boost::program_options::options_description& visible ) 
+    boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
 
@@ -50,25 +50,25 @@ void logAddSessionVars( boost::program_options::options_description& all,
 }
 
 
-void logviewFetch( session& s, const boost::filesystem::path& pathname ) 
+void logviewFetch( session& s, const boost::filesystem::path& pathname )
 {
 
     using namespace RAPIDXML;
     using namespace boost::filesystem;
 
-    /* remove the '/log' command tag and add the project dependency info 
+    /* remove the '/log' command tag and add the project dependency info
        (dws.xml). */
     boost::filesystem::path indexFileName = indexFile.value(s);
 
     /* Each log contains the results gathered on a build server. We prefer
        to present one build results per column but need to write s.out()
-       one table row at a time so we create the table entirely in memory 
-       before we display it. 
+       one table row at a time so we create the table entirely in memory
+       before we display it.
        If we were to present build results per row, we would still need
        to preprocess the log files once but only to determine the column
        headers. */
     static const boost::regex logPat("([^-]+)-.*\\.log");
-    
+
     /* build as column headers */
     typedef std::set<path> colHeadersType;
     colHeadersType colHeaders;
@@ -82,88 +82,84 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
        in the index file. */
     xml_document<> *doc = s.loadxml(indexFileName);
     if ( doc ) {
-	/* Error loading the document, don't bother */
-	xml_node<> *root = doc->first_node();
-	if( root != NULL ) {
-	    for( xml_node<> *project = root->first_node("project");
-		 project != NULL; project = project->next_sibling("project") ) {
-		xml_attribute<> *name = project->first_attribute("name");
-		if( name != NULL ) {
-		    path repcontrol((srcTop.value(s) / path(name->value())) / ".git");
-		    if( boost::filesystem::exists(repcontrol) ) {
-			table[name->value()] = colType();
-		    }
-		}
-	    }
-	}
-    
-	path dirname(is_directory(pathname) ?
-		     pathname : siteTop.value(s) / "log");
+        /* Error loading the document, don't bother */
+        xml_node<> *root = doc->first_node();
+        if( root != NULL ) {
+            for( xml_node<> *project = root->first_node("project");
+                 project != NULL; project = project->next_sibling("project") ) {
+                xml_attribute<> *name = project->first_attribute("name");
+                if( name != NULL ) {
+                     path repcontrol((srcTop.value(s)
+                             / path(name->value())));
+                    if( boost::filesystem::exists(repcontrol) ) {
+                        table[name->value()] = colType();
+                    }
+                }
+            }
+        }
+        path dirname(is_directory(pathname) ?
+            pathname : siteTop.value(s) / "log");
 
-	std::string logBase;
-	for( directory_iterator entry = directory_iterator(dirname); 
-	     entry != directory_iterator(); ++entry ) {
-	    boost::smatch m;
-	    path filename(*entry);
-	    filename = filename.filename();	
-	    if( boost::regex_search(filename.string(),m,logPat) ) {
-		xml_document<> *doc = s.loadxml(*entry);
-		if ( doc ) {
-		    /* If there was an error loading the XML file, don't bother. */
-		    logBase = m.str(1);
-		    colHeaders.insert(filename);
-		    xml_node<> *root = doc->first_node();
-		    if( root != NULL ) {
-			for( xml_node<> *project 
-				 = root->first_node("section");
-			     project != NULL; 
-			     project = project->next_sibling("section") ) {
-			    xml_attribute<> *name 
-				= project->first_attribute("id");
-			    if( name != NULL ) {
-				xml_node<> *status 
-				    = project->first_node("status");
-				if( status != NULL ) {
-				    int exitCode = 0;
-				    xml_attribute<> *exitAttr 
-					= status->first_attribute("error");
-				    if( exitAttr ) {
-					exitCode = atoi(exitAttr->value());
-				    }
-				    table[name->value()][filename] 
-				    = std::make_pair(status->value(),exitCode);
-				}
-			    }
-			}	
-		    }	    
-		}
-	    }
-	}
+        std::string logBase;
+        for( directory_iterator entry = directory_iterator(dirname);
+             entry != directory_iterator(); ++entry ) {
+            boost::smatch m;
+            path fullpath = entry->path();
+            path filename = fullpath.filename();
+            if( boost::regex_search(filename.string(),m,logPat) ) {
+                boost::filesystem::ifstream input;
+                s.openfile(input, *entry);
+                colHeaders.insert(filename);
+                std::string name;
+                while( !input.eof() ) {
+                    std::string line;
+                    getline(input, line);
+                    if( boost::regex_match(line, m,
+                            boost::regex("######## (\\S+)")) ) {
+                        name = m.str(1);
+                    } else if( boost::regex_match(line, m,
+                            boost::regex("\\S+: completed in (.*)")) ) {
+                        std::string status = m.str(1);
+                        if( table.find(name) != table.end() ) {
+                            table[name][filename]
+                                = std::make_pair(status, 0);
+                        }
+                    } else if( boost::regex_match(line, m,
+                            boost::regex("\\S+: error \\((\\d+)\\) after (.*)")) ) {
+                        std::string status = m.str(2);
+                        int exitCode = atoi(m.str(1).c_str());
+                        if( table.find(name) != table.end() ) {
+                            table[name][filename]
+                                = std::make_pair(status, exitCode);
+                        }
+                    }
+                }
+            }
+        }
     }
-
     s.out() << html::p() << "This build view page shows the stability "
-	"of all projects at a glance. Each column represents a build log "
-	"obtained by running the following command on a local machine:" 
-	      << html::p::end;
-    s.out() << html::pre() << html::a().href("/resources/dws") 
-			<< "dws" << html::a::end << " build "
-			<< s.asAbsUrl(s.asUrl(indexFileName),"")
-			<< html::pre::end;
+        "of all projects at a glance. Each column represents a build log "
+        "obtained by running the following command on a local machine:"
+            << html::p::end;
+    s.out() << html::pre() << html::a().href("/resources/dws")
+            << "dws" << html::a::end << " build "
+            << s.asAbsUrl(s.asUrl(indexFileName),"")
+            << html::pre::end;
     s.out() << html::p() << "dws, the inter-project dependency tool "
-	"generates a build log file with XML markups as part of building "
-	"projects. That build log is then stamped with the local machine "
-	"hostname and time before being uploaded onto the remote machine. "
-	"This page presents all build logs currently available on the remote "
-	"machine." << html::p::end;
+        "generates a build log file with XML markups as part of building "
+        "projects. That build log is then stamped with the local machine "
+        "hostname and time before being uploaded onto the remote machine. "
+        "This page presents all build logs currently available on the remote "
+        "machine." << html::p::end;
 
     /* Display the table column headers. */
     if( colHeaders.empty() ) {
-	s.out() << html::pre() << "There are no logs available"
-	      << html::pre::end;
+        s.out() << html::pre() << "There are no logs available"
+                << html::pre::end;
     } else {
 	s.out() << html::table();
 	s.out() << html::tr();
-	s.out() << html::th() << html::th::end;	
+	s.out() << html::th() << html::th::end;
 	for( colHeadersType::const_iterator col = colHeaders.begin();
 	     col != colHeaders.end(); ++col ) {
 	    s.out() << html::th() 
