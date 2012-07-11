@@ -186,7 +186,7 @@ template<typename cmp, const char *filePat>
 void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
 {
     boost::filesystem::path blogroot 
-	= s.root(s.abspath(pathname),"blog") / "blog";
+        = s.root(s.abspath(pathname),"blog",true);
 
      bySet<cmp> count(s.out(),s.asUrl(blogroot));
     blogSplat<cmp> feeds(&count);
@@ -225,7 +225,7 @@ void blogRelatedSubjects( session& s, const boost::filesystem::path& pathname )
 	using namespace boost::filesystem;
 
     boost::filesystem::path blogroot 
-	= s.root(s.abspath(pathname),"blog") / "blog";
+        = s.root(s.abspath(pathname),"blog",true);
 
 	boost::filesystem::path related = pathname;
 	if( !is_regular_file(pathname) ) {

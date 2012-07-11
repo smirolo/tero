@@ -46,22 +46,22 @@ mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
 	   not just the timestamp on the file. */
 	using namespace boost::filesystem;
 
-    boost::filesystem::path blogroot 
-	= s.root(s.abspath(pathname),"blog") / "blog";
+    boost::filesystem::path blogroot
+        = s.root(s.abspath(pathname),"blog");
 
 	boost::filesystem::path related = pathname;
-	/* If *pathname* is not a regular file, we will build a list 
+	/* If *pathname* is not a regular file, we will build a list
 	   of posts related to the most recent post. */
 	bool firstTime = true;
 	boost::posix_time::ptime mostRecent;
-	for( directory_iterator entry = directory_iterator(blogroot); 
+	for( directory_iterator entry = directory_iterator(blogroot);
 		 entry != directory_iterator(); ++entry ) {
-		boost::smatch m;	    
+		boost::smatch m;
 		path filename(*entry);
-		if( is_regular_file(filename) 
+		if( is_regular_file(filename)
 			&& boost::regex_search(filename.string(),
 								   m,boost::regex(blogPat)) ) {
-			boost::posix_time::ptime time 
+			boost::posix_time::ptime time
 				= boost::posix_time::from_time_t(last_write_time(filename));
 			if( firstTime || time > mostRecent ) {
 				mostRecent = time;

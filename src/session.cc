@@ -69,6 +69,12 @@ urlVariable domainName("domainName","domain name of the web server");
 
 timeVariable startTime("startTime","start time for the session");
 
+notLeadingPrefixError::notLeadingPrefixError(
+    const std::string& prefix, const std::string& leaf )
+    : std::runtime_error(prefix
+        + std::string(" is not a leading prefix of ") + leaf) {
+}
+
 
 undefVariableError::undefVariableError( const std::string& varname ) 
     : std::runtime_error(std::string("undefined variable in session ") 
@@ -258,8 +264,8 @@ void session::createfile( boost::filesystem::ofstream& strm,
 }
 
 
-int session::openfile( boost::filesystem::ifstream& strm, 
-						const boost::filesystem::path& pathname ) {
+int session::openfile( boost::filesystem::ifstream& strm,
+    const boost::filesystem::path& pathname ) {
     using namespace boost::system::errc;
     using namespace boost::filesystem;
 
@@ -730,7 +736,7 @@ void session::restore( int argc, char *argv[] )
 
 boost::filesystem::path
 session::root( const boost::filesystem::path& leaf,
-    const boost::filesystem::path& trigger ) const
+    const boost::filesystem::path& trigger, bool keepTrigger ) const
 {
     using namespace boost::filesystem;
     using namespace boost::system::errc;
@@ -738,9 +744,7 @@ session::root( const boost::filesystem::path& leaf,
     std::string srcTop = valueOf("srcTop");
     if( leaf.string().compare(0,srcTop.size(),srcTop) != 0 ) {
         /* *leaf* is not inside srcTop. */
-        boost::throw_exception(boost::system::system_error(
-                    make_error_code(no_such_file_or_directory),
-                    leaf.string()));
+        boost::throw_exception(notLeadingPrefixError(srcTop, leaf.string()));
     }
     path dirname = leaf;
     if( !is_directory(dirname) ) {
@@ -752,7 +756,7 @@ session::root( const boost::filesystem::path& leaf,
         assert( !dirname.string().empty() );
         foundProject = boost::filesystem::exists(dirname.string() / trigger);
     }
-    return foundProject ? dirname : path("");
+    return foundProject ? (keepTrigger ? (dirname.string() / trigger) : dirname) : path("");
 }
 
 

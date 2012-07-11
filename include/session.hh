@@ -50,7 +50,7 @@
 */
 
 
-/** This error is thrown when we are trying to retrieve the value 
+/** This error is thrown when we are trying to retrieve the value
     of a variable from the current session and that variable does
     not exist in the variables map.
 */
@@ -58,6 +58,15 @@ class undefVariableError : public std::runtime_error {
 public:
     explicit undefVariableError( const std::string& varname );
 };
+
+/** This error is thrown when deriving prefix directories.
+*/
+class notLeadingPrefixError : public std::runtime_error {
+public:
+    explicit notLeadingPrefixError(
+        const std::string& prefix, const std::string& leaf );
+};
+
 
 // forward declaration
 class postFilter;
@@ -391,9 +400,9 @@ public:
        is the absolute pathname to the trigger. 
        If *trigger* cannot be found, the method returns an empty path.
     */
-    boost::filesystem::path 
-    root( const boost::filesystem::path& leaf,
-	  const boost::filesystem::path& trigger ) const;
+    boost::filesystem::path root( const boost::filesystem::path& leaf,
+        const boost::filesystem::path& trigger,
+        bool keepTrigger = false ) const;
 
     std::string root() const {
 	return std::string("");
