@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,9 @@ namespace {
 void checkInSiteTop( const session& s, const boost::filesystem::path& p ) {
 	using namespace boost::system::errc;
 	if( !s.prefix(siteTop.value(s),p) ) {
-		std::stringstream msg;
-		msg << p << " is not inside " << siteTop.value(s);
-		boost::throw_exception(boost::system::system_error(
-			   make_error_code(no_such_file_or_directory),msg.str()));
+        boost::throw_exception(notLeadingPrefixError(
+                siteTop.value(s).string(),
+                p.string()));
 	}
 }
 
@@ -741,17 +740,14 @@ session::root( const boost::filesystem::path& leaf,
     using namespace boost::filesystem;
     using namespace boost::system::errc;
 
-    std::string srcTop = valueOf("srcTop");
-    if( leaf.string().compare(0,srcTop.size(),srcTop) != 0 ) {
-        /* *leaf* is not inside srcTop. */
-        boost::throw_exception(notLeadingPrefixError(srcTop, leaf.string()));
-    }
+    checkInSiteTop(*this,leaf);
+
     path dirname = leaf;
     if( !is_directory(dirname) ) {
         dirname = dirname.parent_path();
     }
     bool foundProject = boost::filesystem::exists(dirname.string() / trigger);
-    while( !foundProject && (dirname.string() != srcTop) ) {
+    while( !foundProject && (dirname.string() != siteTop.value(*this)) ) {
         dirname.remove_leaf();
         assert( !dirname.string().empty() );
         foundProject = boost::filesystem::exists(dirname.string() / trigger);

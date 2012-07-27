@@ -34,6 +34,10 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+extern char blogPat[];
+extern const char *blogTrigger;
+
+
 /**
    Splat a field by the number of comma separated values.
 */

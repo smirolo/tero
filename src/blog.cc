@@ -32,45 +32,42 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-namespace {
-
-	const char *blogPat = ".*\\.blog";
-
-} // anonymous namespace
+char blogPat[] = ".*\\.blog$";
+const char *blogTrigger = "blog";
 
 
 const boost::filesystem::path
 mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
 {
-	/* \todo This should take into account the *date* inside the post,
-	   not just the timestamp on the file. */
-	using namespace boost::filesystem;
+    /* \todo This should take into account the *date* inside the post,
+       not just the timestamp on the file. */
+    using namespace boost::filesystem;
 
     boost::filesystem::path blogroot
-        = s.root(s.abspath(pathname),"blog");
+        = s.root(s.abspath(pathname), blogTrigger, true);
 
-	boost::filesystem::path related = pathname;
-	/* If *pathname* is not a regular file, we will build a list
-	   of posts related to the most recent post. */
-	bool firstTime = true;
-	boost::posix_time::ptime mostRecent;
-	for( directory_iterator entry = directory_iterator(blogroot);
-		 entry != directory_iterator(); ++entry ) {
-		boost::smatch m;
-		path filename(*entry);
-		if( is_regular_file(filename)
-			&& boost::regex_search(filename.string(),
-								   m,boost::regex(blogPat)) ) {
-			boost::posix_time::ptime time
-				= boost::posix_time::from_time_t(last_write_time(filename));
-			if( firstTime || time > mostRecent ) {
-				mostRecent = time;
-				related = filename;
-				firstTime = false;
-			}
-		}
-	}
-	return related;
+    boost::filesystem::path related = pathname;
+    /* If *pathname* is not a regular file, we will build a list
+       of posts related to the most recent post. */
+    bool firstTime = true;
+    boost::posix_time::ptime mostRecent;
+    for( directory_iterator entry = directory_iterator(blogroot);
+         entry != directory_iterator(); ++entry ) {
+        boost::smatch m;
+        path filename(*entry);
+        if( is_regular_file(filename)
+            && boost::regex_search(filename.string(),
+                m,boost::regex(blogPat)) ) {
+            boost::posix_time::ptime time
+                = boost::posix_time::from_time_t(last_write_time(filename));
+            if( firstTime || time > mostRecent ) {
+                mostRecent = time;
+                related = filename;
+                firstTime = false;
+            }
+        }
+    }
+    return related;
 }
 
 

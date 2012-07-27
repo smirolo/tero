@@ -163,7 +163,7 @@ std::ostream& operator<<( std::ostream& ostr, const by& v ) {
 		ostr << "anonymous";
 	}
 	if( !v.ptr->email.empty() ) {
-		ostr << "<sup><img src=\"/resources/icon_email.png\"></sup>"
+		ostr << "<sup><img src=\"/static/images/icon_email.png\"></sup>"
 			 << html::a::end;
 	}
 	if( !v.ptr->google.empty() ) {

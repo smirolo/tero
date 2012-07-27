@@ -48,6 +48,7 @@
 
 char none[] = "";
 char todoExt[] = "todo";
+char bookExt[] = "book";
 char corpExt[] = "corp";
 char rssExt[] = "rss";
 char blogExt[] = "blog";
@@ -55,7 +56,6 @@ char blogIndex[] = "blogindex";
 char project[] = "project";
 char docPage[] = "document";
 char todos[] = "todos";
-char blogPat[] = ".*\\.blog$";
 char indexPage[] = "index";
 char author[] = "author";
 char feed[] = "feed";
@@ -141,6 +141,9 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*\\.blog"), whenNotCached, blogEntryFetch },
     { "document", boost::regex(".*/blog/tags-.*"),
       whenNotCached, blogByIntervalTags<docPage,blogPat> },
+    { "document", boost::regex(".*/blog/tags/"), whenNotCached,
+      blogTagLinks<blogPat> },
+
     { "document", boost::regex(".*/blog/archive-.*"),
       whenNotCached, blogByIntervalDate<docPage,blogPat> },
     { "document", boost::regex(".*/blog/"), whenNotCached, mostRecentBlogFetch},
@@ -227,6 +230,7 @@ fetchEntry entries[] = {
     { "view", boost::regex(".*\\.corp"), always, compose<corpExt> },
     { "view", boost::regex(".*\\.rss"), whenNotCached, compose<rssExt> },
     { "view", boost::regex(".*\\.blog"), whenFileExist, compose<blogExt> },
+    { "view", boost::regex(".*\\.book"), whenFileExist, compose<bookExt> },
 
     { "view", boost::regex(".*\\.c"), whenFileExist, compose<source> },
     { "view", boost::regex(".*\\.h"), whenFileExist, compose<source> },

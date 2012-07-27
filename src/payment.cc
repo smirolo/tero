@@ -34,7 +34,7 @@
 */
 
 payCheckoutButton::payCheckoutButton( url domainName )
-    : image("/resources/tryit.png"), 
+    : image("/static/images/tryit.png"), 
       paypipeline("/payproc/paypipeline")
 {}
 
