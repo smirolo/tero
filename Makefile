@@ -34,6 +34,7 @@ libs		:=	libsemilla.a libpayproc.a
 # \todo documentation specific to the project is currently broken. 
 #       It needs to be written up anyway :).
 #shares		:=	semilla.pdf
+etcs		:= $(srcDir)/etc/pam.d/semilla.pam
 
 semillaConfFile	?=	/etc/semilla/default.conf
 sessionDir		?=	/var/db/semilla
@@ -89,13 +90,11 @@ include $(buildTop)/share/dws/suffix.mk
 #	/usr/bin/install -s -p -m 4755 -o root $< $(binDir)
 
 install:: $(wildcard $(srcDir)/data/themes/default/*)
-	$(installDirs) $(shareDir)/semilla
-	cp -Rf $(srcDir)/data/themes $(shareDir)/semilla
-
-install:: $(srcDir)/src/semilla.pam
-	$(installDirs) $(etcDir)/pam.d
-	$(installFiles) $^ $(etcDir)/pam.d/$(basename $(notdir $^))
+	$(installDirs) $(DESTDIR)$(shareDir)/semilla
+	cp -Rf $(srcDir)/data/themes $(DESTDIR)$(shareDir)/semilla
 
 install:: default.conf
-	$(if $(findstring /etc/semilla,$(semillaConfFile)),$(installDirs) $(dir $(semillaConfFile)))
-	$(if $(findstring /etc/semilla,$(semillaConfFile)),$(installFiles) $< $(semillaConfFile))
+	$(if $(findstring /etc/semilla,$(semillaConfFile)),\
+		$(installDirs) $(DESTDIR)$(dir $(semillaConfFile)))
+	$(if $(findstring /etc/semilla,$(semillaConfFile)),\
+		$(installFiles) $< $(DESTDIR)$(semillaConfFile))

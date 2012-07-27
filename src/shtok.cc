@@ -24,7 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cassert>
-#include "shtok.hh"
+#include "tokenize.hh"
 
 /** sh tokenizer
 
