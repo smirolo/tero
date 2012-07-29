@@ -83,20 +83,18 @@ void feedAggregate( session& s,
     path dirname(pathname.parent_path());
     path track(pathname.filename());
 
-    bool subdirs = false;
-    for( directory_iterator entry = directory_iterator(dirname); 
-		 entry != directory_iterator(); ++entry ) {
-		/* \todo include/exclude filtering should surely be done here. */
-		if( is_directory(*entry) ) {	
-			url trackname(s.asUrl(*entry / track));
-			if( !dispatchDoc::instance()->fetch(s,varname,trackname) ) {
-				subdirs = true;
-			}
+    if( boost::filesystem::exists(dirname / ".git") ) {
+        url trackname(s.asUrl(dirname / ".git" / track));
+         dispatchDoc::instance()->fetch(s,varname,trackname);
+    } else {
+        for( directory_iterator entry = directory_iterator(dirname); 
+             entry != directory_iterator(); ++entry ) {
+            /* \todo include/exclude filtering should surely be done here. */
+            if( is_directory(*entry) ) {
+                url trackname(s.asUrl(*entry / track));
+                dispatchDoc::instance()->fetch(s,varname,trackname);
+            }
 		}
-    }
-
-    /* \todo fix tokenizers */
-    if( !subdirs ) {
 		/* \todo find out how to handle commit posts and blog posts
 		   without duplicates, picking the appropriate one. */
 		feedContent<defaultWriter,filePat>(s,dirname);
@@ -172,7 +170,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 					try {
 						p.time = from_mbox_string(content.str());
 					} catch( std::exception& e ) {
-						std::cerr << "unable to reconstruct time from \"" << content.str() << '"' << std::endl;
+						std::cerr << "error: unable to reconstruct time from \"" << content.str() << '"' << std::endl;
 					}
 					content.str("");
 					/* \todo Be careful here, if there are no *.blog pattern
