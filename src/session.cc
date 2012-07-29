@@ -868,11 +868,8 @@ session::subdirpart( const boost::filesystem::path& rootp,
 
 #else
     if( leaf.string().compare(0,root.string().size(),root.string()) != 0 ) {
-		/* \todo throws a bus error in order to trigger the debugger. */
-		int *x = 0;
-		*x = 0;
-		boost::throw_exception(std::runtime_error(root.string() 
-				 + " is not a prefix of " + leaf.string()));
+		boost::throw_exception(notLeadingPrefixError(root.string(),
+                leaf.string()));
     }
     return leaf.string().substr(std::min(leaf.string().size(),
 										 root.string().size() 
