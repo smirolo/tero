@@ -39,14 +39,16 @@ void cppFetch( session& s, const boost::filesystem::path& pathname )
     leftChain.push_back(leftCppStrm);
     rightChain.push_back(rightLinkStrm);
     rightChain.push_back(rightCppStrm);
-    
+
     text cpp(leftChain,rightChain);
     cpp.fetch(s,pathname);
 }
 
 
-void cppDiff( session& s, const boost::filesystem::path& pathname ) 
+void cppDiff( session& s, const boost::filesystem::path& pathname )
 {
+    using namespace boost;
+
     linkLight leftLinkStrm(s);
     linkLight rightLinkStrm(s);
     cppLight leftCppStrm;
@@ -58,5 +60,18 @@ void cppDiff( session& s, const boost::filesystem::path& pathname )
     rightChain.push_back(rightLinkStrm);
     rightChain.push_back(rightCppStrm);
 
-    changediff(s,pathname,&leftChain,&rightChain);
+    static const boost::regex diffRe("(\\S+)/([0-9a-f]{40}/)?diff/([0-9a-f]{40})");
+
+	smatch m;
+    std::string leftRevision;
+    std::string rightRevision;
+    boost::filesystem::path srcpath;
+	if( regex_search(pathname.string(), m, diffRe) ) {
+        srcpath = m.str(1);
+        leftRevision = m.str(2);
+        rightRevision = m.str(3);
+        
+    }
+
+    changediff(s,srcpath,leftRevision,rightRevision,&leftChain,&rightChain);
 }

@@ -71,10 +71,26 @@ void shFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void shDiff( session& s, const boost::filesystem::path& pathname ) 
+void shDiff( session& s, const boost::filesystem::path& pathname )
 {
+    using namespace boost;
+
     htmlEscaper leftLinkText;
     htmlEscaper rightLinkText;
- 
-    changediff(s,pathname,&leftLinkText,&rightLinkText);
+
+    static const boost::regex diffRe("(\\S+)/([0-9a-f]{40}/)?diff/([0-9a-f]{40})");
+
+	smatch m;
+    std::string leftRevision;
+    std::string rightRevision;
+    boost::filesystem::path srcpath;
+	if( regex_search(pathname.string(), m, diffRe) ) {
+        srcpath = m.str(1);
+        leftRevision = m.str(2);
+        rightRevision = m.str(3);
+        
+    }
+
+    changediff(s,srcpath,leftRevision,rightRevision,
+        &leftLinkText,&rightLinkText);
 }

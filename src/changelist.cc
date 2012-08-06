@@ -35,12 +35,6 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-namespace {
-    sessionVariable leftRev("left","commit tag for left pane of diff");
-    sessionVariable rightRev("right","commit tag for right pane of diff");
-
-} // anonymous namespace
-
 pathVariable binDir("binDir","path to external executables");
 
 void 
@@ -51,8 +45,6 @@ changelistAddSessionVars( boost::program_options::options_description& all,
 
     options_description localOptions("changelist");
     localOptions.add(binDir.option());
-    localOptions.add(leftRev.option());
-    localOptions.add(rightRev.option());
     all.add(localOptions);
     visible.add(localOptions);
 }
@@ -61,8 +53,7 @@ changelistAddSessionVars( boost::program_options::options_description& all,
 url diffref::asUrl( const boost::filesystem::path& doc, 
 		       const std::string& rev ) const {
     std::stringstream hrefs;
-    hrefs << doc.string()
-	  << "/diff?right=" << rev; 
+    hrefs << doc.string() << "/diff/" << rev;
     return url(hrefs.str());
 }
 
@@ -117,19 +108,17 @@ void changeFetch(  session& s, const boost::filesystem::path& pathname )
 }
 
 void changediff( session& s, const boost::filesystem::path& pathname,
-		 decorator *primary, decorator *secondary )
+    const std::string& leftRevision, const std::string& rightRevision,
+    decorator *primary, decorator *secondary )
 {
     using namespace std;
 
     std::stringstream text;
-    std::string leftRevision = leftRev.value(s);
-    std::string rightRevision = rightRev.value(s);
-    boost::filesystem::path docname(pathname.parent_path());
 
-    revisionsys *rev = revisionsys::findRev(s,docname);
+    revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev != NULL ) {
 	boost::filesystem::path 
-	    gitrelname = relpath(docname,rev->rootpath);
+	    gitrelname = relpath(pathname,rev->rootpath);
 	rev->diff(text,leftRevision,rightRevision,gitrelname);
 		
 	s.out() << "<table style=\"text-align: left;\">" << endl;
@@ -139,7 +128,7 @@ void changediff( session& s, const boost::filesystem::path& pathname,
 	s.out() << html::tr::end;
 
 	boost::filesystem::ifstream input;
-	s.openfile(input,docname);
+	s.openfile(input,pathname);
 
 	/* \todo the session is not a parameter to between files... */	
 	::text doc(*primary,*secondary);

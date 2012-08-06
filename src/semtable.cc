@@ -64,14 +64,14 @@ char date[] = "date";
 char title[] = "title";
 char buildView[] = "Build View";
 
-std::string active("todos/active");
-
 
 /* The pattern need to be inserted in more specific to more
    generic order since the matcher will apply each the first
    one that yields a positive match. */
 fetchEntry entries[] = {
     { "author", boost::regex(".*\\.blog"), always, textMeta<author> },
+
+    { "bytags", boost::regex(".*/blog/.*"), whenNotCached, blogTagLinks<blogPat> },
 
     { "check", boost::regex(".*\\.c"), whenFileExist, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.h"), whenFileExist, checkfileFetch<cppChecker> },
@@ -104,20 +104,19 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*\\.hh"), whenFileExist, cppFetch },
     { "document", boost::regex(".*\\.tcc"), whenFileExist, cppFetch },
 
-    { "document", boost::regex(".*\\.c/diff"), always, cppDiff },
-    { "document", boost::regex(".*\\.h/diff"), always, cppDiff },
-    { "document", boost::regex(".*\\.cc/diff"), always, cppDiff },
-    { "document", boost::regex(".*\\.hh/diff"), always, cppDiff },
-    { "document", boost::regex(".*\\.tcc/diff"), always, cppDiff },
+    { "document", boost::regex(".*\\.c/diff/[0-9a-f]{40}"), always, cppDiff },
+    { "document", boost::regex(".*\\.h/diff/[0-9a-f]{40}"), always, cppDiff },
+    { "document", boost::regex(".*\\.cc/diff/[0-9a-f]{40}"), always, cppDiff },
+    { "document", boost::regex(".*\\.hh/diff/[0-9a-f]{40}"), always, cppDiff },
+    { "document", boost::regex(".*\\.tcc/diff/[0-9a-f]{40}"), always, cppDiff },
 
     { "document", boost::regex(".*\\.mk"), whenFileExist, shFetch },
     { "document", boost::regex(".*\\.py"), whenFileExist, shFetch },
     { "document", boost::regex(".*Makefile"), whenFileExist, shFetch },
 
-    { "document", boost::regex(".*\\.mk/diff"), always, shDiff },
-    { "document", boost::regex(".*\\.py/diff"), always, shDiff },
-    { "document", boost::regex(".*Makefile/diff"), always, shDiff },
-
+    { "document", boost::regex(".*\\.mk/diff/[0-9a-f]{40}"), always, shDiff },
+    { "document", boost::regex(".*\\.py/diff/[0-9a-f]{40}"), always, shDiff },
+    { "document", boost::regex(".*Makefile/diff/[0-9a-f]{40}"), always, shDiff },
 
     { "document", boost::regex(".*dws\\.xml"),always, projindexFetch },
 
@@ -131,8 +130,7 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*/index\\.rss"), always,
       feedLatestPosts<rsswriter,docPage> },
 
-    { "document", boost::regex(std::string(".*") + active), always,
-      todoIndexWriteHtmlFetch },
+    { "document", boost::regex(".*/todo/"), always, todoIndexWriteHtmlFetch },
 
     { "document", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
     { "document", boost::regex(".*\\.todo/voteAbandon"), always, todoVoteAbandonFetch },
@@ -197,7 +195,6 @@ fetchEntry entries[] = {
     { "regressions", boost::regex(".*dws\\.xml"), whenFileExist, regressionsFetch },
 
     { "relates", boost::regex(".*/blog/.*"), whenNotCached, blogRelatedSubjects<blogPat> },
-    { "tags", boost::regex(".*/blog/.*"), whenNotCached, blogTagLinks<blogPat> },
 
     /* use always instead of whenFileExist here because the composer
        is looking for template files into a themeDir and not the local
@@ -249,7 +246,7 @@ fetchEntry entries[] = {
     { "view", boost::regex(".*dws\\.xml"), always, compose<project> },
 
     /* Composer and document for the todos index view */
-    { "view", boost::regex(".*todos/.+"), always, compose<todos> },
+    { "view", boost::regex(".*/todo/"), always, compose<todos> },
 
     /* We must do this through a "view" and not a "document" because
        the feedback is different if the application is invoked from
@@ -265,7 +262,7 @@ fetchEntry entries[] = {
 
     /* Source code "document" files are syntax-highlighted
        and presented inside a source.template "view". */
-    { "view", boost::regex(".*/diff"), always, compose<source> },
+    { "view", boost::regex(".*/diff/[0-9a-f]{40}"), always, compose<source> },
 
     { "view", boost::regex("/"), always, compose<indexPage> },
 

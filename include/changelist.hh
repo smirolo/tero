@@ -115,7 +115,8 @@ void changeFetch( session& s, const boost::filesystem::path& pathname );
  *secondary* decorator to pass character output through.
  */
 void changediff( session& s, const boost::filesystem::path& pathname,
-		 decorator *primary, decorator *secondary );
+    const std::string& leftRevision, const std::string& rightRevision,
+    decorator *primary, decorator *secondary );
 
 
 /** Short history of changes to a project under revision control. 
