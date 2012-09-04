@@ -239,19 +239,19 @@ fetchEntry entries[] = {
     { "view", boost::regex(".*\\.py"), whenFileExist, compose<source> },
     { "view", boost::regex(".*Makefile"), whenFileExist, compose<source> },
 
-    /* Command to create a new project */
-    { "view", boost::regex(".*/reps/.*/create"), always, projCreateFetch },
-
     /* Composer for a project view */
     { "view", boost::regex(".*dws\\.xml"), always, compose<project> },
-
-    /* Composer and document for the todos index view */
-    { "view", boost::regex(".*/todo/"), always, compose<todos> },
 
     /* We must do this through a "view" and not a "document" because
        the feedback is different if the application is invoked from
        the command line or through the cgi interface. */
-    { "view", boost::regex(".*/todoCreate"), always, todoCreateFetch },
+    { "view", boost::regex(".*/todo/create"), always, todoCreateFetch },
+
+    /* Composer and document for the todos index view */
+    { "view", boost::regex(".*/todo/"), always, compose<todos> },
+
+    /* Command to create a new project */
+    { "view", boost::regex(".*/reps/.*/create"), always, projCreateFetch },
 
     /* comments */
     { "view", boost::regex(std::string("/comments/create")), always, commentPage },

@@ -164,6 +164,8 @@ void mailAsPost::token( rfc2822Token token, const char *line,
 	    field = rfc2822AuthorEmail;
 	} else if( strncmp(&line[first],"Subject",last - first) == 0 ) {
 	    field = rfc2822Title;
+	} else if( strncmp(&line[first],"Score",last - first) == 0 ) {
+	    field = extScore;
 	} else {
 	    name = std::string(&line[first],last - first);
 	    name[0] = std::tolower(name[0]);
@@ -186,6 +188,9 @@ void mailAsPost::token( rfc2822Token token, const char *line,
 	case rfc2822Title:
 	    constructed.title = value;
 	    break;
+    case extScore:
+        constructed.score = atoi(value.c_str());
+        break;
 	default: {
 	    post::headersMap::iterator header 
 		= constructed.moreHeaders.find(name);

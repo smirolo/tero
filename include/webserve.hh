@@ -196,7 +196,7 @@ protected:
 	if( h.statusCode > 0 ) {
 	    switch( h.statusCode ) {
 	    case 404:
-		ostr << "Status: " << h.statusCode << "Not Found\r\n";
+		ostr << "Status: " << h.statusCode << " Not Found\r\n";
 		break;
 	    default:
 		ostr << "Status: " << h.statusCode << "\r\n";

@@ -29,21 +29,37 @@ import subprocess
 
 def app(environ, start_response):
     '''We use gunicorn as a wrapper since nginx does not support CGI.'''
+    cmdenv = {}
+    for key, value in environ.iteritems():
+        if isinstance(value, basestring):
+            cmdenv.update({key: value})
+    cmdenv.update({ 'SCRIPT_FILENAME': '/usr/bin/semilla' })
+    body = environ["wsgi.input"]
+
     cmdline = [ '/usr/bin/semilla',
                 '--config=/etc/semilla/fortylines.com.conf',
                 environ['PATH_INFO'] ]
-    cmd = subprocess.Popen(' '.join(cmdline),shell=True,
+    cmd = subprocess.Popen(cmdline,
+                           stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE)
-    output, errors = cmd.communicate()
+                           stderr=subprocess.PIPE,
+                           env=cmdenv)
+    output, errors = cmd.communicate(body.read())
     cmd.wait()
     if cmd.returncode != 0:
         status = '500 Internal server error'
     else:
         status = '200 OK'
-    response_headers = [
-        ('Content-type','text/html'),
-        ('Content-Length', str(len(output)))
-    ]
+    response_headers = []
+    output = output.splitlines()
+    line = output.pop(0)
+    while line:
+        header = tuple(line.split(':'))
+        if header[0] == 'Status':
+            status = header[1]
+        else:
+            response_headers.append(header)
+        line = output.pop(0)
+#   response_headers.append(('Content-Length', str(len('\n'.join(output)))))
     start_response(status, response_headers)
-    return iter([output])
+    return iter(output)

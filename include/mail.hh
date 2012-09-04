@@ -82,7 +82,8 @@ protected:
 	rfc2822Time,
 	rfc2822Content,
 	rfc2822AuthorEmail,
-	rfc2822Title
+	rfc2822Title,
+    extScore
     } field;
     
     std::string name;
