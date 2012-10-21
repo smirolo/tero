@@ -159,6 +159,24 @@ public:
 };
 
 
+/** Write an html table row per post; group all posts with the same date
+	under a single header.
+ */
+class byTimeHtml : public ostreamWriter {
+private:
+    /** Time stored in the previous post (used in filters method).
+     */
+    boost::posix_time::ptime prev_header;    
+
+
+public:
+    explicit byTimeHtml( std::ostream& o ) : ostreamWriter(o) {}
+
+    virtual void filters( const post& );
+};
+
+
+
 /** Aggregate feeds
 
     Use the toplevel *dispatchDoc* to fetch callback *varname*, for a file 

@@ -332,9 +332,10 @@ public:
 
 /** Comparaison functor based on a post's score.
  */
-struct orderByScore : public std::binary_function<post, post, bool> {
+struct orderByDateScore : public std::binary_function<post, post, bool> {
     bool operator()( const post& left, const post& right ) const {
-		return left.score > right.score;
+		return (left.time < right.time
+				|| (left.time == right.time) && left.score > right.score);
     }
 };
 

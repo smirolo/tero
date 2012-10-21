@@ -83,3 +83,20 @@ void oneliner::filters( const post& p ) {
 }
 
 
+void byTimeHtml::filters( const post& p ) {
+	if( prev_header.is_not_a_date_time() || prev_header != p.time ) {
+		*ostr << html::tr().classref("bytime-date")
+			  << html::td().colspan("3")
+			  << "Complete by " << p.time.date() << html::td::end
+			  << html::tr::end;
+	}
+    *ostr << html::tr() 
+		  << html::td() << p.score << html::td::end
+		  << html::td() << p.author << html::td::end
+		  << html::td() << html::a().href(p.guid) 
+		  << p.title 
+		  << html::a::end << html::td::end
+		  << html::tr::end;
+	prev_header = p.time;
+}
+

@@ -209,7 +209,7 @@ void byScore::flush()
               << html::td::end
               << html::tr::end;
     } else {
-        std::sort(indexes.begin(),indexes.end(),orderByScore());
+        std::sort(indexes.begin(),indexes.end(),orderByDateScore());
         for( indexSet::iterator idx = indexes.begin();
              idx != indexes.end(); ++idx ) {
             next->filters(*idx);
@@ -291,7 +291,7 @@ void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
 void todoIndexWriteHtmlFetch( session& s,
     const boost::filesystem::path& pathname )
 {
-    oneliner shortline(s.out());
+    byTimeHtml shortline(s.out());
     byScore order(s.out(),shortline);
     mailParser parser(order,true);
     parser.fetch(s,pathname);
