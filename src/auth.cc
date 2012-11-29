@@ -290,7 +290,7 @@ void authAddSessionVars( boost::program_options::options_description& all,
 }
 
 
-void loginFetch( session& s, const boost::filesystem::path& pathname ) {
+void loginFetch( session& s, const url& name ) {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
@@ -339,7 +339,7 @@ void loginFetch( session& s, const boost::filesystem::path& pathname ) {
 
 char logoutTemplate[] = "logout";
 
-void logoutFetch( session& s, const boost::filesystem::path& pathname ) {
+void logoutFetch( session& s, const url& name ) {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
@@ -352,7 +352,7 @@ void logoutFetch( session& s, const boost::filesystem::path& pathname ) {
 		std::stringstream logstr;
 		logstr << logged.hours() << " hours logged." << std::endl;
 		s.state("hours",logstr.str());    
-		compose<logoutTemplate>(s,document.name);
+		compose<logoutTemplate>(s,url(document.name));
 	}
 }
 

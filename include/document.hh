@@ -41,25 +41,6 @@ class basicDecorator;
 typedef basicDecorator<char,std::char_traits<char> > decorator;
 
 
-/* When the dispatcher has found a matching pattern (and associated 
-   callback) for a pathname, before it goes on to call the fetch method,
-   it will check if the document should be served regardless or only
-   when the underlying file exists.
-   
-   *always*          call fetch regardless of pathname
-   *notAFile*        call fetch regardless but does not transform pathname
-                     into an absolute path (for printing  metaValue).
-   *whenFileExist*   call fetch only if *pathname* exists in siteTop.
-   *whenNotCached*   call fetch only if there are no cached version
-                     of *pathname*.
-*/
-enum callFetchType {
-    always        = 0x0,	
-	notAFile      = 0x1,
-    whenFileExist = 0x2,
-    whenNotCached = 0x3
-};
-
 /** When the dispatcher has found a matching pattern (and associated 
    callback) for a pathname, before it goes on to call the fetch method,
    it will check if the document should be served to everyone or only
@@ -82,9 +63,26 @@ enum pipeFetchType {
 
 
 /** Prototype for document callbacks
- */
+
+   When the dispatcher has found a matching pattern (and associated 
+   callback) for a pathname, it will check if the fetch method is
+   expecting a in-memory text of the underlying file, an istream
+   of the same file or just the pathname.
+
+   *always*          call fetch regardless of pathname 
+   *whenFileExist*   call fetch only if *pathname* exists in siteTop.
+
+*/
 typedef 
-void (*callFetchFunc)( session& s, const boost::filesystem::path& pathname );
+void (*nameFetchFunc)( session& s, const url& name );
+
+typedef
+void (*streamFetchFunc)( session& s, std::istream& stream,
+						 const url& name );
+
+typedef
+void (*textFetchFunc)( session& s, const slice<char>& text,
+					   const url& name );
 
 
 /** An entry in the dispatch table.
@@ -93,8 +91,11 @@ struct fetchEntry {
     const char *name;
     boost::regex pat;
     uint8_t behavior;
-    callFetchFunc callback;
+	nameFetchFunc nameFetch;
+	streamFetchFunc streamFetch;
+	textFetchFunc textFetch;
 };
+
 
 inline
 bool operator<( const fetchEntry& left, const fetchEntry& right ) {
@@ -120,8 +121,7 @@ protected:
 
     static dispatchDoc *singleton;
 
-    void fetch( session& s, 
-				const fetchEntry *doc, const boost::filesystem::path& value );
+    void fetch( session& s, const fetchEntry *doc, const url& value );
 
 public:
 
@@ -188,7 +188,7 @@ public:
 /** Always prints *value*.
  */
 template<const char *value>
-void consMeta( session& s, const boost::filesystem::path& pathname )
+void consMeta( session& s, const url& name )
 {
     s.out() << value;
 }
@@ -206,19 +206,19 @@ void metaFileOwner( session& s, const boost::filesystem::path& pathname );
 
 /** Prints *pathname* on the session output.
  */
-void metaValue( session& s, const boost::filesystem::path& pathname );
+void metaValue( session& s, const url& name );
 
 /** Prints the content of *varname* or the relative url to *pathname*
     when *varname* cannot be found in the session.
 */
 template<const char *varname>
-void metaFetch( session& s, const boost::filesystem::path& pathname )
+void metaFetch( session& s, const url& name )
 {
     session::variables::const_iterator look = s.find(varname);
     if( s.found(look) ) {    
        s.out() << look->second.value;
     } else {
-       s.out() << s.subdirpart(siteTop.value(s),pathname);
+		s.out() << s.subdirpart(siteTop.value(s),s.abspath(name));
     }
 }
 
@@ -230,19 +230,18 @@ void metaFetch( session& s, const boost::filesystem::path& pathname )
     at the beginning of a text file.    
 */
 template<const char *varname>
-void textMeta( session& s, const boost::filesystem::path& pathname )
+void textMeta( session& s, std::istream& in,
+			   const url& name )
 {
     using namespace boost::filesystem; 
     static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
     /* \todo should only load one but how does it sits with dispatchDoc
      that initializes s[varname] by default to "document"? */
-    ifstream strm;
-    s.openfile(strm,pathname);
-    while( !strm.eof() ) {
+    while( !in.eof() ) {
 	boost::smatch m;
 	std::string line;
-	std::getline(strm,line);
+	std::getline(in,line);
 	if( boost::regex_search(line,m,valueEx) ) {
 	    if( m.str(1) == std::string("Subject") ) {
 		s.insert("title",m.str(2));
@@ -256,12 +255,11 @@ void textMeta( session& s, const boost::filesystem::path& pathname )
 	    }
 	} else break;
     }
-    strm.close();
     /* 
        std::time_t last_write_time( const path & ph );
        To convert the returned value to UTC or local time, 
        use std::gmtime() or std::localtime() respectively. */
-    metaFetch<varname>(s,pathname);
+    metaFetch<varname>(s,url());
 }
 
 
@@ -288,7 +286,7 @@ public:
 			 std::istream& input, std::istream& diff, 
 			 bool inputIsLeftSide= true ) const;
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
+    void fetch( session& s, std::istream& in );
 };
 
 /** Skip over the meta information 
@@ -299,11 +297,13 @@ void skipOverTags( session& s, std::istream& istr );
 /** Skip over the meta information (i.e. Name: Value) in a text file 
     and prints the remaining of the file "as is".
  */
-void textFetch( session& s, const boost::filesystem::path& pathname );
+void textFetch( session& s, std::istream& in,
+				const url& name );
 
 /** Skip over the meta information (i.e. Name: Value) in a text file 
     and prints the remaining of the file highlighting url links.
  */
-void formattedFetch( session& s, const boost::filesystem::path& pathname );
+void formattedFetch( session& s, std::istream& in,
+					 const url& name );
 
 #endif

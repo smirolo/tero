@@ -219,11 +219,12 @@ void byScore::flush()
 }
 
 
-void todoCreateFetch( session& s, const boost::filesystem::path& pathname )
+void todoCreateFetch( session& s, const url& name )
 {
     post p;
     std::stringstream str;
-
+	
+	boost::filesystem::path pathname = s.abspath(name);
     str << boost::uuids::random_generator()();
     p.guid = str.str();
     p.time = boost::posix_time::second_clock::local_time();
@@ -264,8 +265,9 @@ void todoCreateFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
+void todoCommentFetch( session& s, const url& name )
 {
+	boost::filesystem::path pathname = s.abspath(name);
     boost::filesystem::path postname(pathname.parent_path());
     todoCommentFeedback fb(s.out(),s.asUrl(postname).string());
     todocommentor comment(pathname,&fb);
@@ -288,9 +290,9 @@ void todoCommentFetch( session& s, const boost::filesystem::path& pathname )
    }
 }
 
-void todoIndexWriteHtmlFetch( session& s,
-    const boost::filesystem::path& pathname )
+void todoIndexWriteHtmlFetch( session& s, const url& name )
 {
+	boost::filesystem::path pathname = s.abspath(name);
     byTimeHtml shortline(s.out());
     byScore order(s.out(),shortline);
     mailParser parser(order,true);
@@ -300,7 +302,7 @@ void todoIndexWriteHtmlFetch( session& s,
 
 
 void todoVoteAbandonFetch( session& s,
-    const boost::filesystem::path& pathname ) {
+    const url& name ) {
     s.out() << html::p() << "You have abandon the transaction and thus"
             << " your vote has not been registered."
             << " Thank you for your interest."
@@ -308,9 +310,10 @@ void todoVoteAbandonFetch( session& s,
 }
 
 
-void todoVoteSuccessFetch( session& s,
-    const boost::filesystem::path& pathname )
+void todoVoteSuccessFetch( session& s, const url& name )
 {
+	boost::filesystem::path pathname = s.abspath(name);
+
 #if 0
     payment::checkReturn(s,returnPath);
 #endif
@@ -409,23 +412,21 @@ char titleMeta[] = "title";
 } // anonymous
 
 
-void todoMeta( session& s, const boost::filesystem::path& pathname )
+void todoMeta( session& s, std::istream& in, const url& name )
 {
     using namespace boost::filesystem;
     static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
     std::stringstream titles;
-    titles << '[' << basename(pathname.filename()) << ']';
+    titles << "(no title)";
 
     /* \todo should only load one but how does it sits with dispatchDoc
      that initializes s[varname] by default to "document"? */
-    ifstream strm;
     std::string line;
-    s.openfile(strm,pathname);
-    std::getline(strm,line);  // skip first line "From  ..." (see mbox)
-    while( !strm.eof() ) {
+    std::getline(in,line);  // skip first line "From  ..." (see mbox)
+    while( !in.eof() ) {
         boost::smatch m;
-        std::getline(strm,line);
+        std::getline(in,line);
         if( boost::regex_search(line,m,valueEx) ) {
             if( m.str(1) == std::string("Subject") ) {
                 titles << " - " << m.str(2);
@@ -435,20 +436,21 @@ void todoMeta( session& s, const boost::filesystem::path& pathname )
             }
         } else break;
     }
-    strm.close();
 
     /*
        std::time_t last_write_time( const path & ph );
        To convert the returned value to UTC or local time,
        use std::gmtime() or std::localtime() respectively. */
-    metaFetch<titleMeta>(s,pathname);
+    metaFetch<titleMeta>(s,url());
 }
 
 
 void
-todoWriteHtmlFetch( session& s, const boost::filesystem::path& pathname )
+todoWriteHtmlFetch( session& s, std::istream& in, const url& name )
 {
+	boost::filesystem::path pathname = s.abspath(name);
+
     htmlwriter writer(s.out());
     mailParser parser(writer);
-    parser.fetch(s,pathname);
+    parser.fetch(s,s.abspath(name));
 }

@@ -130,6 +130,6 @@ public:
 
 };
 
-void mailParserFetch( session&s, const boost::filesystem::path& pathname );
+void mailParserFetch( session&s, const url& name );
 
 #endif

@@ -24,10 +24,11 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "cppfiles.hh"
+#include "revsys.hh"
 #include "changelist.hh"
 #include "decorator.hh"
 
-void cppFetch( session& s, const boost::filesystem::path& pathname ) 
+void cppFetch( session& s, std::istream& in, const url& name ) 
 {
     linkLight leftLinkStrm(s);
     linkLight rightLinkStrm(s);
@@ -39,13 +40,12 @@ void cppFetch( session& s, const boost::filesystem::path& pathname )
     leftChain.push_back(leftCppStrm);
     rightChain.push_back(rightLinkStrm);
     rightChain.push_back(rightCppStrm);
-
     text cpp(leftChain,rightChain);
-    cpp.fetch(s,pathname);
+    cpp.fetch(s,in);
 }
 
 
-void cppDiff( session& s, const boost::filesystem::path& pathname )
+void cppDiff( session& s, const url& name )
 {
     using namespace boost;
 
@@ -66,7 +66,7 @@ void cppDiff( session& s, const boost::filesystem::path& pathname )
     std::string leftRevision;
     std::string rightRevision;
     boost::filesystem::path srcpath;
-	if( regex_search(pathname.string(), m, diffRe) ) {
+	if( regex_search(s.abspath(name).string(), m, diffRe) ) {
         srcpath = m.str(1);
         leftRevision = m.str(2);
         rightRevision = m.str(3);

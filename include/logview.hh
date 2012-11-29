@@ -37,10 +37,10 @@
 void logAddSessionVars( boost::program_options::options_description& all,
 						boost::program_options::options_description& visible );
 
-void logviewFetch( session& s, const boost::filesystem::path& pathname );
+void logviewFetch( session& s, const url& name );
 
 /** Display test unit regressions as provided by a regression.log 
  */
-void regressionsFetch( session& s, const boost::filesystem::path& pathname );
+void regressionsFetch( session& s, const url& name );
 
 #endif

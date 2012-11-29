@@ -138,18 +138,14 @@ void calendar::parse( session& s, std::istream& ins ) const {
 }
 
 
-void calendarFetch( session& s, const boost::filesystem::path& pathname ) {
+void calendarFetch( session& s, std::istream& in,
+					const url& name ) {
     using namespace std;
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-    if( boost::filesystem::exists(pathname) ) {
-	boost::filesystem::ifstream input;
-	s.openfile(input,pathname);
 	calendar c;
-	c.parse(s,input);
-	input.close();
-    }
+	c.parse(s,in);
 
     date today;
     std::string ms = month.value(s);

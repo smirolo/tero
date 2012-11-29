@@ -28,8 +28,11 @@
 #include "changelist.hh"
 #include "markup.hh"
 #include <boost/regex.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include "project.hh"
 #include "revsys.hh"
+#include "decorator.hh"
 
 /** Execute git commands
 
@@ -85,7 +88,22 @@ public:
 
     void showDetails( std::ostream& ostr,
 		      const std::string& commit );
+
+	void show( std::ostream& ostr,
+			   const boost::filesystem::path& pathname,
+			   const std::string& commit,
+			   decorator *dec = NULL
+			   );
+
+	slice<char> loadtext( const boost::filesystem::path& pathname,
+						  const std::string& commit );
+
+	std::streambuf* openfile( std::istream& in,
+	    const boost::filesystem::path& pathname,
+		const std::string& commit = "HEAD" );
+
 }; 
+
 
 gitcmd gitcmd::_instance;
 
@@ -104,17 +122,41 @@ const std::string& revisionsys::configval( const std::string& key ) {
 
 revisionsys*
 revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
+    using namespace boost::filesystem;
+    using namespace boost::system::errc;
+
     if( revs.empty() ) {
         /* first time */
         revs.push_back(&gitcmd::instance(binDir.value(s) / "git"));
     }
 
     /* The pathname is absolute at this point. */
-    boost::filesystem::path start(pathname);
+	path repoRoot;
     for( revsSet::iterator r = revs.begin(); r != revs.end(); ++r ) {
-        boost::filesystem::path sccsRoot = s.root(start,(*r)->metadir);
-        if( !sccsRoot.empty() ) {
-            (*r)->rootpath = sccsRoot;
+
+		/* Find the root directory of the source repository
+		   where *pathname* resides. */
+		path tmppath = pathname;
+		while( s.prefix(siteTop.value(s), tmppath) ) {
+			path metadir(tmppath);
+			metadir.replace_extension((*r)->metadir);
+			if( is_directory(metadir) ) {
+				/* directory finishing in .git, we have a candidate. */
+				repoRoot = metadir;
+				break;
+			}
+			metadir = tmppath / (*r)->metadir;
+			if( is_directory(metadir) ) {
+				/* directory contains a .git subdirectory,
+				   we have a candidate. */
+				repoRoot = metadir;
+				break;
+			}
+			tmppath = tmppath.parent_path();
+		}
+		
+		if( !repoRoot.empty() ) {
+			(*r)->rootpath = repoRoot;
             (*r)->loadconfig(s);
             return *r;
         }
@@ -187,7 +229,7 @@ void gitcmd::create( const boost::filesystem::path& pathname,
     {
 	/* Enable the post-update hook because the repository is accessible
 	   through http. */
-	path hookName(path(".git") / path("hooks") / path("post-update"));
+	path hookName(path("hooks") / path("post-update"));
 	path hookNameSample(hookName.string() + ".sample");
 	if( is_regular_file(hookNameSample) ) {
 	    rename(hookNameSample,hookName);
@@ -203,7 +245,7 @@ void gitcmd::create( const boost::filesystem::path& pathname,
 	   sure the pages will be in sync with the repository head. We need
 	   to issue the checkout command after the commit. This cannot be
 	   done in post-update. */
-	path hookName(path(".git") / path("hooks") / path("post-receive"));
+	path hookName(path("hooks") / path("post-receive"));
 	path hookNameSample(hookName.string() + ".sample");
 	if( is_regular_file(hookNameSample) ) {
 	    rename(hookNameSample,hookName);
@@ -225,7 +267,7 @@ void gitcmd::create( const boost::filesystem::path& pathname,
     }
 
     configText lines;
-    path configPath(path(".git") / path("config"));
+    path configPath(path("config"));
     int foundReceiveIdx = -1;
     int foundDenyCurrentBranchIdx = -1;
     {
@@ -328,8 +370,8 @@ void gitcmd::commit( const std::string& msg )
     using namespace boost::system;
     using namespace boost::filesystem;
 
-   /* The git command needs to be issued from within a directory where .git
-       can be found by walking up the tree structure. */
+   /* The git command needs to be issued from within a directory
+	  where the git config can be found by walking up the tree structure. */
     boost::filesystem::initial_path(); 
     boost::filesystem::current_path(rootpath);
 
@@ -344,8 +386,8 @@ void gitcmd::diff( std::ostream& ostr,
 		   const std::string& leftCommit, 
 		   const std::string& rightCommit, 
 		   const boost::filesystem::path& pathname ) {
-    /* The git command needs to be issued from within a directory where .git
-       can be found by walking up the tree structure. */
+    /* The git command needs to be issued from within a directory
+	   where the git config can be found by walking up the tree structure. */
     boost::filesystem::initial_path(); 
     boost::filesystem::current_path(rootpath);
     
@@ -372,7 +414,7 @@ void gitcmd::history( std::ostream& ostr,
 		      historyref& ref ) {
     
     /* The git command needs to be issued from within a directory 
-       where .git can be found by walking up the tree structure. */ 
+       where the git config can be found by walking up the tree structure. */ 
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
     
@@ -414,7 +456,7 @@ void gitcmd::loadconfig( session& s ) {
     using namespace boost::filesystem;
     static const boost::regex valueEx("(\\S+)\\s*=\\s*(.*)");
 
-    path configPath(rootpath / ".git" / "config");
+    path configPath(rootpath / "config");
     boost::filesystem::ifstream configFile;
     s.openfile(configFile,configPath);
     while( !configFile.eof() ) {
@@ -434,7 +476,7 @@ void gitcmd::checkins( const session& s,
 					   postFilter& filter ) {
     using namespace boost::filesystem;
     /* The git command needs to be issued from within a directory 
-       where .git can be found by walking up the tree structure. */ 
+       where the git config can be found by walking up the tree structure. */ 
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
 
@@ -550,7 +592,7 @@ void gitcmd::checkins( const session& s,
 void gitcmd::showDetails( std::ostream& ostr,	
 			  const std::string& commit ) {    
     /* The git command needs to be issued from within a directory 
-       where .git can be found by walking up the tree structure. */ 
+       where the git config can be found by walking up the tree structure. */ 
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
 
@@ -566,4 +608,155 @@ void gitcmd::showDetails( std::ostream& ostr,
     pclose(summary);
 
     boost::filesystem::current_path(boost::filesystem::initial_path());
+}
+
+
+void gitcmd::show( std::ostream& ostr,
+				   const boost::filesystem::path& pathname,
+				   const std::string& commit,
+				   decorator *dec )
+{
+	using namespace boost;
+    using namespace boost::system;
+
+    if( dec ) {
+		if( dec->formated() ) ostr << code();
+		dec->attach(ostr);
+    }
+
+    /* The git command needs to be issued from within a directory 
+       where the git config can be found by walking up the tree structure. */ 
+    boost::filesystem::initial_path();
+    boost::filesystem::current_path(rootpath);
+
+    std::stringstream sstm;
+    sstm << executable << " show " << commit << ":" << pathname; 
+    
+    char lcstr[256];
+    FILE *summary = popen(sstm.str().c_str(),"r");
+    assert( summary != NULL );
+    while( fgets(lcstr,sizeof(lcstr),summary) != NULL ) {
+		ostr << lcstr;
+    }
+    pclose(summary);
+
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+
+
+    if( dec ) {
+		dec->detach();
+		if( dec->formated() ) ostr << html::pre::end;
+    }
+}
+
+
+slice<char> gitcmd::loadtext( const boost::filesystem::path& pathname,
+							  const std::string& commit )
+{
+    std::stringstream sstm;
+    sstm << executable << " show " << commit << ":" << pathname; 
+	char lcstr[256];
+
+    /* The git command needs to be issued from within a directory 
+       where the git config can be found by walking up the tree structure. */ 
+    boost::filesystem::initial_path();
+    boost::filesystem::current_path(rootpath);
+    FILE *git_output = popen(sstm.str().c_str(), "r");
+	std::vector<char> dyn_buff;
+		
+    assert( git_output != NULL );
+	/* XXX Not really the most efficient to allocate and fill buffer
+	   while we do not know the size of the input file ... yet will
+	   do for now. */
+    while( fgets(lcstr, sizeof(lcstr), git_output) != NULL ) {
+		std::copy(lcstr, &lcstr[strlen(lcstr)], std::back_inserter(dyn_buff));
+    }
+    pclose(git_output);	
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+
+	char *text = new char[ dyn_buff.size() + 1 ];
+	std::copy(dyn_buff.begin(), dyn_buff.end(), text);
+	text[dyn_buff.size()] = '\0';
+	return slice<char>(text, &text[dyn_buff.size()]); 
+}
+
+std::streambuf* gitcmd::openfile( std::istream& in,
+								  const boost::filesystem::path& pathname,
+								  const std::string& commit ) {
+
+	using namespace boost::iostreams;
+
+    std::stringstream sstm;
+    sstm << executable << " show " << commit << ":" << pathname; 
+
+    /* The git command needs to be issued from within a directory 
+       where the git config can be found by walking up the tree structure. */ 
+    boost::filesystem::initial_path();
+    boost::filesystem::current_path(rootpath);
+    FILE *git_output = popen(sstm.str().c_str(), "r");
+	std::vector<char> dyn_buff;
+		
+    assert( git_output != NULL );
+	std::streambuf *buf
+		= new stream_buffer<file_descriptor_source>(fileno(git_output),
+													close_handle);
+	std::streambuf *prev = in.rdbuf(buf);
+
+    boost::filesystem::current_path(boost::filesystem::initial_path());
+	return prev;
+}
+
+
+namespace detail {
+
+void rev_directory_iterator_construct(
+    rev_directory_iterator& iter,
+    const boost::filesystem::path& abspath,
+    boost::system::error_code* errcode,
+    session& ses )
+{
+    revisionsys *rev = revisionsys::findRev(ses, abspath);
+    if( ! rev ) {
+        // XXX error
+        return;
+    }
+    boost::filesystem::path relpath = ses.subdirpart(rev->rootpath, abspath);
+
+    std::stringstream strm;
+    rev->show(strm, relpath, "HEAD");
+    std::string buffer = strm.str();
+
+    size_t prev = 0;
+    size_t curr = buffer.find("\n", prev);
+    while( curr != std::string::npos ) {
+        if( curr != prev ) {
+            iter.m_imp->entries.push_back(buffer.substr(prev, curr - prev));
+        }
+        prev = curr + 1;
+        curr = buffer.find("\n", prev);
+    }
+
+    boost::filesystem::file_status file_stat, symlink_file_stat;
+    iter.m_imp->next = iter.m_imp->entries.begin();
+    iter.m_imp->dir_entry.assign(*(iter.m_imp->next),
+        file_stat, symlink_file_stat);
+    ++(iter.m_imp->next);
+}
+
+
+void rev_directory_iterator_increment(
+    rev_directory_iterator& iter,
+    boost::system::error_code* errcode )
+{
+    if( iter.m_imp->next == iter.m_imp->entries.end() ) {
+        iter.m_imp.reset();
+        return;
+    }
+
+    boost::filesystem::file_status file_stat, symlink_file_stat;
+    iter.m_imp->dir_entry.assign(*(iter.m_imp->next),
+        file_stat, symlink_file_stat);
+    ++(iter.m_imp->next);
+}
+
 }

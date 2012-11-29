@@ -111,7 +111,7 @@ void sendMail( session& s,
 	std::ostream& prevDisp = s.out();
 	std::stringstream content;
 	s.out(content);
-	compose<noTemplate>(s,contentTemplate);
+	compose<noTemplate>(s,s.asUrl(contentTemplate));
 	s.out(prevDisp);
 
     MailMessage message;    
@@ -256,11 +256,11 @@ void mailParser::walk( session& s, std::istream& ins, const std::string& name ) 
 }
 
 
-void mailParserFetch( session& s, const boost::filesystem::path& pathname )
+void mailParserFetch( session& s, const url& name )
 {
     mailthread mt(s.out());
     mailParser mp(mt);
-    mp.fetch(s,pathname);
+    mp.fetch(s,s.abspath(name));
 #if 0
     /* \todo Cannot flush here if we want to support feedContent calls blogEntry.
        This call will generate non-intended intermediate flushes. It might be

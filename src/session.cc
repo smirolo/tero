@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -34,6 +36,7 @@
 #include "session.hh"
 #include <uriparser/Uri.h>
 #include "markup.hh"
+#include "revsys.hh"
 
 /** Session manager
 
@@ -263,14 +266,19 @@ void session::createfile( boost::filesystem::ofstream& strm,
 }
 
 
-int session::openfile( boost::filesystem::ifstream& strm,
-    const boost::filesystem::path& pathname ) {
+std::streambuf* session::openfile( std::istream& strm,
+	const boost::filesystem::path& pathname ) {
     using namespace boost::system::errc;
     using namespace boost::filesystem;
+	using namespace boost::iostreams;
 
     check(pathname);
 
-    strm.open(pathname,std::ios_base::in|std::ios_base::binary);
+	std::streambuf *buf
+		= new stream_buffer<file_descriptor_source>(pathname,
+	    std::ios_base::in|std::ios_base::binary);
+	std::streambuf *prev = strm.rdbuf(buf);
+
 	if( strm.fail() ) {
 		/* \todo figure out how to pass iostream error code in exception. */
 		boost::throw_exception(boost::system::system_error(
@@ -280,37 +288,50 @@ int session::openfile( boost::filesystem::ifstream& strm,
 	int bytesRead = strm.readsome(firstBytes,16);
 	strm.seekg(0,std::ios_base::beg);
 	for( int i = 0; i < bytesRead; ++i ) {
-		if( !isprint(firstBytes[i]) ) {		
-			return std::ios_base::binary;
+		if( !isprint(firstBytes[i]) ) {
+			strm.rdbuf(prev);
+			delete buf;
+			return NULL;
 		}
 	}
-	return 0;
+
+	return prev;
 }
 
 
-slice<char> session::loadtext( const boost::filesystem::path& p )
+slice<char> session::loadtext( const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem;
     using namespace boost::system::errc;
 
-    textMap::const_iterator found = texts.find(p);
+    textMap::const_iterator found = texts.find(pathname);
     if( found != texts.end() ) {
-	return found->second;
+		return found->second;
     }
 
-    if( is_regular_file(p) ) {
-	size_t fileSize = file_size(p);
-	char *text = new char[ fileSize + 1 ];
-	ifstream file;
-	openfile(file,p);
-	file.read(text,fileSize);
-	text[fileSize] = '\0';
-	file.close();
-	/* +1 for zero but it would arbitrarly augment text -
-	   does not work for tokenizers. */
-	texts[p] = slice<char>(text,&text[fileSize]); 
-	return texts[p];
-    }
+	check(pathname);
+	if( is_regular_file(pathname) ) {
+		size_t fileSize = file_size(pathname);
+		char *text = new char[ fileSize + 1 ];
+		ifstream file;
+		openfile(file, pathname);
+		file.read(text, fileSize);
+		text[fileSize] = '\0';
+		file.close();
+		/* +1 for zero but it would arbitrarly augment text -
+		   does not work for tokenizers. */
+		texts[pathname] = slice<char>(text, &text[fileSize]); 
+		return texts[pathname];
+
+	} else {
+		revisionsys *rev = revisionsys::findRev(*this, pathname);
+		if( rev != NULL ) {
+			boost::filesystem::path 
+				localpathname = relpath(pathname, rev->rootpath);
+			texts[pathname] = rev->loadtext(localpathname, "HEAD");
+			return texts[pathname];
+		}
+	}
 
     return slice<char>();
 }
@@ -833,7 +854,7 @@ session::subdirpart( const boost::filesystem::path& rootp,
 			size_t len = strlen(realp);
 			if( len + 1 < FILENAME_MAX ) {
 				realp[len] = '/';
-				realp[len + 1] = '\0';		
+				realp[len + 1] = '\0';
 			}
 		}
 		leaf = path(realp);
@@ -841,32 +862,6 @@ session::subdirpart( const boost::filesystem::path& rootp,
 		leaf = leafp;
     }
 
-#if 0
-	const char* rootsegf = root.string().c_str();
-	const char* rootsege = NULL;
-	const char* roote = root.string().c_str() + root.string.size();
-
-	const char* leafsegf = leaf.string().c_str();
-	const char* leafsege = NULL;
-	const char* leafe = leaf.string().c_str() + root.string.size();
-	
-	while( true  ) {
-		pathSeg(&rootsegf,&rootsege,roote);
-		pathSeg(&leafsegf,&leafsege,leafe);
-		size_t rootsegs = rootsege - rootsegf;
-		size_t leafsegs = leafsege - leafsegf;		
-		if( rootsegs == 0 ) break;
-		if( rootsegs != leafsegs
-			|| strncmp(rootsegf,leafsegf,rootsegs) != 0 ) {
-			boost::throw_exception(std::runtime_error(root.string() 
-								 + " is not a prefix of " + leaf.string()));
-		}
-		rootsegf = rootsege;
-		leafsegf = leafsege;
-	}
-	return leaf.string().substr(leafsegf - leaf.string().c_str());
-
-#else
     if( leaf.string().compare(0,root.string().size(),root.string()) != 0 ) {
 		boost::throw_exception(notLeadingPrefixError(root.string(),
                 leaf.string()));
@@ -874,7 +869,6 @@ session::subdirpart( const boost::filesystem::path& rootp,
     return leaf.string().substr(std::min(leaf.string().size(),
 										 root.string().size() 
 		  	 + (root.string()[root.string().size() - 1] != '/' ? 1 : 0)));
-#endif
 }
 
 

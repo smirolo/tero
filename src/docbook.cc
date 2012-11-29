@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -830,14 +830,14 @@ char titleMeta[] = "title";
 } // anonymous
 
 
-void docbookMeta( session& s, const boost::filesystem::path& pathname )
+void docbookMeta( session& s, const url& name )
 {
     using namespace RAPIDXML;
 
     /* \todo should only load one but how does it sits with dispatchDoc
      that initializes s[varname] by default to "document"? */
 
-    RAPIDXML::xml_document<> *doc = s.loadxml(pathname);
+    RAPIDXML::xml_document<> *doc = s.loadxml(s.abspath(name));
 
     xml_node<> *root = doc->first_node();
     if( root != NULL ) {
@@ -853,17 +853,17 @@ void docbookMeta( session& s, const boost::filesystem::path& pathname )
     if( !s.found(found) ) {
 	s.insert("title",document.value(s).string());
     }    
-    metaFetch<titleMeta>(s,pathname);
+    metaFetch<titleMeta>(s,name);
 }
 
 
-void docbookFetch( session& s, const boost::filesystem::path& pathname )
+void docbookFetch( session& s, const url& name )
 {    
     linkLight leftFormatedText(s);
     linkLight rightFormatedText(s);
     docbook d(leftFormatedText,rightFormatedText);
 
-    d.doc = s.loadxml(pathname);
+    d.doc = s.loadxml(s.abspath(name));
     d.leftDec->attach(s.out());
     RAPIDXML::xml_node<> *root = d.doc->first_node();
     if( root != NULL ) {

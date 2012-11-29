@@ -66,12 +66,12 @@ url checkinref::asUrl( const boost::filesystem::path& doc,
 }
 
 
-void cancelFetch( session& s, const boost::filesystem::path& pathname ) {
+void cancelFetch( session& s, const url& name ) {
     httpHeaders.location(url(document.value(s).string()));
 }
 
 
-void changeFetch(  session& s, const boost::filesystem::path& pathname )
+void changeFetch(  session& s, const url& name )
 {
     using namespace boost::system;
     using namespace boost::filesystem;
@@ -140,43 +140,46 @@ void changediff( session& s, const boost::filesystem::path& pathname,
 }
 
 void 
-changecheckinFetch( session& s, const boost::filesystem::path& pathname )
+changecheckinFetch( session& s, const url& name )
 {
+	boost::filesystem::path pathname = s.abspath(name);
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
-	checkinref ref;
-	rev->history(s.out(),s,pathname,ref);
+		checkinref ref;
+		rev->history(s.out(),s,pathname,ref);
     }
 }
 
 void 
-changehistoryFetch( session& s, const boost::filesystem::path& pathname )
+changehistoryFetch( session& s, const url& name )
 {
+	boost::filesystem::path pathname = s.abspath(name);
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
-	diffref ref;
-	rev->history(s.out(),s,pathname,ref);
+		diffref ref;
+		rev->history(s.out(),s,pathname,ref);
     }
 }
 
 
-void changeShowDetails( session& s, const boost::filesystem::path& pathname ) {
+void changeShowDetails( session& s, const url& name ) {
+	boost::filesystem::path pathname = s.abspath(name);
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
-	std::string commit = boost::filesystem::basename(pathname);
-	htmlEscaper escaper;
-	s.out() << code();
-	escaper.attach(s.out());
-	rev->showDetails(s.out(),commit);
-	escaper.detach();
-	s.out() << html::pre::end;
+		std::string commit = boost::filesystem::basename(pathname);
+		htmlEscaper escaper;
+		s.out() << code();
+		escaper.attach(s.out());
+		rev->showDetails(s.out(),commit);
+		escaper.detach();
+		s.out() << html::pre::end;
     }
 }
 
 
-void feedRepositoryPopulate( session& s, 
-							 const boost::filesystem::path& pathname )
+void feedRepositoryPopulate( session& s, const url& name )
 {
+	boost::filesystem::path pathname = s.abspath(name);
 	if( s.prefix(srcTop.value(s),pathname) ) {
 		/* *projectName* will try to extract a project name as the slice
 		   between *srcTop* and the repository identifier.

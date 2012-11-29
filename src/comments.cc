@@ -109,18 +109,18 @@ void sendPostToSMTP::filters( const post& p ) {
 
 
 void pageCommentsFetch( session& s, 
-			  const boost::filesystem::path& pathname ) 
+			  const url& name ) 
 {
     htmlwriter writer(s.out()); 
     mailParser parser(writer);
-    parser.fetch(s,pathname);
+    parser.fetch(s,s.abspath(name));
 }
 
 
 void commentPage( session& s, 
-		  const boost::filesystem::path& pathname )
+		  const url& name )
 {
-    boost::filesystem::path docname(pathname.parent_path());
+    boost::filesystem::path docname(s.abspath(name).parent_path());
     if( !s.valueOf("href").empty() ) {
 	docname = s.valueOf("href");
     }

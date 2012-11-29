@@ -73,7 +73,7 @@ void feedPage<feedBase>::provide() {
 
 template<typename defaultWriter, const char* varname, const char *filePat>
 void feedAggregate( session& s, 
-		    const boost::filesystem::path& pathname )
+					const boost::filesystem::path& pathname )
 {
     using namespace boost::filesystem;
 
@@ -108,7 +108,7 @@ void feedAggregate( session& s,
 }
 
 /* \todo see next HACK! */
-void blogEntryFetch( session& s, const boost::filesystem::path& pathname );
+void blogEntryFetch( session& s, const url& name );
 
 
 template<typename defaultWriter, const char* filePat>
@@ -145,7 +145,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 				   can from the filesystem. */
 				const fetchEntry* e 
 					= dispatchDoc::instance()->select("document",filename.string());
-				if( e->callback == blogEntryFetch ) {
+				if( e->nameFetch == blogEntryFetch ) {
 					/* \todo HACK! to insures *tags* are set correctly
 					   and non blog files are generated as posts. */
 					dispatchDoc::instance()->fetch(s,"document",link);
@@ -198,8 +198,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 
 
 template<typename defaultWriter, const char* varname>
-void feedLatestPosts( session& s, 
-					  const boost::filesystem::path& pathname )
+void feedLatestPosts( session& s, const url& name )
 {
     defaultWriter writer(s.out());
     feedOrdered<orderByTime<post> > latests(&writer);
@@ -208,7 +207,7 @@ void feedLatestPosts( session& s,
 		s.feeds = &feeds;
     }
 
-    feedAggregate<defaultWriter,varname,allFilesPat>(s,pathname);
+    feedAggregate<defaultWriter,varname,allFilesPat>(s,s.abspath(name));
 
     if( s.feeds == &feeds ) {
 		s.feeds->flush();
@@ -218,31 +217,33 @@ void feedLatestPosts( session& s,
 
 
 template<const char*varname>
-void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname ) 
+void htmlSiteAggregate( session& s, const url& name ) 
 {
-    feedLatestPosts<htmlwriter,varname>(s,srcTop.value(s) / "index.feed");
+    feedLatestPosts<htmlwriter,varname>(s,
+	    s.asUrl(srcTop.value(s) / "index.feed"));
 }
 
 
 template<const char*varname>
-void rssSiteAggregate( session& s, const boost::filesystem::path& pathname )
+void rssSiteAggregate( session& s, const url& name )
 {
     absUrlDecorator d(siteTop.value(s),s);
     d.attach(s.out());
-    feedLatestPosts<rsswriter,varname>(s,srcTop.value(s) / pathname.leaf());
+    feedLatestPosts<rsswriter,varname>(s,
+	    s.asUrl(srcTop.value(s) / name.pathname.leaf()));
     d.detach();
 }
 
 
 template<typename defaultWriter, const char* filePat>
-void feedSummary( session& s, const boost::filesystem::path& pathname ) {
+void feedSummary( session& s, const url& name ) {
     defaultWriter writer(s.out());
     summarize feeds(&writer);
     if( !s.feeds ) {
 		s.feeds = &feeds;
     }
 	
-    feedContent<defaultWriter,filePat>(s,pathname);
+    feedContent<defaultWriter,filePat>(s,s.abspath(name));
 	
     if( s.feeds == &feeds ) {
 		s.feeds->flush();

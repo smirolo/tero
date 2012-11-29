@@ -78,13 +78,13 @@ public:
 
 template<typename defaultWriter, const char* varname, const char* filePat, 
 	 typename cmp>
-void blogByInterval( session& s, const boost::filesystem::path& pathname );
+void blogByInterval( session& s, const url& name );
 
 template<const char* varname, const char* filePat>
-void blogByIntervalDate( session& s, const boost::filesystem::path& pathname );
+void blogByIntervalDate( session& s, const url& name );
 
 template<const char* varname, const char* filePat>
-void blogByIntervalTags( session& s, const boost::filesystem::path& pathname );
+void blogByIntervalTags( session& s, const url& name );
 
 
 /** */
@@ -112,24 +112,24 @@ class blogSetLinks : public feedWriter
 filePat is a regex.
 */
 template<typename cmp, const char *filePat>
-void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname );
+void blogSetLinksFetch( session& s, const url& name );
 
 template<const char *filePat>
-void blogDateLinks( session& s, const boost::filesystem::path& pathname );
+void blogDateLinks( session& s, const url& name );
 
 template<const char *filePat>
-void blogTagLinks( session& s, const boost::filesystem::path& pathname );
+void blogTagLinks( session& s, const url& name );
 
 template<const char *filePat>
-void blogRelatedSubjects( session& s, const boost::filesystem::path& pathname );
+void blogRelatedSubjects( session& s, const url& name );
 
-void blogEntryFetch( session& s, const boost::filesystem::path& pathname );
+void blogEntryFetch( session& s, const url& name );
 
-void mostRecentBlogFetch( session& s, const boost::filesystem::path& pathname );
+void mostRecentBlogFetch( session& s, const url& name );
 
-void mostRecentBlogTitle( session& s, const boost::filesystem::path& pathname );
+void mostRecentBlogTitle( session& s, const url& name );
 
-void blogByIntervalTitle( session& s, const boost::filesystem::path& pathname );
+void blogByIntervalTitle( session& s, const url& name );
 
 #include "blog.tcc"
 

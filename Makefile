@@ -65,7 +65,7 @@ registerDeps	:= -lpam
 semilla: semilla.cc semtable.o libsemilla.a libpayproc.a \
 		-lcryptopp -luriparser $(registerDeps) \
 		-lboost_date_time -lboost_random -lboost_regex -lboost_program_options \
-		-lboost_filesystem -lboost_system -lPocoNet
+		-lboost_iostreams -lboost_filesystem -lboost_system -lPocoNet
 	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@ -lldap
 
 smailui: smailui.cc libsemilla.a \

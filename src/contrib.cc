@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -203,7 +203,7 @@ void registerAddSessionVars( boost::program_options::options_description& all,
 }
 
 
-void registerEnter( session& s, const boost::filesystem::path& pathname )
+void registerEnter( session& s, const url& name )
 {
 	/* Prepare for next step in registration pipeline */
 	std::stringstream next;
@@ -221,17 +221,17 @@ void registerEnter( session& s, const boost::filesystem::path& pathname )
 	sendMail(s,mail.value(s),"Register",registerMailTemplate);
 
 	/* Prepare html page to invite registering user to check his/her inbox */
-	compose<registerTemplate>(s,pathname);
+	compose<registerTemplate>(s,name);
 }
 
 
-void registerConfirm( session& s, const boost::filesystem::path& pathname ) {
+void registerConfirm( session& s, const url& name ) {
 	/* e-mail address confirmed, let's add the registered user into
 	   the persistent database and show a confirmation webpage. */
 
 	validate(s);
 
-	std::string sessionId = pathname.leaf().string();
+	std::string sessionId = name.pathname.leaf().string();
 	s.loadsession(sessionId);
 	
 	/* add entry to LDAP database */
@@ -269,11 +269,11 @@ void registerConfirm( session& s, const boost::filesystem::path& pathname ) {
 	LDAP_NO_ERROR(ldapb,ldap_add_ext_s(ld,who.c_str(), attrs, NULL, NULL));
 
 	/* Write out thank you page. */
-	compose<registerConfirmTemplate>(s,pathname);
+	compose<registerConfirmTemplate>(s,name);
 }
 
 
-void unregisterEnter( session& s, const boost::filesystem::path& pathname )
+void unregisterEnter( session& s, const url& name )
 {
 	std::string dn = authContribDN(s,uid.value(s));
 	{
@@ -284,20 +284,20 @@ void unregisterEnter( session& s, const boost::filesystem::path& pathname )
 	   rights to delete its own key. */
 	LDAPBound ldapb(s,ldapAdmin.value(s),ldapAdminPassword);
 	LDAP_NO_ERROR(ldapb,ldap_delete_ext_s(ldapb._ld(),dn.c_str(),NULL,NULL));;
-	compose<unregisterTemplate>(s,pathname);
+	compose<unregisterTemplate>(s,name);
 }
 
 
-void passwdChange( session& s, const boost::filesystem::path& pathname )
+void passwdChange( session& s, const url& name )
 {
 	LDAPBound ldapb(s,authContribDN(s,uid.value(s)),oldPassword);
 	modifyPassword(ldapb,s,authContribDN(s,uid.value(s)));
 
-	compose<passwordChangeTemplate>(s,pathname);
+	compose<passwordChangeTemplate>(s,name);
 }
 
 
-void passwdReset( session& s, const boost::filesystem::path& pathname )
+void passwdReset( session& s, const url& name )
 {
 	std::string chars(
         "abcdefghijklmnopqrstuvwxyz"
@@ -320,44 +320,41 @@ void passwdReset( session& s, const boost::filesystem::path& pathname )
 	modifyPassword(ldapb,s,authContribDN(s,uid.value(s)));
 
 	sendMail(s,mail.value(s),"Password Reset",passwordResetMailTemplate);
-	compose<passwordResetTemplate>(s,pathname);
+	compose<passwordResetTemplate>(s,name);
 }
 
 
-void contribIdxFetch( session& s, const boost::filesystem::path& pathname )
+void contribIdxFetch( session& s, const url& name )
 {
     using namespace std;
     using namespace boost::filesystem;
-    
+
 #if 0
-    s.out() << html::table();    
-#endif
+	/* XXX re-enable when we have actual contributor profiles */
     if( is_directory(pathname) ) {
-	for( directory_iterator entry = directory_iterator(pathname); 
-	     entry != directory_iterator(); ++entry ) {
-	    if( is_directory(*entry) ) {
-		boost::filesystem::path 
-		    profilePathname = path(*entry) / "profile.blog";	
-		if( boost::filesystem::is_regular_file(profilePathname) ) {
+		for( directory_iterator entry = directory_iterator(pathname); 
+			 entry != directory_iterator(); ++entry ) {
+			if( is_directory(*entry) ) {
+				boost::filesystem::path 
+					profilePathname = path(*entry) / "profile.blog";	
+				if( boost::filesystem::is_regular_file(profilePathname) ) {
 #if 0
-		    s.out() << html::tr() 
-			 << html::td() 
-			 << "<img src=\"/resources/contrib/" 
-			 << entry->filename() << "/profile.jpg\">"
-			 << html::td::end
-			 << html::td();
+					s.out() << html::tr() 
+							<< html::td() 
+							<< "<img src=\"/resources/contrib/" 
+							<< entry->filename() << "/profile.jpg\">"
+							<< html::td::end
+							<< html::td();
 #endif		    
-		    textFetch(s,profilePathname);
+					textFetch(s,profilePathname);
 #if 0		    
-		    s.out() << html::td::end
-			 << html::tr::end;
+					s.out() << html::td::end
+							<< html::tr::end;
 #endif
+				}
+			}
 		}
-	    }
-	}
     }
-#if 0
-    s.out() << html::table::end;
 #endif
 }
 

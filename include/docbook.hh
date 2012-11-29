@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -53,8 +53,7 @@
 class docbook : public text {
 protected:
 
-    friend void docbookFetch( session& s, 
-				  const boost::filesystem::path& pathname );
+    friend void docbookFetch( session& s, const url& name );
 
     typedef void 
     (docbook::* walkNodePtr) ( session& s, const RAPIDXML::xml_node<>& node ) const;
@@ -125,13 +124,13 @@ public:
     docbook( decorator& l,  decorator& r );
 };
 
-void docbookFetch( session& s, const boost::filesystem::path& pathname );
+void docbookFetch( session& s, const url& name );
 
 
 /** Load meta information associated to a docbook file. (*whenFileExist*) 
 
     class docbookMeta : public meta    
  */
-void docbookMeta( session& s, const boost::filesystem::path& pathname );
+void docbookMeta( session& s, const url& name );
 
 #endif

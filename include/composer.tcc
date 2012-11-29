@@ -31,7 +31,7 @@
 */
 
 template<const char *layoutPtr>
-void compose( session& s, const boost::filesystem::path& pathname )
+void compose( session& s, const url& name )
 {
     using namespace boost;
     using namespace boost::system;
@@ -42,7 +42,7 @@ void compose( session& s, const boost::filesystem::path& pathname )
     ifstream strm;
     std::string layout(layoutPtr);
     path fixed(themeDir.value(s) / (!layout.empty() ? (layout + ".template")
-				    : pathname.filename()));
+				    : name.pathname.filename()));
 
     s.openfile(strm,fixed);
     skipOverTags(s,strm);

@@ -130,12 +130,12 @@ void authAddSessionVars( boost::program_options::options_description& opts,
     identifier saved as a cookie in the browser on the client-side 
     for further requests. 
 */
-void loginFetch( session& s, const boost::filesystem::path& pathname );
+void loginFetch( session& s, const url& name );
 
 
 /** Forced de-authentication will invalidate the current session identifier
     passed as part of the request.
 */
-void logoutFetch( session& s, const boost::filesystem::path& pathname );
+void logoutFetch( session& s, const url& name );
 
 #endif

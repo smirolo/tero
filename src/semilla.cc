@@ -157,7 +157,7 @@ int main( int argc, char *argv[] )
 		try {
 			std::cerr << e.what() << std::endl;
 			s.insert("exception",e.what());
-			compose<except>(s,document.name);
+			compose<except>(s,document.value(s));
 		} catch( exception& e ) {
 			/* Something went really wrong if we either get here. */
 			cout << httpHeaders.contentType().status(404);

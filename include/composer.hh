@@ -48,7 +48,7 @@ extern pathVariable themeDir;
 /** Use the *layout* template HTML to display document *pathname*.
  */
 template<const char *layout>
-void compose( session& s, const boost::filesystem::path& pathname );
+void compose( session& s, const url& name );
 
 #include "composer.tcc"
 

@@ -182,9 +182,7 @@ basicLinkLight<charT,traitsT>::add( const url& u ) {
 		&& u.pathname.extension() != ".html" ) {
 		result = localLinkGenerated;
 		url f = context->asUrl(context->abspath(u));
-		const fetchEntry* e 
-			= dispatchDoc::instance()->select("view",u.string());
-		if( e->behavior != always ) {
+		if( true ) { /* XXX In case it is not an "always" generated link. */
 			result = localFileExists;
 			if( allLinks.find(f) == allLinks.end() 
 				&& currs.find(f) == currs.end() ) {	

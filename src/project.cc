@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -81,23 +81,24 @@ projectName( const session& s, const boost::filesystem::path& p ) {
     return projname;
 }
 
-void projectTitle( session& s, const boost::filesystem::path& pathname )
+void projectTitle( session& s, const url& name )
 {
-    s.insert("title",projectName(s,pathname));
+    s.insert("title",projectName(s,s.abspath(name)));
     session::variables::const_iterator look = s.find("title");
     if( s.found(look) ) {    
-	s.out() << look->second.value;
+		s.out() << look->second.value;
     } else {
-	s.out() << pathname;
+		s.out() << name;
     }
 }
 
 
-void projCreateFetch( session& s, const boost::filesystem::path& pathname )
+void projCreateFetch( session& s, const url& name )
 {
     using namespace boost::system;
     using namespace boost::filesystem;
 
+	path pathname = s.abspath(name);
     /** revision system to use to create the project. */
     revisionsys* rev = revisionsys::findRevByMetadir(s,".git");
 
@@ -137,11 +138,12 @@ void projCreateFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void projindexFetch( session& s, const boost::filesystem::path& pathname )
+void projindexFetch( session& s, const url& name )
 {
     using namespace RAPIDXML;
     using namespace boost::filesystem;
 
+	path pathname = s.abspath(name);
     s.check(pathname);
 
     path projdir = pathname.parent_path().filename();
@@ -389,8 +391,8 @@ void projfiles::fetch( session& s, const boost::filesystem::path& pathname )
     }
 }
 
-void projfilesFetch( session& s, const boost::filesystem::path& pathname )
+void projfilesFetch( session& s, const url& name )
 {
     projfiles p;
-    p.fetch(s,pathname);
+    p.fetch(s,s.abspath(name));
 }

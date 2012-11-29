@@ -93,7 +93,7 @@ public:
 
 };
 
-void todoModifPostFetch( session& s, const boost::filesystem::path& pathname );
+void todoModifPostFetch( session& s, const url& name );
 
 
 /** Create a new item
@@ -109,7 +109,7 @@ public:
 	: todoModifPost(m,is) {}
 };
 
-void todoCreateFetch( session& s, const boost::filesystem::path& pathname );
+void todoCreateFetch( session& s, const url& name );
 
 
 /** Comment an item
@@ -125,19 +125,19 @@ public:
 	: todoModifPost(m,is) {}
 };
 
-void todoCommentFetch( session& s, const boost::filesystem::path& pathname );
+void todoCommentFetch( session& s, const url& name );
 
 
 /** Display an index of all items in a directory with one item per row
     with the rows sorted in descending score order. (*always*)
  */
-void todoIndexWriteHtmlFetch( session& s, const boost::filesystem::path& pathname );
+void todoIndexWriteHtmlFetch( session& s, const url& name );
 
 
 /** Callback when the process of voting on an item has been abandonned
     (*always*).
  */
-void todoVoteAbandonFetch( session& s, const boost::filesystem::path& pathname );
+void todoVoteAbandonFetch( session& s, const url& name );
 
 /** Callback when a vote on an item has successed.
     
@@ -156,14 +156,14 @@ public:
 	: todoModifPost(m), returnPath(retPath) {}
 };
 
-void todoVoteSuccessFetch( session& s, const boost::filesystem::path& pathname );
+void todoVoteSuccessFetch( session& s, const url& name );
 
 
-void todoMeta( session& s, const boost::filesystem::path& pathname );
+void todoMeta( session& s, std::istream& in, const url& name );
 
 
 /** Generate an HTML printout of an item
  */
-void todoWriteHtmlFetch( session& s, const boost::filesystem::path& pathname );
+void todoWriteHtmlFetch( session& s, std::istream& in, const url& name );
 
 #endif

@@ -45,33 +45,37 @@ boost::filesystem::path covPath( session& s, const std::string& projectName ) {
 }
 
 
-void shFetch( session& s, const boost::filesystem::path& pathname ) 
+void shFetch( session& s, std::istream& in, const url& name ) 
 {
+	/* XXX re-enable lint additions when we figure out how to do
+	   that with only a istream... */
+#if 0
 	std::string proj = projectName(s,pathname);
 
 	/* order of declaration is important here. */
 	coverageAnnotate coverage(pathname,covPath(s,proj));
 	lintAnnotate lint(s,s.subdirpart(srcTop.value(s) / proj,pathname),
 					  lintPath(s,proj));
+#endif
     htmlEscaper leftLinkText;
     decoratorChain leftChain;
-
+#if 0
 	if( !coverage.empty() ) {
 		leftChain.push_back(coverage);
 	}
-
 	if( !lint.empty() ) {
 		leftChain.push_back(lint);
 	}
+#endif
 	leftChain.push_back(leftLinkText);
 
     htmlEscaper rightLinkText;
     text sh(leftChain,rightLinkText);
-    sh.fetch(s,pathname);
+    sh.fetch(s,in);
 }
 
 
-void shDiff( session& s, const boost::filesystem::path& pathname )
+void shDiff( session& s, const url& name )
 {
     using namespace boost;
 
@@ -84,7 +88,7 @@ void shDiff( session& s, const boost::filesystem::path& pathname )
     std::string leftRevision;
     std::string rightRevision;
     boost::filesystem::path srcpath;
-	if( regex_search(pathname.string(), m, diffRe) ) {
+	if( regex_search(s.abspath(name).string(), m, diffRe) ) {
         srcpath = m.str(1);
         leftRevision = m.str(2);
         rightRevision = m.str(3);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -103,10 +103,10 @@ public:
 
 /** Command to cancel web edits
 */
-void cancelFetch( session& s, const boost::filesystem::path& pathname );
+void cancelFetch( session& s, const url& name );
 
 
-void changeFetch( session& s, const boost::filesystem::path& pathname );
+void changeFetch( session& s, const url& name );
 
 
 /** Diff between two revisions of a file under revision control (*always*)
@@ -125,35 +125,35 @@ void changediff( session& s, const boost::filesystem::path& pathname,
     to an expended description of the checkin instead of a difference between
     the current file and the revision.
  */
-void changecheckinFetch( session& s, const boost::filesystem::path& pathname );
+void changecheckinFetch( session& s, const url& name );
 
 
 /** History of changes to a file under revision control
  */
-void changehistoryFetch( session& s, const boost::filesystem::path& pathname );
+void changehistoryFetch( session& s, const url& name );
 
 
 /** Display a unified diff between a commit and the previous one. 
  */
-void changeShowDetails( session& s, const boost::filesystem::path& pathname );
+void changeShowDetails( session& s, const url& name );
 
 
 /** Populate *s.feeds* with the commit log of *pathname*.
  */
 void 
-feedRepositoryPopulate( session& s, const boost::filesystem::path& pathname );
+feedRepositoryPopulate( session& s, const url& name );
 
 
 /** Populate a feed from the commit log of *pathname* in a repository
  */
 template<typename defaultWriter>
-void feedRepository( session& s, const boost::filesystem::path& pathname ) {
+void feedRepository( session& s, const url& name ) {
     defaultWriter writer(s.out());
     if( !s.feeds ) {
 		s.feeds = &writer;
     }
 
-    feedRepositoryPopulate(s,pathname);
+    feedRepositoryPopulate(s,name);
 
     if( s.feeds == &writer ) {
 		s.feeds->flush();

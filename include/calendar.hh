@@ -65,7 +65,8 @@ public:
 };
 
 
-void calendarFetch( session& s, const boost::filesystem::path& pathname );
+void calendarFetch( session& s, std::istream& in,
+					const url& name );
 
 
 #endif

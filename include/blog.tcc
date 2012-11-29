@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -87,7 +87,7 @@ void blogInterval<cmp>::provide()
 
 template<typename defaultWriter, const char* varname, const char* filePat, 
 	 typename cmp>
-void blogByInterval( session& s, const boost::filesystem::path& pathname )
+void blogByInterval( session& s, const url& name )
 {
     cmp c;
     defaultWriter writer(s.out());    
@@ -95,10 +95,10 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
     try {
 		boost::smatch m;	    
 #if 0
-		std::string firstName = boost::filesystem::basename(pathname);
+		std::string firstName = boost::filesystem::basename(name);
 #else
 		std::string firstName;
-		if( boost::regex_search(pathname.string(),m,
+		if( boost::regex_search(name.string(),m,
 								boost::regex(std::string(c.name) + "-(.*)")) ) {
 			firstName = m.str(1);
 		}
@@ -120,7 +120,7 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
 		s.feeds = &feeds;
     }
     
-    feedContent<defaultWriter,filePat>(s,pathname);
+    feedContent<defaultWriter,filePat>(s,s.abspath(name));
 
     if( s.feeds == &feeds ) {
 		s.feeds->flush();
@@ -129,15 +129,15 @@ void blogByInterval( session& s, const boost::filesystem::path& pathname )
 }
 
 template<const char* varname, const char* filePat>
-void blogByIntervalDate( session& s, const boost::filesystem::path& pathname )
+void blogByIntervalDate( session& s, const url& name )
 {
-    blogByInterval<htmlwriter,varname,filePat,orderByTime<post> >(s,pathname);
+    blogByInterval<htmlwriter,varname,filePat,orderByTime<post> >(s,name);
 }
 
 template<const char* varname, const char* filePat>
-void blogByIntervalTags( session& s, const boost::filesystem::path& pathname )
+void blogByIntervalTags( session& s, const url& name )
 {
-    blogByInterval<htmlwriter,varname,filePat,orderByTag<post> >(s,pathname);
+    blogByInterval<htmlwriter,varname,filePat,orderByTag<post> >(s,name);
 }
 
 
@@ -183,10 +183,10 @@ void bySet<cmp>::flush()
 
 
 template<typename cmp, const char *filePat>
-void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
+void blogSetLinksFetch( session& s, const url& name )
 {
     boost::filesystem::path blogroot
-        = s.root(s.abspath(pathname),blogTrigger,true);
+        = s.root(s.abspath(name),blogTrigger,true);
 
      bySet<cmp> count(s.out(),s.asUrl(blogroot));
     blogSplat<cmp> feeds(&count);
@@ -209,27 +209,27 @@ void blogSetLinksFetch( session& s, const boost::filesystem::path& pathname )
 
 
 template<const char *filePat>
-void blogDateLinks( session& s, const boost::filesystem::path& pathname ) {
-    blogSetLinksFetch<orderByTime<post>,filePat>(s,pathname);
+void blogDateLinks( session& s, const url& name ) {
+    blogSetLinksFetch<orderByTime<post>,filePat>(s,name);
 }
 
 template<const char *filePat>
-void blogTagLinks( session& s, const boost::filesystem::path& pathname ) {
-    blogSetLinksFetch<orderByTag<post>,filePat>(s,pathname);
+void blogTagLinks( session& s, const url& name ) {
+    blogSetLinksFetch<orderByTag<post>,filePat>(s,name);
 }
 
 
 template<const char *filePat>
-void blogRelatedSubjects( session& s, const boost::filesystem::path& pathname )
+void blogRelatedSubjects( session& s, const url& name )
 {
 	using namespace boost::filesystem;
 
     boost::filesystem::path blogroot 
-        = s.root(s.abspath(pathname),blogTrigger,true);
+        = s.root(s.abspath(name),blogTrigger,true);
 
-	boost::filesystem::path related = pathname;
-	if( !is_regular_file(pathname) ) {
-		/* If *pathname* is not a regular file, we will build a list 
+	boost::filesystem::path related = name.pathname;
+	if( !is_regular_file(s.abspath(name)) ) {
+		/* If *name* is not a regular file, we will build a list 
 		   of posts related to the most recent post. */
 		bool firstTime = true;
 		boost::posix_time::ptime mostRecent;

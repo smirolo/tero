@@ -50,11 +50,13 @@ void logAddSessionVars( boost::program_options::options_description& all,
 }
 
 
-void logviewFetch( session& s, const boost::filesystem::path& pathname )
+void logviewFetch( session& s, const url& name )
 {
 
     using namespace RAPIDXML;
     using namespace boost::filesystem;
+
+	path pathname = s.abspath(name);
 
     /* remove the '/log' command tag and add the project dependency info
        (dws.xml). */
@@ -205,7 +207,7 @@ void logviewFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void regressionsFetch( session& s, const boost::filesystem::path& pathname )
+void regressionsFetch( session& s, const url& name )
 {
     using namespace RAPIDXML;
     using namespace boost::filesystem;

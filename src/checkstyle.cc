@@ -269,47 +269,42 @@ void checkstyle::flush( session& s ) const
 }
 
 
-void checkstyleFetch( session& s, const boost::filesystem::path& pathname )
+void checkstyleFetch( session& s, const url& name )
 {
     checkstyle p;
-    p.fetch(s,pathname);
+    p.fetch(s,s.abspath(name));
 }
 
 
 void lintAnnotate::init( session& s,
 						 const boost::filesystem::path& key,
-						 const boost::filesystem::path& infoPath )
+						 std::istream& info )
 {
-	if( boost::filesystem::exists(infoPath) ) {
-		boost::filesystem::ifstream strm;
-		s.openfile(strm,infoPath);
-		
-		errTokWriter w(super::annotations,key);
-		errTokenizer tok(w);
-		
-		char buffer[4096];
-		while( !strm.eof() ) {
-			strm.read(buffer,4096);
-			tok.tokenize(buffer,strm.gcount());
-		}
+	errTokWriter w(super::annotations,key);
+	errTokenizer tok(w);
+	
+	char buffer[4096];
+	while( !info.eof() ) {
+		info.read(buffer,4096);
+		tok.tokenize(buffer,info.gcount());
 	}
 }
 
 
 lintAnnotate::lintAnnotate( session& s,
 							const boost::filesystem::path& key,
-							const boost::filesystem::path& infoPath ) 
+							std::istream& info ) 
 	: super() { 
-	init(s,key,infoPath);
+	init(s,key,info);
 }
 
     
 lintAnnotate::lintAnnotate( session& s,
 							const boost::filesystem::path& key,
-							const boost::filesystem::path& infoPath,
+							std::istream& info,
 							std::basic_ostream<char>& o )
 	: super(o) {
-	init(s,key,infoPath);
+	init(s,key,info);
 }
 
 

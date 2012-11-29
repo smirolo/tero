@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -136,7 +136,7 @@ public:
 
 
 template<typename checker>
-void checkfileFetch( session& s, const boost::filesystem::path& pathname );
+void checkfileFetch( session& s, const url& name );
 
 
 class checkstyle : public projfiles {
@@ -151,7 +151,7 @@ protected:
 };
 
 
-void checkstyleFetch( session&s, const boost::filesystem::path& pathname );
+void checkstyleFetch( session&s, const url& name );
 
 
 
@@ -161,16 +161,16 @@ protected:
 
 	void init( session& s,
 			   const boost::filesystem::path& key,
-			   const boost::filesystem::path& coveragePath );
+			   std::istream& info );
 
 public:
 	lintAnnotate( session& s,
 				  const boost::filesystem::path& key,
-				  const boost::filesystem::path& coveragePath );
+				  std::istream& info );
     
     lintAnnotate( session& s,
 				  const boost::filesystem::path& key,
-				  const boost::filesystem::path& coveragePath,
+				  std::istream& info,
 				  std::basic_ostream<char>& o );
 
 	bool empty() const {

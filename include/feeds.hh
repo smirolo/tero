@@ -207,22 +207,22 @@ void feedContent( session& s, const boost::filesystem::path& pathname );
     or the filename when there are no assiated presentation.
  */
 template<typename defaultWriter, const char* filePat>
-void feedSummary( session& s, const boost::filesystem::path& pathname );
+void feedSummary( session& s, const url& name );
 
 
 
 /* class feedLatestPosts : public feedAggregate<postWriter> */
 template<typename defaultWriter, const char* varname>
-void feedLatestPosts( session& s, const boost::filesystem::path& pathname );
+void feedLatestPosts( session& s, const url& name );
 
 
 /** Aggregate over time with a fixed number of posts. 
     Most suitable for site feeds. */
 template<const char* varname>
-void htmlSiteAggregate( session& s, const boost::filesystem::path& pathname );
+void htmlSiteAggregate( session& s, const url& name );
 
 template<const char* varname>
-void rssSiteAggregate( session& s, const boost::filesystem::path& pathname );
+void rssSiteAggregate( session& s, const url& name );
 
 
 #include "feeds.tcc"

@@ -28,9 +28,9 @@
 
 #include "session.hh"
 
-void cppFetch( session& s, const boost::filesystem::path& pathname );
+void cppFetch( session& s, std::istream& in, const url& name );
 
-void cppDiff( session& s, const boost::filesystem::path& pathname );
+void cppDiff( session& s, const url& name );
 
 
 #endif

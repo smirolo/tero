@@ -36,7 +36,7 @@ char blogPat[] = ".*\\.blog$";
 const char *blogTrigger = "blog";
 
 
-const boost::filesystem::path
+url
 mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
 {
     /* \todo This should take into account the *date* inside the post,
@@ -67,23 +67,23 @@ mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
             }
         }
     }
-    return related;
+    return s.asUrl(related);
 }
 
 
-void blogByIntervalTitle( session& s, const boost::filesystem::path& pathname )
+void blogByIntervalTitle( session& s, const url& u )
 {
 	using namespace boost;
 
 	smatch m;
-	if( regex_search(pathname.string(),m,boost::regex(".*-(\\w+)$")) ) {
+	if( regex_search(s.abspath(u).string(),m,boost::regex(".*-(\\w+)$")) ) {
 	    std::string name = m.str(1);
 		s.out() << "Posts for " << name << std::endl;
 	}
 }
 
 
-void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
+void blogEntryFetch( session& s, const url& name )
 {
     /* This code is called through two different contexts. If we remove
 	   the conditional assignment to s.feeds and write directly to s.out, 
@@ -101,7 +101,7 @@ void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
 		s.feeds = &feeds;
     }
     mailParser parser(boost::regex(blogPat),*s.feeds,true);
-    parser.fetch(s,pathname);
+    parser.fetch(s,s.abspath(name));
     if( s.feeds == &feeds ) {
 		s.feeds->flush();
 		s.feeds = NULL;
@@ -109,11 +109,9 @@ void blogEntryFetch( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void mostRecentBlogTitle( session& s, const boost::filesystem::path& pathname )
+void mostRecentBlogTitle( session& s, const url& name )
 {
-	boost::filesystem::path entry = mostRecentBlogEntry(s,pathname);
-
-    slice<char> text = s.loadtext(entry);
+    slice<char> text = s.loadtext(s.abspath(mostRecentBlogEntry(s,s.abspath(name))));
     mailAsPost listener;
     rfc2822Tokenizer tok(listener);
     tok.tokenize(text.begin(),text.size());
@@ -123,7 +121,7 @@ void mostRecentBlogTitle( session& s, const boost::filesystem::path& pathname )
 }
 
 
-void mostRecentBlogFetch( session& s, const boost::filesystem::path& pathname )
+void mostRecentBlogFetch( session& s, const url& name )
 {
-	blogEntryFetch(s,mostRecentBlogEntry(s,pathname));
+	blogEntryFetch(s,mostRecentBlogEntry(s,s.abspath(name)));
 }

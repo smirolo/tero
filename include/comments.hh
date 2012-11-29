@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ public:
 
 /** Display comments on a page
  */
-void pageCommentsFetch( session& s, const boost::filesystem::path& pathname);
+void pageCommentsFetch( session& s, const url& name);
 
 
 /** Comment an page
@@ -75,7 +75,7 @@ void pageCommentsFetch( session& s, const boost::filesystem::path& pathname);
     (*always*)
 */
 
-void commentPage( session& s, const boost::filesystem::path& pathname );
+void commentPage( session& s, const url& name );
 
 
 #endif

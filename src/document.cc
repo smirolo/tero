@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2012, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #include "decorator.hh"
+#include "revsys.hh"
 
 /** Base document functions
 
@@ -80,8 +81,7 @@ bool dispatchDoc::fetch( session& s,
 #endif
     const fetchEntry *doc = select(name,value.string());
     if( doc != NULL ) {
-		fetch(s,doc,((doc->behavior & 0x3) == notAFile) ?
-			  value.pathname : s.abspath(value));
+		fetch(s,doc,value);
 	}
 	/* \todo throw exception? */
     return ( doc != NULL );
@@ -90,7 +90,7 @@ bool dispatchDoc::fetch( session& s,
 
 void dispatchDoc::fetch( session& s, 
 						 const fetchEntry *doc, 
-						 const boost::filesystem::path& p ) {
+						 const url& value ) {
     using namespace boost::filesystem;
 
 	if(  doc->behavior & whenAuth ) {
@@ -98,7 +98,7 @@ void dispatchDoc::fetch( session& s,
 	    if( s.valueOf("uid").empty() ) {
 			/* \todo redirect to auth page with future redirect */
 			std::stringstream str;
-			str << "/login?q=" << p.string();
+			str << "/login?q=" << value;
 			httpHeaders.refresh(0,url(str.str()));
 			return;
 		}
@@ -111,23 +111,56 @@ void dispatchDoc::fetch( session& s,
 			throw std::runtime_error("misstep in pipeline");
 		}
 	}
-	if( (doc->behavior & 0x3) == notAFile ) {
-		doc->callback(s,p);
-	} else {
-		path prev = current_path();
+
+	/* fetch the document using the appropriate method. */
+	if( doc->textFetch ) {
+		slice<char> text;
+		boost::filesystem::path p = s.abspath(value);
+		path prevcwd = current_path();
 		path dir = s.prefixdir(p);
 		current_path(dir);
-		switch( doc->behavior & 0x3 ) {
-		case whenFileExist:
-			s.check(p);
-		case always:
-			doc->callback(s,p);
-			break;
-		case whenNotCached:
-			doc->callback(s,p);
-			break;
-		}	
-		current_path(prev);
+		revisionsys *rev = revisionsys::findRev(s, p);
+		if( rev != NULL ) {
+			std::cerr << "!!! found repo at " << rev->rootpath
+					  << " for " << p << std::endl;
+			text = rev->loadtext(p, "HEAD");
+		} else {
+			std::cerr << "!!! repo not found for " << p << std::endl;
+			text = s.loadtext(p);
+		}
+		doc->textFetch(s, text, value);
+		current_path(prevcwd);
+
+	} else if( doc->streamFetch ) {
+		std::streambuf *prev = NULL;
+		std::fstream strm;
+		boost::filesystem::path p = s.abspath(value);
+		path prevcwd = current_path();
+		path dir = s.prefixdir(p);
+		current_path(dir);
+		revisionsys *rev = revisionsys::findRev(s, p);
+		if( rev != NULL ) {
+			std::cerr << "!!! found repo at " << rev->rootpath
+					  << " for " << p << std::endl;
+			prev = rev->openfile(strm, p, "HEAD");
+
+		} else {
+			std::cerr << "!!! repo not found for " << p << std::endl;
+			prev = s.openfile(strm, p);
+		}
+		
+		if( prev ) {
+			doc->streamFetch(s, strm, value);
+#if 0
+			/* XXX Don't know why a compilation error here ...*/
+			std::streambuf *buf = strm.rdbuf(prev);
+			delete buf;
+#endif
+		}
+		current_path(prevcwd);
+
+	} else if( doc->nameFetch ) {
+		doc->nameFetch(s, value);
 	}
 }
 
@@ -412,53 +445,46 @@ void skipOverTags( session& s, std::istream& istr )
 }
 
 
-void text::fetch( session& s, const boost::filesystem::path& pathname ) {
+void text::fetch( session& s, std::istream& in ) {
     using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem; 
-
-    ifstream strm;
-    if( s.openfile(strm,pathname) == std::ios_base::binary ) {
-		/* This is a binary file, we do nothing with it. */
-		strm.close();
-	}
 
     if( leftDec ) {
 		if( leftDec->formated() ) s.out() << code();
 		leftDec->attach(s.out());
     }
 
-    skipOverTags(s,strm);
-
-    /* remaining lines */
-    while( !strm.eof() ) {
+	skipOverTags(s,in);
+	/* remaining lines */
+	while( !in.eof() ) {
 		std::string line;
-		std::getline(strm,line);
+		std::getline(in,line);
 		s.out() << line << std::endl;
-    }
+	}
 
     if( leftDec ) {
 		leftDec->detach();
 		if( leftDec->formated() ) s.out() << html::pre::end;
     }
-
-    strm.close();
 }
 
 
-void textFetch( session& s, const boost::filesystem::path& pathname ) {
+void textFetch( session& s, std::istream& in,
+				const url& name ) {
     htmlEscaper leftLinkText;
     htmlEscaper rightLinkText;
     text rawtext(leftLinkText,rightLinkText);
-    rawtext.fetch(s,pathname);
+    rawtext.fetch(s,in);
 }
 
 
-void formattedFetch( session& s, const boost::filesystem::path& pathname ) {
+void formattedFetch( session& s, std::istream& in,
+					 const url& name ) {
     linkLight leftFormatedText(s);
     linkLight rightFormatedText(s);
     text formatedText(leftFormatedText,rightFormatedText);
-    formatedText.fetch(s,pathname);
+    formatedText.fetch(s,in);
 }
 
 void metaLastTime( session& s, const boost::filesystem::path& pathname ) {    
@@ -470,9 +496,9 @@ void metaLastTime( session& s, const boost::filesystem::path& pathname ) {
     s.out() << strm.str();
 }
 
-void metaValue( session& s, const boost::filesystem::path& pathname )
+void metaValue( session& s, const url& name )
 {
-    s.out() << pathname.string();
+    s.out() << name;
 }
 
 

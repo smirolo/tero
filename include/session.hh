@@ -294,8 +294,8 @@ public:
 		it returns ios_base::binary if the file seems to be a binary file
 		and zero if it looks like a text file (analyzing first 16 bytes).
     */
-    int openfile( boost::filesystem::ifstream& strm, 
-				  const boost::filesystem::path& pathname );
+	std::streambuf* openfile( std::istream& strm,
+						 const boost::filesystem::path& pathname );
     
     void loadsession( const std::string& id );
 

@@ -70,12 +70,12 @@ projectName( const session& s, const boost::filesystem::path& p );
 
 /** Sets title to project name.
 */
-void projectTitle( session& s, const boost::filesystem::path& pathname );
+void projectTitle( session& s, const url& name );
 
 
 /** Create a new directory and initialize it as a project repository.
 */
-void projCreateFetch( session& s, const boost::filesystem::path& pathname );
+void projCreateFetch( session& s, const url& name );
 
 
 /** Show a top-level page index of project.
@@ -86,7 +86,7 @@ void projCreateFetch( session& s, const boost::filesystem::path& pathname );
     to download <!-- through e-commerce transaction? --> the project as 
     a package, browse the source code and sign-on to the rss feed.
 */
-void projindexFetch( session& s, const boost::filesystem::path& pathname );
+void projindexFetch( session& s, const url& name );
 
 
 class projfiles {
@@ -124,7 +124,7 @@ public:
 
 };
 
-void projfilesFetch( session& s, const boost::filesystem::path& pathname );
+void projfilesFetch( session& s, const url& name );
 
  
 #endif

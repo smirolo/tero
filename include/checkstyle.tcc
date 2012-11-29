@@ -26,27 +26,28 @@
 #include "markup.hh"
 
 template<typename checker>
-void checkfileFetch( session& s, const boost::filesystem::path& pathname )
+void checkfileFetch( session& s, const url& name )
 {
     using namespace boost::filesystem; 
 
     checker check;
+	path pathname = s.abspath(name);
     slice<char> buffer = s.loadtext(pathname);
     check.tokenize(buffer.begin(),buffer.size());
 
     url href;
-    std::string name;
+    std::string projname;
     path projdir = s.root(pathname,"dws.xml");
     if( s.prefix(projdir,pathname) ) {
-	name = s.subdirpart(projdir,pathname).string();
-	href = s.asUrl(pathname);
+		projname = s.subdirpart(projdir,pathname).string();
+		href = s.asUrl(pathname);
     } else {
-	name = pathname.string();
+		projname = pathname.string();
     }
 
     s.out() << html::tr()
 	    << html::td() << html::a().href(href.string()) 
-	    << name << html::a::end << html::td::end
+	    << projname << html::a::end << html::td::end
 	    << html::td() << check.license() 
 	    << " (" << check.dates << "," << check.grantor << ")"
 	    << html::td::end
