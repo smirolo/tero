@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -32,21 +32,21 @@
 #include <boost/program_options.hpp>
 #include "session.hh"
 
-/** A big part of the semilla presentation engine deals with posts. 
-    These are snipsets of textual content easily presented through 
-    different channels (web, rss feed, e-mail, ...). 
-    Blog entries, todo items, mailing lists and repository commits 
+/** A big part of the semilla presentation engine deals with posts.
+    These are snipsets of textual content easily presented through
+    different channels (web, rss feed, e-mail, ...).
+    Blog entries, todo items, mailing lists and repository commits
     are the major sources of posts.
 
     Post are usually passed along, transformed and ordered through
-    different filters before finishing as formatted html, mail, 
-    or rss documents. 
+    different filters before finishing as formatted html, mail,
+    or rss documents.
     Functionally there are two behaviors for a filter: pass-thru
-    or retained. In pass-thru behavior, the filter triggers *filters()* 
+    or retained. In pass-thru behavior, the filter triggers *filters()*
     call to the next filter inside its own *filters()* method. No call
     to *flush()* is necessary. In retained mode, the filter will store
-    posts in an internal buffer through its *filters()* method. 
-    Processing and calls to the next filter down is done inside 
+    posts in an internal buffer through its *filters()* method.
+    Processing and calls to the next filter down is done inside
     the *flush()* method.
     For example, filters that write posts as formatted html are
     typically pass-thru filters while feeds that order posts by
@@ -62,22 +62,22 @@
     In most cases, a post optionaly contains an author's email address,
     a title and a filename the post is derived from. As communication and
     coordination amonst contributors is usually done in the form of posts,
-    various scores and tags are also often associated to a post.        
+    various scores and tags are also often associated to a post.
 */
 class post {
 public:
 
     // required
 
-    /** The full name of the author of the post. 
+    /** The full name of the author of the post.
      */
     std::string author;
 
     /** Time at which the post was published.
      */
-    boost::posix_time::ptime time;    
+    boost::posix_time::ptime time;
 
-    /** The text content of the post. 
+    /** The text content of the post.
      */
     std::string content;
 
@@ -85,34 +85,34 @@ public:
 
     /** The e-mail address of the author of the post.
      */
-    std::string authorEmail;    
+    std::string authorEmail;
 
-	/** Depending on the post writer, links to the web version 
-		of the post will be displayed either in the caption (html) 
-		or the body (rss, email). 
+	/** Depending on the post writer, links to the web version
+		of the post will be displayed either in the caption (html)
+		or the body (rss, email).
 		By default if this field is not set, links are generated
 		from the *title* (text) and *guid* (href).
 	 */
 	std::string link;
 
     /** The title of the post will be displayed as header of pages
-       and subject of e-mails. 
+       and subject of e-mails.
     */
-    std::string title;   
+    std::string title;
 
     /** The post unique identifier is used in many case to associate
 	a post to a specific file.
 
-       Implementation Note: 
+       Implementation Note:
        At some point the identifier was defined as a boost::uuids::uuid.
        This works great when our application controls the generation
-       of identifiers (ex. todo items) but it fails when the format 
+       of identifiers (ex. todo items) but it fails when the format
        of the identifiers is imposed by an external application (ex. git).
-       guid generation. 
+       guid generation.
     */
     std::string guid;
 
-    /** File this post is derived from. 
+    /** File this post is derived from.
      */
     boost::filesystem::path filename;
 
@@ -127,12 +127,12 @@ public:
 
     std::string tag;
 
-    /** stores extra (name,value) pairs that not specific fields. 
+    /** stores extra (name,value) pairs that not specific fields.
      */
     typedef std::map<std::string,std::string> headersMap;
     headersMap moreHeaders;
 
-    /** remove non meaningful whitespaces in the various text fields. 
+    /** remove non meaningful whitespaces in the various text fields.
      */
     void normalize();
 
@@ -159,12 +159,12 @@ public:
 };
 
 
-/** Base class for post filters. 
+/** Base class for post filters.
  */
 class postFilter {
 protected:
 
-    /** next filter down the chain. 
+    /** next filter down the chain.
      */
     postFilter *next;
 
@@ -172,7 +172,7 @@ public:
 #if 0
     /* Visible name of the filter
 
-       A mail parser will initialize that name to the pathname 
+       A mail parser will initialize that name to the pathname
        of the file being parsed such that todo identifiers can
        be set correctly. */
     std::string name;
@@ -186,7 +186,7 @@ public:
     virtual void filters( const post& ) = 0;
 
     /** Called whenever all posts that need processing by the filter
-	have been inserted (see *filters()*). 
+	have been inserted (see *filters()*).
     */
     virtual void flush() = 0;
 };
@@ -232,12 +232,12 @@ public:
     retainedFilter() {}
     explicit retainedFilter( postFilter *n ) : postFilter(n) {}
 
-    virtual void filters( const post& p ) { 
-	posts.push_back(p); 
+    virtual void filters( const post& p ) {
+        posts.push_back(p);
     }
 
-    /** The default implementation of flush is to call provide 
-	and push all posts in [first,last[ to the next filter.
+    /** The default implementation of flush is to call provide
+        and push all posts in [first,last[ to the next filter.
     */
     virtual void flush();
 };
@@ -250,7 +250,7 @@ public:
 /** Base class to write posts to an ostream.
 
     Note: This class is purely an implementation artifact (code factorization)
-    rather than an interface definition.    
+    rather than an interface definition.
 */
 class ostreamWriter : public passThruFilter {
 protected:
@@ -278,13 +278,22 @@ class htmlwriter : public contentHtmlwriter {
 protected:
 
     /** The counter of posts that have been written so far is used
-	to alternate HTML divs between the *postEven* and *postOdd* 
-	CSS classes in order to make them more readable.
+        to alternate HTML divs between the *postEven* and *postOdd*
+        CSS classes in order to make them more readable.
     */
     size_t postNum;
 
+    /* True when the title should not be printed. This is used
+       when a title is explicitely specified in the template
+       and it would be duplicated. */
+    bool notitle;
+
 public:
-    explicit htmlwriter( std::ostream& o ) : contentHtmlwriter(o), postNum(0) {}
+    explicit htmlwriter( std::ostream& o )
+        : contentHtmlwriter(o), postNum(0), notitle(false) {}
+
+    htmlwriter( std::ostream& o, bool n )
+        : contentHtmlwriter(o), postNum(0), notitle(n) {}
 
     virtual void filters( const post& );
 };
@@ -322,7 +331,7 @@ public:
  */
 class subjectWriter : public ostreamWriter {
 public:
-	explicit subjectWriter( std::ostream& o ) 
+	explicit subjectWriter( std::ostream& o )
 		: ostreamWriter(o) {}
 
     virtual void filters( const post& );
@@ -334,8 +343,8 @@ public:
  */
 struct orderByDateScore : public std::binary_function<post, post, bool> {
     bool operator()( const post& left, const post& right ) const {
-		return (left.time < right.time
-				|| (left.time == right.time) && left.score > right.score);
+        return (left.time < right.time)
+            || ((left.time == right.time) && (left.score > right.score));
     }
 };
 
@@ -428,7 +437,7 @@ struct orderByTag : public std::binary_function<vT, vT, bool> {
     }
 
     bool operator()( const valueType& left, const valueType& right ) const {
-		return left.tag > right.tag 
+		return left.tag > right.tag
 			|| (left.tag == right.tag && left.time > right.time);
     }
 };
@@ -443,7 +452,7 @@ extern sessionVariable authorVar;
 extern sessionVariable authorEmail;
 extern sessionVariable descrVar;
 
-void 
+void
 postAddSessionVars( boost::program_options::options_description& all,
 		    boost::program_options::options_description& visible );
 

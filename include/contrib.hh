@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -30,50 +30,50 @@
 #include <boost/tr1/memory.hpp>
 
 /** Pages related to contributors such as registration of new contributors,
-	profile management, password updates, etc.
+    profile management, password updates, etc.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 class contrib {
 public:
-	typedef std::tr1::shared_ptr<contrib> pointer_type;
+    typedef std::tr1::shared_ptr<contrib> pointer_type;
 
 public:
-	std::string email;
-	std::string name;
-	std::string google;
-	
+    std::string email;
+    std::string name;
+    std::string google;
+
 public:
-	static pointer_type find( const std::string& email, 
-							  const std::string& name = "" );
+    static pointer_type find( const std::string& email,
+        const std::string& name = "" );
 };
 
 
 class by {
 protected:
-	const contrib::pointer_type& ptr;
+    const contrib::pointer_type& ptr;
 
 public:
-	friend std::ostream& operator<<( std::ostream&, const by& );
+    friend std::ostream& operator<<( std::ostream&, const by& );
 
-	explicit by( const contrib::pointer_type& p ) : ptr(p) {}
+    explicit by( const contrib::pointer_type& p ) : ptr(p) {}
 };
 
 class from {
 protected:
-	const contrib::pointer_type& ptr;
+    const contrib::pointer_type& ptr;
 
 public:
-	friend std::ostream& operator<<( std::ostream&, const from& );
+    friend std::ostream& operator<<( std::ostream&, const from& );
 
-	explicit from( const contrib::pointer_type& p ) : ptr(p) {}
+    explicit from( const contrib::pointer_type& p ) : ptr(p) {}
 };
 
 /** Add session variables related to auth module.
  */
 void registerAddSessionVars( boost::program_options::options_description& opts,
-						 boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 
 /** Index the set of contribs and display an HTML row per contrib item
@@ -83,7 +83,7 @@ void contribIdxFetch( session& s, const url& name );
 
 
 /** Reply to POST request to create a new contributor account. It creates
-	a session identifier and sends an email to the contributor.
+    a session identifier and sends an email to the contributor.
  */
 void registerEnter( session& s, const url& name );
 
@@ -94,8 +94,8 @@ void registerConfirm( session& s, const url& name );
 
 
 /** Even if we delete a contributor's ability to log in, we still want
-	to keep all references to their name and email address in the repository
-	commits. */
+    to keep all references to their name and email address in the repository
+    commits. */
 void unregisterEnter( session& s, const url& name );
 
 
@@ -105,7 +105,7 @@ void passwdChange( session& s, const url& name );
 
 
 /** Modify a contributor's password to a randomly generated password
-	and e-mail that password to the contributor.
+    and e-mail that password to the contributor.
 */
 void passwdReset( session& s, const url& name );
 

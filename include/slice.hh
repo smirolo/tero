@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ public:
     slice() : first(NULL), last(NULL) {}
 
     slice( vT* f, vT* l )
-	: first(f), last(l) {}
+        : first(f), last(l) {}
 
     iterator begin() { return first; }
     const_iterator begin() const { return first; }
@@ -57,34 +57,33 @@ public:
     const_iterator end() const { return last; }
 
     size_t size() const {
-	return last - first;
+        return last - first;
     }
 
     slice& operator+=( const slice& s ) {
-	if( first == last ) {
-	    first = s.first;
-	    last = s.last;
-	} else {
-	    assert( last == s.first );
-	    last = s.last;
-	}
-	return *this;
+        if( first == last ) {
+            first = s.first;
+            last = s.last;
+        } else {
+            assert( last == s.first );
+            last = s.last;
+        }
+        return *this;
     }
 };
 
 
-/** Shrink a slice of characters such as to discard leading 
+/** Shrink a slice of characters such as to discard leading
     and trailing whitespaces.
  */
 template<typename charT>
 const slice<charT> strip( const slice<charT>& s ) {
-    const char *seps = " \t\n\r";
     typename slice<charT>::const_iterator p = s.begin();
-    while( isspace(*p) & p != s.end() ) ++p;
+    while( isspace(*p) & (p != s.end()) ) ++p;
     typename slice<charT>::const_iterator q = s.end();
     do {
-	--q;
-    } while( isspace(*q) & q != p );
+        --q;
+    } while( isspace(*q) & (q != p) );
     return slice<charT>(p,q + 1);
 }
 
@@ -93,7 +92,7 @@ template<typename ch, typename tr, typename vT>
 inline std::basic_ostream<ch, tr>&
 operator<<( std::basic_ostream<ch, tr>& ostr, const slice<vT>& v ) {
     ostr << "[" << static_cast<const void*>(v.begin())
-	 << ',' << static_cast<const void*>(v.end()) << "[";
+         << ',' << static_cast<const void*>(v.end()) << "[";
     return ostr;
 }
 

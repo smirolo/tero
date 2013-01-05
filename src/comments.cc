@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,13 @@
 #include "mail.hh"
 
 pathVariable commentTop("commentTop",
-			"root of the tree where comments are stored");
+    "root of the tree where comments are stored");
 sessionVariable recipient("commentRecipient",
-			  "e-mail address comments are sent to");
+    "e-mail address comments are sent to");
 
-void 
+void
 commentAddSessionVars( boost::program_options::options_description& opts,
-		       boost::program_options::options_description& visible )
+    boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
 
@@ -54,12 +54,12 @@ void appendCommentToFile::filters( const post& p ) {
     using namespace boost::filesystem;
 
     boost::filesystem::ofstream file;
-    boost::filesystem::path comments 
-	= commentTop.value(*mySession) / (postname.string() + ".comments");
+    boost::filesystem::path comments
+        = commentTop.value(*mySession) / (postname.string() + ".comments");
 
     mySession->appendfile(file,comments);
     boost::interprocess::file_lock f_lock(comments.string().c_str());
-    f_lock.lock();    
+    f_lock.lock();
     mailwriter writer(file);
     writer.filters(p);
     file.close();
@@ -77,8 +77,8 @@ protected:
 
 public:
     explicit sendPostToSMTP( const session& s ) : mySession(&s) {}
-    sendPostToSMTP( const session& s, postFilter *n ) 
-	: passThruFilter(n), mySession(&s) {}
+    sendPostToSMTP( const session& s, postFilter *n )
+        : passThruFilter(n), mySession(&s) {}
 
     virtual void filters( const post& );
 };
@@ -88,13 +88,13 @@ void sendPostToSMTP::filters( const post& p ) {
     using namespace boost::system::errc;
     using namespace boost::filesystem;
 
-    Poco::Net::MailMessage message;    
+    Poco::Net::MailMessage message;
 
     std::stringstream received;
-    received << "from unknown (unknown [" << mySession->client() << "])	by "
-	     << domainName.value(*mySession) << " (smailui) with SMTP id "
-	     << "XXXXXXXXXXX for <" << recipient.value(*mySession) << ">;"
-	     << p.time;
+    received << "from unknown (unknown [" << mySession->client() << "]) by "
+             << domainName.value(*mySession) << " (smailui) with SMTP id "
+             << "XXXXXXXXXXX for <" << recipient.value(*mySession) << ">;"
+             << p.time;
     message.set("Received",received.str());
     message.addRecipient(Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT,recipient.value(*mySession)));
     message.setSubject(p.title);
@@ -104,35 +104,33 @@ void sendPostToSMTP::filters( const post& p ) {
     message.setContentType(const std::string& mediaType);
     message.setDate(const Poco::Timestamp& dateTime);
 #endif
-	sendMail(*mySession,message);
+    sendMail(*mySession,message);
 }
 
 
-void pageCommentsFetch( session& s, 
-			  const url& name ) 
+void pageCommentsFetch( session& s, const url& name )
 {
-    htmlwriter writer(s.out()); 
+    htmlwriter writer(s.out());
     mailParser parser(writer);
     parser.fetch(s,s.abspath(name));
 }
 
 
-void commentPage( session& s, 
-		  const url& name )
+void commentPage( session& s, const url& name )
 {
     boost::filesystem::path docname(s.abspath(name).parent_path());
     if( !s.valueOf("href").empty() ) {
-	docname = s.valueOf("href");
+        docname = s.valueOf("href");
     }
 
-    url	postname(s.asUrl(docname));
+    url postname(s.asUrl(docname));
 
     sendPostToSMTP comment(s);
 
     post p;
     std::stringstream sender;
-    sender << authorVar.value(s) 
-	   << " <" << s.client() << "@" << domainName.value(s) << ">";
+    sender << authorVar.value(s)
+           << " <" << s.client() << "@" << domainName.value(s) << ">";
     p.authorEmail = sender.str();
     std::stringstream title;
     title << "Comment on " << postname;
@@ -142,7 +140,7 @@ void commentPage( session& s,
     comment.filters(p);
 
     /* \todo clean-up. We use this code such that the browser displays
-       the correct url. If we use a redirect, it only works with static 
+       the correct url. If we use a redirect, it only works with static
        pages (index.html). */
     httpHeaders.refresh(0,postname);
 }

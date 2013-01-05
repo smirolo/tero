@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,15 @@ char blogPat[] = ".*\\.blog$";
 const char *blogTrigger = "blog";
 
 
+void mostRecentFilter::filters( const post& p )
+{
+    if( firstTime || p.time > mostRecentPost.time ) {
+        mostRecentPost = p;
+        firstTime = false;
+    }
+}
+
+
 url
 mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
 {
@@ -46,65 +55,47 @@ mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
     boost::filesystem::path blogroot
         = s.root(s.abspath(pathname), blogTrigger, true);
 
-    boost::filesystem::path related = pathname;
-    /* If *pathname* is not a regular file, we will build a list
-       of posts related to the most recent post. */
-    bool firstTime = true;
-    boost::posix_time::ptime mostRecent;
-    for( directory_iterator entry = directory_iterator(blogroot);
-         entry != directory_iterator(); ++entry ) {
-        boost::smatch m;
-        path filename(*entry);
-        if( is_regular_file(filename)
-            && boost::regex_search(filename.string(),
-                m,boost::regex(blogPat)) ) {
-            boost::posix_time::ptime time
-                = boost::posix_time::from_time_t(last_write_time(filename));
-            if( firstTime || time > mostRecent ) {
-                mostRecent = time;
-                related = filename;
-                firstTime = false;
-            }
-        }
-    }
-    return s.asUrl(related);
+    mostRecentFilter mostRecent(NULL);
+    mailParser walker(boost::regex(blogPat), mostRecent, true);
+    walker.fetch(s, blogroot);
+    return s.asUrl(mostRecent.mostRecent().filename);
 }
 
 
 void blogByIntervalTitle( session& s, const url& u )
 {
-	using namespace boost;
+    using namespace boost;
 
-	smatch m;
-	if( regex_search(s.abspath(u).string(),m,boost::regex(".*-(\\w+)$")) ) {
-	    std::string name = m.str(1);
-		s.out() << "Posts for " << name << std::endl;
-	}
+    smatch m;
+    if( regex_search(s.abspath(u).string(),m,boost::regex(".*-(\\w+)$")) ) {
+        std::string name = m.str(1);
+        s.out() << "Posts for " << name << std::endl;
+    }
 }
 
 
 void blogEntryFetch( session& s, const url& name )
 {
     /* This code is called through two different contexts. If we remove
-	   the conditional assignment to s.feeds and write directly to s.out, 
-	   two things happen:
-	   - First, tags and other parsed attributes are discareded when called
-	   within a feedContent() context. Meta-data are not read from within
-	   the file but assigned to the default values set by feedContent() itself.
-	   - Second, "by *author* on *date*" lines are either duplicated 
-	   in the feedContent() context or not showing up in the stand-alone
-	   context.
-	*/
+       the conditional assignment to s.feeds and write directly to s.out,
+       two things happen:
+       - First, tags and other parsed attributes are discareded when called
+       within a feedContent() context. Meta-data are not read from within
+       the file but assigned to the default values set by feedContent() itself.
+       - Second, "by *author* on *date*" lines are either duplicated
+       in the feedContent() context or not showing up in the stand-alone
+       context.
+    */
 
-	htmlwriter feeds(s.out());
+    htmlwriter feeds(s.out(), true);
     if( !s.feeds ) {
-		s.feeds = &feeds;
+        s.feeds = &feeds;
     }
-    mailParser parser(boost::regex(blogPat),*s.feeds,true);
-    parser.fetch(s,s.abspath(name));
+    mailParser parser(boost::regex(blogPat), *s.feeds, true);
+    parser.fetchFile(s,s.abspath(name));
     if( s.feeds == &feeds ) {
-		s.feeds->flush();
-		s.feeds = NULL;
+        s.feeds->flush();
+        s.feeds = NULL;
     }
 }
 
@@ -117,11 +108,11 @@ void mostRecentBlogTitle( session& s, const url& name )
     tok.tokenize(text.begin(),text.size());
     post p = listener.unserialized();
 
-	s.out() << p.title;
+    s.out() << p.title;
 }
 
 
 void mostRecentBlogFetch( session& s, const url& name )
 {
-	blogEntryFetch(s,mostRecentBlogEntry(s,s.abspath(name)));
+    blogEntryFetch(s,mostRecentBlogEntry(s,s.abspath(name)));
 }

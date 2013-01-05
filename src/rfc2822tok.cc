@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Fortylines LLC
+/* Copyright (c) 2011-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,8 @@
 #include <boost/regex.hpp>
 #include "rfc2822tok.hh"
 
-/** tokenizer for the Internet Message Format (http://tools.ietf.org/html/rfc2822)
+/** tokenizer for the Internet Message Format
+    (http://tools.ietf.org/html/rfc2822)
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
@@ -42,7 +43,8 @@ const char *rfc2822TokenTitles[] = {
     "fieldName",
     "colon",
     "fieldBody",
-    "messageBody"
+    "messageBody",
+    "messageBreak"
 };
 
 #define advance(state) { trans = &&state; goto advancePointer; }
@@ -55,18 +57,18 @@ size_t rfc2822Tokenizer::tokenize( const char *line, size_t n )
     void *trans = state;
     const char *p = line, *crlf = NULL;
     if( n == 0 ) return n;
-    if( trans != NULL ) goto *trans; else goto headers;
-    
+    if( trans != NULL ) goto *trans; else goto entryPoint;
+
 advancePointer:
-    last = std::distance(line,p);
+    last = std::distance(line, p);
     if( *p == '\0' ) {
-		if( listener != NULL ) {
-			listener->token(tok,line,first,p - line,false);
-		}
+        if( listener != NULL ) {
+            listener->token(tok, line, first, p - line, false);
+        }
     }
     if( last >= n ) {
-		state = trans;
-		return last;
+        state = trans;
+        return last;
     }
     ++p;
     goto *trans;
@@ -74,7 +76,7 @@ advancePointer:
 fieldName:
     while( *p != ':' ) advance(fieldName);
     if( listener != NULL ) {
-	listener->token(tok,line,first,p - line,false);
+        listener->token(tok,line,first,p - line,false);
     }
     tok = rfc2822Colon;
     first = p - line;
@@ -82,7 +84,7 @@ fieldName:
 
 headerColon:
     if( listener != NULL ) {
-	listener->token(tok,line,first,p - line,false);
+        listener->token(tok,line,first,p - line,false);
     }
     tok = rfc2822FieldBody;
     first = p - line;
@@ -102,39 +104,97 @@ fieldBodyCR:
 fieldBodyCRLF:
     if( *p == ' ' || *p == '\t' ) advance(fieldBody);
     if( listener != NULL ) {
-	listener->token(tok,line,first,crlf - line,false);
+        listener->token(tok,line,first,crlf - line,false);
     }
     tok = rfc2822Err;
     first = crlf - line;
     if( listener != NULL ) {
-	listener->newline(line,first,p - line);
+        listener->newline(line,first,p - line);
     }
     first = p - line;
-    goto headers;    
+    goto headers;
 
 headers:
     /* The standard says it should always be a CR/LF pair but for convenience,
        we will also accept LF by itself. */
-    if( *p == '\r' ) {
-	tok = rfc2822MessageBody;
-	advance(headersCR);
-    }
-    if( *p == '\n' ) {
-	tok = rfc2822MessageBody;
-	advance(headersCRLF);
+    switch( *p ) {
+    case '\r':
+        tok = rfc2822MessageBody;
+        advance(headersCR);
+        break;
+    case '\n':
+        tok = rfc2822MessageBody;
+        advance(bodyCR);
+        break;
+    default:
+        break;
     }
     tok = rfc2822FieldName;
     advance(fieldName);
 
 headersCR:
     if( *p == '\n' ) {
-	advance(headersCRLF);
+        advance(bodyCR);
     }
-    advance(headers);    
-   
-headersCRLF:
+    advance(headers);
+
+entryPoint:
+    if( *p == 'F' ) {
+        advance(bodyFromF);
+    }
+    goto headers;
+
+body:
     /* We are now in the body of the message. */
-    advance(headersCRLF);
+    switch( *p ) {
+    case '\r':
+        advance(bodyCR);
+        break;
+    case '\n':
+        advance(bodyCR);
+        break;
+    }
+    advance(body);
 
+bodyCR:
+    if( *p == 'F' ) {
+        advance(bodyFromF);
+    }
+    goto body;
+
+bodyFromF:
+    if( *p == 'r' ) advance(bodyFromR);
+    goto body;
+
+bodyFromR:
+    if( *p == 'o' ) advance(bodyFromO);
+    goto body;
+
+bodyFromO:
+    if( *p == 'm' ) advance(bodyFromM);
+    goto body;
+
+bodyFromM:
+    if( (p - line - 4) > 0 && listener != NULL ) {
+        listener->token(tok, line, first, p - line - 4, false);
+    }
+    first = p - line - 4;
+    tok = rfc2822MessageBreak;
+    goto messageBreak;
+
+messageBreak:
+    while( *p != '\r' && *p != '\n' ) {
+        advance(messageBreak);
+    }
+    advance(messageBreakCR);
+
+messageBreakCR:
+    if( listener != NULL ) {
+        listener->token(tok, line, first, p - line - 1, false);
+    }
+    first = p - line;
+    last = std::distance(line, p);
+    state = &&headers;
+    return last;
+    //    goto headers;
 }
-

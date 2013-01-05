@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <cstdio>
+#include "document.hh"
 #include "changelist.hh"
 #include "markup.hh"
 #include "project.hh"
@@ -37,9 +38,9 @@
 
 pathVariable binDir("binDir","path to external executables");
 
-void 
+void
 changelistAddSessionVars( boost::program_options::options_description& all,
-			  boost::program_options::options_description& visible )
+    boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
 
@@ -50,18 +51,19 @@ changelistAddSessionVars( boost::program_options::options_description& all,
 }
 
 
-url diffref::asUrl( const boost::filesystem::path& doc, 
-		       const std::string& rev ) const {
+url diffref::asUrl( const boost::filesystem::path& doc,
+    const std::string& rev ) const
+{
     std::stringstream hrefs;
     hrefs << doc.string() << "/diff/" << rev;
     return url(hrefs.str());
 }
 
-url checkinref::asUrl( const boost::filesystem::path& doc, 
-		       const std::string& rev ) const {
+url checkinref::asUrl( const boost::filesystem::path& doc,
+    const std::string& rev ) const
+{
     std::stringstream hrefs;
-    hrefs << doc.string()
-	  << "/checkin?revision=" << rev; 
+    hrefs << doc.string() << "/checkin?revision=" << rev;
     return  url(hrefs.str());
 }
 
@@ -78,23 +80,23 @@ void changeFetch(  session& s, const url& name )
 
     session::variables::const_iterator text = s.find("editedText");
     if( s.found(text) ) {
-	path docName
-#if 0	
-	/* \todo wiki-like edits are not currently working */
-	(s.valueOf("srcTop") + s.valueOf("document")
-		     + std::string(".edits"))
+        path docName
+#if 0
+            /* \todo wiki-like edits are not currently working */
+            (s.valueOf("srcTop") + s.valueOf("document")
+                + std::string(".edits"))
 #endif
-	;
-	if( !exists(docName) ) {
-	    create_directories(docName);
-	}
+            ;
+        if( !exists(docName) ) {
+            create_directories(docName);
+        }
 
-	ofstream file;
-	s.createfile(file,docName);
-	file << text->second.value;
-	file.close();
+        ofstream file;
+        s.createfile(file,docName);
+        file << text->second.value;
+        file.close();
 
-#if 0	
+#if 0
 	/* \todo wiki-like edits are not currently working */
 	/* add entry in the changelist */
 	path changesPath(s.userPath().string() + std::string("/changes"));
@@ -103,8 +105,8 @@ void changeFetch(  session& s, const url& name )
 	file.close();
 #endif
     }
-    httpHeaders.location(url(document.value(s).string() 
-			     + std::string(".edits")));
+    httpHeaders.location(url(document.value(s).string()
+            + std::string(".edits")));
 }
 
 void changediff( session& s, const boost::filesystem::path& pathname,
@@ -117,82 +119,84 @@ void changediff( session& s, const boost::filesystem::path& pathname,
 
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev != NULL ) {
-	boost::filesystem::path 
-	    gitrelname = relpath(pathname,rev->rootpath);
-	rev->diff(text,leftRevision,rightRevision,gitrelname);
-		
-	s.out() << "<table style=\"text-align: left;\">" << endl;
-	s.out() << html::tr();
-	s.out() << html::th() << leftRevision << html::th::end;
-	s.out() << html::th() << rightRevision << html::th::end;
-	s.out() << html::tr::end;
+        boost::filesystem::path
+            gitrelname = rev->relative(pathname);
+        rev->diff(text,leftRevision,rightRevision,gitrelname);
 
-	boost::filesystem::ifstream input;
-	s.openfile(input,pathname);
+        s.out() << "<table style=\"text-align: left;\">" << endl;
+        s.out() << html::tr();
+        s.out() << html::th() << leftRevision << html::th::end;
+        s.out() << html::th() << rightRevision << html::th::end;
+        s.out() << html::tr::end;
 
-	/* \todo the session is not a parameter to between files... */	
-	::text doc(*primary,*secondary);
-	doc.showSideBySide(s,input,text,false);
-	s.out() << html::table::end;
-	input.close();
+        /* XXX Handle revys here as well? */
+        std::streambuf *buf = revisionsys::findRevOpenfile(s, pathname);
+        if( buf ) {
+            std::istream input(buf);
+            /* \todo the session is not a parameter to between files... */
+            ::text doc(*primary,*secondary);
+            doc.showSideBySide(s,input,text,false);
+            s.out() << html::table::end;
+            delete buf;
+        }
     }
-    
 }
 
-void 
+void
 changecheckinFetch( session& s, const url& name )
 {
-	boost::filesystem::path pathname = s.abspath(name);
+    boost::filesystem::path pathname = s.abspath(name);
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
-		checkinref ref;
-		rev->history(s.out(),s,pathname,ref);
+        checkinref ref;
+        rev->history(s.out(),s,pathname,ref);
     }
 }
 
-void 
+void
 changehistoryFetch( session& s, const url& name )
 {
-	boost::filesystem::path pathname = s.abspath(name);
-    revisionsys *rev = revisionsys::findRev(s,pathname);
+    boost::filesystem::path pathname = s.abspath(name);
+    revisionsys *rev = revisionsys::findRev(s, pathname);
     if( rev ) {
-		diffref ref;
-		rev->history(s.out(),s,pathname,ref);
+        diffref ref;
+        rev->history(s.out(),s,pathname,ref);
     }
 }
 
 
-void changeShowDetails( session& s, const url& name ) {
-	boost::filesystem::path pathname = s.abspath(name);
+void changeShowDetails( session& s, const url& name )
+{
+    boost::filesystem::path pathname = s.abspath(name);
     revisionsys *rev = revisionsys::findRev(s,pathname);
     if( rev ) {
-		std::string commit = boost::filesystem::basename(pathname);
-		htmlEscaper escaper;
-		s.out() << code();
-		escaper.attach(s.out());
-		rev->showDetails(s.out(),commit);
-		escaper.detach();
-		s.out() << html::pre::end;
+        std::string commit = boost::filesystem::basename(pathname);
+        htmlEscaper escaper;
+        s.out() << code();
+        escaper.attach(s.out());
+        rev->showDetails(s.out(),commit);
+        escaper.detach();
+        s.out() << html::pre::end;
     }
 }
 
 
 void feedRepositoryPopulate( session& s, const url& name )
 {
-	boost::filesystem::path pathname = s.abspath(name);
-	if( s.prefix(srcTop.value(s),pathname) ) {
-		/* *projectName* will try to extract a project name as the slice
-		   between *srcTop* and the repository identifier.
-		   We skip any repository feeds for projects which are not 
-		   in *srcTop*. This allow us to keep the website under revision
-		   control without commits to it popping up in the feed as check-ins.*/
-		revisionsys *rev = revisionsys::findRev(s,pathname);
-		if( rev && s.feeds ) {
-			boost::filesystem::path projname = projectName(s,rev->rootpath);	
-			s.insert("title",projname.string());
-			rev->checkins(s,pathname,*s.feeds);
-		}
-	}
+    boost::filesystem::path pathname = s.abspath(name);
+    if( s.prefix(srcTop.value(s),pathname) ) {
+        /* *projectName* will try to extract a project name as the slice
+           between *srcTop* and the repository identifier.
+           We skip any repository feeds for projects which are not
+           in *srcTop*. This allow us to keep the website under revision
+           control without commits to it popping up in the feed as check-ins.*/
+        revisionsys *rev = revisionsys::findRev(s,pathname);
+        if( rev && s.feeds ) {
+            boost::filesystem::path projname = projectName(s,rev->rootpath);
+            s.insert("title",projname.string());
+            rev->checkins(s,pathname,*s.feeds);
+        }
+    }
 }
 
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -65,11 +65,11 @@ operator<<( std::basic_ostream<ch, tr>& ostr, cppToken v ) {
 
 
 enum errToken {
-	errErr,
-	errFilename,
-	errLineNum,
-	errMessage,
-	errSeparator
+    errErr,
+    errFilename,
+    errLineNum,
+    errMessage,
+    errSeparator
 };
 
 
@@ -130,12 +130,11 @@ operator<<( std::basic_ostream<ch, tr>& ostr, xmlToken v ) {
 class cppTokListener {
 public:
     cppTokListener() {}
-    
-    virtual void newline(const char *line, 
-			  int first, int last ) = 0;
-    
-    virtual void token( cppToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
+
+    virtual void newline(const char *line, int first, int last ) = 0;
+
+    virtual void token( cppToken token, const char *line,
+        int first, int last, bool fragment ) = 0;
 };
 
 
@@ -143,21 +142,21 @@ public:
  */
 class cppTokenizer {
 protected:
-	void *state;
-	cppToken tok;
-	int hexQuads;
-	char expects;
-	cppTokListener *listener;
+    void *state;
+    cppToken tok;
+    int hexQuads;
+    char expects;
+    cppTokListener *listener;
 
 public:
-    cppTokenizer() 
-		: state(NULL), tok(cppErr), listener(NULL) {}
-	
-    explicit cppTokenizer( cppTokListener& l ) 
-	: state(NULL), tok(cppErr), listener(&l) {}
-    
+    cppTokenizer()
+        : state(NULL), tok(cppErr), listener(NULL) {}
+
+    explicit cppTokenizer( cppTokListener& l )
+        : state(NULL), tok(cppErr), listener(&l) {}
+
     void attach( cppTokListener& l ) { listener = &l; }
-    
+
     size_t tokenize( const char *line, size_t n );
 };
 
@@ -167,34 +166,33 @@ public:
 class errTokListener {
 public:
     errTokListener() {}
-    
-    virtual void newline(const char *line, 
-			  int first, int last ) = 0;
-    
-    virtual void token( errToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
+
+    virtual void newline(const char *line, int first, int last ) = 0;
+
+    virtual void token( errToken token, const char *line,
+        int first, int last, bool fragment ) = 0;
 };
 
 
 /** Tokenizer for compiler error/warning messages
 
-	Implementation Note: We use this tokenizer for parsable pylint output.
+    Implementation Note: We use this tokenizer for parsable pylint output.
  */
 class errTokenizer {
 protected:
-	void *trans, *savedtrans;
-	errToken tok;
-	errTokListener *listener;
+    void *trans, *savedtrans;
+    errToken tok;
+    errTokListener *listener;
 
 public:
-    errTokenizer() 
-		: trans(NULL), savedtrans(NULL), tok(errErr), listener(NULL) {}
-	
-    explicit errTokenizer( errTokListener& l ) 
-		: trans(NULL), savedtrans(NULL), tok(errErr), listener(&l) {}
-    
+    errTokenizer()
+        : trans(NULL), savedtrans(NULL), tok(errErr), listener(NULL) {}
+
+    explicit errTokenizer( errTokListener& l )
+        : trans(NULL), savedtrans(NULL), tok(errErr), listener(&l) {}
+
     void attach( errTokListener& l ) { listener = &l; }
-    
+
     size_t tokenize( const char *line, size_t n );
 };
 
@@ -204,34 +202,33 @@ public:
 class hrefTokListener {
 public:
     hrefTokListener() {}
-    
-    virtual void newline( const char *line, 
-			  int first, int last ) = 0;
-    
-    virtual void token( hrefToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
+
+    virtual void newline( const char *line, int first, int last ) = 0;
+
+    virtual void token( hrefToken token, const char *line,
+        int first, int last, bool fragment ) = 0;
 };
 
 
-/** The href tokenizer attempts to recognize filenames in a text. 
+/** The href tokenizer attempts to recognize filenames in a text.
     The decorators can then thus generate hypertext links out of them.
 
     \todo extend to recognize urls.
 */
 class hrefTokenizer {
 protected:
-	void *state;
-	int first;
-	hrefToken tok;
-	hrefTokListener *listener;
+    void *state;
+    int first;
+    hrefToken tok;
+    hrefTokListener *listener;
 
 public:
-    hrefTokenizer() 
-	: state(NULL), first(0), tok(hrefErr), listener(NULL) {}
+    hrefTokenizer()
+        : state(NULL), first(0), tok(hrefErr), listener(NULL) {}
 
-    hrefTokenizer( hrefTokListener& l ) 
-	: state(NULL), first(0), tok(hrefErr), listener(&l) {}
-    
+    hrefTokenizer( hrefTokListener& l )
+        : state(NULL), first(0), tok(hrefErr), listener(&l) {}
+
     void attach( hrefTokListener& l ) { listener = &l; }
 
     size_t tokenize( const char *line, size_t n );
@@ -263,12 +260,12 @@ operator<<( std::basic_ostream<ch, tr>& ostr, shToken v ) {
 class shTokListener {
 public:
     shTokListener() {}
-    
-    virtual void newline(const char *line, 
-			  int first, int last ) = 0;
-    
-    virtual void token( shToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
+
+    virtual void newline(const char *line,
+        int first, int last ) = 0;
+
+    virtual void token( shToken token, const char *line,
+        int first, int last, bool fragment ) = 0;
 };
 
 
@@ -276,19 +273,19 @@ public:
  */
 class shTokenizer {
 protected:
-	void *state;
-	shToken tok;
-	shTokListener *listener;
+    void *state;
+    shToken tok;
+    shTokListener *listener;
 
 public:
-    shTokenizer() 
-	: state(NULL), tok(shErr), listener(NULL) {}
-	
-    explicit shTokenizer( shTokListener& l ) 
-	: state(NULL), tok(shErr), listener(&l) {}
-    
+    shTokenizer()
+        : state(NULL), tok(shErr), listener(NULL) {}
+
+    explicit shTokenizer( shTokListener& l )
+        : state(NULL), tok(shErr), listener(&l) {}
+
     void attach( shTokListener& l ) { listener = &l; }
-    
+
     size_t tokenize( const char *line, size_t n );
 };
 
@@ -298,11 +295,11 @@ public:
 class xmlEscTokListener {
 public:
     xmlEscTokListener() {}
-    
+
     virtual void newline( const char *line, int first, int last ) = 0;
-    
-    virtual void token( xmlEscToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
+
+    virtual void token( xmlEscToken token, const char *line,
+        int first, int last, bool fragment ) = 0;
 };
 
 
@@ -310,17 +307,17 @@ public:
 */
 class xmlEscTokenizer {
 protected:
-	void *trans, *savedtrans;
-	xmlEscToken tok;
-	xmlEscTokListener *listener;
+    void *trans, *savedtrans;
+    xmlEscToken tok;
+    xmlEscTokListener *listener;
 
 public:
-    xmlEscTokenizer() 
-	: trans(NULL), tok(escErr), listener(NULL) {}
+    xmlEscTokenizer()
+        : trans(NULL), tok(escErr), listener(NULL) {}
 
-    xmlEscTokenizer( xmlEscTokListener& l ) 
-	: trans(NULL), tok(escErr), listener(&l) {}
-    
+    xmlEscTokenizer( xmlEscTokListener& l )
+        : trans(NULL), tok(escErr), listener(&l) {}
+
     void attach( xmlEscTokListener& l ) { listener = &l; }
 
     size_t tokenize( const char *line, size_t n );
@@ -332,46 +329,45 @@ public:
 class xmlTokListener {
 public:
     xmlTokListener() {}
-    
-    virtual void newline( const char *line, 
-			  int first, int last ) = 0;
-    
-    virtual void token( xmlToken token, const char *line, 
-			int first, int last, bool fragment ) = 0;
+
+    virtual void newline( const char *line, int first, int last ) = 0;
+
+    virtual void token( xmlToken token, const char *line,
+        int first, int last, bool fragment ) = 0;
 };
 
 
-/** The current XML tokenizer recognize elements, data, comments 
+/** The current XML tokenizer recognize elements, data, comments
     and declaration nodes.
 
     As XML Elements are complex entities beyhond the scope of a lexical
-    tokenizer, the tokens generated are: xmlElementStart ('<'), 
-    xmlName (alphanum identifier), xmlAssign, xmlAttValue ("..."), 
+    tokenizer, the tokens generated are: xmlElementStart ('<'),
+    xmlName (alphanum identifier), xmlAssign, xmlAttValue ("..."),
     xmlCloseTag ('>'), xmlElementEnd ('</') and xmlEmptyElementEnd ('/>').
 
-    xmlError is the first element such that xmlErr == 0, thus consistent 
+    xmlError is the first element such that xmlErr == 0, thus consistent
     with memset-style initialization.
-    
-    \todo Add rapidxml::node_cdata, rapidxml::node_doctype 
+
+    \todo Add rapidxml::node_cdata, rapidxml::node_doctype
           (and rapidxml::node_pi?)
 
 */
 class xmlTokenizer {
 protected:
-	void *trans, *savedtrans;
-	int first;
-	xmlToken tok;
-	int hexQuads;
-	char expects;
-	xmlTokListener *listener;
+    void *trans, *savedtrans;
+    int first;
+    xmlToken tok;
+    int hexQuads;
+    char expects;
+    xmlTokListener *listener;
 
 public:
-    xmlTokenizer() 
-	: trans(NULL), first(0), tok(xmlErr), listener(NULL) {}
+    xmlTokenizer()
+        : trans(NULL), first(0), tok(xmlErr), listener(NULL) {}
 
-    xmlTokenizer( xmlTokListener& l ) 
-	: trans(NULL), first(0), tok(xmlErr), listener(&l) {}
-    
+    xmlTokenizer( xmlTokListener& l )
+        : trans(NULL), first(0), tok(xmlErr), listener(&l) {}
+
     void attach( xmlTokListener& l ) { listener = &l; }
 
     size_t tokenize( const char *line, size_t n );

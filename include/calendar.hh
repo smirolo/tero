@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -37,22 +37,22 @@
 
 extern sessionVariable month;
 
-void 
+void
 calendarAddSessionVars( boost::program_options::options_description& all,
-			boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 
 class calendar {
 protected:
-    typedef void 
+    typedef void
     (calendar::* walkNodePtr)( const std::string& s ) const;
 
     struct walkNodeEntry {
-	const char* name;
-	walkNodePtr start;
-	walkNodePtr end;
+        const char* name;
+        walkNodePtr start;
+        walkNodePtr end;
 
-	bool operator<( const walkNodeEntry& right ) const;
+        bool operator<( const walkNodeEntry& right ) const;
     };
 
     static walkNodeEntry walkers[];
@@ -66,7 +66,6 @@ public:
 
 
 void calendarFetch( session& s, std::istream& in,
-					const url& name );
-
+    const url& name );
 
 #endif

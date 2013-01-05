@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,36 +23,36 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "markup.hh" 
+#include "markup.hh"
 
 
 template<typename cmp>
 void blogSplat<cmp>::filters( const post& v ) {
     post p = v;
-    post::headersMap::const_iterator tags 
-	= p.moreHeaders.find(cmp::name);
+    post::headersMap::const_iterator tags
+        = p.moreHeaders.find(cmp::name);
     if( tags != p.moreHeaders.end() ) {
-	size_t first = 0, last = 0;
-	while( last != tags->second.size() ) {
-	    if( tags->second[last] == ',' ) {
-			std::string s 
-				= strip(tags->second.substr(first,last-first));
-			if( !s.empty() ) {
-				p.tag = s;
-				next->filters(p);
-			}
-			first = last + 1;
-	    }
-	    ++last;
-	}
-	std::string s 
-	    = strip(tags->second.substr(first,last-first));
-	if( !s.empty() ) {
-	    p.tag = s;
-	    next->filters(p);
-	}
+        size_t first = 0, last = 0;
+        while( last != tags->second.size() ) {
+            if( tags->second[last] == ',' ) {
+                std::string s
+                    = strip(tags->second.substr(first,last-first));
+                if( !s.empty() ) {
+                    p.tag = s;
+                    next->filters(p);
+                }
+                first = last + 1;
+            }
+            ++last;
+        }
+        std::string s
+            = strip(tags->second.substr(first,last-first));
+        if( !s.empty() ) {
+            p.tag = s;
+            next->filters(p);
+        }
     } else {
-		next->filters(p);
+        next->filters(p);
     }
 }
 
@@ -66,16 +66,16 @@ void blogInterval<cmp>::provide()
     /* sorted from decreasing order most recent to oldest. */
     super::first = std::lower_bound(super::first,super::last,bottom,c);
     if( super::first == super::posts.end() ) {
-		super::first = super::posts.begin();
+        super::first = super::posts.begin();
     }
     super::last = std::upper_bound(super::first,super::last,top,c);
 
 #if 0
     std::cerr << "[blogInterval] provide:" << std::endl;
-    for( typename super::const_iterator f = super::posts.begin(); 
-		 f != super::posts.end(); ++f ) {	
+    for( typename super::const_iterator f = super::posts.begin();
+		 f != super::posts.end(); ++f ) {
 		std::cerr << f->time << ": " << f->tag << ": " << f->title;
-		if( c(*super::first,*f) 
+		if( c(*super::first,*f)
 			&& (super::last == super::posts.end() || c(*f,*super::last)) ) {
 			std::cerr << " *";
 		}
@@ -85,17 +85,17 @@ void blogInterval<cmp>::provide()
 }
 
 
-template<typename defaultWriter, const char* varname, const char* filePat, 
-	 typename cmp>
+template<typename defaultWriter, const char* varname, const char* filePat,
+         typename cmp>
 void blogByInterval( session& s, const url& name )
 {
     cmp c;
-    defaultWriter writer(s.out());    
+    defaultWriter writer(s.out());
     typename cmp::valueType lower, upper;
     try {
-		boost::smatch m;	    
+        boost::smatch m;
 #if 0
-		std::string firstName = boost::filesystem::basename(name);
+        std::string firstName = boost::filesystem::basename(name);
 #else
 		std::string firstName;
 		if( boost::regex_search(name.string(),m,
@@ -222,45 +222,32 @@ void blogTagLinks( session& s, const url& name ) {
 template<const char *filePat>
 void blogRelatedSubjects( session& s, const url& name )
 {
-	using namespace boost::filesystem;
+    using namespace boost::filesystem;
 
-    boost::filesystem::path blogroot 
-        = s.root(s.abspath(name),blogTrigger,true);
+    boost::filesystem::path blogroot
+        = s.root(s.abspath(name), blogTrigger, true);
 
-	boost::filesystem::path related = name.pathname;
-	if( !is_regular_file(s.abspath(name)) ) {
-		/* If *name* is not a regular file, we will build a list 
-		   of posts related to the most recent post. */
-		bool firstTime = true;
-		boost::posix_time::ptime mostRecent;
-		for( directory_iterator entry = directory_iterator(blogroot); 
-			 entry != directory_iterator(); ++entry ) {
-			boost::smatch m;	    
-			path filename(*entry);
-			if( is_regular_file(filename) 
-				&& boost::regex_search(filename.string(),
-									   m,boost::regex(filePat)) ) {
-				boost::posix_time::ptime time 
-					= boost::posix_time::from_time_t(last_write_time(filename));
-				if( firstTime || time > mostRecent ) {
-					mostRecent = time;
-					related = filename;
-					firstTime = false;
-				}
-			}
-		}
-	}
-
-    slice<char> text = s.loadtext(related);
-    mailAsPost listener;
-    rfc2822Tokenizer tok(listener);
-    tok.tokenize(text.begin(),text.size());
-    post p = listener.unserialized();
+    post p;
+    if( !is_regular_file(s.abspath(name)) ) {
+        /* If *name* is not a regular file, we will build a list
+           of posts related to the most recent post. */
+        mostRecentFilter mostRecent(NULL);
+        mailParser walker(boost::regex(blogPat), mostRecent, true);
+        walker.fetch(s, blogroot);
+        p = mostRecent.mostRecent();
+    } else {
+        boost::filesystem::path related = name.pathname;
+        slice<char> text = s.loadtext(related);
+        mailAsPost listener;
+        rfc2822Tokenizer tok(listener);
+        tok.tokenize(text.begin(),text.size());
+        p = listener.unserialized();
+    }
 
     typename feedSelect<orderByTag<post> >::matchKeySet tags;
-	insertItems(p.moreHeaders["tags"].begin().base(),
-				p.moreHeaders["tags"].end().base(),
-				std::inserter(tags,tags.begin()));
+    insertItems(p.moreHeaders["tags"].begin().base(),
+        p.moreHeaders["tags"].end().base(),
+        std::inserter(tags,tags.begin()));
 
 #if 0
 	std::cerr << "tags=" << std::endl;

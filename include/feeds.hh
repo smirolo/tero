@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,12 @@
 #include "mail.hh"
 #include "post.hh"
 #include "decorator.hh"
+#include "revsys.hh"
 
 /* Feeds are used to bundle and present a set of posts together.
    The aggregate function is used to populate a feed from different
    sources selected through the toplevel *dispatchDoc*.
-   The ordered and page retained post filters are usually used 
+   The ordered and page retained post filters are usually used
    together to display an ordered subset of posts (example: the latest
    commits).
    The summurize and oneline pass-thru filters implement alternative
@@ -46,8 +47,8 @@
 */
 
 
-/** On flush (i.e. provide), the feedOrdered retained filter will sort 
-    its posts using the *cmp* operator and pass it to the next filter 
+/** On flush (i.e. provide), the feedOrdered retained filter will sort
+    its posts using the *cmp* operator and pass it to the next filter
     down in sorted order. */
 template<typename cmp>
 class feedOrdered : public retainedFilter {
@@ -160,14 +161,13 @@ public:
 
 
 /** Write an html table row per post; group all posts with the same date
-	under a single header.
+    under a single header.
  */
 class byTimeHtml : public ostreamWriter {
 private:
     /** Time stored in the previous post (used in filters method).
      */
-    boost::posix_time::ptime prev_header;    
-
+    boost::posix_time::ptime prev_header;
 
 public:
     explicit byTimeHtml( std::ostream& o ) : ostreamWriter(o) {}
@@ -179,13 +179,13 @@ public:
 
 /** Aggregate feeds
 
-    Use the toplevel *dispatchDoc* to fetch callback *varname*, for a file 
+    Use the toplevel *dispatchDoc* to fetch callback *varname*, for a file
     basename(pathname) in all sub-directories in dirname(pathname).
 
-    This function uses dispatchDoc::fetch and thus potentially might be 
-    invoked recursively. All posts are passed through the global s.feeds 
+    This function uses dispatchDoc::fetch and thus potentially might be
+    invoked recursively. All posts are passed through the global s.feeds
     so it remains to insure s.feeds is not intempestively updated.
-    We thus only initialized s.feeds to defaultWriter and later call 
+    We thus only initialized s.feeds to defaultWriter and later call
     s.feeds.flush when it is null entering the function.
 */
 template<typename defaultWriter, const char* varname, const char *filePat>
@@ -203,7 +203,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname );
 
 
 /** Feed of summaries for files in a directory.
-    The summary is based on the first N lines of the file 
+    The summary is based on the first N lines of the file
     or the filename when there are no assiated presentation.
  */
 template<typename defaultWriter, const char* filePat>
@@ -216,7 +216,7 @@ template<typename defaultWriter, const char* varname>
 void feedLatestPosts( session& s, const url& name );
 
 
-/** Aggregate over time with a fixed number of posts. 
+/** Aggregate over time with a fixed number of posts.
     Most suitable for site feeds. */
 template<const char* varname>
 void htmlSiteAggregate( session& s, const url& name );

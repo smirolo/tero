@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Fortylines LLC
+/* Copyright (c) 2011-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,8 @@ enum rfc2822Token {
     rfc2822FieldName,
     rfc2822Colon,
     rfc2822FieldBody,
-    rfc2822MessageBody
+    rfc2822MessageBody,
+    rfc2822MessageBreak
 };
 
 extern const char *rfc2822TokenTitles[];
@@ -57,56 +58,55 @@ operator<<( std::basic_ostream<ch, tr>& ostr, rfc2822Token v ) {
 class rfc2822TokListener {
 public:
     rfc2822TokListener() {}
-    
-    virtual void newline(const char *line, 
-			  int first, int last ) = 0;
-    
-    virtual void token( rfc2822Token token, const char *line, 
-			int first, int last, bool fragment ) = 0;
+
+    virtual void newline(const char *line, int first, int last ) = 0;
+
+    virtual void token( rfc2822Token token, const char *line,
+        int first, int last, bool fragment ) = 0;
 };
 
 
 template<typename charT, typename traitsT = std::char_traits<charT> >
 class htmlrfc2822TokListener : public rfc2822TokListener {
 protected:
-	std::basic_ostream<charT,traitsT> *ostr;
-	
+    std::basic_ostream<charT,traitsT> *ostr;
+
 public:
-    explicit htmlrfc2822TokListener( std::basic_ostream<charT,traitsT>& o ) 
-	: ostr(&o) {}
-    
+    explicit htmlrfc2822TokListener( std::basic_ostream<charT,traitsT>& o )
+        : ostr(&o) {}
+
 public:
     void newline(const char *line, int first, int last ) {
-	*ostr << std::endl;
+        *ostr << std::endl;
     }
 
-    void token( rfc2822Token token, const char *line, 
-		int first, int last, bool fragment ) {
-	*ostr << "<span class=\"" << rfc2822TokenTitles[token] << "\">";
-	std::copy(&line[first],&line[last],
-		  std::ostream_iterator<charT>(*ostr));
-	*ostr << "</span>";
+    void token( rfc2822Token token, const char *line,
+        int first, int last, bool fragment ) {
+        *ostr << "<span class=\"" << rfc2822TokenTitles[token] << "\">";
+        std::copy(&line[first],&line[last],
+            std::ostream_iterator<charT>(*ostr));
+        *ostr << "</span>";
     }
 };
 
 
-/** Tokenizer for rfc2822 
+/** Tokenizer for rfc2822
  */
 class rfc2822Tokenizer {
 protected:
-	void *state;
-	rfc2822Token tok;
-	rfc2822TokListener *listener;
+    void *state;
+    rfc2822Token tok;
+    rfc2822TokListener *listener;
 
 public:
-    rfc2822Tokenizer() 
-	: state(NULL), tok(rfc2822Err), listener(NULL) {}
-	
-    explicit rfc2822Tokenizer( rfc2822TokListener& l ) 
-	: state(NULL), tok(rfc2822Err), listener(&l) {}
-    
+    rfc2822Tokenizer()
+        : state(NULL), tok(rfc2822Err), listener(NULL) {}
+
+    explicit rfc2822Tokenizer( rfc2822TokListener& l )
+        : state(NULL), tok(rfc2822Err), listener(&l) {}
+
     void attach( rfc2822TokListener& l ) { listener = &l; }
-    
+
     size_t tokenize( const char *line, size_t n );
 };
 

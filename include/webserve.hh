@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #include <boost/date_time/posix_time/conversion.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-/** \file webserve.hh 
+/** \file webserve.hh
 
     - Common functions used by web servers to access files
     - Wrappers around common CGI functionalities.
@@ -51,12 +51,6 @@
 boost::posix_time::ptime
 getmtime( const boost::filesystem::path& pathname );
 
-/** returns *pathname* as a relative path from *base*.
- */
-boost::filesystem::path 
-relpath( const boost::filesystem::path& pathname,
-	 const boost::filesystem::path& base );
-
 
 /* \todo rfc? percent escape a string. */
 std::string uriEncode( const std::string& );
@@ -69,22 +63,22 @@ public:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<(std::basic_ostream<ch, tr>& ostr, const url& u ) {
-		if( u.absolute() ) {
-			ostr << u.protocol << ':';
-			if( u.protocol != "mailto" ) ostr << "//";
-		}
-		if( !u.host.empty() ) ostr << u.host;
-		if( u.port > 0 ) ostr << ':' << u.port;
-		ostr << u.pathname.string();
-		return ostr;
+        if( u.absolute() ) {
+            ostr << u.protocol << ':';
+            if( u.protocol != "mailto" ) ostr << "//";
+        }
+        if( !u.host.empty() ) ostr << u.host;
+        if( u.port > 0 ) ostr << ':' << u.port;
+        ostr << u.pathname.string();
+        return ostr;
     }
 
     friend bool operator<( const url& left, const url& right ) {
-	return left.string() < right.string();
+        return left.string() < right.string();
     }
 
     friend bool operator!=( const url& left, const url& right ) {
-	return left.string() != right.string();
+        return left.string() != right.string();
     }
 
 
@@ -94,24 +88,24 @@ public:
     std::string host;
     std::string protocol;
     boost::filesystem::path pathname;
-    
+
 public:
     url() : port(0), host(""), protocol(""), pathname("") {}
 
     explicit url( const std::string& name );
-    
-    url( const std::string& pprotocol, const std::string& phost, 
-	 const boost::filesystem::path& ppathname ) 
-	: port(0), host(phost), protocol(pprotocol), pathname(ppathname) {} 
 
-    url( const std::string& pprotocol, const std::string& phost, int pport, 
-	 const boost::filesystem::path& ppathname ) 
-	: port(pport), host(phost), protocol(pprotocol), pathname(ppathname) {} 
-    
+    url( const std::string& pprotocol, const std::string& phost,
+        const boost::filesystem::path& ppathname )
+        : port(0), host(phost), protocol(pprotocol), pathname(ppathname) {}
+
+    url( const std::string& pprotocol, const std::string& phost, int pport,
+        const boost::filesystem::path& ppathname )
+        : port(pport), host(phost), protocol(pprotocol), pathname(ppathname) {}
+
     bool absolute() const;
 
     bool empty() const {
-	return string().empty();
+        return string().empty();
     }
 
     url operator/( const boost::filesystem::path& right ) const;
@@ -141,80 +135,80 @@ protected:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<( std::basic_ostream<ch, tr>& ostr, httpHeaderSet& h ) {
-	if( !h.firstTime ) return ostr;
-       
-	if( !h.contentTypeValue.empty() ) {
-	    ostr << "Content-Type:" << h.contentTypeValue;
-	    if( !h.contentTypeCharset.empty() ) {
-		ostr << ";charset=" << h.contentTypeCharset;
-	    }
-	    ostr << "\r\n";	
-	}
-	if( h.contentLengthValue > 0 ) {
-	    ostr << "Content-Length:" << h.contentLengthValue << "\r\n";
-	}
-	if( !h.contentDispositionValue.empty() ) {
-	    ostr << "Content-Disposition:" << h.contentDispositionValue;
-	    if( !h.contentDispositionFilename.empty() ) {
-		ostr << ";filename=" << h.contentDispositionFilename;
-	    }
-	    ostr << "\r\n";
-	}
-	if( !h.setCookieName.empty() ) {
-	    ostr << "Set-Cookie:" << h.setCookieName << "=" << h.setCookieValue
-		 << "; Path=/";
-	    if( h.setCookieLifetime 
-		!= boost::posix_time::ptime::date_duration_type(0) ) {
-		using namespace boost::posix_time;
-		ptime now = second_clock::universal_time(); // Use the clock 
-		// Get the date part out of the time 
-		ptime::date_type today = now.date();        
-		ptime::date_type expires = today + h.setCookieLifetime;
-		ostr << "; expires=" 
-		     << expires.day_of_week() 
-		     << ", " << expires.day()
-		     << ' ' << expires.month()
-		     << " " << std::setfill('0') << std::setw(2) 
-		     << expires.year()
-		     << " " << std::setfill('0') << std::setw(2) 
-		     << now.time_of_day().hours()
-		     << ':' << std::setfill('0') << std::setw(2) 
-		     << now.time_of_day().minutes()
-		     << ':' << std::setfill('0') << std::setw(2) 
-		     << now.time_of_day().seconds()
-		     << " GMT";
-	    }
-	    ostr << "; Version=1\r\n";
-	}
-	if( !h.locationValue.empty() ) {
-	    ostr << "Location: " << h.locationValue << "\r\n";
-	}
-	if( !h.refreshUrl.empty() ) {
-	    ostr << "Refresh:" << h.refreshDelay 
-		 << ";URL=" << h.refreshUrl << "\r\n";
-	}
-	if( h.statusCode > 0 ) {
-	    switch( h.statusCode ) {
-	    case 404:
-		ostr << "Status: " << h.statusCode << " Not Found\r\n";
-		break;
-	    default:
-		ostr << "Status: " << h.statusCode << "\r\n";
-	    }
-	}
-	ostr << "\r\n";
-	h.firstTime = false;
-	return ostr;
+        if( !h.firstTime ) return ostr;
+
+        if( !h.contentTypeValue.empty() ) {
+            ostr << "Content-Type:" << h.contentTypeValue;
+            if( !h.contentTypeCharset.empty() ) {
+                ostr << ";charset=" << h.contentTypeCharset;
+            }
+            ostr << "\r\n";
+        }
+        if( h.contentLengthValue > 0 ) {
+            ostr << "Content-Length:" << h.contentLengthValue << "\r\n";
+        }
+        if( !h.contentDispositionValue.empty() ) {
+            ostr << "Content-Disposition:" << h.contentDispositionValue;
+            if( !h.contentDispositionFilename.empty() ) {
+                ostr << ";filename=" << h.contentDispositionFilename;
+            }
+            ostr << "\r\n";
+        }
+        if( !h.setCookieName.empty() ) {
+            ostr << "Set-Cookie:" << h.setCookieName << "=" << h.setCookieValue
+                 << "; Path=/";
+            if( h.setCookieLifetime
+                != boost::posix_time::ptime::date_duration_type(0) ) {
+                using namespace boost::posix_time;
+                ptime now = second_clock::universal_time(); // Use the clock
+                // Get the date part out of the time
+                ptime::date_type today = now.date();
+                ptime::date_type expires = today + h.setCookieLifetime;
+                ostr << "; expires="
+                     << expires.day_of_week()
+                     << ", " << expires.day()
+                     << ' ' << expires.month()
+                     << " " << std::setfill('0') << std::setw(2)
+                     << expires.year()
+                     << " " << std::setfill('0') << std::setw(2)
+                     << now.time_of_day().hours()
+                     << ':' << std::setfill('0') << std::setw(2)
+                     << now.time_of_day().minutes()
+                     << ':' << std::setfill('0') << std::setw(2)
+                     << now.time_of_day().seconds()
+                     << " GMT";
+            }
+            ostr << "; Version=1\r\n";
+        }
+        if( !h.locationValue.empty() ) {
+            ostr << "Location: " << h.locationValue << "\r\n";
+        }
+        if( !h.refreshUrl.empty() ) {
+            ostr << "Refresh:" << h.refreshDelay
+                 << ";URL=" << h.refreshUrl << "\r\n";
+        }
+        if( h.statusCode > 0 ) {
+            switch( h.statusCode ) {
+            case 404:
+                ostr << "Status: " << h.statusCode << " Not Found\r\n";
+                break;
+            default:
+                ostr << "Status: " << h.statusCode << "\r\n";
+            }
+        }
+        ostr << "\r\n";
+        h.firstTime = false;
+        return ostr;
     }
 
 public:
     httpHeaderSet();
 
-    httpHeaderSet& contentDisposition( const std::string& value, 
-				       const std::string& filename );
+    httpHeaderSet& contentDisposition( const std::string& value,
+        const std::string& filename );
 
-    httpHeaderSet& contentType( const std::string& value = "text/html", 
-				 const std::string& charset = "iso-8859-1" );
+    httpHeaderSet& contentType( const std::string& value = "text/html",
+        const std::string& charset = "iso-8859-1" );
 
     httpHeaderSet& contentLength( size_t length );
 
@@ -222,11 +216,11 @@ public:
 
     httpHeaderSet& refresh( size_t delay, const url& v );
 
-    httpHeaderSet& 
-    setCookie( const std::string& name, 
-	       const std::string& value, 
-	       boost::posix_time::ptime::date_duration_type expires 
-	       = boost::posix_time::ptime::date_duration_type(0) );
+    httpHeaderSet&
+    setCookie( const std::string& name,
+        const std::string& value,
+        boost::posix_time::ptime::date_duration_type expires
+        = boost::posix_time::ptime::date_duration_type(0) );
 
     httpHeaderSet& status( unsigned int s );
 };
@@ -239,15 +233,15 @@ public:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<(std::basic_ostream<ch, tr>& ostr, const emptyParaHackType& v ) {
-	ostr << "<p>" << std::endl;
-	for( int i = 0; i < 20; ++i ) {
-	    for( int i = 0; i < 12; ++i ) {
-		ostr << "&nbsp;";
-	    }
-	    ostr << std::endl;
-	}
-	ostr << "</p>" << std::endl;
-	return ostr;
+        ostr << "<p>" << std::endl;
+        for( int i = 0; i < 20; ++i ) {
+            for( int i = 0; i < 12; ++i ) {
+                ostr << "&nbsp;";
+            }
+            ostr << std::endl;
+        }
+        ostr << "</p>" << std::endl;
+        return ostr;
     };
 };
 
@@ -267,7 +261,7 @@ public:
 
     basic_cgi_parser() : optDesc(NULL), positionalDesc(NULL) {}
 
-    /** Sets options descriptions to use. 
+    /** Sets options descriptions to use.
      */
     basic_cgi_parser& options( const boost::program_options::options_description& desc ) {
         optDesc = &desc;
@@ -276,7 +270,7 @@ public:
 
     /** Sets positional options description to use. */
     basic_cgi_parser& positional( const boost::program_options::positional_options_description& desc ) {
-	positionalDesc = &desc;
+        positionalDesc = &desc;
         return *this;
     }
 
@@ -287,9 +281,9 @@ typedef basic_cgi_parser cgi_parser;
 
 
 /** This function takes a range of characters [*first,afterLast[ and returns
-	the first segment between separators as [*first,*segAfterLast[.		
+    the first segment between separators as [*first,*segAfterLast[.
  */
-void 
+void
 pathSeg( const char** first, const char **segAfterLast, const char *afterLast );
 
 

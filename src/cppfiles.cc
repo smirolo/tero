@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -24,14 +24,14 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "cppfiles.hh"
-#include "revsys.hh"
+#include "document.hh"
 #include "changelist.hh"
 #include "decorator.hh"
 
-void cppFetch( session& s, std::istream& in, const url& name ) 
+void cppFetch( session& s, std::istream& in, const url& name )
 {
-    linkLight leftLinkStrm(s);
-    linkLight rightLinkStrm(s);
+    linkLight leftLinkStrm(s, siteTop.value(s));
+    linkLight rightLinkStrm(s, siteTop.value(s));
     cppLight leftCppStrm;
     cppLight rightCppStrm;
     decoratorChain leftChain;
@@ -49,8 +49,8 @@ void cppDiff( session& s, const url& name )
 {
     using namespace boost;
 
-    linkLight leftLinkStrm(s);
-    linkLight rightLinkStrm(s);
+    linkLight leftLinkStrm(s, siteTop.value(s));
+    linkLight rightLinkStrm(s, siteTop.value(s));
     cppLight leftCppStrm;
     cppLight rightCppStrm;
     decoratorChain leftChain;
