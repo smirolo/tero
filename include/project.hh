@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 
 #include "markup.hh"
 #include "changelist.hh"
+#include "document.hh"
 
 /**
    Pages related to projects.
@@ -37,28 +38,28 @@
 
 extern pathVariable srcTop;
 
-void 
+void
 projectAddSessionVars( boost::program_options::options_description& all,
-		       boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 
 /** output an hyper link to a project index page.
 */
-class projhref {    
-protected:  
+class projhref {
+protected:
     std::string name;
     boost::filesystem::path base;
 
     template<typename ch, typename tr>
     friend inline std::basic_ostream<ch, tr>&
     operator<<( std::basic_ostream<ch, tr>& ostr, const projhref& v ) {
-	ostr << html::a().href((v.base / v.name / "dws.xml").string())
-	     << v.name << html::a::end;
-	return ostr;
+        ostr << html::a().href((v.base / v.name / "dws.xml").string())
+             << v.name << html::a::end;
+        return ostr;
     }
-    
-public:  
-    projhref( const session& s, const std::string& n ); 
+
+public:
+    projhref( const session& s, const std::string& n );
 
 };
 
@@ -80,51 +81,32 @@ void projCreateFetch( session& s, const url& name );
 
 /** Show a top-level page index of project.
 
-    The project view description and dependencies of a project as stated 
-    in the index file. A project view also contains the list of unit 
-    failures, checkstyle failures and open issues. There are also links 
-    to download <!-- through e-commerce transaction? --> the project as 
+    The project view description and dependencies of a project as stated
+    in the index file. A project view also contains the list of unit
+    failures, checkstyle failures and open issues. There are also links
+    to download <!-- through e-commerce transaction? --> the project as
     a package, browse the source code and sign-on to the rss feed.
 */
-void projindexFetch( session& s, const url& name );
+void projindexFetch( session& s, const slice<char>& text, const url& name );
 
 
-class projfiles {
-public:    
-    typedef std::list<boost::regex> filterContainer;
-
-    enum stateCode {
-	start,
-	toplevelFiles,
-	direntryFiles
-    };
-
-    mutable stateCode state;
-
+class projfiles : public dirwalker {
 protected:
-    /** directory in the source tree which is the root of the project (srcDir)
-     */
-    mutable boost::filesystem::path projdir;
-    
-    virtual void 
+    virtual void
     addDir( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void 
+    virtual void
     addFile( session& s, const boost::filesystem::path& pathname ) const;
 
     virtual void flush( session& s ) const;
 
-    /** returns true when the pathname matches one of the pattern in *filters*.
-     */
-    bool selects( const boost::filesystem::path& pathname ) const;
-    
 public:
 
-    void fetch( session& s, const boost::filesystem::path& pathname );
-
+    virtual void fetch( session& s, const boost::filesystem::path& pathname );
 };
+
 
 void projfilesFetch( session& s, const url& name );
 
- 
+
 #endif

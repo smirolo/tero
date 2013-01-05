@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,9 @@
 sessionVariable month("month","month");
 
 
-void 
+void
 calendarAddSessionVars( boost::program_options::options_description& all,
-			boost::program_options::options_description& visible )
+    boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
 
@@ -108,11 +108,11 @@ void calendar::any( const std::string& s ) const {
 
 
 calendar::walkNodeEntry* calendar::walker( const std::string& s ) const {
-    walkNodeEntry *walkersEnd 
-	= &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
+    walkNodeEntry *walkersEnd
+        = &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
     walkNodeEntry *d;
     walkNodeEntry key;
-    
+
     key.name = s.c_str();
     d = std::lower_bound(walkers,walkersEnd,key);
     if( d != walkersEnd ) return d;
@@ -126,79 +126,79 @@ void calendar::parse( session& s, std::istream& ins ) const {
 
     size_t lineCount = 0;
     while( !ins.eof() ) {
-	boost::smatch m;
-	std::string line;
-	std::getline(ins,line);
-	++lineCount;
-	if( regex_match(line,m,syntax) ) {
-	    walkNodeEntry *w = walker(m.str(1));
-	    if( w ) (this->*(w->start))(m.str(2));
-	}
+        boost::smatch m;
+        std::string line;
+        std::getline(ins,line);
+        ++lineCount;
+        if( regex_match(line,m,syntax) ) {
+            walkNodeEntry *w = walker(m.str(1));
+            if( w ) (this->*(w->start))(m.str(2));
+        }
     }
 }
 
 
-void calendarFetch( session& s, std::istream& in,
-					const url& name ) {
+void calendarFetch( session& s, std::istream& in, const url& name )
+{
     using namespace std;
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-	calendar c;
-	c.parse(s,in);
+    calendar c;
+    c.parse(s,in);
 
     date today;
     std::string ms = month.value(s);
     if( ms.empty() ) {
-	today = second_clock::local_time().date();
+        today = second_clock::local_time().date();
     } else {
-	today = date(from_simple_string(ms));
+        today = date(from_simple_string(ms));
     }
 
     date firstOfMonth(today.year(),today.month(),1);
     date lastOfMonth(firstOfMonth.end_of_month());
 
     static const char *weekdayNames[] = {
-	"Sunday",
-	"Monday",
-	"Tuesday",
-	"Wednesday",
-	"Thursday",
-	"Friday",
-	"Saturday"
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
     };
 
     {
-	std::stringstream strm;
-	strm << "/schedule.ics?month=" << (firstOfMonth - days(1)) << "";	
-	s.out() << html::a().href(strm.str()) << "prev" << html::a::end;
-	strm.str("");
-	s.out() << " ";
-	strm << "/schedule.ics?month=" << (lastOfMonth + days(1)) << "";	
-	s.out() << html::a().href(strm.str()) << "next" << html::a::end;	
-    }    
-    
+        std::stringstream strm;
+        strm << "/schedule.ics?month=" << (firstOfMonth - days(1)) << "";
+        s.out() << html::a().href(strm.str()) << "prev" << html::a::end;
+        strm.str("");
+        s.out() << " ";
+        strm << "/schedule.ics?month=" << (lastOfMonth + days(1)) << "";
+        s.out() << html::a().href(strm.str()) << "next" << html::a::end;
+    }
+
     s.out() << html::table();
-    s.out() << "<caption>" << today.month() << " " << today.year() 
-	 << "</caption>" << std::endl;
+    s.out() << "<caption>" << today.month() << " " << today.year()
+            << "</caption>" << std::endl;
     s.out() << html::tr();
     for( int day = 0; day < 7; ++day ) {
-	s.out() << html::th()
-	     << weekdayNames[day]
-	     << html::th::end;
+        s.out() << html::th()
+                << weekdayNames[day]
+                << html::th::end;
     }
     s.out() << html::tr::end;
 
     date firstOfCal = firstOfMonth - days((size_t)firstOfMonth.day_of_week());
     for( date d = firstOfCal; d < lastOfMonth; ) {
-	s.out() << html::tr();
-	for( int day = 0; day < 7; ++day ) {
-	    s.out() << html::td()
-		 << d
-		 << html::td::end;	    
-	    d += days(1);	    
-	}
-	s.out() << html::tr::end;
+        s.out() << html::tr();
+        for( int day = 0; day < 7; ++day ) {
+            s.out() << html::td()
+                    << d
+                    << html::td::end;
+            d += days(1);
+        }
+        s.out() << html::tr::end;
     }
     s.out() << html::table::end;
 }

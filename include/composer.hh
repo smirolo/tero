@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,9 @@
 /** Add the command line options which are referenced (*all*) and the subset
     printed in the command line help (*visible*).
  */
-void 
+void
 composerAddSessionVars( boost::program_options::options_description& all,
-			boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 /** Path to the directory containing the template HTML files (.template)
  */
@@ -49,6 +49,9 @@ extern pathVariable themeDir;
  */
 template<const char *layout>
 void compose( session& s, const url& name );
+
+void compose( session& s, std::istream& strm,
+    const boost::filesystem::path& fixed );
 
 #include "composer.tcc"
 

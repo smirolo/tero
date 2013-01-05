@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,8 @@
 #define guarddocument
 
 #include "session.hh"
-#include "markup.hh" 
+#include "markup.hh"
+#include "revsys.hh"
 
 /**
    Basic functions to display the content of a "document".
@@ -41,48 +42,48 @@ class basicDecorator;
 typedef basicDecorator<char,std::char_traits<char> > decorator;
 
 
-/** When the dispatcher has found a matching pattern (and associated 
+/** When the dispatcher has found a matching pattern (and associated
    callback) for a pathname, before it goes on to call the fetch method,
    it will check if the document should be served to everyone or only
    to authenticated users.
 */
 enum authFetchType {
-	noAuth        = 0x0,
-	whenAuth      = 0x4
+    noAuth        = 0x0,
+    whenAuth      = 0x4
 };
 
-/** When the dispatcher has found a matching pattern (and associated 
+/** When the dispatcher has found a matching pattern (and associated
    callback) for a pathname, before it goes on to call the fetch method,
    it will check if the document is the next step in a process pipeline
    (ex. registration) or not and serve it accordingly.
 */
 enum pipeFetchType {
-	noPipe        = 0x0,
-	whenPipe      = 0x8
+    noPipe        = 0x0,
+    whenPipe      = 0x8
 };
 
 
 /** Prototype for document callbacks
 
-   When the dispatcher has found a matching pattern (and associated 
+   When the dispatcher has found a matching pattern (and associated
    callback) for a pathname, it will check if the fetch method is
    expecting a in-memory text of the underlying file, an istream
    of the same file or just the pathname.
 
-   *always*          call fetch regardless of pathname 
+   *always*          call fetch regardless of pathname
    *whenFileExist*   call fetch only if *pathname* exists in siteTop.
 
 */
-typedef 
+typedef
 void (*nameFetchFunc)( session& s, const url& name );
 
 typedef
 void (*streamFetchFunc)( session& s, std::istream& stream,
-						 const url& name );
+    const url& name );
 
 typedef
 void (*textFetchFunc)( session& s, const slice<char>& text,
-					   const url& name );
+    const url& name );
 
 
 /** An entry in the dispatch table.
@@ -91,9 +92,9 @@ struct fetchEntry {
     const char *name;
     boost::regex pat;
     uint8_t behavior;
-	nameFetchFunc nameFetch;
-	streamFetchFunc streamFetch;
-	textFetchFunc textFetch;
+    nameFetchFunc nameFetch;
+    streamFetchFunc streamFetch;
+    textFetchFunc textFetch;
 };
 
 
@@ -108,14 +109,14 @@ extern urlVariable nextpage;
 /** Add session variables related to generic documents.
  */
 void docAddSessionVars( boost::program_options::options_description& opts,
-						boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
-   
-/* Pick the appropriate presentation entry (callback) based on regular 
+
+/* Pick the appropriate presentation entry (callback) based on regular
    expressions applied to a document name.
  */
 class dispatchDoc {
-protected:    
+protected:
     fetchEntry* entries;
     size_t nbEntries;
 
@@ -125,34 +126,34 @@ protected:
 
 public:
 
-    /** Initialize the dispatcher with a set of (name,pattern,callback) 
-	enties.
+    /** Initialize the dispatcher with a set of (name,pattern,callback)
+        enties.
 
-	The entries have to be sorted by name in increasing alphabetical 
-	order. Out of the patterns associated to a specific name, the first
-	matching rule applies.
+        The entries have to be sorted by name in increasing alphabetical
+        order. Out of the patterns associated to a specific name, the first
+        matching rule applies.
     */
     dispatchDoc( fetchEntry* entries, size_t nbEntries );
 
     /** returns the singleton instance
      */
-    static dispatchDoc *instance() { 
-	assert( singleton != NULL );
-	return singleton;
+    static dispatchDoc *instance() {
+        assert( singleton != NULL );
+        return singleton;
     }
 
     /** Invoke the callback associated with *widget* and the matching
-	pattern for *value*.
-	
-	This method returns true when a callback has been invoked.
+        pattern for *value*.
+
+        This method returns true when a callback has been invoked.
     */
-    bool fetch( session& s, 
-		const std::string& widget, const url& value );
+    bool fetch( session& s,
+        const std::string& widget, const url& value );
 
     /** Returns the entry associated with *name* and those pattern
-	matches *value* or NULL if no entries could be found.
+        matches *value* or NULL if no entries could be found.
     */
-    const fetchEntry* 
+    const fetchEntry*
     select( const std::string& name, const std::string& value ) const;
 
 };
@@ -162,26 +163,40 @@ public:
     walk() for file whose name match the regular expression *filematch*.
 */
 class dirwalker {
-protected:
-    boost::regex filematch;
+public:
+    typedef std::list<boost::regex> filterContainer;
 
-    virtual void first() const {}
-    virtual void last() const {}
+    enum stateCode {
+        start,
+        toplevelFiles,
+        direntryFiles
+    };
+
+    filterContainer pats;
+    mutable stateCode state;
+
+protected:
+    virtual void
+    addDir( session& s, const boost::filesystem::path& pathname ) const {}
+
+    virtual void
+    addFile( session& s, const boost::filesystem::path& pathname ) const {}
+
+    virtual void flush( session& s ) const {}
+
+    /** returns true when the pathname matches one of the pattern in *filters*.
+     */
+    bool selects( const boost::filesystem::path& pathname ) const;
+
+    void recurse( session& s, revisionsys *rev,
+        boost::filesystem::path nodedir );
 
 public:
-    dirwalker() : filematch(".*") {}
+    dirwalker();
 
-    explicit dirwalker( const boost::regex& fm  ) 
-	: filematch(fm) {}
-
-    /** *name* initialized with pathname for the todo filters to set the uuid
-	correctly on filters(). 
-    */
-    virtual void walk( session& s, std::istream& ins, 
-		       const std::string& name ) const {}
+    explicit dirwalker( const boost::regex& fm );
 
     virtual void fetch( session& s, const boost::filesystem::path& pathname );
-
 };
 
 
@@ -193,7 +208,7 @@ void consMeta( session& s, const url& name )
     s.out() << value;
 }
 
-/** Assign the last modification time of *pathname* to the time session 
+/** Assign the last modification time of *pathname* to the time session
     variable.
  */
 void metaLastTime( session& s, const boost::filesystem::path& pathname );
@@ -215,49 +230,49 @@ template<const char *varname>
 void metaFetch( session& s, const url& name )
 {
     session::variables::const_iterator look = s.find(varname);
-    if( s.found(look) ) {    
-       s.out() << look->second.value;
+    if( s.found(look) ) {
+        s.out() << look->second.value;
     } else {
-		s.out() << s.subdirpart(siteTop.value(s),s.abspath(name));
+        s.out() << s.subdirpart(siteTop.value(s),s.abspath(name));
     }
 }
 
 
-/** Fetch meta information from *pathname* into session *s* 
+/** Fetch meta information from *pathname* into session *s*
     and prints the value of meta information associated to *varname*.
 
     Text meta information consists of all entries of the form Name: Value
-    at the beginning of a text file.    
+    at the beginning of a text file.
 */
 template<const char *varname>
 void textMeta( session& s, std::istream& in,
-			   const url& name )
+    const url& name )
 {
-    using namespace boost::filesystem; 
+    using namespace boost::filesystem;
     static const boost::regex valueEx("^(\\S+):\\s+(.*)");
 
     /* \todo should only load one but how does it sits with dispatchDoc
      that initializes s[varname] by default to "document"? */
     while( !in.eof() ) {
-	boost::smatch m;
-	std::string line;
-	std::getline(in,line);
-	if( boost::regex_search(line,m,valueEx) ) {
-	    if( m.str(1) == std::string("Subject") ) {
-		s.insert("title",m.str(2));
-	    } else if( m.str(1) == std::string("From") ) {
-		s.insert("author",extractName(m.str(2)));
-		s.insert("authorEmail",extractEmailAddress(m.str(2)));
-	    } else {
-		std::string name = m.str(1);
-		name[0] = tolower(name[0]);
-		s.insert(name,m.str(2));
-	    }
-	} else break;
+        boost::smatch m;
+        std::string line;
+        std::getline(in,line);
+        if( boost::regex_search(line,m,valueEx) ) {
+            if( m.str(1) == std::string("Subject") ) {
+                s.insert("title",m.str(2));
+            } else if( m.str(1) == std::string("From") ) {
+                s.insert("author",extractName(m.str(2)));
+                s.insert("authorEmail",extractEmailAddress(m.str(2)));
+            } else {
+                std::string name = m.str(1);
+                name[0] = tolower(name[0]);
+                s.insert(name,m.str(2));
+            }
+        } else break;
     }
-    /* 
+    /*
        std::time_t last_write_time( const path & ph );
-       To convert the returned value to UTC or local time, 
+       To convert the returned value to UTC or local time,
        use std::gmtime() or std::localtime() respectively. */
     metaFetch<varname>(s,url());
 }
@@ -269,41 +284,40 @@ protected:
     decorator *rightDec;
 
 public:
-    text() 
-	: leftDec(NULL), rightDec(NULL) {}
+    text() : leftDec(NULL), rightDec(NULL) {}
 
-    text( decorator& l,  decorator& r ) 
-	: leftDec(&l), rightDec(&r) {}
+    text( decorator& l,  decorator& r )
+        : leftDec(&l), rightDec(&r) {}
 
-    /** \brief show difference between two texts side by side 
+    /** \brief show difference between two texts side by side
 
-	\param  doc              document to do syntax coloring
-	\param  input            showing on the left pane
-	\param  diff             difference between left and right pane
-	\param  inputIsLeftSide  true when input stream is left side
+        \param  doc              document to do syntax coloring
+        \param  input            showing on the left pane
+        \param  diff             difference between left and right pane
+        \param  inputIsLeftSide  true when input stream is left side
     */
-    void showSideBySide( session& s, 
-			 std::istream& input, std::istream& diff, 
-			 bool inputIsLeftSide= true ) const;
+    void showSideBySide( session& s,
+        std::istream& input, std::istream& diff,
+        bool inputIsLeftSide= true ) const;
 
     void fetch( session& s, std::istream& in );
 };
 
-/** Skip over the meta information 
+/** Skip over the meta information
  */
 void skipOverTags( session& s, std::istream& istr );
 
 
-/** Skip over the meta information (i.e. Name: Value) in a text file 
+/** Skip over the meta information (i.e. Name: Value) in a text file
     and prints the remaining of the file "as is".
  */
 void textFetch( session& s, std::istream& in,
-				const url& name );
+    const url& name );
 
-/** Skip over the meta information (i.e. Name: Value) in a text file 
+/** Skip over the meta information (i.e. Name: Value) in a text file
     and prints the remaining of the file highlighting url links.
  */
 void formattedFetch( session& s, std::istream& in,
-					 const url& name );
+    const url& name );
 
 #endif

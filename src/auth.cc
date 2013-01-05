@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@
 
 /** Authentication through PAM.
 
-	Useful urls:
-	<a href="http://www.freebsd.org/doc/en/articles/pam/pam-essentials.html">FreeBSD PAM Essentials</a>
+    Useful urls:
+    <a href="http://www.freebsd.org/doc/en/articles/pam/pam-essentials.html">FreeBSD PAM Essentials</a>
     <a href="http://linux.die.net/man/3/pam">PAM Linux man page</a>
     <a href="http://www.linuxjournal.com/article/5940"></a>
 
@@ -51,30 +51,29 @@ sessionVariable uid("uid","uid");
 sessionVariable userPassword("userPassword","password");
 
 urlVariable ldapHost("ldapHost",
-					 "LDAP host to connect to");
+    "LDAP host to connect to");
 intVariable ldapPort("ldapPort",
-					 "LDAP port on host to connect to");
+    "LDAP port on host to connect to");
 sessionVariable ldapDN("ldapDN",
-	 "DN to which contributors are added (ex. ou=people,dc=example,dc=com)");
+    "DN to which contributors are added (ex. ou=people,dc=example,dc=com)");
 
-
-    sessionVariable ldapAdmin("ldapAdmin",
-	   "admin with write access to DN (ex. cn=admin,dc=example,dc=com");
-    sessionVariable ldapAdminPassword("ldapAdminPassword","Password for the LDAP admin");
+sessionVariable ldapAdmin("ldapAdmin",
+    "admin with write access to DN (ex. cn=admin,dc=example,dc=com");
+sessionVariable ldapAdminPassword("ldapAdminPassword","Password for the LDAP admin");
 
 
 static int su_conv( int num_msg,
-					const struct pam_message **msgm,
-					struct pam_response **resp,
-					void *appdata );
+    const struct pam_message **msgm,
+    struct pam_response **resp,
+    void *appdata );
 
 namespace {
 
-	void validate( const session& s ) {
-		assert( !ldapHost.value(s).empty() );
-		assert( ldapPort.value(s) != 0);
-		assert( !ldapDN.value(s).empty() );
-	}
+    void validate( const session& s ) {
+        assert( !ldapHost.value(s).empty() );
+        assert( ldapPort.value(s) != 0);
+        assert( !ldapDN.value(s).empty() );
+    }
 
 
 boost::posix_time::time_duration stop( session& s ) {
@@ -85,13 +84,13 @@ boost::posix_time::time_duration stop( session& s ) {
     ptime start = startTime.value(s);
     ptime stop = second_clock::local_time();
     time_duration aggregate = stop - start;
-    
+
 #if 0
     ofstream file;
     s.appendfile(file,contributorLog(s));
     std::string msg = authMessage.value(s);
     if( !msg.empty() ) {
-	file << msg << ':' << std::endl;
+        file << msg << ':' << std::endl;
     }
     file << start << ' ' << stop << std::endl;
     file.close();
@@ -113,18 +112,18 @@ void authPAM( session& s ) {
     pam_handle_t *pamh = NULL;
     int retval =  pam_start("semilla",NULL,&conv,&pamh);
     if( retval != PAM_SUCCESS ) {
-		throw invalidAuthentication(invalidAuthentication::REASON_PAM_START);
+        boost::throw_exception(invalidAuthentication(invalidAuthentication::REASON_PAM_START));
     }
 
     /* Call pam_authenticate(handle, flags) */
     retval = pam_authenticate(pamh,0);
     if( retval != PAM_SUCCESS ) {
-		throw invalidAuthentication(invalidAuthentication::REASON_PAM_AUTHENTICATE);
+        boost::throw_exception(invalidAuthentication(invalidAuthentication::REASON_PAM_AUTHENTICATE));
     }
 
-    int pam_status = 0; 
-    if( pam_end(pamh,pam_status) != PAM_SUCCESS ) { 
-		pamh = NULL;
+    int pam_status = 0;
+    if( pam_end(pamh,pam_status) != PAM_SUCCESS ) {
+        pamh = NULL;
     }
 }
 
@@ -132,66 +131,66 @@ void authPAM( session& s ) {
 /** Authentication using LDAP.
 */
 void authLDAP( const session& s ) {
-	try {
-		LDAPBound ldapb(s,authContribDN(s,uid.value(s)),userPassword);
-	} catch( LDAPException& except ) {
-		throw invalidAuthentication(invalidAuthentication::REASON_LDAP_AUTHENTICATE);
-	}
+    try {
+        LDAPBound ldapb(s,authContribDN(s,uid.value(s)),userPassword);
+    } catch( LDAPException& except ) {
+        boost::throw_exception(invalidAuthentication(invalidAuthentication::REASON_LDAP_AUTHENTICATE));
+    }
 }
 
 } // anonymous namespace
 
 
 const char* invalidAuthentication::message( const reason& r ) {
-	static const char *messages[] = {
-		"invalidAuthentication (EMPTY_UID)",
-		"invalidAuthentication (EMPTY_PASSWORD)",
-		"invalidAuthentication (ALL_METHOD_FAILED)",
-		"invalidAuthentication (PAM_START)",
-		"invalidAuthentication (PAM_AUTHENTICATE)"
-		"invalidAuthentication (LDAP_AUTHENTICATE)"
-	};
-	if( r < REASON_LAST_REASON ) {
-		return messages[r];
-	}
-	return "invalidAuthentication (UNKNOWN)";
+    static const char *messages[] = {
+        "invalidAuthentication (EMPTY_UID)",
+        "invalidAuthentication (EMPTY_PASSWORD)",
+        "invalidAuthentication (ALL_METHOD_FAILED)",
+        "invalidAuthentication (PAM_START)",
+        "invalidAuthentication (PAM_AUTHENTICATE)"
+        "invalidAuthentication (LDAP_AUTHENTICATE)"
+    };
+    if( r < REASON_LAST_REASON ) {
+        return messages[r];
+    }
+    return "invalidAuthentication (UNKNOWN)";
 }
 
 
 static int su_conv( int num_msg,
-					const struct pam_message **msgm,
-					struct pam_response **resp,
-					void *appdata )
+    const struct pam_message **msgm,
+    struct pam_response **resp,
+    void *appdata )
 {
     session *s = (session*)appdata;
-    
+
     int count;
-    struct pam_response *r;   
+    struct pam_response *r;
     r = (struct pam_response*)calloc(num_msg,sizeof(struct pam_response));
-	
-    for( count=0; count < num_msg; ++count) {	
-		char *value = NULL;
-		switch(msgm[count]->msg_style) {
-		case PAM_PROMPT_ECHO_OFF:
-			value = (char*)malloc((userPassword.value(*s).size() + 1)
-								  * sizeof(char));
-			strcpy(value,userPassword.value(*s).c_str());
-			break;
-		case PAM_PROMPT_ECHO_ON:
-			value = (char*)malloc((uid.value(*s).size() + 1)
-								  * sizeof(char));
-			strcpy(value,uid.value(*s).c_str());
-			break;	    
-		case PAM_ERROR_MSG:
-		case PAM_TEXT_INFO:
-			std::cerr << msgm[count]->msg;
-			break;
-		default:
-			std::cerr << "Erroneous Conversation (" 
-					  << msgm[count]->msg_style << ")" << std::endl;
-		}
-		r[count].resp_retcode = 0;
-		r[count].resp = value;
+
+    for( count=0; count < num_msg; ++count) {
+        char *value = NULL;
+        switch(msgm[count]->msg_style) {
+        case PAM_PROMPT_ECHO_OFF:
+            value = (char*)malloc((userPassword.value(*s).size() + 1)
+                * sizeof(char));
+            strcpy(value,userPassword.value(*s).c_str());
+            break;
+        case PAM_PROMPT_ECHO_ON:
+            value = (char*)malloc((uid.value(*s).size() + 1)
+                * sizeof(char));
+            strcpy(value,uid.value(*s).c_str());
+            break;
+        case PAM_ERROR_MSG:
+        case PAM_TEXT_INFO:
+            std::cerr << msgm[count]->msg;
+            break;
+        default:
+            std::cerr << "Erroneous Conversation ("
+                      << msgm[count]->msg_style << ")" << std::endl;
+        }
+        r[count].resp_retcode = 0;
+        r[count].resp = value;
     }
     *resp = r;
     return PAM_SUCCESS;
@@ -199,91 +198,92 @@ static int su_conv( int num_msg,
 
 
 LDAPBound::LDAPBound( const session& s,
-					  const std::string& who,
-					  const sessionVariable& password )
+    const std::string& who,
+    const sessionVariable& password )
 {
-	validate(s);
+    validate(s);
 
-	std::string host = ldapHost.value(s).string();
-	int port = ldapPort.value(s);
-	if( port <= 0 ) port = LDAP_PORT;
+    std::string host = ldapHost.value(s).string();
+    int port = ldapPort.value(s);
+    if( port <= 0 ) port = LDAP_PORT;
 
-	std::stringstream uri;
-	uri << "ldap://" << host.c_str() << ":" << port;
-	LDAP_NO_ERROR(*this,ldap_initialize(&ld,uri.str().c_str()));
+    std::stringstream uri;
+    uri << "ldap://" << host.c_str() << ":" << port;
+    LDAP_NO_ERROR(*this,ldap_initialize(&ld,uri.str().c_str()));
 
-	int protocol = 3;
-	LDAP_NO_ERROR(*this,ldap_set_option(ld,LDAP_OPT_PROTOCOL_VERSION,&protocol));
+    int protocol = 3;
+    LDAP_NO_ERROR(*this,ldap_set_option(ld,LDAP_OPT_PROTOCOL_VERSION,&protocol));
 
-	std::string passwd = password.value(s);
+    std::string passwd = password.value(s);
 #if 0
-	std::cerr << "!!! [auth] " << who.c_str()
-			  << ", passwd: '" << passwd << "'" << std::endl;
+    std::cerr << "!!! [auth] " << who.c_str()
+              << ", passwd: '" << passwd << "'" << std::endl;
 #endif
 
-	/* ldap_simple_bind_s has been deprecated thus we use ldap_sasl_bind_s
-	   with simple credentials. Here is the prototype for it:
-	   ldap_sasl_bind_s( LDAP *ld, const char *dn, const char *mechanism,
-	                     struct berval *cred, LDAPControl *sctrls[],
-						 LDAPControl *cctrls[], struct berval **servercredp) */
-	berval cred;
-	cred.bv_val = (char *)passwd.c_str();
-	cred.bv_len = (size_t) passwd.size();
-	const char *mechanism = (const char *)LDAP_SASL_SIMPLE;
-	LDAP_NO_ERROR(*this,ldap_sasl_bind_s(ld,who.c_str(),mechanism,&cred,
-										 NULL,NULL,NULL));
+    /* ldap_simple_bind_s has been deprecated thus we use ldap_sasl_bind_s
+       with simple credentials. Here is the prototype for it:
+       ldap_sasl_bind_s( LDAP *ld, const char *dn, const char *mechanism,
+       struct berval *cred, LDAPControl *sctrls[],
+       LDAPControl *cctrls[], struct berval **servercredp) */
+    berval cred;
+    cred.bv_val = (char *)passwd.c_str();
+    cred.bv_len = (size_t) passwd.size();
+    const char *mechanism = (const char *)LDAP_SASL_SIMPLE;
+    LDAP_NO_ERROR(*this,ldap_sasl_bind_s(ld,who.c_str(),mechanism,&cred,
+            NULL,NULL,NULL));
 }
 
 
-std::string authContribDN( const session& s, const std::string& uid ) {
-	std::stringstream who;
-	who << "uid=" << uid << ',' << ldapDN.value(s);
-	return who.str();
+std::string authContribDN( const session& s, const std::string& uid )
+{
+    std::stringstream who;
+    who << "uid=" << uid << ',' << ldapDN.value(s);
+    return who.str();
 }
 
 
 LDAPBound::~LDAPBound()
 {
-	int err;
-	if( (err = ldap_unbind_ext_s(ld, NULL, NULL)) ) {
-		std::stringstream str;
-		str << "ldap_unbind_ext_s: " << ldap_err2string(err);
-		throw LDAPException(str.str());
-	}
+    int err;
+    if( (err = ldap_unbind_ext_s(ld, NULL, NULL)) ) {
+        std::stringstream str;
+        str << "ldap_unbind_ext_s: " << ldap_err2string(err);
+        boost::throw_exception(LDAPException(str.str()));
+    }
 }
 
 
 void LDAPBound::assertNoError( int err, const char* file, int line )
 {
-	if( err ) {
-		char *info = NULL;
-		std::stringstream str;
-		str << file << ':' << line << ": " << ldap_err2string(err);
-		ldap_get_option(ld,LDAP_OPT_DIAGNOSTIC_MESSAGE,&info);
-		if( info && strlen(info) > 0 ) {
-			str << ", additionnal info: " << info;
-		}
-		ldap_memfree(info);
-		boost::throw_exception(LDAPException(str.str()));
-	}
+    if( err ) {
+        char *info = NULL;
+        std::stringstream str;
+        str << file << ':' << line << ": " << ldap_err2string(err);
+        ldap_get_option(ld,LDAP_OPT_DIAGNOSTIC_MESSAGE,&info);
+        if( info && strlen(info) > 0 ) {
+            str << ", additionnal info: " << info;
+        }
+        ldap_memfree(info);
+        boost::throw_exception(LDAPException(str.str()));
+    }
 }
 
 
 void authAddSessionVars( boost::program_options::options_description& all,
-						 boost::program_options::options_description& visible )
+    boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
-    
+
     options_description localOptions("authentication");
     localOptions.add(uid.option());
     localOptions.add(userPassword.option());
 
-	localOptions.add(ldapHost.option());
-	localOptions.add(ldapPort.option());
-	localOptions.add(ldapDN.option());
+    localOptions.add(ldapHost.option());
+    localOptions.add(ldapPort.option());
+    localOptions.add(ldapDN.option());
 
-	localOptions.add(ldapAdmin.option());
-	localOptions.add(ldapAdminPassword.option());
+    localOptions.add(ldapAdmin.option());
+    localOptions.add(ldapAdminPassword.option());
 
     all.add(localOptions);
     visible.add(localOptions);
@@ -294,46 +294,46 @@ void loginFetch( session& s, const url& name ) {
     using namespace boost::system;
     using namespace boost::posix_time;
     using namespace boost::filesystem;
-    
-    if( uid.value(s).empty() ) {
-		throw invalidAuthentication(invalidAuthentication::REASON_EMPTY_UID);
-	}
 
-	if( userPassword.value(s).empty() ) {
-		throw invalidAuthentication(invalidAuthentication::REASON_EMPTY_PASSWORD);
+    if( uid.value(s).empty() ) {
+        boost::throw_exception(invalidAuthentication(invalidAuthentication::REASON_EMPTY_UID));
     }
 
-	/* Actual authentication using multiple service in order. */
-	bool authenticated = false;
-	if( !authenticated ) {
-		try {
-			authPAM(s);
-			authenticated = true;
-		} catch( invalidAuthentication& invalid ) {
-		}
-	}
-	if( !authenticated ) {
-		try {
-			authLDAP(s);
-			authenticated = true;
-		} catch( invalidAuthentication& invalid ) {
-		}
-	}
-	if( !authenticated ) {
-		throw invalidAuthentication(invalidAuthentication::REASON_ALL_METHOD_FAILED);
-	}
+    if( userPassword.value(s).empty() ) {
+        boost::throw_exception(invalidAuthentication(invalidAuthentication::REASON_EMPTY_PASSWORD));
+    }
+
+    /* Actual authentication using multiple service in order. */
+    bool authenticated = false;
+    if( !authenticated ) {
+        try {
+            authPAM(s);
+            authenticated = true;
+        } catch( invalidAuthentication& invalid ) {
+        }
+    }
+    if( !authenticated ) {
+        try {
+            authLDAP(s);
+            authenticated = true;
+        } catch( invalidAuthentication& invalid ) {
+        }
+    }
+    if( !authenticated ) {
+        boost::throw_exception(invalidAuthentication(invalidAuthentication::REASON_ALL_METHOD_FAILED));
+    }
 
     /* The authentication will create a persistent ("uid",value)
        pair that, in turn, will create a sessionId and a startTime. */
     s.state(uid.name,uid.value(s));
     s.store();
-    
+
     /* Set a session cookie and redirect to orignal page requested. */
     httpHeaders.setCookie(s.sessionName,
-						  s.id()).location(url(document.value(s).string()));
-	if( !nextpage.value(s).empty() ) {
-		httpHeaders.refresh(0,nextpage.value(s));
-	}
+        s.id()).location(url(document.value(s).string()));
+    if( !nextpage.value(s).empty() ) {
+        httpHeaders.refresh(0,nextpage.value(s));
+    }
 }
 
 
@@ -345,15 +345,15 @@ void logoutFetch( session& s, const url& name ) {
     using namespace boost::filesystem;
 
     if( s.exists() ) {
-		httpHeaders.setCookie(s.sessionName,s.id(),
-							  boost::posix_time::ptime::date_duration_type(-1));
+        httpHeaders.setCookie(s.sessionName,s.id(),
+            boost::posix_time::ptime::date_duration_type(-1));
 
-		time_duration logged = stop(s);
-		std::stringstream logstr;
-		logstr << logged.hours() << " hours logged." << std::endl;
-		s.state("hours",logstr.str());    
-		compose<logoutTemplate>(s,url(document.name));
-	}
+        time_duration logged = stop(s);
+        std::stringstream logstr;
+        logstr << logged.hours() << " hours logged." << std::endl;
+        s.state("hours",logstr.str());
+        compose<logoutTemplate>(s,url(document.name));
+    }
 }
 
 

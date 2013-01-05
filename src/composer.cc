@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -34,23 +34,77 @@
 */
 
 pathVariable themeDir("themeDir",
-		      "directory that contains the user interface templates");
+    "directory that contains the user interface templates");
 
-void 
+void
 composerAddSessionVars( boost::program_options::options_description& opts,
-			boost::program_options::options_description& visible )
+    boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
-    
+
     options_description localOpts("composer");
     localOpts.add(themeDir.option());
-    opts.add(localOpts);    
+    opts.add(localOpts);
     visible.add(localOpts);
 
     options_description hiddenOpts("hidden");
     hiddenOpts.add_options()
-	("document",value<std::string>(),"document");
-    opts.add(hiddenOpts);    
+        ("document",value<std::string>(),"document");
+    opts.add(hiddenOpts);
 }
 
 
+void compose( session& s, std::istream& strm, const boost::filesystem::path& fixed )
+{
+    using namespace boost;
+    using namespace boost::system;
+    using namespace boost::filesystem;
+
+    static const boost::regex tmpl("<!-- widget '(\\S+)'(\\s+name='(\\S+)')?(\\s+value='(\\S+)')? -->");
+
+    skipOverTags(s,strm);
+    while( !strm.eof() ) {
+        smatch m;
+        std::string line;
+        bool found = false;
+        std::getline(strm,line);
+        if( regex_search(line,m,tmpl) ) {
+            std::string widget = m.str(1);
+            std::string name = m.str(3);
+            if( name.empty() ) name = widget;
+            std::string value = m.str(5);
+            if( value.empty() ) {
+                /* By default if a variable does not have a value, use the value
+                   of "document". */
+                session::variables::const_iterator look = s.find(name);
+                if( !s.found(look) ) {
+                    s.insert(name,document.value(s).string());
+                    look = s.find(name);
+                }
+                value = look->second.value;
+            }
+
+            found = true;
+            s.out() << m.prefix();
+            std::ostream& prevDisp = s.out();
+            try {
+                path prev = current_path();
+                current_path(s.prefixdir(fixed));
+                dispatchDoc::instance()->fetch(s,widget,url(value));
+                current_path(prev);
+            } catch( const std::runtime_error& e ) {
+                s.out(prevDisp);
+                s.feeds = NULL; /* ok here since those objects were
+                                   allocated on the stack. */
+                ++s.nErrs;
+                std::cerr << "[embed of '" << value << "'] "
+                          << e.what() << std::endl;
+                s.out() << "<p>" << e.what() << "</p>" << std::endl;
+            }
+            s.out() << m.suffix() << std::endl;
+        }
+        if( !found ) {
+            s.out() << line << std::endl;
+        }
+    }
+}

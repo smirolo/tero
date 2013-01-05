@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 #define guardadapter
 
 /**
-   Retrive price/description information 
+   Retrive price/description information
    on an article sold through the website.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
@@ -41,14 +41,14 @@ public:
 
     article() {}
 
-    article( const std::string& g, const std::string d, uint32_t v ) 
-	: guid(g), descr(d), value(v) {}
+    article( const std::string& g, const std::string d, uint32_t v )
+        : guid(g), descr(d), value(v) {}
 };
 
 class adapter {
 public:
-    virtual article fetch( session& s, 
-			   const boost::filesystem::path& pathname ) = 0;    
+    virtual article fetch( session& s,
+        const boost::filesystem::path& pathname ) = 0;
 };
 
 

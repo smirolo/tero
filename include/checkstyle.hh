@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -58,9 +58,9 @@ public:
 
 protected:
     enum stateCode {
-	start,
-	readLicense,
-	doneLicense
+        start,
+        readLicense,
+        doneLicense
     };
     stateCode state;
 
@@ -75,27 +75,26 @@ public:
     std::string grantor;
     size_t nbLines;
     size_t nbCodeLines;
-    
+
 public:
-    checker() : state(start), cached(false), 
-		licenseType(unknownLicense),
-		nbLines(0), nbCodeLines(0) {}
+    checker() : state(start), cached(false),
+                licenseType(unknownLicense),
+                nbLines(0), nbCodeLines(0) {}
 
     licenseCode license() {
-	if( !cached ) cache();
-	return licenseType;
+        if( !cached ) cache();
+        return licenseType;
     }
-    
 };
 
 
 class cppChecker : public checker,
-		     public cppTokListener {
-protected:    
+                   public cppTokListener {
+protected:
     enum commentCode {
-	emptyLine,
-	codeLine,
-	commentLine
+        emptyLine,
+        codeLine,
+        commentLine
     };
     commentCode comment;
 
@@ -106,17 +105,17 @@ public:
 
     virtual void newline(const char *line, int first, int last );
 
-    virtual void token( cppToken token, const char *line, 
-			int first, int last, bool fragment );
+    virtual void token( cppToken token, const char *line,
+        int first, int last, bool fragment );
 
     size_t tokenize( const char *line, size_t n ) {
-	return tokenizer.tokenize(line,n);
+        return tokenizer.tokenize(line,n);
     }
 };
 
 
 class shChecker : public checker,
-		    public shTokListener {
+                  public shTokListener {
 protected:
     shTokenizer tokenizer;
 
@@ -126,25 +125,25 @@ public:
 
     virtual void newline(const char *line, int first, int last );
 
-    virtual void token( shToken token, const char *line, 
-			int first, int last, bool fragment );
+    virtual void token( shToken token, const char *line,
+        int first, int last, bool fragment );
 
     size_t tokenize( const char *line, size_t n ) {
-	return tokenizer.tokenize(line,n);
+        return tokenizer.tokenize(line,n);
     }
 };
 
 
 template<typename checker>
-void checkfileFetch( session& s, const url& name );
+void checkfileFetch( session& s, const slice<char>& text, const url& name );
 
 
 class checkstyle : public projfiles {
-protected:    
-    virtual void 
+protected:
+    virtual void
     addDir( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void 
+    virtual void
     addFile( session& s, const boost::filesystem::path& pathname ) const;
 
     virtual void flush( session& s ) const;
@@ -159,27 +158,26 @@ class lintAnnotate  : public noteDecorator {
 protected:
     typedef noteDecorator super;
 
-	void init( session& s,
-			   const boost::filesystem::path& key,
-			   std::istream& info );
+    void init( session& s,
+        const boost::filesystem::path& key,
+        std::istream& info );
 
 public:
-	lintAnnotate( session& s,
-				  const boost::filesystem::path& key,
-				  std::istream& info );
-    
     lintAnnotate( session& s,
-				  const boost::filesystem::path& key,
-				  std::istream& info,
-				  std::basic_ostream<char>& o );
+        const boost::filesystem::path& key,
+        std::istream& info );
 
-	bool empty() const {
-		return annotations.empty();
-	}
+    lintAnnotate( session& s,
+        const boost::filesystem::path& key,
+        std::istream& info,
+        std::basic_ostream<char>& o );
+
+    bool empty() const {
+        return annotations.empty();
+    }
 };
 
 
 #include "checkstyle.tcc"
-
 
 #endif

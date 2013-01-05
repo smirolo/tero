@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -109,8 +109,8 @@ void logviewFetch( session& s, const url& name )
             path fullpath = entry->path();
             path filename = fullpath.filename();
             if( boost::regex_search(filename.string(),m,logPat) ) {
-                boost::filesystem::ifstream input;
-                s.openfile(input, *entry);
+                std::streambuf *buf = revisionsys::findRevOpenfile(s, *entry);
+                std::istream input(buf);
                 colHeaders.insert(filename);
                 std::string name;
                 while( !input.eof() ) {
@@ -136,6 +136,7 @@ void logviewFetch( session& s, const url& name )
                         }
                     }
                 }
+                delete buf;
             }
         }
     }

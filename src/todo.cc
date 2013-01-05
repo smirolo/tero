@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -145,9 +145,9 @@ void todocreator::filters( const post& v ) {
     file.flush();
     file.close();
 #else
-    throw std::runtime_error("Todo item could not be created"
+    boost::throw_exception(std::runtime_error("Todo item could not be created"
         " because you do not have permissions to do so on this server."
-        " Sorry for the inconvienience.");
+            " Sorry for the inconvienience."));
 #endif
 
     if( next ) next->filters(p);
@@ -179,9 +179,9 @@ void todocommentor::filters( const post& p ) {
     file.close();
     f_lock.unlock();
 #else
-    throw std::runtime_error("comment could not be created"
+    boost::throw_exception(std::runtime_error("comment could not be created"
         " because you do not have permissions to do so on this server."
-        " Sorry for the inconvienience.");
+            " Sorry for the inconvienience."));
 #endif
     if( next ) next->filters(p);
 }
@@ -223,8 +223,8 @@ void todoCreateFetch( session& s, const url& name )
 {
     post p;
     std::stringstream str;
-	
-	boost::filesystem::path pathname = s.abspath(name);
+
+    boost::filesystem::path pathname = s.abspath(name);
     str << boost::uuids::random_generator()();
     p.guid = str.str();
     p.time = boost::posix_time::second_clock::local_time();
@@ -267,7 +267,7 @@ void todoCreateFetch( session& s, const url& name )
 
 void todoCommentFetch( session& s, const url& name )
 {
-	boost::filesystem::path pathname = s.abspath(name);
+    boost::filesystem::path pathname = s.abspath(name);
     boost::filesystem::path postname(pathname.parent_path());
     todoCommentFeedback fb(s.out(),s.asUrl(postname).string());
     todocommentor comment(pathname,&fb);
@@ -292,11 +292,11 @@ void todoCommentFetch( session& s, const url& name )
 
 void todoIndexWriteHtmlFetch( session& s, const url& name )
 {
-	boost::filesystem::path pathname = s.abspath(name);
+    boost::filesystem::path pathname = s.abspath(name);
     byTimeHtml shortline(s.out());
-    byScore order(s.out(),shortline);
-    mailParser parser(order,true);
-    parser.fetch(s,pathname);
+    byScore order(s.out(), shortline);
+    mailParser parser(order, true);
+    parser.fetch(s, pathname);
     order.flush();
 }
 
@@ -312,7 +312,7 @@ void todoVoteAbandonFetch( session& s,
 
 void todoVoteSuccessFetch( session& s, const url& name )
 {
-	boost::filesystem::path pathname = s.abspath(name);
+    boost::filesystem::path pathname = s.abspath(name);
 
 #if 0
     payment::checkReturn(s,returnPath);
@@ -408,7 +408,9 @@ void todoVoteSuccessFetch( session& s, const url& name )
 }
 
 namespace {
-char titleMeta[] = "title";
+
+    char titleMeta[] = "title";
+
 } // anonymous
 
 
@@ -446,11 +448,9 @@ void todoMeta( session& s, std::istream& in, const url& name )
 
 
 void
-todoWriteHtmlFetch( session& s, std::istream& in, const url& name )
+todoWriteHtmlFetch( session& s, const url& name )
 {
-	boost::filesystem::path pathname = s.abspath(name);
-
     htmlwriter writer(s.out());
     mailParser parser(writer);
-    parser.fetch(s,s.abspath(name));
+    parser.fetchFile(s, s.abspath(name));
 }

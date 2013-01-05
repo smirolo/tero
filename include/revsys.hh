@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -27,14 +27,22 @@
 #define guardrevsys
 
 #include "post.hh"
-#include "changelist.hh"
+#include "decorator.hh"
 #if 1
 #include <boost/system/error_code.hpp>
 #include <boost/filesystem/operations.hpp>
 #endif
 
+class historyref {
+public:
+    historyref() {}
 
-/** Base class definition for interacting with a source code control system.    
+    virtual url asUrl( const boost::filesystem::path& doc,
+        const std::string& rev ) const = 0;
+};
+
+
+/** Base class definition for interacting with a source code control system.
  */
 class revisionsys {
 public:
@@ -43,69 +51,63 @@ public:
 
     boost::filesystem::path rootpath;
 
-    /** Directory name in which revision control meta information 
-	is stored (example: .git). 
+    /** Directory name in which revision control meta information
+        is stored (example: .git).
     */
     const char* metadir;
 
-	std::map<std::string,std::string> config;
+    std::map<std::string,std::string> config;
 
 public:
     explicit revisionsys( const char* m ) : metadir(m) {}
 
     virtual void loadconfig( session& s ) = 0;
 
-    /** Create a new repository from directory *pathname*. When *group*
-	is true, all users in the same group as the creator have permissions
-	to push changes into the repository otherwise only the creator
-	can push changes.
-     */
-    virtual void create( const boost::filesystem::path& pathname,
-			 bool group = false ) = 0;
+    const std::string& configval( const std::string& key );
 
-    /** Add *pathname* to the changelist to be committed. 
-     */
-    virtual void add( const boost::filesystem::path& pathname ) = 0;
+    boost::filesystem::path
+    absolute( const boost::filesystem::path& p ) const;
 
-	const std::string& configval( const std::string& key );
+    virtual boost::filesystem::path
+    relative( const boost::filesystem::path& p ) const;
 
-    /** Commit the default changelist.
-     */
-    virtual void commit( const std::string& msg ) = 0;
+    virtual void diff( std::ostream& ostr,
+        const std::string& leftCommit,
+        const std::string& rightCommit,
+        const boost::filesystem::path& pathname ) = 0;
 
-    virtual void diff( std::ostream& ostr, 
-		       const std::string& leftCommit, 
-		       const std::string& rightCommit, 
-		       const boost::filesystem::path& pathname ) = 0;
-    
     virtual void history( std::ostream& ostr,
-			  const session& s, 
-			  const boost::filesystem::path& pathname,
-			  historyref& r ) = 0;
+        const session& s,
+        const boost::filesystem::path& pathname,
+        historyref& r ) = 0;
 
     virtual void checkins( const session& s,
-			   const boost::filesystem::path& pathname,
-			   postFilter& filter ) = 0;
+        const boost::filesystem::path& pathname,
+        postFilter& filter ) = 0;
 
-    virtual void showDetails( std::ostream& ostr,			
-			      const std::string& commit ) = 0;
+    virtual void showDetails( std::ostream& ostr,
+        const std::string& commit ) = 0;
 
-	/** Show a file in the repository at a specified *commit*,
-		using a decorator to do syntax highlighting. */
-	virtual void show( std::ostream& ostr,
-					   const boost::filesystem::path& pathname,
-					   const std::string& commit,
-					   decorator *dec = NULL
-					   ) = 0;
+    /** Show a file in the repository at a specified *commit*,
+        using a decorator to do syntax highlighting. */
+    virtual void show( std::ostream& ostr,
+        const boost::filesystem::path& pathname,
+        const std::string& commit,
+        decorator *dec = NULL ) = 0;
 
-	virtual slice<char> loadtext( const boost::filesystem::path& pathname,
-								  const std::string& commit ) = 0;
+    virtual slice<char> loadtext( const boost::filesystem::path& pathname,
+        const std::string& commit ) = 0;
 
-	virtual std::streambuf* openfile( std::istream& in,
-	    const boost::filesystem::path& pathname,
-		const std::string& commit ) = 0;
+    virtual std::streambuf* openfile( const boost::filesystem::path& pathname,
+        const std::string& commit ) = 0;
 
-    /** returns the revision system associated with a pathname 
+    /** returns a revision system when dirname can be reliably determined
+        to be a bare repository or a top level repository clone.
+    */
+    static revisionsys*
+    exists( session& s, const boost::filesystem::path& dirname );
+
+    /** returns the revision system associated with a pathname
      */
     static revisionsys*
     findRev( session& s, const boost::filesystem::path& pathname );
@@ -115,28 +117,32 @@ public:
     static revisionsys*
     findRevByMetadir( session& s, const std::string& metadir );
 
+    static std::streambuf* findRevOpenfile(
+        session& s,
+        const boost::filesystem::path& pathname,
+        const std::string& commit = "HEAD" );
 };
 
 class rev_directory_iterator;
 
 namespace detail {
 
-	struct rev_dir_itr_imp {
-		boost::filesystem::directory_entry  dir_entry;
+    struct rev_dir_itr_imp {
+        boost::filesystem::directory_entry  dir_entry;
         std::list<std::string> entries;
         std::list<std::string>::const_iterator next;
 
-		rev_dir_itr_imp() {}
-		
-		~rev_dir_itr_imp() {} // never throws
-	};
+        rev_dir_itr_imp() {}
+
+        ~rev_dir_itr_imp() {} // never throws
+    };
 
     void rev_directory_iterator_construct( rev_directory_iterator& it,
         const boost::filesystem::path& p, boost::system::error_code* ec,
         session& ses );
 
-	void rev_directory_iterator_increment( rev_directory_iterator& it,
-		boost::system::error_code* ec);
+    void rev_directory_iterator_increment( rev_directory_iterator& it,
+        boost::system::error_code* ec);
 
 }
 

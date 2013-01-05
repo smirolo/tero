@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,7 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include "document.hh"
 #include "checkstyle.hh"
 #include "markup.hh"
 #include "slice.hh"
@@ -237,34 +238,34 @@ void shChecker::token( shToken token, const char *line,
 }
 
 
-void checkstyle::addDir( session& s, 
-			 const boost::filesystem::path& pathname ) const {
+void checkstyle::addDir( session& s,
+    const boost::filesystem::path& pathname ) const {
 }
 
 
-void checkstyle::addFile( session& s, 
-			  const boost::filesystem::path& pathname ) const {
-    using namespace boost::filesystem; 
+void checkstyle::addFile( session& s,
+    const boost::filesystem::path& pathname ) const {
+    using namespace boost::filesystem;
 
     if( state == start ) {
-	s.out() << html::p() 
-		<< html::table();
-	s.out() << html::tr()
-		  << html::th() << html::th::end
-		  << html::th() << "license" << html::th::end
-		  << html::th() << "code lines" << html::th::end
-		  << html::th() << "total lines" << html::th::end
-		  << html::tr::end;
-	state = toplevelFiles;
+        s.out() << html::p()
+                << html::table();
+        s.out() << html::tr()
+                << html::th() << html::th::end
+                << html::th() << "license" << html::th::end
+                << html::th() << "code lines" << html::th::end
+                << html::th() << "total lines" << html::th::end
+                << html::tr::end;
+        state = toplevelFiles;
     }
     dispatchDoc::instance()->fetch(s,"check",s.asUrl(pathname));
 }
 
-void checkstyle::flush( session& s ) const 
+void checkstyle::flush( session& s ) const
 {
     if( state != start ) {
-	s.out() << html::table::end
-		  << html::p::end;
+        s.out() << html::table::end
+                << html::p::end;
     }
 }
 

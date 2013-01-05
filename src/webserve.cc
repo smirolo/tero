@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -45,31 +45,6 @@ getmtime( const boost::filesystem::path& pathname )
     struct stat s; 
     stat(pathname.string().c_str(), &s);
     return from_time_t(s.st_mtime);       /* seconds since the epoch */
-}
-
-
-boost::filesystem::path 
-relpath( const boost::filesystem::path& pathname,
-	 const boost::filesystem::path& base ) {
-
-    boost::filesystem::path existingPath(pathname);
-    while( !boost::filesystem::exists(existingPath) ) {
-	existingPath.remove_leaf();
-    } 
-
-    boost::filesystem::path::iterator first = existingPath.begin();
-    boost::filesystem::path::iterator second = base.begin();
-    for( ; (first != existingPath.end()) & (second != base.end()); 
-	 ++first, ++second ) {
-	if( *first != *second ) break;
-    }
-
-    boost::filesystem::path result;
-    for( ; first != existingPath.end(); ++first ) {
-	result /= *first;
-    }
-
-    return result;
 }
 
 

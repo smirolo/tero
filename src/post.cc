@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -112,28 +112,28 @@ void htmlwriter::filters( const post& p ) {
     time_facet* facet(new time_facet(pubDate::shortFormat));
     (*ostr).imbue(std::locale((*ostr).getloc(), facet));
 
-    *ostr << html::div().classref( (postNum % 2 == 0) ? 
-				   "postEven" : "postOdd");
+    *ostr << html::div().classref( (postNum % 2 == 0) ?
+        "postEven" : "postOdd");
 
     /* caption for the post */
     *ostr << html::div().classref("postCaption");
-	if( !p.link.empty() ) {
-		*ostr << p.link << std::endl;
-		
-	} else if( !p.title.empty() ) {
-		*ostr << html::a().href(p.guid)
-			  << html::h(1) << p.title << html::h(1).end() 
-			  << html::a::end << std::endl;
-	}
+    if( !p.link.empty() ) {
+        *ostr << p.link << std::endl;
+
+    } else if( !notitle && !p.title.empty() ) {
+        *ostr << html::a().href(p.guid)
+              << html::h(1) << p.title << html::h(1).end()
+              << html::a::end << std::endl;
+    }
     *ostr << by(contrib::find(p.authorEmail,p.author)) << " on " << p.time;
-    *ostr << html::div::end;    
+    *ostr << html::div::end;
 
     /* body of the post */
-    *ostr << html::div().classref("postBody");    
+    *ostr << html::div().classref("postBody");
     contentHtmlwriter::filters(p);
     *ostr << html::div::end;
-    
-    *ostr << html::div::end;    
+
+    *ostr << html::div::end;
     ++postNum;
 }
 

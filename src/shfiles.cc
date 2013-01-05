@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "shfiles.hh"
+#include "document.hh"
 #include "changelist.hh"
 #include "decorator.hh"
 #include "tokenize.hh"
@@ -33,22 +34,22 @@
 
 
 boost::filesystem::path lintPath( session& s, const std::string& projectName ) {
-    return siteTop.value(s) 
-		/ boost::filesystem::path("log/tests")
-		/ (projectName + std::string("-test/lint.log"));
+    return siteTop.value(s)
+        / boost::filesystem::path("log/tests")
+        / (projectName + std::string("-test/lint.log"));
 }
 
 boost::filesystem::path covPath( session& s, const std::string& projectName ) {
-    return siteTop.value(s) 
-		/ boost::filesystem::path("log/tests")
-		/ (projectName + std::string("-test/coverage.bin"));
+    return siteTop.value(s)
+        / boost::filesystem::path("log/tests")
+        / (projectName + std::string("-test/coverage.bin"));
 }
 
 
-void shFetch( session& s, std::istream& in, const url& name ) 
+void shFetch( session& s, std::istream& in, const url& name )
 {
-	/* XXX re-enable lint additions when we figure out how to do
-	   that with only a istream... */
+    /* XXX re-enable lint additions when we figure out how to do
+       that with only a istream... */
 #if 0
 	std::string proj = projectName(s,pathname);
 
@@ -60,14 +61,14 @@ void shFetch( session& s, std::istream& in, const url& name )
     htmlEscaper leftLinkText;
     decoratorChain leftChain;
 #if 0
-	if( !coverage.empty() ) {
-		leftChain.push_back(coverage);
-	}
-	if( !lint.empty() ) {
-		leftChain.push_back(lint);
-	}
+    if( !coverage.empty() ) {
+        leftChain.push_back(coverage);
+    }
+    if( !lint.empty() ) {
+        leftChain.push_back(lint);
+    }
 #endif
-	leftChain.push_back(leftLinkText);
+    leftChain.push_back(leftLinkText);
 
     htmlEscaper rightLinkText;
     text sh(leftChain,rightLinkText);
@@ -84,15 +85,14 @@ void shDiff( session& s, const url& name )
 
     static const boost::regex diffRe("(\\S+)/([0-9a-f]{40}/)?diff/([0-9a-f]{40})");
 
-	smatch m;
+    smatch m;
     std::string leftRevision;
     std::string rightRevision;
     boost::filesystem::path srcpath;
-	if( regex_search(s.abspath(name).string(), m, diffRe) ) {
+    if( regex_search(s.abspath(name).string(), m, diffRe) ) {
         srcpath = m.str(1);
         leftRevision = m.str(2);
         rightRevision = m.str(3);
-        
     }
 
     changediff(s,srcpath,leftRevision,rightRevision,

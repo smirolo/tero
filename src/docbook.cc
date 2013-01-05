@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -35,24 +35,24 @@
 namespace {
 
     void parseInfo( session& s, const RAPIDXML::xml_node<>& r ) {
-	using namespace RAPIDXML;
+        using namespace RAPIDXML;
 
-	/* We found an <info> tag, let's parse the meta information 
-	   about the article such as the author, the date, etc. */
-	for( xml_node<> *n = r.first_node();
-	     n != NULL; n = n->next_sibling() ) {
-	    switch( n->type() ) {
-	    case node_element:
+        /* We found an <info> tag, let's parse the meta information
+           about the article such as the author, the date, etc. */
+        for( xml_node<> *n = r.first_node();
+             n != NULL; n = n->next_sibling() ) {
+            switch( n->type() ) {
+            case node_element:
 #if 1
-		/* \todo be careful with insert. code used to be s.vars[] = */
-		/* author, title, date. */		
-		s.insert(n->name(),n->value());
+                /* \todo be careful with insert. code used to be s.vars[] = */
+                /* author, title, date. */
+                s.insert(n->name(),n->value());
 #endif
-	    default:
-		/* Nothing to do except prevent gcc from complaining. */
-		break;
-	    }
-	}
+            default:
+                /* Nothing to do except prevent gcc from complaining. */
+                break;
+            }
+        }
     }
 
 }  // anonymous namespace
@@ -206,7 +206,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "informalequation", &docbook::any, &docbook::any },
     { "informalexample", &docbook::any, &docbook::any },
     { "informalfigure", &docbook::any, &docbook::any },
-    { "informaltable", &docbook::informaltableStart, 
+    { "informaltable", &docbook::informaltableStart,
       &docbook::informaltableEnd },
     { "initializer", &docbook::any, &docbook::any },
     { "inlineequation", &docbook::any, &docbook::any },
@@ -230,7 +230,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "link", &docbook::linkStart, &docbook::linkEnd },
     { "listitem", &docbook::itemStart, &docbook::itemEnd },
     { "literal", &docbook::any, &docbook::any },
-    { "literallayout", &docbook::literallayoutStart, 
+    { "literallayout", &docbook::literallayoutStart,
                        &docbook::literallayoutEnd },
     { "locator", &docbook::any, &docbook::any },
     { "manvolnum", &docbook::any, &docbook::any },
@@ -295,7 +295,7 @@ docbook::walkNodeEntry docbook::walkers[] = {
     { "productionset", &docbook::any, &docbook::any },
     { "productname", &docbook::any, &docbook::any },
     { "productnumber", &docbook::any, &docbook::any },
-    { "programlisting", &docbook::programlistingStart, 
+    { "programlisting", &docbook::programlistingStart,
       &docbook::programlistingEnd },
     { "programlistingco", &docbook::any, &docbook::any },
     { "prompt", &docbook::any, &docbook::any },
@@ -432,8 +432,8 @@ bool docbook::walkNodeEntry::operator<( const walkNodeEntry& right ) const {
 }
 
 
-docbook::docbook( decorator& l,  decorator& r ) 
-    : text(l,r), 
+docbook::docbook( decorator& l,  decorator& r )
+    : text(l,r),
       info(false), linebreak(false), sectionLevel(0) {}
 
 
@@ -442,25 +442,25 @@ void docbook::any( session& s, const RAPIDXML::xml_node<>& node ) const {
 
 void docbook::captionEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::caption::end;
+        s.out() << html::caption::end;
     }
 }
 
 void docbook::captionStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::caption();
+        s.out() << html::caption();
     }
 }
 
 void docbook::emphasisEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::span::end;
+        s.out() << html::span::end;
     }
 }
 
 void docbook::emphasisStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::span().classref("emphasis");
+        s.out() << html::span().classref("emphasis");
     }
 }
 
@@ -469,33 +469,33 @@ void docbook::imagedataEnd( session& s, const RAPIDXML::xml_node<>& node ) const
 
 void docbook::imagedataStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	RAPIDXML::xml_attribute<> *fileref = node.first_attribute("fileref");
-	RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
-	RAPIDXML::xml_attribute<> *format = node.first_attribute("format");
-	if( format != NULL && strncmp(format->value(),"SVG",3) == 0 ) {
-	    if( fileref != NULL ) {	
-		s.out() << "<embed src=\"" << fileref->value()
-			<< "\" type=\"image/svg+xml\""
+        RAPIDXML::xml_attribute<> *fileref = node.first_attribute("fileref");
+        RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
+        RAPIDXML::xml_attribute<> *format = node.first_attribute("format");
+        if( format != NULL && strncmp(format->value(),"SVG",3) == 0 ) {
+            if( fileref != NULL ) {	
+                s.out() << "<embed src=\"" << fileref->value()
+                        << "\" type=\"image/svg+xml\""
 #if 0
-		    /* Potentially useful attributes: */
- 			<< " width=\"300\" height=\"100\""
-			<< " pluginspage=\"http://www.adobe.com/svg/viewer/install/\" "
+                    /* Potentially useful attributes: */
+                        << " width=\"300\" height=\"100\""
+                        << " pluginspage=\"http://www.adobe.com/svg/viewer/install/\" "
 #endif
-			<< " />" << std::endl;
-	    }
-	} else {
-	    if( fileref != NULL ) {	
-		if( role != NULL ) {
-		    s.out() << html::img().src(url(fileref->value())).classref(role->value())
-			    << html::img::end;
-		} else {
-		    s.out() << html::img().src(url(fileref->value()))
-			    << html::img::end;
-		}
-	    } else {
-		s.out() << html::img() << html::img::end;
-	    }
-	}
+                        << " />" << std::endl;
+            }
+        } else {
+            if( fileref != NULL ) {
+                if( role != NULL ) {
+                    s.out() << html::img().src(url(fileref->value())).classref(role->value())
+                            << html::img::end;
+                } else {
+                    s.out() << html::img().src(url(fileref->value()))
+                            << html::img::end;
+                }
+            } else {
+                s.out() << html::img() << html::img::end;
+            }
+        }
     }
 }
 
@@ -504,147 +504,147 @@ void docbook::infoEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
 }
 
 void docbook::infoStart( session& s, const RAPIDXML::xml_node<>& node ) const {
-	/* Assume top level node is a <section>. */
-	if( sectionLevel <= 1 ) {
-		info = true;
-	}
+    /* Assume top level node is a <section>. */
+    if( sectionLevel <= 1 ) {
+        info = true;
+    }
 }
 
 void docbook::informaltableEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-		s.out() << html::table::end;
+        s.out() << html::table::end;
     }
 }
 
 void docbook::informaltableStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::table();
+        s.out() << html::table();
     }
 }
 
 void docbook::linkEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::a::end;
+        s.out() << html::a::end;
     }
 }
 
 void docbook::linkStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	RAPIDXML::xml_attribute<> *href = node.first_attribute("xlink:href");
-	if( href != NULL ) {
-	    s.out() << html::a().href(href->value());
-	} else {
-	    href = node.first_attribute("linkend");
-	    if( href != NULL ) {
-		/* works for both fop and semilla but validbook complains 
-		   /Volumes/Home/smirolo/workspace/fortylines/dev/reps/whitepapers/doc/glossary.book:18: validity error : xml:id : attribute value glossary.book#localMachine is not an NCName
-		   <glossentry xml:id="glossary.book#localMachine">
-		*/
-		url u(href->value());
-		url h = u;
-		std::string name(boost::filesystem::basename(u.pathname) + std::string(".book"));
-		std::string ext = boost::filesystem::extension(u.pathname);
-		if( !ext.empty() ) {
-		    ext[0] = '#';
-		    name += ext;
-		}
-		h.pathname = name;
-		s.out() << html::a().href(h.string());
-	    } else {
-		s.out() << html::a();
-	    }
-	}
+        RAPIDXML::xml_attribute<> *href = node.first_attribute("xlink:href");
+        if( href != NULL ) {
+            s.out() << html::a().href(href->value());
+        } else {
+            href = node.first_attribute("linkend");
+            if( href != NULL ) {
+                /* works for both fop and semilla but validbook complains
+                   /Volumes/Home/smirolo/workspace/fortylines/dev/reps/whitepapers/doc/glossary.book:18: validity error : xml:id : attribute value glossary.book#localMachine is not an NCName
+                   <glossentry xml:id="glossary.book#localMachine">
+                */
+                url u(href->value());
+                url h = u;
+                std::string name(boost::filesystem::basename(u.pathname) + std::string(".book"));
+                std::string ext = boost::filesystem::extension(u.pathname);
+                if( !ext.empty() ) {
+                    ext[0] = '#';
+                    name += ext;
+                }
+                h.pathname = name;
+                s.out() << html::a().href(h.string());
+            } else {
+                s.out() << html::a();
+            }
+        }
     }
 }
 
 
 void docbook::literallayoutEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	linebreak = false;
+        linebreak = false;
     }
 }
 
 
 void docbook::literallayoutStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	linebreak = true;
+        linebreak = true;
     }
 }
 
 
 void docbook::itemEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::li::end;
+        s.out() << html::li::end;
     }
 }
 
 void docbook::itemStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::li();
+        s.out() << html::li();
     }
 }
 
 void docbook::paraEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
-	if( role != NULL ) { 
-	    if( strncmp(role->value(),"code",4) == 0 ) {
-		s.out() << html::pre::end;
-	    } else {
-		s.out() << html::p::end;
-	    }
-	} else {
-	    s.out() << html::p::end;
-	}
+        RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
+        if( role != NULL ) {
+            if( strncmp(role->value(),"code",4) == 0 ) {
+                s.out() << html::pre::end;
+            } else {
+                s.out() << html::p::end;
+            }
+        } else {
+            s.out() << html::p::end;
+        }
     }
 }
 
 void docbook::paraStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
-	if( role != NULL ) { 
-	    if( strncmp(role->value(),"code",4) == 0 ) {
-		s.out() << html::pre().classref(role->value());
-	    } else {
-		s.out() << html::p().classref(role->value());
-	    }
-	} else {
-	    s.out() << html::p();
-	}
+        RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
+        if( role != NULL ) {
+            if( strncmp(role->value(),"code",4) == 0 ) {
+                s.out() << html::pre().classref(role->value());
+            } else {
+                s.out() << html::p().classref(role->value());
+            }
+        } else {
+            s.out() << html::p();
+        }
     }
 }
 
 void docbook::phraseEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::span::end;
+        s.out() << html::span::end;
     }
 }
 
 void docbook::phraseStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
-	if( role != NULL ) { 
-	    s.out() << html::span().classref(role->value());
-	} else {
-	    s.out() << html::span();
-	}
+        RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
+        if( role != NULL ) {
+            s.out() << html::span().classref(role->value());
+        } else {
+            s.out() << html::span();
+        }
     }
 }
 
 void docbook::programlistingEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-		htmlesc.detach();
-		s.out() << code::end;
+        htmlesc.detach();
+        s.out() << code::end;
     }
 }
 
 void docbook::programlistingStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-		s.out() << code();
-		/* rapidxml will convert the &lt;, etc. into actual symbols
-		   so we need to re-escape them before printing any source 
-		   code. */
-		htmlesc.attach(s.out());
+        s.out() << code();
+        /* rapidxml will convert the &lt;, etc. into actual symbols
+           so we need to re-escape them before printing any source
+           code. */
+        htmlesc.attach(s.out());
     }
 }
 
@@ -658,19 +658,19 @@ void docbook::sectionStart( session& s, const RAPIDXML::xml_node<>& node ) const
 
 void docbook::listEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::ul::end;
+        s.out() << html::ul::end;
     }
 }
 
 void docbook::listStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::ul();
+        s.out() << html::ul();
     }
 }
 
 void docbook::tableEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::table::end;
+        s.out() << html::table::end;
     }
 }
 
@@ -687,43 +687,43 @@ void docbook::tableStart( session& s, const RAPIDXML::xml_node<>& node ) const {
 
 void docbook::tdEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::td::end;
+        s.out() << html::td::end;
     }
 }
 
 void docbook::tdStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::td();
+        s.out() << html::td();
     }
 }
 
 void docbook::thEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::th::end;
+        s.out() << html::th::end;
     }
 }
 
 void docbook::thStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::th();
+        s.out() << html::th();
     }
 }
 
 void docbook::titleEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::h(sectionLevel - 1).end();
+        s.out() << html::h(sectionLevel - 1).end();
     }
 }
 
 void docbook::titleStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::h(sectionLevel - 1);
+        s.out() << html::h(sectionLevel - 1);
     }
 }
 
 void docbook::trEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::tr::end;
+        s.out() << html::tr::end;
     }
 }
 
@@ -733,51 +733,51 @@ void docbook::trStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     }
 }
 
-void 
+void
 docbook::xiincludeEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     linkEnd(s,node);
 }
 
 
-void 
+void
 docbook::xiincludeStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-		s.out() << "<li>";
-		linkStart(s,node);
-		RAPIDXML::xml_attribute<> *href = node.first_attribute("xlink:href");
-		if( href != NULL ) {
-			/* \todo load file title. */
-			RAPIDXML::xml_document<> *doc = s.loadxml(s.abspath(href->value()));
-			if( !doc ) return;
-			RAPIDXML::xml_node<> *section = doc->first_node();
-			if( !section ) return;
-			RAPIDXML::xml_node<> *info = section->first_node("info");
-			if( !info ) return;
-			RAPIDXML::xml_node<> *title = info->first_node("title");
-			if( !title ) return;
-			s.out() << title->value();
-		}
+        s.out() << "<li>";
+        linkStart(s,node);
+        RAPIDXML::xml_attribute<> *href = node.first_attribute("xlink:href");
+        if( href != NULL ) {
+            /* \todo load file title. */
+            RAPIDXML::xml_document<> *doc = s.loadxml(s.abspath(href->value()));
+            if( !doc ) return;
+            RAPIDXML::xml_node<> *section = doc->first_node();
+            if( !section ) return;
+            RAPIDXML::xml_node<> *info = section->first_node("info");
+            if( !info ) return;
+            RAPIDXML::xml_node<> *title = info->first_node("title");
+            if( !title ) return;
+            s.out() << title->value();
+        }
     }
 }
 
 
 void docbook::xrefEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	s.out() << html::a::end;
+        s.out() << html::a::end;
     }
 }
 
 
 void docbook::xrefStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     if( !info ) {
-	RAPIDXML::xml_attribute<> *linkend = node.first_attribute("linkend");
-	if( linkend != NULL ) {	
-	    s.out() << html::a().href(std::string("glossary.book#") 
-					+ linkend->value());
-	    s.out() << linkend->value();
-	} else {
-	    s.out() << html::a();
-	}
+        RAPIDXML::xml_attribute<> *linkend = node.first_attribute("linkend");
+        if( linkend != NULL ) {
+            s.out() << html::a().href(std::string("glossary.book#")
+                + linkend->value());
+            s.out() << linkend->value();
+        } else {
+            s.out() << html::a();
+        }
     }
 }
 
@@ -785,43 +785,43 @@ void docbook::xrefStart( session& s, const RAPIDXML::xml_node<>& node ) const {
 void docbook::walk( session& s, const RAPIDXML::xml_node<>& node ) const {
     using namespace RAPIDXML;
 
-    walkNodeEntry *walkersEnd 
-	= &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
+    walkNodeEntry *walkersEnd
+        = &walkers[sizeof(walkers)/sizeof(walkNodeEntry)];
     walkNodeEntry *d;
     walkNodeEntry key;
 
     switch( node.type() ) {
     case node_element:
-	key.name = node.name();
-	d = std::lower_bound(walkers,walkersEnd,key);
-	if( d != walkersEnd ) (this->*(d->start))(s,node);
-	break;
+        key.name = node.name();
+        d = std::lower_bound(walkers,walkersEnd,key);
+        if( d != walkersEnd ) (this->*(d->start))(s,node);
+        break;
     case node_data:
     case node_cdata:
-	if( !info ) {
-	    s.out() << node.value();
-	    if( linebreak ) s.out() << "<br />" << std::endl;
-	}
-	break;
+        if( !info ) {
+            s.out() << node.value();
+            if( linebreak ) s.out() << "<br />" << std::endl;
+        }
+        break;
     default:
-	/* \todo currently we only prevent gcc from complaining but
-	   there are more cases that might have to be handled here. */
-	break;
+        /* \todo currently we only prevent gcc from complaining but
+           there are more cases that might have to be handled here. */
+        break;
     }
 
     for( xml_node<> *child = node.first_node();
-	 child != NULL; child = child->next_sibling() ) {
-	walk(s,*child);
+         child != NULL; child = child->next_sibling() ) {
+        walk(s,*child);
     }
 
     switch( node.type() ) {
     case node_element:
-	if( d != walkersEnd ) (this->*(d->end))(s,node);
-	break;
+        if( d != walkersEnd ) (this->*(d->end))(s,node);
+        break;
     default:
-	/* \todo currently we only prevent gcc from complaining but
-	   there are more cases that might have to be handled here. */
-	break;
+        /* \todo currently we only prevent gcc from complaining but
+           there are more cases that might have to be handled here. */
+        break;
     }
 }
 
@@ -841,33 +841,33 @@ void docbookMeta( session& s, const url& name )
 
     xml_node<> *root = doc->first_node();
     if( root != NULL ) {
-	xml_node<> *info = root->first_node("info");
-	if( info == NULL ) {
-	    info = root->first_node("refmeta");
-	}
-	if( info != NULL ) {
-	    parseInfo(s,*info);
-	}
+        xml_node<> *info = root->first_node("info");
+        if( info == NULL ) {
+            info = root->first_node("refmeta");
+        }
+        if( info != NULL ) {
+            parseInfo(s,*info);
+        }
     }
     session::variables::const_iterator found = s.find("title");
     if( !s.found(found) ) {
-	s.insert("title",document.value(s).string());
-    }    
+        s.insert("title",document.value(s).string());
+    }
     metaFetch<titleMeta>(s,name);
 }
 
 
 void docbookFetch( session& s, const url& name )
-{    
-    linkLight leftFormatedText(s);
-    linkLight rightFormatedText(s);
+{
+    linkLight leftFormatedText(s, siteTop.value(s));
+    linkLight rightFormatedText(s, siteTop.value(s));
     docbook d(leftFormatedText,rightFormatedText);
 
     d.doc = s.loadxml(s.abspath(name));
     d.leftDec->attach(s.out());
     RAPIDXML::xml_node<> *root = d.doc->first_node();
     if( root != NULL ) {
-	d.walk(s,*root);
+        d.walk(s,*root);
     }
     d.leftDec->detach();
 }

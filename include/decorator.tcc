@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -36,13 +36,13 @@ basicDecoratorChain<charT,traitsT>::~basicDecoratorChain() {
 
 
 template<typename charT, typename traitsT>
-void basicDecoratorChain<charT,traitsT>::attach( 
-	     std::basic_ostream<charT, traitsT>& o )
-{	 
+void basicDecoratorChain<charT,traitsT>::attach(
+    std::basic_ostream<charT, traitsT>& o )
+{
     if( last ) {
-	assert( first != NULL );
-	last->next = &o;
-	last->nextBuf = o.rdbuf(first->rdbuf());
+        assert( first != NULL );
+        last->next = &o;
+        last->nextBuf = o.rdbuf(first->rdbuf());
     }
 }
 
@@ -51,19 +51,19 @@ template<typename charT, typename traitsT>
 void basicDecoratorChain<charT,traitsT>::detach()
 {
     if( last ) {
-	last->detach();
+        last->detach();
     }
 }
 
 
 template<typename charT, typename traitsT>
-void basicDecoratorChain<charT,traitsT>::push_back( 
-        basicDecorator<charT, traitsT>& d ) 
+void basicDecoratorChain<charT,traitsT>::push_back(
+        basicDecorator<charT, traitsT>& d )
 {
     if( first ) {
-	d.attach(*first);
+        d.attach(*first);
     } else {
-	last = &d;
+        last = &d;
     }
     first = &d;
     super::pre |= d.formated();
@@ -85,8 +85,8 @@ basicHighLight<tokenizerT,charT,traitsT>::basicHighLight( bool formated )
 
 
 template<typename tokenizerT, typename charT, typename traitsT>
-basicHighLight<tokenizerT,charT,traitsT>::basicHighLight( 
-    std::basic_ostream<charT,traitsT>& o, bool formated ) 
+basicHighLight<tokenizerT,charT,traitsT>::basicHighLight(
+    std::basic_ostream<charT,traitsT>& o, bool formated )
     : super(&buf,formated),
       buf(*this)
 {
@@ -95,9 +95,9 @@ basicHighLight<tokenizerT,charT,traitsT>::basicHighLight(
 
 
 template<typename tokenizerT, typename charT, typename traitsT>
-void basicHighLight<tokenizerT,charT,traitsT>::attach( std::ostream& o ) { 
-    /* !!! This method relies on a correct usage pattern as it will not detach 
-       a previously attached stream. It does not call detach as a decorator 
+void basicHighLight<tokenizerT,charT,traitsT>::attach( std::ostream& o ) {
+    /* !!! This method relies on a correct usage pattern as it will not detach
+       a previously attached stream. It does not call detach as a decorator
        chain could have setup the decorator as part of a sequence. */
     super::next = &o;
     super::nextBuf = o.rdbuf(&buf);
@@ -107,19 +107,19 @@ void basicHighLight<tokenizerT,charT,traitsT>::attach( std::ostream& o ) {
 template<typename tokenizerT, typename charT, typename traitsT>
 void basicHighLight<tokenizerT,charT,traitsT>::detach() {
     if( super::next != NULL ) {
-	sync();
-	super::next->rdbuf(super::nextBuf);
-	super::next = NULL;
+        sync();
+        super::next->rdbuf(super::nextBuf);
+        super::next = NULL;
     }
 }
 
 
 template<typename tokenizerT, typename charT, typename traitsT>
-int basicHighLight<tokenizerT,charT,traitsT>::sync() { 
+int basicHighLight<tokenizerT,charT,traitsT>::sync() {
     if( super::next != NULL ) {
-		assert( super::nextBuf != NULL );
-		scan(); 
-		return super::nextBuf->pubsync(); 
+        assert( super::nextBuf != NULL );
+        scan();
+        return super::nextBuf->pubsync();
     }
     return 0;
 }
@@ -128,97 +128,98 @@ int basicHighLight<tokenizerT,charT,traitsT>::sync() {
 template<typename tokenizerT, typename charT, typename traitsT>
 void basicHighLight<tokenizerT,charT,traitsT>::scan() {
     int size = std::distance(buf.gptr(), buf.pptr());
-    tokenizer.tokenize(buf.gptr(),size);    
+    tokenizer.tokenize(buf.gptr(),size);
     buf.gbump(size);
 }
 
 
 template<typename charT, typename traitsT>
-void basicHtmlEscaper<charT,traitsT>::token( xmlEscToken token, 
-					     const char *line, 
-					     int first, int last, 
-					     bool fragment ) {
+void basicHtmlEscaper<charT,traitsT>::token( xmlEscToken token,
+    const char *line,
+    int first, int last,
+    bool fragment )
+{
     switch( token ) {
     case escErr:
     case escData:
-	super::nextBuf->sputn(&line[first],last-first);
-	break;
+        super::nextBuf->sputn(&line[first],last-first);
+        break;
     case escAmpEscape:
-	super::nextBuf->sputn("&amp;",5);
-	break;
+        super::nextBuf->sputn("&amp;",5);
+        break;
     case escLtEscape:
-	super::nextBuf->sputn("&lt;",4);
-	break;
+        super::nextBuf->sputn("&lt;",4);
+        break;
     case escGtEscape:
-	super::nextBuf->sputn("&gt;",4);
-	break;
+        super::nextBuf->sputn("&gt;",4);
+        break;
     case escQuotEscape:
-	super::nextBuf->sputn("&quot;",6);
-	break;
+        super::nextBuf->sputn("&quot;",6);
+        break;
     }
 }
 
 template<typename charT, typename traitsT>
-typename basicLinkLight<charT,traitsT>::linkSet 
+typename basicLinkLight<charT,traitsT>::linkSet
 basicLinkLight<charT,traitsT>::allLinks;
 
 template<typename charT, typename traitsT>
-typename basicLinkLight<charT,traitsT>::linkSet 
+typename basicLinkLight<charT,traitsT>::linkSet
 basicLinkLight<charT,traitsT>::currs;
 
 template<typename charT, typename traitsT>
-typename basicLinkLight<charT,traitsT>::linkSet 
+typename basicLinkLight<charT,traitsT>::linkSet
 basicLinkLight<charT,traitsT>::nexts;
 
 
 template<typename charT, typename traitsT>
-typename basicLinkLight<charT,traitsT>::linkClass 
+typename basicLinkLight<charT,traitsT>::linkClass
 basicLinkLight<charT,traitsT>::add( const url& u ) {
 #if 0
     std::cerr << "consider " << u;
 #endif
-	linkClass result = remoteLink;
+    linkClass result = remoteLink;
     if( (u.host.empty() || u.host == domainName.value(*context).host)
-		&& u.pathname.extension() != ".html" ) {
-		result = localLinkGenerated;
-		url f = context->asUrl(context->abspath(u));
-		if( true ) { /* XXX In case it is not an "always" generated link. */
-			result = localFileExists;
-			if( allLinks.find(f) == allLinks.end() 
-				&& currs.find(f) == currs.end() ) {	
-				/* we have never seen that vertex before (i.e. white)
-				   so let's add it to the list of successors to process. */
+        && u.pathname.extension() != ".html" ) {
+        result = localLinkGenerated;
+        if( context->prefix(base, context->abspath(u)) ) { /* XXX In case it is not an "always" generated link. */
+            url f = context->asUrl(context->abspath(u));
+            result = localFileExists;
+            if( allLinks.find(f) == allLinks.end()
+                && currs.find(f) == currs.end() ) {
+                /* we have never seen that vertex before (i.e. white)
+                   so let's add it to the list of successors to process. */
 #if 0
-				std::cerr << ", add " << f;
+                std::cerr << ", add " << f;
 #endif
-				nexts.insert(f);
-			}
-		}
+                nexts.insert(f);
+            }
+        }
     }
 #if 0
     std::cerr << std::endl;
 #endif
-    return result; 
+    return result;
 }
 
 
-template<typename charT, typename traitsT>   
+template<typename charT, typename traitsT>
 bool basicLinkLight<charT,traitsT>::decorate( const url& u )
 {
     super::nextBuf->sputc('"');
     super::nextBuf->sputn(u.string().c_str(),u.string().size());
-    super::nextBuf->sputc('"');	
+    super::nextBuf->sputc('"');
 
     switch( add(u) ) {
     case localFileExists:
-		break;
+        break;
     case localLinkGenerated: {
-		std::string absolute(" class=\"new\"");
-		super::nextBuf->sputn(absolute.c_str(),absolute.size());
+        std::string absolute(" class=\"new\"");
+        super::nextBuf->sputn(absolute.c_str(),absolute.size());
     } break;
     case remoteLink: {
-		std::string absolute(" class=\"outside\"");
-		super::nextBuf->sputn(absolute.c_str(),absolute.size());
+        std::string absolute(" class=\"outside\"");
+        super::nextBuf->sputn(absolute.c_str(),absolute.size());
     } break;
     }
 
@@ -226,209 +227,207 @@ bool basicLinkLight<charT,traitsT>::decorate( const url& u )
 }
 
 
-template<typename charT, typename traitsT>   
-void basicLinkLight<charT,traitsT>::token( xmlToken token, 
-					   const char *line, 
-					   int first, int last, 
-					   bool fragment ) {
+template<typename charT, typename traitsT>
+void basicLinkLight<charT,traitsT>::token( xmlToken token,
+    const char *line,
+    int first, int last,
+    bool fragment )
+{
     bool needPut = true;
-    
+
     switch( token ) {
     case xmlElementStart:
     case xmlElementEnd:
-	/* Reset the state machine */ 
-	state = linkStartState;
-	break;
+        /* Reset the state machine */
+        state = linkStartState;
+        break;
     case xmlName:
-	if( strncmp(&line[first],"href",std::min(last - first,4)) == 0 ) {
-	    /* Wait for attribute value */
-	    state = linkWaitAttState;
-	}
-	break;
+        if( strncmp(&line[first],"href",std::min(last - first,4)) == 0 ) {
+            /* Wait for attribute value */
+            state = linkWaitAttState;
+        }
+        break;
     case xmlAttValue:
-	/* Categorize link */ 
-	if( state == linkWaitAttState ) {
-	    std::string name(&line[first + 1],last - first - 2);
-	    needPut = decorate(url(name));
-	}
-	state = linkStartState;
-	break;
+        /* Categorize link */
+        if( state == linkWaitAttState ) {
+            std::string name(&line[first + 1],last - first - 2);
+            needPut = decorate(url(name));
+        }
+        state = linkStartState;
+        break;
     default:
-	/* Nothing to do except prevent gcc from complaining. */
-	break;
+        /* Nothing to do except prevent gcc from complaining. */
+        break;
     }
     if( needPut ) super::nextBuf->sputn(&line[first],last - first);
 }
 
 
-template<typename charT, typename traitsT>   
+template<typename charT, typename traitsT>
 bool absUrlDecoratorBase<charT,traitsT>::decorate( const url& u )
 {
-    url a = super::context->asAbsUrl(u,base);
+    url a = super::context->asAbsUrl(u,super::base);
     super::nextBuf->sputc('"');
     super::nextBuf->sputn(a.string().c_str(),a.string().size());
-    super::nextBuf->sputc('"');	
-    return false;
-}
-
-
-template<typename charT, typename traitsT>   
-bool cachedUrlBase<charT,traitsT>::decorate( const url& u )
-{
     super::nextBuf->sputc('"');
-    switch( super::add(u) ) {
-    case super::localFileExists: {
-		url cached(super::context->cacheName(u));
-		super::nextBuf->sputn(cached.string().c_str(),cached.string().size());
-    } break;
-    default:
-		super::nextBuf->sputn(u.string().c_str(),u.string().size());
-		break;
-    }    
-    super::nextBuf->sputc('"');	
-	
     return false;
 }
 
 
 template<typename charT, typename traitsT>
-void basicHrefLight<charT,traitsT>::token( hrefToken token, const char *line, 
-					   int first, int last, bool fragment ) 
+bool cachedUrlBase<charT,traitsT>::decorate( const url& u )
+{
+    super::nextBuf->sputc('"');
+    switch( super::add(u) ) {
+    case super::localFileExists: {
+        url cached(super::context->cacheName(u));
+        super::nextBuf->sputn(cached.string().c_str(),cached.string().size());
+    } break;
+    default:
+        super::nextBuf->sputn(u.string().c_str(),u.string().size());
+        break;
+    }
+    super::nextBuf->sputc('"');
+
+    return false;
+}
+
+
+template<typename charT, typename traitsT>
+void basicHrefLight<charT,traitsT>::token( hrefToken token, const char *line,
+    int first, int last, bool fragment )
 {
     switch( token ) {
     case hrefFilename: {
-	std::string href("<a href=\"");
-	std::string hrefEnd("</a>");
-	super::nextBuf->sputn(href.c_str(),href.size());
-	super::nextBuf->sputn(&line[first],last - first);
-	super::nextBuf->sputc('"');
-	super::nextBuf->sputc('>');	
-	super::nextBuf->sputn(&line[first],last - first);
-	super::nextBuf->sputn(hrefEnd.c_str(),hrefEnd.size());
+        std::string href("<a href=\"");
+        std::string hrefEnd("</a>");
+        super::nextBuf->sputn(href.c_str(),href.size());
+        super::nextBuf->sputn(&line[first],last - first);
+        super::nextBuf->sputc('"');
+        super::nextBuf->sputc('>');
+        super::nextBuf->sputn(&line[first],last - first);
+        super::nextBuf->sputn(hrefEnd.c_str(),hrefEnd.size());
     } break;
     default:
-	super::nextBuf->sputn(&line[first],last - first);	
-	break;
+        super::nextBuf->sputn(&line[first],last - first);
+        break;
     }
 }
-    
 
 
-
-template<typename charT, typename traitsT>   
-void basicCppLight<charT,traitsT>::newline(const char *line, 
-					   int first, int last )
+template<typename charT, typename traitsT>
+void basicCppLight<charT,traitsT>::newline(const char *line,
+    int first, int last )
 {
     if( preprocessing ) {
-	std::string endSpan("</span>");
-	super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
+        std::string endSpan("</span>");
+        super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
     }
     super::nextBuf->sputc('\n');
     if( preprocessing & virtualLineBreak ) {
-	std::string staSpan("<span class=\"");
-	super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
-	super::nextBuf->sputn(cppTokenTitles[cppPreprocessing],
-			      strlen(cppTokenTitles[cppPreprocessing]));
-	super::nextBuf->sputc('"');
-	super::nextBuf->sputc('>');
+        std::string staSpan("<span class=\"");
+        super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
+        super::nextBuf->sputn(cppTokenTitles[cppPreprocessing],
+            strlen(cppTokenTitles[cppPreprocessing]));
+        super::nextBuf->sputc('"');
+        super::nextBuf->sputc('>');
     } else {
-	preprocessing = false;
+        preprocessing = false;
     }
 }
 
 
-template<typename charT, typename traitsT>   
-void basicCppLight<charT,traitsT>::token( cppToken token, 
-					  const char *line, 
-					  int first, int last, 
-					  bool fragment ) {
+template<typename charT, typename traitsT>
+void basicCppLight<charT,traitsT>::token( cppToken token,
+    const char *line,
+    int first, int last,
+    bool fragment ) {
 
     std::string staSpan("<span class=\"");
     std::string endSpan("</span>");
     if( !preprocessing ) {
-	super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
-	super::nextBuf->sputn(cppTokenTitles[token],
-			      strlen(cppTokenTitles[token]));
-	super::nextBuf->sputc('"');
-	super::nextBuf->sputc('>');
-	if( token == cppPreprocessing ) preprocessing = true;
+        super::nextBuf->sputn(staSpan.c_str(),staSpan.size());
+        super::nextBuf->sputn(cppTokenTitles[token],
+            strlen(cppTokenTitles[token]));
+        super::nextBuf->sputc('"');
+        super::nextBuf->sputc('>');
+        if( token == cppPreprocessing ) preprocessing = true;
     }
     if( token != cppComment ) {
-	/* Special caracters are not replaced within comments
-	   such that they can be used to mark up text as html. */
-	for( ; first != last; ++first ) {
-	    switch( line[first] ) {
-	    case '<':
-		super::nextBuf->sputn("&lt;",4);
-		break;
-	    case '>':
-		super::nextBuf->sputn("&gt;",4);
-		break;
-	    default:
-		super::nextBuf->sputc(line[first]);
-	    }
-	}
+        /* Special caracters are not replaced within comments
+           such that they can be used to mark up text as html. */
+        for( ; first != last; ++first ) {
+            switch( line[first] ) {
+            case '<':
+                super::nextBuf->sputn("&lt;",4);
+                break;
+            case '>':
+                super::nextBuf->sputn("&gt;",4);
+                break;
+            default:
+                super::nextBuf->sputc(line[first]);
+            }
+        }
     } else {
-	super::nextBuf->sputn(&line[first],last - first);
+        super::nextBuf->sputn(&line[first],last - first);
     }
     if( !preprocessing ) {
-	super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
+        super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
     }
     virtualLineBreak = fragment;
 }
 
 
-template<typename charT, typename traitsT>   
+template<typename charT, typename traitsT>
 void basicAnnotate<charT,traitsT>::newline(const char *line, int first, int last )
 {
-	++nbLines;
+    ++nbLines;
     super::nextBuf->sputc('\n');
 }
- 
 
-template<typename charT, typename traitsT>   
-void basicAnnotate<charT,traitsT>::token( xmlToken token, const char *line, 
-										  int first, int last, bool fragment )
+
+template<typename charT, typename traitsT>
+void basicAnnotate<charT,traitsT>::token( xmlToken token, const char *line,
+    int first, int last, bool fragment )
 {
-	super::nextBuf->sputn(&line[first],last - first);
+    super::nextBuf->sputn(&line[first],last - first);
 }
 
 
-template<typename charT, typename traitsT>   
+template<typename charT, typename traitsT>
 void noteAnnotate<charT,traitsT>::newline(const char *line, int first, int last )
 {
-	super::newline(line,first,last);
- 	annotationsType::const_iterator found = annotations.find(super::nbLines);
-	if( found != annotations.end() ) {
-		std::string begSpan("<span class=\"lint\">");
-		super::nextBuf->sputn(begSpan.c_str(),begSpan.size());			
-		super::nextBuf->sputn(found->second.c_str(),found->second.size());
-		std::string endSpan("</span></div>");
-		super::nextBuf->sputn(endSpan.c_str(),endSpan.size());	
-	}
-	found = annotations.find(super::nbLines + 1);
-	if( found != annotations.end() ) {
-		std::string beg("<div class=\"annotate\">[lint] ");
-		super::nextBuf->sputn(beg.c_str(),beg.size());			
-	}
-
+    super::newline(line,first,last);
+    annotationsType::const_iterator found = annotations.find(super::nbLines);
+    if( found != annotations.end() ) {
+        std::string begSpan("<span class=\"lint\">");
+        super::nextBuf->sputn(begSpan.c_str(),begSpan.size());
+        super::nextBuf->sputn(found->second.c_str(),found->second.size());
+        std::string endSpan("</span></div>");
+        super::nextBuf->sputn(endSpan.c_str(),endSpan.size());
+    }
+    found = annotations.find(super::nbLines + 1);
+    if( found != annotations.end() ) {
+        std::string beg("<div class=\"annotate\">[lint] ");
+        super::nextBuf->sputn(beg.c_str(),beg.size());
+    }
 }
 
 
-template<typename charT, typename traitsT>   
+template<typename charT, typename traitsT>
 void rangeAnnotate<charT,traitsT>::newline(const char *line, int first, int last )
 {
-	super::newline(line,first,last);
+    super::newline(line,first,last);
 
-	std::stringstream ln;
-	ln << super::nbLines << " ";
-	super::nextBuf->sputn(ln.str().c_str(),ln.str().size());	
+    std::stringstream ln;
+    ln << super::nbLines << " ";
+    super::nextBuf->sputn(ln.str().c_str(),ln.str().size());
 
-	rangesType::iterator found 
-		= lower_bound(ranges.begin(),ranges.end(),super::nbLines);
-	int lowerb = std::distance(ranges.begin(),found); 
-	if( lowerb % 2 == 0 ) {
-		std::string begSpan("<span class=\"coverage\">|</span>");
-		super::nextBuf->sputn(begSpan.c_str(),begSpan.size());
-	}
+    rangesType::iterator found
+        = lower_bound(ranges.begin(),ranges.end(),super::nbLines);
+    int lowerb = std::distance(ranges.begin(),found);
+    if( lowerb % 2 == 0 ) {
+        std::string begSpan("<span class=\"coverage\">|</span>");
+        super::nextBuf->sputn(begSpan.c_str(),begSpan.size());
+    }
 }

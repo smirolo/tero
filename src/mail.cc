@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 
 /** Parser for mailboxes
 
-    references: 
+    references:
       http://en.wikipedia.org/wiki/Mbox
       see also rfc2822tok.cc
 
@@ -42,29 +42,29 @@
 
 
 urlVariable smtpHost("smtpHost",
-		       "host to connect to in order to send emails");
+    "host to connect to in order to send emails");
 intVariable smtpPort("smtpPort",
-			 "port to connect to in order to send emails");
+    "port to connect to in order to send emails");
 sessionVariable smtpLogin("smtpLogin",
-			  "login to the $smtpHost:$smtpPort");
+    "login to the $smtpHost:$smtpPort");
 sessionVariable smtpPassword("smtpPassword",
-			     "password $smtpHost:$smtpPort");
+    "password $smtpHost:$smtpPort");
 
 namespace {
 
-	void validate( const session& s ) {
-		assert( !smtpHost.value(s).empty() );
-		assert( smtpPort.value(s) != 0);
-		assert( !smtpLogin.value(s).empty() );
-		assert( !smtpPassword.value(s).empty() );
-	}
+    void validate( const session& s ) {
+        assert( !smtpHost.value(s).empty() );
+        assert( smtpPort.value(s) != 0);
+        assert( !smtpLogin.value(s).empty() );
+        assert( !smtpPassword.value(s).empty() );
+    }
 
 } // anonymous
 
 
 void
 mailAddSessionVars( boost::program_options::options_description& opts,
-					boost::program_options::options_description& visible )
+    boost::program_options::options_description& visible )
 {
     using namespace boost::program_options;
 
@@ -78,22 +78,22 @@ mailAddSessionVars( boost::program_options::options_description& opts,
 
 
 std::string qualifiedMailAddress( const session& s, const std::string& uid ) {
-	std::stringstream qualified;
-	qualified << uid << '@' << domainName.value(s);
-	return qualified.str();
+    std::stringstream qualified;
+    qualified << uid << '@' << domainName.value(s);
+    return qualified.str();
 }
 
 
 void sendMail( const session& s, const Poco::Net::MailMessage& message )
 {
-	using namespace Poco::Net;
-	validate(s);
+    using namespace Poco::Net;
+    validate(s);
 
-	SMTPClientSession session(smtpHost.value(s).string(),
-							  smtpPort.value(s));
+    SMTPClientSession session(smtpHost.value(s).string(),
+        smtpPort.value(s));
     session.login(SMTPClientSession::AUTH_LOGIN,
-				  smtpLogin.value(s),
-				  smtpPassword.value(s));
+        smtpLogin.value(s),
+        smtpPassword.value(s));
     session.sendMessage(message);
     session.close();
 }
@@ -102,47 +102,47 @@ void sendMail( const session& s, const Poco::Net::MailMessage& message )
 char noTemplate[] = "";
 
 void sendMail( session& s,
-			   const std::string& recipient,
-			   const std::string& subject,
-			   const char *contentTemplate )
+    const std::string& recipient,
+    const std::string& subject,
+    const char *contentTemplate )
 {
-	using namespace Poco::Net;
+    using namespace Poco::Net;
 
-	std::ostream& prevDisp = s.out();
-	std::stringstream content;
-	s.out(content);
-	compose<noTemplate>(s,s.asUrl(contentTemplate));
-	s.out(prevDisp);
+    std::ostream& prevDisp = s.out();
+    std::stringstream content;
+    s.out(content);
+    compose<noTemplate>(s,s.asUrl(contentTemplate));
+    s.out(prevDisp);
 
-    MailMessage message;    
+    MailMessage message;
     message.setSubject(subject);
     message.setSender(qualifiedMailAddress(s,"no-reply"));
     message.setContent(content.str(),MailMessage::ENCODING_QUOTED_PRINTABLE);
     message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT,
-									   recipient));
-	sendMail(s, message);
-}	
+            recipient));
+    sendMail(s, message);
+}
 
 
 void mailthread::filters( const post& p ) {
     static const boost::regex titlePat("(^.*:)(.*)");
 
     boost::smatch m;
-    if( boost::regex_match(p.title,m,titlePat) ) {    
-	indexMap::iterator found = indexes.find(m.str(2));
-	if( found != indexes.end() ) {
-	    ++found->second;
-	} else {
-	    indexes[m.str(2)] = 0;
-	}
+    if( boost::regex_match(p.title,m,titlePat) ) {
+        indexMap::iterator found = indexes.find(m.str(2));
+        if( found != indexes.end() ) {
+            ++found->second;
+        } else {
+            indexes[m.str(2)] = 0;
+        }
     }
 }
 
 
 void mailthread::flush() {
-    for( indexMap::iterator idx = indexes.begin(); 
-	 idx != indexes.end(); ++idx ) {
-	*ostr << idx->first << "(" << idx->second << ")" << std::endl;
+    for( indexMap::iterator idx = indexes.begin();
+         idx != indexes.end(); ++idx ) {
+        *ostr << idx->first << "(" << idx->second << ")" << std::endl;
     }
 }
 
@@ -152,107 +152,96 @@ void mailAsPost::newline(const char *line, int first, int last )
 }
 
 
-void mailAsPost::token( rfc2822Token token, const char *line, 
-			int first, int last, bool fragment )
+void mailAsPost::token( rfc2822Token token, const char *line,
+    int first, int last, bool fragment )
 {
+    std::string debug(&line[first],last - first);
     switch( token ) {
     case rfc2822FieldName:
-	field = rfc2822Err;
-	if( strncmp(&line[first],"Date",last - first) == 0 ) {
-	    field = rfc2822Time;
-	} else if( strncmp(&line[first],"From",last - first) == 0 ) {
-	    field = rfc2822AuthorEmail;
-	} else if( strncmp(&line[first],"Subject",last - first) == 0 ) {
-	    field = rfc2822Title;
-	} else if( strncmp(&line[first],"Score",last - first) == 0 ) {
-	    field = extScore;
-	} else {
-	    name = std::string(&line[first],last - first);
-	    name[0] = std::tolower(name[0]);
-	}
-	break;
-    case rfc2822FieldBody: {
-	std::string value = strip(std::string(&line[first],last - first));
-	switch( field ) {
-	case rfc2822Time:
-	    try {
-		constructed.time = from_mbox_string(value);
-	    } catch( std::exception& e ) {
-		std::cerr << "unable to reconstruct time from " << value << std::endl;
-	    }
-	    break;
-	case rfc2822AuthorEmail:
-	    constructed.author = extractName(value);
-	    constructed.authorEmail = extractEmailAddress(value);	    
-	    break;
-	case rfc2822Title:
-	    constructed.title = value;
-	    break;
-    case extScore:
-        constructed.score = atoi(value.c_str());
+        nontrivial = true;
+        field = rfc2822Err;
+        if( strncmp(&line[first],"Date",last - first) == 0 ) {
+            field = rfc2822Time;
+        } else if( strncmp(&line[first],"From",last - first) == 0 ) {
+            field = rfc2822AuthorEmail;
+        } else if( strncmp(&line[first],"Subject",last - first) == 0 ) {
+            field = rfc2822Title;
+        } else if( strncmp(&line[first],"Score",last - first) == 0 ) {
+            field = extScore;
+        } else {
+            name = std::string(&line[first],last - first);
+            name[0] = std::tolower(name[0]);
+        }
         break;
-	default: {
-	    post::headersMap::iterator header 
-		= constructed.moreHeaders.find(name);
-	    if( header != constructed.moreHeaders.end() ) {
-		header->second += std::string(",") + value;
-	    } else {
-		constructed.moreHeaders[name] = value;
-	    }
-	} break;
-	}
+    case rfc2822FieldBody: {
+        nontrivial = true;
+        std::string value = strip(std::string(&line[first],last - first));
+        switch( field ) {
+        case rfc2822Time:
+            try {
+                constructed.time = from_mbox_string(value);
+            } catch( std::exception& e ) {
+                std::cerr << "unable to reconstruct time from " << value << std::endl;
+            }
+            break;
+        case rfc2822AuthorEmail:
+            constructed.author = extractName(value);
+            constructed.authorEmail = extractEmailAddress(value);
+            break;
+        case rfc2822Title:
+            constructed.title = value;
+            break;
+        case extScore:
+            constructed.score = atoi(value.c_str());
+            break;
+        default: {
+            post::headersMap::iterator header
+                = constructed.moreHeaders.find(name);
+            if( header != constructed.moreHeaders.end() ) {
+                header->second += std::string(",") + value;
+            } else {
+                constructed.moreHeaders[name] = value;
+            }
+        } break;
+        }
     } break;
     case rfc2822MessageBody:
-	constructed.content = std::string(&line[first],&line[last]);
-	break;
+        nontrivial = true;
+        constructed.content = std::string(&line[first],&line[last]);
+        break;
     default:
-	/* to stop gcc from complaining */
-	break;
-    }    
+        /* to stop gcc from complaining */
+        break;
+    }
 }
 
 
-void mailParser::walk( session& s, std::istream& ins, const std::string& name ) const
+void
+mailParser::addFile( session& s, const boost::filesystem::path& filename ) const
 {
-    using namespace boost::gregorian;
-    using namespace boost::posix_time;
-    using namespace boost::local_time;
-    using namespace std;
-
-    typedef std::set<std::string> tagSet;
-
-    /** tags associated to a post. 
-     */
-    size_t lineCount = 0;
-    mailAsPost listener;
-    rfc2822Tokenizer tok(listener);
-    std::stringstream mailtext;
-    while( !ins.eof() ) {
-		std::string line;
-		std::getline(ins,line);
-		++lineCount;
-		
-		if( line.compare(0,5,"From ") == 0 ) {
-			/* Beginning of new message
-			   http://en.wikipedia.org/wiki/Mbox */
-			if( !mailtext.str().empty() ) {
-				/* First line of file introduces first e-mail. */
-				if( stopOnFirst ) break;	    
-				tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
-				post p = listener.unserialized();
-				p.guid = s.asUrl(name).string();
-				filter->filters(p);
-				mailtext.str("");
-			}
-		} else {
-			mailtext << line << std::endl;
-		}
+    slice<char> text = s.loadtext(filename);
+    char *start = text.begin();
+    size_t length = text.size();
+    while( length > 0 ) {
+        mailAsPost listener;
+        rfc2822Tokenizer tok(listener);
+        size_t processed = tok.tokenize(start, length);
+        start += processed;
+        length -= processed;
+        if( listener.nontrivial ) {
+            post entry = listener.unserialized();
+            entry.filename = filename;
+            entry.guid = s.asUrl(filename).string();
+            filter->filters(entry);
+            if( stopOnFirst ) break;
+        }
     }
-    tok.tokenize(mailtext.str().c_str(),mailtext.str().size());
-    post p = listener.unserialized();
-    p.guid = s.asUrl(name).string();
-    filter->filters(p);
-    mailtext.str("");    
+}
+
+
+void mailParser::flush( session& s ) const
+{
+    filter->flush();
 }
 
 

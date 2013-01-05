@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -47,10 +47,30 @@ public:
     typedef passThruFilter super;
 
 public:
-    explicit blogSplat( postFilter* n ) 
-	: super(n) {}
+    explicit blogSplat( postFilter* n )
+        : super(n) {}
 
     virtual void filters( const post& );
+};
+
+
+/** Keeps a reference to the most recent post.
+ */
+class mostRecentFilter : public passThruFilter {
+public:
+    typedef passThruFilter super;
+
+protected:
+    bool firstTime;
+    post mostRecentPost;
+
+public:
+    explicit mostRecentFilter( postFilter* n )
+        : super(n), firstTime(true) {}
+
+    virtual void filters( const post& p );
+
+    const post& mostRecent() const { return mostRecentPost; }
 };
 
 
@@ -67,17 +87,17 @@ public:
     typedef feedOrdered<cmp> super;
 
 public:
-    explicit blogInterval( postFilter* n, 
-			   const typename cmp::valueType& lower,
-			   const typename cmp::valueType& upper ) 
-	: super(n), bottom(lower), top(upper) {}
+    explicit blogInterval( postFilter* n,
+        const typename cmp::valueType& lower,
+        const typename cmp::valueType& upper )
+        : super(n), bottom(lower), top(upper) {}
 
     void provide();
 };
 
 
-template<typename defaultWriter, const char* varname, const char* filePat, 
-	 typename cmp>
+template<typename defaultWriter, const char* varname, const char* filePat,
+         typename cmp>
 void blogByInterval( session& s, const url& name );
 
 template<const char* varname, const char* filePat>
@@ -99,16 +119,17 @@ protected:
     url root;
 
 public:
-    bySet( std::ostream& o, const url& r ) 
-	: ostr(&o), root(r / boost::filesystem::path(cmp::name)) {}
+    bySet( std::ostream& o, const url& r )
+        : ostr(&o), root(r / boost::filesystem::path(cmp::name)) {}
 
     virtual void filters( const post& p );
-    
-    virtual void flush(); 
+
+    virtual void flush();
 };
- 
+
+
 /** Links to sets of blog posts sharing a specific key (ie. month, tag, etc.).
-class blogSetLinks : public feedWriter 
+class blogSetLinks : public feedWriter
 filePat is a regex.
 */
 template<typename cmp, const char *filePat>

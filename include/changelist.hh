@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,7 @@
 #ifndef guardchangelist
 #define guardchangelist
 
-#include "composer.hh"
-#include "post.hh"
+#include "revsys.hh"
 
 /* Different displays of changes to an underlying source control repository.
 
@@ -35,36 +34,27 @@
 */
 
 
-/** Add session variables related to changelist module. 
+/** Add session variables related to changelist module.
 */
-void 
+void
 changelistAddSessionVars( boost::program_options::options_description& all,
-			  boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
-
-
-class historyref {
-public:
-    historyref() {}
-
-    virtual url asUrl( const boost::filesystem::path& doc, 
-		       const std::string& rev ) const = 0;
-};
 
 class diffref : public historyref {
 public:
     diffref() {}
 
-    virtual url asUrl( const boost::filesystem::path& doc, 
-		       const std::string& rev ) const;
+    virtual url asUrl( const boost::filesystem::path& doc,
+        const std::string& rev ) const;
 };
 
 class checkinref : public historyref {
 public:
     checkinref() {}
 
-    virtual url asUrl( const boost::filesystem::path& doc, 
-		       const std::string& rev ) const;
+    virtual url asUrl( const boost::filesystem::path& doc,
+        const std::string& rev ) const;
 };
 
 class checkin : public post {
@@ -77,7 +67,7 @@ public:
     checkin() {}
 
     void addFile( const boost::filesystem::path& pathname ) {
-	files.push_back(pathname);
+        files.push_back(pathname);
     }
 };
 
@@ -87,18 +77,16 @@ public:
 class history {
 public:
     typedef std::list<checkin> checkinSet;
-    
+
 public:
     checkinSet checkins;
 
-    checkin* add() { 
-	checkin ci;
-	checkins.push_back(ci);
-	return &checkins.back();
+    checkin* add() {
+        checkin ci;
+        checkins.push_back(ci);
+        return &checkins.back();
     }
 };
-
-
 
 
 /** Command to cancel web edits
@@ -119,7 +107,7 @@ void changediff( session& s, const boost::filesystem::path& pathname,
     decorator *primary, decorator *secondary );
 
 
-/** Short history of changes to a project under revision control. 
+/** Short history of changes to a project under revision control.
 
     This will generate the same output as changehistory but with hyperlinks
     to an expended description of the checkin instead of a difference between
@@ -133,14 +121,14 @@ void changecheckinFetch( session& s, const url& name );
 void changehistoryFetch( session& s, const url& name );
 
 
-/** Display a unified diff between a commit and the previous one. 
+/** Display a unified diff between a commit and the previous one.
  */
 void changeShowDetails( session& s, const url& name );
 
 
 /** Populate *s.feeds* with the commit log of *pathname*.
  */
-void 
+void
 feedRepositoryPopulate( session& s, const url& name );
 
 
@@ -150,14 +138,14 @@ template<typename defaultWriter>
 void feedRepository( session& s, const url& name ) {
     defaultWriter writer(s.out());
     if( !s.feeds ) {
-		s.feeds = &writer;
+        s.feeds = &writer;
     }
 
     feedRepositoryPopulate(s,name);
 
     if( s.feeds == &writer ) {
-		s.feeds->flush();
-		s.feeds = NULL;
+        s.feeds->flush();
+        s.feeds = NULL;
     }
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, Fortylines LLC
+/* Copyright (c) 2010-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -40,57 +40,57 @@
 
 namespace {
 
-/** Reads an X.509 v3 certificate from a PEM file, extracts 
-    the subjectPublicKeyInfo structure (which is one way PK_Verifiers 
+/** Reads an X.509 v3 certificate from a PEM file, extracts
+    the subjectPublicKeyInfo structure (which is one way PK_Verifiers
     can get their key material) and writes it to keyout.
 
     @throws CryptoPP::BERDecodeError
 
-    This code is derived from what was posted at 
-    http://www.cryptopp.com/wiki/X.509 and originally offered 
+    This code is derived from what was posted at
+    http://www.cryptopp.com/wiki/X.509 and originally offered
     by Geoff Beier on the Crypto++ newsgroup.
 */
 
 void GetPublicKeyFromCert( const char* pathname,
-			   CryptoPP::BufferedTransformation& keyout )
+    CryptoPP::BufferedTransformation& keyout )
 {
     using namespace CryptoPP;
 
     std::stringstream sg;
     std::ifstream pem(pathname);
     if( pem.fail() ) {
-	using namespace boost::filesystem;
-	using namespace boost::system::errc;
-	boost::throw_exception(boost::system::system_error(
-	    make_error_code(no_such_file_or_directory),pathname));
+        using namespace boost::filesystem;
+        using namespace boost::system::errc;
+        boost::throw_exception(boost::system::system_error(
+                make_error_code(no_such_file_or_directory),pathname));
     }
     std::string line;
     std::getline(pem,line);
     while( !pem.eof() ) {
-	if( line.compare(0,5,"-----") != 0 ) {
-	    sg << line;
-	}
-	std::getline(pem,line);
+        if( line.compare(0,5,"-----") != 0 ) {
+            sg << line;
+        }
+        std::getline(pem,line);
     }
     CryptoPP::StringSource certin((const byte*)sg.str().c_str(),
-				  sg.str().size(),
-				  true,
-				  new CryptoPP::Base64Decoder());       
-    
+        sg.str().size(),
+        true,
+        new CryptoPP::Base64Decoder());
+
     BERSequenceDecoder x509Cert(certin);
     BERSequenceDecoder tbsCert(x509Cert);
-    
+
     // ASN.1 from RFC 3280
     // TBSCertificate  ::=  SEQUENCE  {
     // version         [0]  EXPLICIT Version DEFAULT v1,
-    
+
     // consume the context tag on the version
     BERGeneralDecoder context(tbsCert,0xa0);
     word32 ver;
-    
+
     // only want a v3 cert
     BERDecodeUnsigned<word32>(context,ver,INTEGER,2,2);
-    
+
     // serialNumber         CertificateSerialNumber,
     Integer serial;
     serial.BERDecode(tbsCert);
@@ -98,26 +98,26 @@ void GetPublicKeyFromCert( const char* pathname,
     // signature            AlgorithmIdentifier,
     BERSequenceDecoder signature(tbsCert);
     signature.SkipAll();
-    
+
     // issuer               Name,
     BERSequenceDecoder issuerName(tbsCert);
     issuerName.SkipAll();
-    
+
     // validity             Validity,
     BERSequenceDecoder validity(tbsCert);
     validity.SkipAll();
-    
+
     // subject              Name,
     BERSequenceDecoder subjectName(tbsCert);
     subjectName.SkipAll();
-    
+
     // subjectPublicKeyInfo SubjectPublicKeyInfo,
     BERSequenceDecoder spki(tbsCert);
     DERSequenceEncoder spkiEncoder(keyout);
-    
+
     spki.CopyTo(spkiEncoder);
     spkiEncoder.MessageEnd();
-    
+
     spki.SkipAll();
     tbsCert.SkipAll();
     x509Cert.SkipAll();
@@ -127,16 +127,16 @@ void GetPublicKeyFromCert( const char* pathname,
 
 
 #if 1
-const char *awsStandardButton::paypipeline 
+const char *awsStandardButton::paypipeline
     = "https://authorize.payments-sandbox.amazon.com/pba/paypipeline";
 #else
-const char *awsStandardButton::paypipeline 
+const char *awsStandardButton::paypipeline
     = "https://authorize.payments.amazon.com/pba/paypipeline";
 #endif
 
-const char *awsStandardButton::image 
+const char *awsStandardButton::image
     = "http://g-ecx.images-amazon.com/images/G/01/asp/"
-	"golden_small_paynow_withmsg_whitebg.gif";
+    "golden_small_paynow_withmsg_whitebg.gif";
 
 static const char *httpMethod = "GET";
 static const char *hostHeader = "https://authorize.payments-sandbox.amazon.com";
@@ -148,11 +148,11 @@ sessionVariable awsSecretKey("awsSecretKey","Amazon Secret Key");
 sessionVariable awsCertificate("awsCertificate","Amazon Public Certificate");
 
 
-void 
+void
 awsAddSessionVars( boost::program_options::options_description& opts,
-		   boost::program_options::options_description& visible ) {
+    boost::program_options::options_description& visible ) {
     using namespace boost::program_options;
- 
+
     /* For authentication with Amazon payment services. */
     options_description localOpts("amazon");
     localOpts.add(awsAccessKey.option());
@@ -184,34 +184,34 @@ awsStandardButton::awsStandardButton( const session& s )
 {
 }
 
-std::string 
+std::string
 awsStandardButton::formatRequest( const std::string& httpMethod,
-				  const std::string& hostHeader,
-				  const std::string& requestURI,
-				  const paramMap& params,
-				  const char *sep )
+    const std::string& hostHeader,
+    const std::string& requestURI,
+    const paramMap& params,
+    const char *sep )
 {
     const char *sepUsed = "";
     std::stringstream s;
     /*
       StringToSign = HTTPVerb + "\n" +
       ValueOfHostHeaderInLowercase + "\n" +
-      HTTPRequestURI + "\n" +         
-      CanonicalizedQueryString  
+      HTTPRequestURI + "\n" +
+      CanonicalizedQueryString
 
       * @param httpMethod - POST or GET
       * @param hostHeader - Service end point
       * @param requestURI - Path
-    */    
+    */
     s << httpMethod << '\n'
       << hostHeader << '\n'
       << requestURI << '\n';
 
-    for( paramMap::const_iterator param = params.begin(); 
-	 param != params.end();++param ) {
-	s << sepUsed << param->first << "=" << param->second;
-	sepUsed = sep;
-    } 
+    for( paramMap::const_iterator param = params.begin();
+         param != params.end();++param ) {
+        s << sepUsed << param->first << "=" << param->second;
+        sepUsed = sep;
+    }
     return s.str();
 }
 

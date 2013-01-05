@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -69,26 +69,26 @@ char buildView[] = "Build View";
    generic order since the matcher will apply each the first
    one that yields a positive match. */
 fetchEntry entries[] = {
-    { "author", boost::regex(".*\\.blog"), 
+    { "author", boost::regex(".*\\.blog"),
 	  noAuth|noPipe, NULL,  textMeta<author>, NULL },
     { "bytags", boost::regex(".*/blog/.*"),
 	  noAuth|noPipe, blogTagLinks<blogPat>, NULL, NULL },
     { "check", boost::regex(".*\\.c"),
-	  noAuth|noPipe, checkfileFetch<cppChecker>, NULL, NULL },
+	  noAuth|noPipe, NULL, NULL, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.h"),
-	  noAuth|noPipe, checkfileFetch<cppChecker>, NULL, NULL },
+	  noAuth|noPipe,  NULL, NULL, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.cc"),
-	  noAuth|noPipe, checkfileFetch<cppChecker>, NULL, NULL },
+	  noAuth|noPipe, NULL, NULL, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.hh"),
-	  noAuth|noPipe, checkfileFetch<cppChecker>, NULL, NULL },
+	  noAuth|noPipe, NULL, NULL, checkfileFetch<cppChecker> },
     { "check", boost::regex(".*\\.tcc"),
-	  noAuth|noPipe, checkfileFetch<cppChecker>, NULL, NULL },
-    { "check", boost::regex(".*\\.mk"), 
-	  noAuth|noPipe, checkfileFetch<shChecker>, NULL, NULL },
+	  noAuth|noPipe, NULL, NULL, checkfileFetch<cppChecker> },
+    { "check", boost::regex(".*\\.mk"),
+	  noAuth|noPipe, NULL, NULL, checkfileFetch<shChecker> },
     { "check", boost::regex(".*\\.py"),
-	  noAuth|noPipe, checkfileFetch<shChecker>, NULL, NULL },
+	  noAuth|noPipe, NULL, NULL, checkfileFetch<shChecker> },
     { "check", boost::regex(".*Makefile"),
-	  noAuth|noPipe, checkfileFetch<shChecker>, NULL, NULL },
+	  noAuth|noPipe, NULL, NULL, checkfileFetch<shChecker> },
     /* Widget to display status of static analysis of a project
        source files in the absence of a more restrictive pattern. */
     { "checkstyle", boost::regex(".*"),
@@ -116,11 +116,11 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, NULL, cppFetch, NULL },
     { "document", boost::regex(".*\\.hh"),
 	  noAuth|noPipe, NULL, cppFetch, NULL },
-    { "document", boost::regex(".*\\.tcc"), 
+    { "document", boost::regex(".*\\.tcc"),
 	  noAuth|noPipe, NULL, cppFetch, NULL },
     { "document", boost::regex(".*\\.c/diff/[0-9a-f]{40}"),
 	  noAuth|noPipe, cppDiff, NULL, NULL },
-    { "document", boost::regex(".*\\.h/diff/[0-9a-f]{40}"), 
+    { "document", boost::regex(".*\\.h/diff/[0-9a-f]{40}"),
 	  noAuth|noPipe, cppDiff, NULL, NULL },
     { "document", boost::regex(".*\\.cc/diff/[0-9a-f]{40}"),
 	  noAuth|noPipe, cppDiff, NULL, NULL },
@@ -141,7 +141,7 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*Makefile/diff/[0-9a-f]{40}"),
 	  noAuth|noPipe, shDiff, NULL, NULL },
     { "document", boost::regex(".*dws\\.xml"),
-	  noAuth|noPipe, projindexFetch, NULL, NULL },
+	  noAuth|noPipe, NULL, NULL, projindexFetch },
     /* Widget to generate a rss feed. Attention: it needs
        to be declared before any of the todoFilter::viewPat
        (i.e. todos/.+) since an rss feed exists for todo items
@@ -161,7 +161,7 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*\\.todo/voteSuccess"),
 	  noAuth|noPipe, todoVoteSuccessFetch, NULL, NULL },
     { "document", boost::regex(".*\\.blog"),
-	  noAuth|noPipe, blogEntryFetch, NULL, NULL },
+      noAuth|noPipe, blogEntryFetch, NULL, NULL },
     { "document", boost::regex(".*/blog/tags-.*"),
       noAuth|noPipe, blogByIntervalTags<docPage,blogPat>, NULL, NULL },
     { "document", boost::regex(".*/blog/tags/"),
@@ -190,14 +190,14 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*accounts/"),
 	  noAuth|noPipe, contribIdxFetch, NULL, NULL },
     /* misc pages */
-    { "document", boost::regex(".*\\.commit"),
+    { "document", boost::regex(".*/commit/[0-9a-f]{40}"),
 	  noAuth|noPipe, changeShowDetails, NULL, NULL },
     { "document", boost::regex(".*\\.eml"),
 	  noAuth|noPipe, mailParserFetch, NULL, NULL },
     { "document", boost::regex(".*\\.ics"),
 	  noAuth|noPipe, NULL, calendarFetch,  NULL },
     { "document", boost::regex(".*\\.todo"),
-	  noAuth|noPipe, NULL, todoWriteHtmlFetch, NULL },
+	  noAuth|noPipe, todoWriteHtmlFetch, NULL, NULL },
 
     /* We transform docbook formatted text into HTML for .book
        and .corp "document" files and interpret all other unknown
@@ -216,13 +216,13 @@ fetchEntry entries[] = {
     { "feed", boost::regex(".*/index\\.feed"),
 	  noAuth|noPipe, feedLatestPosts<htmlwriter,feed>, NULL, NULL },
     { "feed", boost::regex("/"),
-	  noAuth|noPipe, htmlSiteAggregate<feed>, NULL, NULL },
+      noAuth|noPipe, htmlSiteAggregate<feed>, NULL, NULL },
     { "history", boost::regex(".*dws\\.xml"),
-	  noAuth|noPipe, feedRepository<htmlwriter>, NULL, NULL },
+      noAuth|noPipe, feedRepository<htmlwriter>, NULL, NULL },
     /* Widget to display the history of a file under revision control
        in the absence of a more restrictive pattern. */
     { "history", boost::regex(".*"),
-	  noAuth|noPipe, changehistoryFetch, NULL, NULL },
+      noAuth|noPipe, changehistoryFetch, NULL, NULL },
 
     /* just print the value of *name* */
     { "print", boost::regex(".*"),
@@ -320,19 +320,15 @@ fetchEntry entries[] = {
     { "view", boost::regex(".*/todo/"),
 	  noAuth|noPipe, compose<todos>, NULL, NULL },
 
-    /* Command to create a new project */
-    { "view", boost::regex(".*/reps/.*/create"),
-	  noAuth|noPipe, projCreateFetch, NULL, NULL },
-
     /* comments */
     { "view", boost::regex(std::string("/comments/create")),
 	  noAuth|noPipe, commentPage, NULL, NULL },
 
     /* blog presentation */
     { "view", boost::regex(".*/blog/"),
-	  noAuth|noPipe, compose<blogIndex>, NULL, NULL },
+      noAuth|noPipe, compose<blogIndex>, NULL, NULL },
     { "view", boost::regex(".*/blog/.*"),
-	  noAuth|noPipe, compose<blogExt>, NULL, NULL },
+      noAuth|noPipe, compose<blogExt>, NULL, NULL },
 
     /* Source code "document" files are syntax-highlighted
        and presented inside a source.template "view". */

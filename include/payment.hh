@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #include "adapter.hh"
 
 /**
-   Interaction with payment system 
+   Interaction with payment system
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
@@ -47,7 +47,7 @@ protected:
     uint32_t amount;
     std::string referenceId;
 
-    const url image;    
+    const url image;
     const url paypipeline;
 
 public:
@@ -56,10 +56,10 @@ public:
 
    void build( const std::string& referenceId, uint32_t amount );
 
-    /** returns true when the signature of the return request 
-	matches the one computed with the server's secretKey. */
+    /** returns true when the signature of the return request
+        matches the one computed with the server's secretKey. */
     bool checkReturn( const session& s, const char *requestURI );
-    
+
     template<typename ch, typename tr>
     void writehtml( std::basic_ostream<ch, tr>& ostr ) const;
 };
@@ -69,14 +69,14 @@ public:
 class payment {
 protected:
     struct entry {
-	const boost::regex* regexp;
-	const char *retPath;
-	adapter* adapt; 
+        const boost::regex* regexp;
+        const char *retPath;
+        adapter* adapt;
 
-	entry() {}
+        entry() {}
 
-	entry( const boost::regex& r, const char *rp, adapter& a ) 
-	    : regexp(&r), retPath(rp), adapt(&a) {}
+        entry( const boost::regex& r, const char *rp, adapter& a )
+            : regexp(&r), retPath(rp), adapt(&a) {}
 
     };
 
@@ -87,25 +87,25 @@ protected:
 public:
     void add( const boost::regex& r, const char *retPath, adapter& a );
 
-    static void 
+    static void
     addSessionVars( boost::program_options::options_description& all,
-		    boost::program_options::options_description& visible );
+        boost::program_options::options_description& visible );
 
     static void checkReturn( session& s, const char* page );
 
     static void show( std::ostream& ostr,
-		      session& s, 
-		      const url& returnUrl, 
-		      const std::string& referenceId, 
-		      size_t value,
-		      const std::string& descr = "" );
+        session& s,
+        const url& returnUrl,
+        const std::string& referenceId,
+        size_t value,
+        const std::string& descr = "" );
 };
 
 
-void paymentFetch( session& s, const boost::filesystem::path& pathname );    
+void paymentFetch( session& s, const boost::filesystem::path& pathname );
 
 
-/** "Do-nothing" pipeline to process payments 
+/** "Do-nothing" pipeline to process payments
  */
 void payPipelineFetch( session& s, const boost::filesystem::path& pathname );
 #endif

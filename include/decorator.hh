@@ -28,7 +28,9 @@
 
 #include <ostream>
 #include "session.hh"
+#if 0
 #include "document.hh"
+#endif
 #include "tokenize.hh"
 
 /* Decorators are used to highjack the underlying buffer of an ostream
@@ -221,6 +223,7 @@ protected:
     };
     
     session* context;
+    boost::filesystem::path base;
 
     /** returns true if the orginal text needs to be copied to the output
 	stream and false if the method replaced the text already. */
@@ -247,13 +250,16 @@ public:
     linkClass add( const url& u );
 
 public:
-    explicit basicLinkLight( session& s ) 
-	: super(false), context(&s) { 
-	super::tokenizer.attach(*this); 
+    explicit basicLinkLight( session& s, const boost::filesystem::path& r )
+        : super(false), context(&s), base(r) {
+	super::tokenizer.attach(*this);
     }
     
-    basicLinkLight(  session& s, std::basic_ostream<charT,traitsT>& o )
-	: super(o,false), context(&s) { super::tokenizer.attach(*this); }
+    basicLinkLight(  session& s, const boost::filesystem::path& root,
+        std::basic_ostream<charT,traitsT>& o )
+        : super(o,false), context(&s), base(root) {
+        super::tokenizer.attach(*this);
+    }
     
     void newline( const char *line, int first, int last ) {
 	super::nextBuf->sputc('\n');
@@ -272,17 +278,15 @@ class absUrlDecoratorBase : public basicLinkLight<charT, traitsT> {
 protected:
     typedef basicLinkLight<charT, traitsT> super;
 
-    boost::filesystem::path base;
-
     virtual bool decorate( const url& u );
 
 public:
     absUrlDecoratorBase( const boost::filesystem::path& b, session& s ) 
-	: super(s), base(b) {}
+        : super(s,b) {}
     
     absUrlDecoratorBase( const boost::filesystem::path& b, 
 		     session& s, std::basic_ostream<charT,traitsT>& o )
-	: super(s,o), base(b) {}
+        : super(s,b,o) {}
 };
 
 
@@ -297,10 +301,12 @@ protected:
     virtual bool decorate( const url& u );
 
 public:
-    explicit cachedUrlBase( session& s ) : super(s) {}
+    explicit cachedUrlBase( session& s, const boost::filesystem::path& r )
+        : super(s,r) {}
     
-    cachedUrlBase( session& s, std::basic_ostream<charT,traitsT>& o )
-	: super(s,o) {}
+    cachedUrlBase( session& s, const boost::filesystem::path& r,
+        std::basic_ostream<charT,traitsT>& o )
+        : super(s,r,o) {}
 };
 
 

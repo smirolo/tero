@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -30,16 +30,16 @@
 #include "markup.hh"
 
 /** show projects and their status taken out of log files
-  
+
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 void logAddSessionVars( boost::program_options::options_description& all,
-						boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 void logviewFetch( session& s, const url& name );
 
-/** Display test unit regressions as provided by a regression.log 
+/** Display test unit regressions as provided by a regression.log
  */
 void regressionsFetch( session& s, const url& name );
 

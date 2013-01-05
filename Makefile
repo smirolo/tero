@@ -28,9 +28,12 @@
 include $(shell dws context)
 include $(buildTop)/share/dws/prefix.mk
 
+CXXFLAGS	+= -g
+
 bins 		:=	semilla
 #bins 		:=	semilla smailui
-libs		:=	libsemilla.a libpayproc.a
+#libs		:=	libsemilla.a libpayproc.a
+libs		:=  libsemilla.a
 # \todo documentation specific to the project is currently broken. 
 #       It needs to be written up anyway :).
 #shares		:=	semilla.pdf
@@ -62,7 +65,7 @@ LDFLAGS		+=	-ldl
 
 registerDeps	:= -lpam 
 
-semilla: semilla.cc semtable.o libsemilla.a libpayproc.a \
+semilla: semilla.cc semtable.o libsemilla.a \
 		-lcryptopp -luriparser $(registerDeps) \
 		-lboost_date_time -lboost_random -lboost_regex -lboost_program_options \
 		-lboost_iostreams -lboost_filesystem -lboost_system -lPocoNet

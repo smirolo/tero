@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 
 void
 commentAddSessionVars( boost::program_options::options_description& all,
-		       boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 
 /** Create the comments file if it does not exists and then append
@@ -50,12 +50,12 @@ protected:
     boost::filesystem::path postname;
 
 public:
-   appendCommentToFile( session& s, const boost::filesystem::path& p ) 
+   appendCommentToFile( session& s, const boost::filesystem::path& p )
        : mySession(&s), postname(p) {}
 
-    appendCommentToFile( session& s, const boost::filesystem::path& p, 
-			 postFilter* n ) 
-	: passThruFilter(n), mySession(&s), postname(p) {}
+    appendCommentToFile( session& s, const boost::filesystem::path& p,
+        postFilter* n )
+        : passThruFilter(n), mySession(&s), postname(p) {}
 
     virtual void filters( const post& );
 };
@@ -69,7 +69,7 @@ void pageCommentsFetch( session& s, const url& name);
 
 /** Comment an page
 
-    Commmenting on a page involves finding the comment file matching 
+    Commmenting on a page involves finding the comment file matching
     the page and append the post at the end of that file.
 
     (*always*)

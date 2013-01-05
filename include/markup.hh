@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -40,80 +40,80 @@ namespace detail {
 
     class nodeEnd {
     public:
-	bool newline;
-	const char* name;
+        bool newline;
+        const char* name;
 
-	explicit nodeEnd( const char* n, bool nl = false ) 
-	    : newline(nl), name(n) {}
+        explicit nodeEnd( const char* n, bool nl = false )
+            : newline(nl), name(n) {}
 
-	template<typename ch, typename tr>
-	friend std::basic_ostream<ch, tr>&
-	operator<<(std::basic_ostream<ch, tr>& ostr, const nodeEnd& v ) {
-	    ostr << "</" << v.name << '>';
-	    if( v.newline ) ostr << std::endl;
-	    return ostr;
-	}
+        template<typename ch, typename tr>
+        friend std::basic_ostream<ch, tr>&
+        operator<<(std::basic_ostream<ch, tr>& ostr, const nodeEnd& v ) {
+            ostr << "</" << v.name << '>';
+            if( v.newline ) ostr << std::endl;
+            return ostr;
+        }
     };
 
     class attribute {
     public:
-	bool valid;
-	const char* name;
-	std::string value;
+        bool valid;
+        const char* name;
+        std::string value;
 
-	explicit attribute( const char* n ) 
-	    : valid(false), name(n) {}
+        explicit attribute( const char* n )
+            : valid(false), name(n) {}
 
-	attribute( const char* n, const std::string& v ) 
-	    : valid(true), name(n), value(v) {}
-	
-	template<typename ch, typename tr>
-	friend std::basic_ostream<ch, tr>&
-	operator<<(std::basic_ostream<ch, tr>& ostr, const attribute& v ) {
-	    if( v.valid ) {
-		ostr << ' ' << v.name << "=\"" << v.value << '\"';
-	    }
-	    return ostr;
-	}
+        attribute( const char* n, const std::string& v )
+            : valid(true), name(n), value(v) {}
+
+        template<typename ch, typename tr>
+        friend std::basic_ostream<ch, tr>&
+        operator<<(std::basic_ostream<ch, tr>& ostr, const attribute& v ) {
+            if( v.valid ) {
+                ostr << ' ' << v.name << "=\"" << v.value << '\"';
+            }
+            return ostr;
+        }
     };
-    
+
     class markup {
     protected:
-	bool newline;
-	const char *name;
+        bool newline;
+        const char *name;
 
-	const size_t attrArrayLength;
-	const char **attrNames;
-	std::string *attrValues;
+        const size_t attrArrayLength;
+        const char **attrNames;
+        std::string *attrValues;
 
-   public:		
-	markup( const char *n, 
-		const char **attrNs,
-		std::string *attrVs,
-		const size_t attrNbs,
-		bool nl = false ) : newline(nl), name(n), 
-				    attrArrayLength(attrNbs),
-				    attrNames(attrNs), attrValues(attrVs)
-	{}
-	
-	template<typename ch, typename tr>
-	friend std::basic_ostream<ch, tr>&
-	operator<<(std::basic_ostream<ch, tr>& ostr, const markup& v ) {
-	    ostr << "<" << v.name;
-	    if( (v.attrNames != NULL) & (v.attrValues != NULL) ) {
-		for( size_t i = 0; i < v.attrArrayLength; ++i ) {
-		    if( !v.attrValues[i].empty() ) {
-			ostr << ' ' << v.attrNames[i] << "=\"" << v.attrValues[i] << '\"';
-		    }
-		}
-	    }
-	    ostr << '>';
-	    /* \todo newline formatting should only appear when two tags
-	     are following each other with no text in between. 
-	    The way to do it is with a decorator, not here. */
-	    if( v.newline ) ostr << std::endl;
-	    return ostr;
-	}
+   public:
+        markup( const char *n,
+            const char **attrNs,
+            std::string *attrVs,
+            const size_t attrNbs,
+            bool nl = false ) : newline(nl), name(n),
+                                attrArrayLength(attrNbs),
+                                attrNames(attrNs), attrValues(attrVs)
+        {}
+
+        template<typename ch, typename tr>
+        friend std::basic_ostream<ch, tr>&
+        operator<<(std::basic_ostream<ch, tr>& ostr, const markup& v ) {
+            ostr << "<" << v.name;
+            if( (v.attrNames != NULL) & (v.attrValues != NULL) ) {
+                for( size_t i = 0; i < v.attrArrayLength; ++i ) {
+                    if( !v.attrValues[i].empty() ) {
+                        ostr << ' ' << v.attrNames[i] << "=\"" << v.attrValues[i] << '\"';
+                    }
+                }
+            }
+            ostr << '>';
+            /* \todo newline formatting should only appear when two tags
+               are following each other with no text in between.
+               The way to do it is with a decorator, not here. */
+            if( v.newline ) ostr << std::endl;
+            return ostr;
+        }
     };
 
 } // detail
@@ -134,264 +134,263 @@ namespace html {
 
     /** HTML a (href) markup
      */
-    class a : public detail::markup {    
+    class a : public detail::markup {
     protected:
-	enum attributes {
-	    hrefAttr,
-	    titleAttr
-	};
+        enum attributes {
+            hrefAttr,
+            titleAttr
+        };
 
-	static const size_t attrLength = 2;
+        static const size_t attrLength = 2;
 
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
 
 
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
-	static std::set<url> cached;
-	static std::set<url> uncached;
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
+        static std::set<url> cached;
+        static std::set<url> uncached;
 
-    
-	a() : markup(name,attrNames,attrValues,attrLength) {}
 
-	a& href( const url& v );
+        a() : markup(name,attrNames,attrValues,attrLength) {}
 
-	a& href( const std::string& v ) {
-	    return href(url(v));
-	}
+        a& href( const url& v );
 
-	a& title( const std::string& v ) {
-	    attrValues[titleAttr] = v;
-	    return *this;
-	}
+        a& href( const std::string& v ) {
+            return href(url(v));
+        }
+
+        a& title( const std::string& v ) {
+            attrValues[titleAttr] = v;
+            return *this;
+        }
     };
 
     /** HTML body markup
      */
-    class body : public detail::markup {    
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
-    
-	body() : markup(name,NULL,NULL,0,true) {}
+    class body : public detail::markup {
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        body() : markup(name,NULL,NULL,0,true) {}
     };
 
 
     /** HTML caption markup
      */
-    class caption : public detail::markup {    
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
-    
-	caption() : markup(name,NULL,NULL,0,true) {}
+    class caption : public detail::markup {
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        caption() : markup(name,NULL,NULL,0,true) {}
     };
 
     /** HTML div markup
      */
-    class div : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr,
-	};
+    class div : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr,
+        };
 
-	static const size_t attrLength = 1;
+        static const size_t attrLength = 1;
 
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
 
-	
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
-    
-	div() : markup(name,attrNames,attrValues,attrLength,true) {}
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
 
-	div& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}
+        div() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        div& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
     };
 
     /** form markup
      */
-    class form : public detail::markup {    
-    protected:  
-	enum attributes {
-	    actionAttr,
-	    classAttr,
-	    methodAttr
-	};
-	
-	static const size_t attrLength = 3;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	form() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	form& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+    class form : public detail::markup {
+    protected:
+        enum attributes {
+            actionAttr,
+            classAttr,
+            methodAttr
+        };
 
-	form& action( const url& u ) {
-	    attrValues[actionAttr] = u.string();
-	    return *this;
-	}	
+        static const size_t attrLength = 3;
 
-	form& method( const char *v ) {
-	    attrValues[methodAttr] = v;
-	    return *this;
-	}
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        form() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        form& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
+
+        form& action( const url& u ) {
+            attrValues[actionAttr] = u.string();
+            return *this;
+        }
+
+        form& method( const char *v ) {
+            attrValues[methodAttr] = v;
+            return *this;
+        }
     };
 
     /** HTML head markup
      */
-    class head : public detail::markup {    
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
-    
-	head() : markup(name,NULL,NULL,0,true) {}
+    class head : public detail::markup {
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        head() : markup(name,NULL,NULL,0,true) {}
     };
 
     /** img markup
      */
-    class img : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr,
-	    srcAttr,
-	};
-	
-	static const size_t attrLength = 2;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	img() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	img& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+    class img : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr,
+            srcAttr,
+        };
 
-	img& src( const url& u ) {
-	    attrValues[srcAttr] = u.string();
-	    return *this;
-	}	
+        static const size_t attrLength = 2;
+
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        img() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        img& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
+
+        img& src( const url& u ) {
+            attrValues[srcAttr] = u.string();
+            return *this;
+        }
 
     };
 
 
     /** input markup
      */
-    class input : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr,
-	    nameAttr,
-	    srcAttr,
-	    typeAttr,
-	    valueAttr
-	};
+    class input : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr,
+            nameAttr,
+            srcAttr,
+            typeAttr,
+            valueAttr
+        };
+
+        static const size_t attrLength = 5;
+
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+        static const char* one;
+        static const char* zero;
 	
-	static const size_t attrLength = 5;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
+    public:
 
-	static const char* one;
-	static const char* zero;
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	static const char* hidden;
-	static const char* image;
+        static const char* name;
+        static const detail::nodeEnd end;
 
-	input() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	input& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+        static const char* hidden;
+        static const char* image;
 
-	input& nameref( const char *v ) {
-	    attrValues[nameAttr] = v;
-	    return *this;
-	}	
+        input() : markup(name,attrNames,attrValues,attrLength,true) {}
 
-	input& src( const url& u ) {
-	    attrValues[srcAttr] = u.string();
-	    return *this;
-	}	
+        input& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
 
-	input& type( const char *v ) {
-	    attrValues[typeAttr] = v;
-	    return *this;
-	}	
+        input& nameref( const char *v ) {
+            attrValues[nameAttr] = v;
+            return *this;
+        }
 
-	input& value( bool b ) {
-	    attrValues[valueAttr] = b ? one : zero;
-	    return *this;
-	}	
+        input& src( const url& u ) {
+            attrValues[srcAttr] = u.string();
+            return *this;
+        }
 
-	input& value( const std::string& s ) {
-	    attrValues[valueAttr] = s;
-	    return *this;
-	}	
+        input& type( const char *v ) {
+            attrValues[typeAttr] = v;
+            return *this;
+        }
 
-	input& value( uint32_t v ) {
-	    std::stringstream s;
-	    s << v;
-	    attrValues[valueAttr] = s.str();
-	    return *this;
-	}	
+        input& value( bool b ) {
+            attrValues[valueAttr] = b ? one : zero;
+            return *this;
+        }
+
+        input& value( const std::string& s ) {
+            attrValues[valueAttr] = s;
+            return *this;
+        }
+
+        input& value( uint32_t v ) {
+            std::stringstream s;
+            s << v;
+            attrValues[valueAttr] = s.str();
+            return *this;
+        }
     };
 
 
     /** HTML h{1,2,3,...} markup
      */
-    class h : public detail::markup {    
+    class h : public detail::markup {
     protected:
-	static const char* names[];
+        static const char* names[];
 
-	int num;
+        int num;
 
     public:
-	/* \todo assert than n < 5. */
-	explicit h( int n ) : markup(names[n],NULL,NULL,0), num(n) {}
+        /* \todo assert than n < 5. */
+        explicit h( int n ) : markup(names[n],NULL,NULL,0), num(n) {}
 
-	detail::nodeEnd end() const {
-	    return detail::nodeEnd(names[num],true);
-	}
+        detail::nodeEnd end() const {
+            return detail::nodeEnd(names[num],true);
+        }
 
     };
 
     /** HTML li markup
      */
-    class li : public detail::markup {    
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
-    
-	li() : markup(name,NULL,NULL,0) {}
+    class li : public detail::markup {
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        li() : markup(name,NULL,NULL,0) {}
     };
 
     /** HTML linebreak markup
@@ -400,205 +399,205 @@ namespace html {
 
     /** HTML p markup
      */
-    class p : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr,
-	};
-	
-	static const size_t attrLength = 1;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
+    class p : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr,
+        };
 
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
+        static const size_t attrLength = 1;
 
-	p() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	p& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        p() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        p& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
     };
 
     /** pre markup
      */
-    class pre : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr,
-	};
-	
-	static const size_t attrLength = 1;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	pre() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	pre& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+    class pre : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr,
+        };
+
+        static const size_t attrLength = 1;
+
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        pre() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        pre& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
     };
 
     /** span markup
      */
-    class span : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr
-	};
-	
-	static const size_t attrLength = 1;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	span() : markup(name,attrNames,attrValues,attrLength) {}
-	
-	span& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+    class span : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr
+        };
+
+        static const size_t attrLength = 1;
+
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        span() : markup(name,attrNames,attrValues,attrLength) {}
+
+        span& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
     };
 
     /** HTML table markup
      */
-    class table : public detail::markup {    
+    class table : public detail::markup {
     public:
-	enum attributes {
-	    classAttr,
-	};
+        enum attributes {
+            classAttr,
+        };
 
-	static const size_t attrLength = 1;
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
+        static const size_t attrLength = 1;
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
 
-	static const char* name;
-	static const detail::nodeEnd end;
-    
-	table() : markup(name,attrNames,attrValues,attrLength,true) {}
+        static const char* name;
+        static const detail::nodeEnd end;
 
-	table& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+        table() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        table& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
 
     };
 
     /** td markup
      */
-    class td : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr,
-	    colspanAttr,
-	};
-	
-	static const size_t attrLength = 2;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	td() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	td& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+    class td : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr,
+            colspanAttr,
+        };
 
-	td& colspan( const char *v ) {
-	    attrValues[colspanAttr] = v;
-	    return *this;
-	}	
+        static const size_t attrLength = 2;
+
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        td() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        td& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
+
+        td& colspan( const char *v ) {
+            attrValues[colspanAttr] = v;
+            return *this;
+        }
 
     };
 
     /** th markup
      */
-    class th : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr,
-	    colspanAttr,
-	};
-	
-	static const size_t attrLength = 2;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	th() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	th& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+    class th : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr,
+            colspanAttr,
+        };
 
-	th& colspan( const char *v ) {
-	    attrValues[colspanAttr] = v;
-	    return *this;
-	}	
+        static const size_t attrLength = 2;
+
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        th() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        th& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
+
+        th& colspan( const char *v ) {
+            attrValues[colspanAttr] = v;
+            return *this;
+        }
 
     };
 
     /** tr markup
      */
-    class tr : public detail::markup {    
-    protected:  
-	enum attributes {
-	    classAttr
-	};
-	
-	static const size_t attrLength = 1;
-	
-	static const char *attrNames[];
-	std::string attrValues[attrLength];
-	
-    public:  
-	
-	static const char* name;
-	static const detail::nodeEnd end;
-	
-	tr() : markup(name,attrNames,attrValues,attrLength,true) {}
-	
-	tr& classref( const char *v ) {
-	    attrValues[classAttr] = v;
-	    return *this;
-	}	
+    class tr : public detail::markup {
+    protected:
+        enum attributes {
+            classAttr
+        };
+
+        static const size_t attrLength = 1;
+
+        static const char *attrNames[];
+        std::string attrValues[attrLength];
+
+    public:
+
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        tr() : markup(name,attrNames,attrValues,attrLength,true) {}
+
+        tr& classref( const char *v ) {
+            attrValues[classAttr] = v;
+            return *this;
+        }
     };
 
     /** HTML ul markup
      */
-    class ul : public detail::markup {    
-    public:  
-	static const char* name;
-	static const detail::nodeEnd end;
-    
-	ul() : markup(name,NULL,NULL,0,true) {}
+    class ul : public detail::markup {
+    public:
+        static const char* name;
+        static const detail::nodeEnd end;
+
+        ul() : markup(name,NULL,NULL,0,true) {}
     };
 
 
@@ -608,66 +607,66 @@ namespace html {
 
     This must be an e-mail address
  */
-class author : public detail::markup {    
-public:  
+class author : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     author() : markup(name,NULL,NULL,0) {}
 };
 
 
 /** channel markup
  */
-class channel : public detail::markup {    
-public:  
+class channel : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     channel() : markup(name,NULL,NULL,0,true) {}
 };
 
 
 /** description markup
  */
-class description : public detail::markup {    
-public:  
+class description : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     description() : markup(name,NULL,NULL,0,true) {}
 };
 
 
 /** guid into a rss feed
  */
-class guid : public detail::markup {    
-public:  
+class guid : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     guid() : markup(name,NULL,NULL,0) {}
 };
 
 
 /** item into a rss feed
  */
-class item : public detail::markup {    
-public:  
+class item : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     item() : markup(name,NULL,NULL,0,true) {}
 };
 
 
 /** link into a rss feed
  */
-class rsslink : public detail::markup {    
-public:  
+class rsslink : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     rsslink() : markup(name,NULL,NULL,0) {}
 };
 
@@ -675,14 +674,14 @@ public:
 /** a source code listing markup
  */
 class code : public html::pre {
-public:  
+public:
     code() {}
-    
+
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<(std::basic_ostream<ch, tr>& ostr, const code& v ) {
-	ostr << "<pre class=\"code\">" << std::endl;
-	return ostr;
+        ostr << "<pre class=\"code\">" << std::endl;
+        return ostr;
     }
 };
 
@@ -691,30 +690,30 @@ public:
 
     Following RFC 822 formatting.
  */
-class pubDate : public detail::markup {    
-public:  
+class pubDate : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
     boost::posix_time::ptime time;
 
-    /** format string used for printing date_time 
+    /** format string used for printing date_time
      */
     static const char *format;
-	static const char *shortFormat;
+    static const char *shortFormat;
 
-    explicit pubDate( boost::posix_time::ptime t ) 
+    explicit pubDate( boost::posix_time::ptime t )
     : markup(name,NULL,NULL,0), time(t) {}
 
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<( std::basic_ostream<ch, tr>& ostr, const pubDate& v ) {
-		boost::posix_time::time_facet* 
-			facet(new boost::posix_time::time_facet(format));
-		ostr.imbue(std::locale(ostr.getloc(), facet));
-		ostr << static_cast<const detail::markup&>(v)
-			 << v.time
-			 << end;
-		return ostr;
+        boost::posix_time::time_facet*
+            facet(new boost::posix_time::time_facet(format));
+        ostr.imbue(std::locale(ostr.getloc(), facet));
+        ostr << static_cast<const detail::markup&>(v)
+             << v.time
+             << end;
+        return ostr;
     }
 
 
@@ -723,49 +722,49 @@ public:
 
 /** rss markup
  */
-class rss : public detail::markup {    
+class rss : public detail::markup {
 protected:
     enum attributes {
-	versionAttr,
+        versionAttr,
     };
-    
+
     static const size_t attrLength = 1;
-    
+
     static const char *attrNames[];
     std::string attrValues[attrLength];
-    
 
-public:  
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     rss() : markup(name,attrNames,attrValues,attrLength,true) {}
 
     rss& version( const char *v ) {
-	attrValues[versionAttr] = v;
-	return *this;
+        attrValues[versionAttr] = v;
+        return *this;
     }
 };
 
 
 /** title markup
  */
-class title : public detail::markup {    
-public:  
+class title : public detail::markup {
+public:
     static const char* name;
     static const detail::nodeEnd end;
-    
+
     title() : markup(name,NULL,NULL,0) {}
 };
 
 
 template<typename ch, typename tr>
 std::basic_ostream<ch, tr>&
-mbox_string( std::basic_ostream<ch, tr>& ostr, 
-	     const boost::posix_time::ptime& time ) {
+mbox_string( std::basic_ostream<ch, tr>& ostr,
+    const boost::posix_time::ptime& time )
+{
     using namespace boost::gregorian;
     using namespace boost::posix_time;
-    
+
     time_facet* facet(new time_facet(pubDate::format));
     ostr.imbue(std::locale(ostr.getloc(), facet));
     ostr << time;
@@ -773,42 +772,42 @@ mbox_string( std::basic_ostream<ch, tr>& ostr,
 }
 
 
-/** insert a comma separated list stored as a string into a set of strings. 
+/** insert a comma separated list stored as a string into a set of strings.
  */
 template<typename charIter, typename outIter>
 outIter insertItems( charIter first, charIter last, outIter outs ) {
-	charIter base = first;
-	while( first != last ) {
-	    if( *first == ',' ) {
-			std::string s = strip(std::string(base,first - base));
-			if( !s.empty() ) {
-				*outs++ = s;
-			}
-			base = first;
-			++base;
-	    }
-	    ++first;
-	}
-	std::string s = strip(std::string(base,first - base));
-	if( !s.empty() ) {
-		*outs++ = s;
-	}
-	return outs;
+    charIter base = first;
+    while( first != last ) {
+        if( *first == ',' ) {
+            std::string s = strip(std::string(base,first - base));
+            if( !s.empty() ) {
+                *outs++ = s;
+            }
+            base = first;
+            ++base;
+        }
+        ++first;
+    }
+    std::string s = strip(std::string(base,first - base));
+    if( !s.empty() ) {
+        *outs++ = s;
+    }
+    return outs;
 }
 
 
 /** Write a pathname *base* / *leaf* as an html href link in an output stream *ostr*. 
  */
 template<typename charT, typename traitsT>
-std::basic_ostream<charT,traitsT>& 
+std::basic_ostream<charT,traitsT>&
 writelink( std::basic_ostream<charT,traitsT>& ostr,
-	   const boost::filesystem::path& base,
-	   const boost::filesystem::path& leaf,
-	   const std::string& ext = "" ) {    
+    const boost::filesystem::path& base,
+    const boost::filesystem::path& leaf,
+    const std::string& ext = "" ) {
     if( !ext.empty() ) {
-	ostr << html::a().href((base / leaf).string() + ext);
+        ostr << html::a().href((base / leaf).string() + ext);
     } else {
-	ostr << html::a().href((base / leaf).string());
+        ostr << html::a().href((base / leaf).string());
     }
     ostr << leaf << html::a::end;
     return ostr;

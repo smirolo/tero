@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@ size_t xmlTokenizer::tokenize( const char *line, size_t n )
 
     if( n == 0 ) return 0;
     if( trans != NULL ) goto *trans; else goto token;
-    
+
 advancePointer:
 	last = (size_t)std::distance(line,p);
 	if( last >= n ) {
@@ -78,7 +78,7 @@ advancePointer:
 	}
     switch( *p ) {
     case '\\':
-		savedtrans = trans;	
+		savedtrans = trans;
 		trans = &&esceol;
 		goto eolAdvancePointer;
     case '\r':
@@ -86,7 +86,7 @@ advancePointer:
 		savedtrans = trans;
 		trans = &&eolmacwin;
 		goto eolAdvancePointer;
-    case '\n':  
+    case '\n':
 		/* unix-like */
 		savedtrans = trans;
 		trans = &&eol;
@@ -107,7 +107,7 @@ advancePointer:
 	}
 	++p;
     goto *trans;
-	
+
  esceol:
 	/* Escaped EOL character */
 	switch( *p ) {
@@ -132,7 +132,7 @@ advancePointer:
 		goto eolAdvancePointer;
 	}
 	goto eol;
-	
+
  eol:
 	if( last > first && listener != NULL ) {
 		listener->token(tok,line,first,last,false);
@@ -153,7 +153,7 @@ attValueDouble:
     /* AttValue ::= '"' ([^<&"] | Reference)* '"' */
     if( *p != '"' ) advance(attValueDouble);
     advance(tag);
-    
+
 attValueSingle:
     /* AttValue ::= "'" ([^<&'] | Reference)* "'" */
     if( *p != '"' ) advance(attValueSingle);
@@ -191,15 +191,15 @@ endComment2:
 	advance(token);
     }
     goto error;
-    
+
  error:
     /* skip until tag delimiter character */
     if( (*p != '<') & (*p != '>') ) advance(error);
     goto tag;
-    
+
  name:
     if( nameChar(*p) ) advance(name);
-    goto tag;	
+    goto tag;
 
  spaces:
     if( *p == ' ' ) advance(spaces);
@@ -207,7 +207,7 @@ endComment2:
 
  spacesBeforeContent:
     if( *p == ' ' ) advance(spacesBeforeContent);
-    goto token;    
+    goto token;
 
 startComment:
     if( *p == '-') advance(startComment2);
@@ -216,7 +216,7 @@ startComment:
 startComment2:
     if( *p == '-') advance(comment);
     goto error;
-    
+
  startDecl:
     switch( *p ) {
     case '/':
@@ -231,7 +231,7 @@ startComment2:
     }
     tok = xmlElementStart;
     goto tag;
-    
+
  tag:
     if( (p - line) > first && listener != NULL ) {
 		listener->token(tok,line,first,p - line,false);
@@ -250,7 +250,7 @@ startComment2:
 	advance(spaces);
     case '<':
 	advance(startDecl);
-    case '/':		
+    case '/':
 	advance(endEmptyElement);
     case '>':
 	tok = xmlCloseTag;
@@ -268,7 +268,7 @@ startComment2:
 	advance(endEmptyDecl);
     }
     goto error;
-    
+
  token:
     last = std::distance(line,p);
     if( last > first && listener != NULL ) {

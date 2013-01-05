@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, Fortylines LLC
+/* Copyright (c) 2010-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,9 @@
 extern sessionVariable paypalSecretKey;
 extern sessionVariable paypalPublicCertificate;
 
-void 
+void
 paypalAddSessionVars( boost::program_options::options_description& opts,
-		      boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 
 class paypalStandardButton {
@@ -63,13 +63,13 @@ protected:
 
     std::string loadSecretKey( const boost::filesystem::path& p );
 
-public:   
+public:
     static
     std::string formatRequest( const std::string& httpMethod,
-			       const std::string& hostHeader,
-			       const std::string& requestURI,
-			       const paramMap& params,
-			       const char *sep = "" );
+        const std::string& hostHeader,
+        const std::string& requestURI,
+        const paramMap& params,
+        const char *sep = "" );
 
 public:
     url abandonUrl;
@@ -81,17 +81,16 @@ public:
     bool isDonationWidget;
     bool processImmediate;
     url returnUrl;
-    
+
 public:
     explicit paypalStandardButton( const session& s );
 
     void build( const std::string& referenceId, uint32_t amount );
 
-    /** returns true when the signature of the return request 
-	matches the one computed with the server's secretKey. */
-    bool checkReturn( const session& s,
-		      const char *requestURI );
-    
+    /** returns true when the signature of the return request
+        matches the one computed with the server's secretKey. */
+    bool checkReturn( const session& s, const char *requestURI );
+
     template<typename ch, typename tr>
     void writehtml( std::basic_ostream<ch, tr>& ostr ) const;
 };
@@ -105,34 +104,34 @@ void paypalStandardButton::writehtml( std::basic_ostream<ch, tr>& ostr ) const {
     ostr << html::form().action(url(paypipeline)).method("post");
 
     ostr << html::input()
-	.type(html::input::hidden)
-	.nameref("business")
-	.value("info@fortylines.com")
-	
-	 << html::input()
-	.type(html::input::hidden)
-	.nameref("cmd")
-	.value("_xclick")
+        .type(html::input::hidden)
+        .nameref("business")
+        .value("info@fortylines.com")
 
-	 << html::input()
-	.type(html::input::image)
-	.nameref("submit")
-	.src(url(image));
+         << html::input()
+        .type(html::input::hidden)
+        .nameref("cmd")
+        .value("_xclick")
+
+         << html::input()
+        .type(html::input::image)
+        .nameref("submit")
+        .src(url(image));
 
     /* Specify details about the item that buyers will purchase. */
     ostr << html::input()
-	.type(html::input::hidden)
-	.nameref("item_name")
-	.value(refid.str())
+        .type(html::input::hidden)
+        .nameref("item_name")
+        .value(refid.str())
 
-	.type(html::input::hidden)
-	.nameref("amount")
-	.value(amount)
+        .type(html::input::hidden)
+        .nameref("amount")
+        .value(amount)
 
-	.type(html::input::hidden)
-	.nameref("currency_code")
-	.value("USD");
-	
+        .type(html::input::hidden)
+        .nameref("currency_code")
+        .value("USD");
+
     ostr << html::form::end;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
 */
 class parsingError : public std::runtime_error {
 public:
-	parsingError( const std::string& s ) : std::runtime_error(s) {}
+    parsingError( const std::string& s ) : std::runtime_error(s) {}
 };
 
 
@@ -47,20 +47,20 @@ class coverageAnnotate  : public rangeDecorator {
 protected:
     typedef rangeDecorator super;
 
-	void init( const boost::filesystem::path& key,
-			   const boost::filesystem::path& coveragePath );
+    void init( const boost::filesystem::path& key,
+        const boost::filesystem::path& coveragePath );
 
 public:
-	coverageAnnotate( const boost::filesystem::path& key,
-					  const boost::filesystem::path& coveragePath );
-    
     coverageAnnotate( const boost::filesystem::path& key,
-					  const boost::filesystem::path& coveragePath,
-					  std::basic_ostream<char>& o );
+        const boost::filesystem::path& coveragePath );
 
-	bool empty() const {
-		return ranges.empty();
-	}
+    coverageAnnotate( const boost::filesystem::path& key,
+        const boost::filesystem::path& coveragePath,
+        std::basic_ostream<char>& o );
+
+    bool empty() const {
+        return ranges.empty();
+    }
 };
 
 #endif

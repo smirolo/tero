@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@
  */
 class todoAdapter : public adapter {
 public:
-    article fetch( session& s, const boost::filesystem::path& pathname );    
+    article fetch( session& s, const boost::filesystem::path& pathname );
 
     boost::filesystem::path asPath( const boost::uuids::uuid& id ) const;
 };
@@ -50,7 +50,7 @@ public:
 class todoFilter : public passThruFilter {
 public:
 
-    /** Pattern used to select directories containing todo items. 
+    /** Pattern used to select directories containing todo items.
      */
     static const boost::regex viewPat;
 
@@ -60,16 +60,16 @@ public:
 
 public:
     explicit todoFilter( const boost::filesystem::path& m )
-	: modifs(m) {}
+        : modifs(m) {}
 
-    todoFilter( const boost::filesystem::path& m, postFilter* n  ) 
-	: passThruFilter(n), modifs(m) {}
+    todoFilter( const boost::filesystem::path& m, postFilter* n  )
+        : passThruFilter(n), modifs(m) {}
 
     std::string asPath( const std::string& tag );
 };
 
 
-/** Creating an item or commenting on an already existing item 
+/** Creating an item or commenting on an already existing item
     use very similar mechanism. This abstract class implements
     such mechanism to append a post to an item. (*always*)
 */
@@ -79,17 +79,16 @@ protected:
     /** Directory where modifications to todo items are stored. */
     const boost::filesystem::path modifs;
 
-    /** Input stream containing the modification post 
-	formatted as an e-mail. */
+    /** Input stream containing the modification post
+        formatted as an e-mail. */
     std::istream *istr;
 
 public:
-    explicit todoModifPost( const boost::filesystem::path& m ) 
-	: modifs(m), istr(NULL) {}
+    explicit todoModifPost( const boost::filesystem::path& m )
+        : modifs(m), istr(NULL) {}
 
-    todoModifPost( const boost::filesystem::path& m,		    
-		    std::istream& is ) 
-	: modifs(m), istr(&is) {}
+    todoModifPost( const boost::filesystem::path& m, std::istream& is )
+        : modifs(m), istr(&is) {}
 
 };
 
@@ -104,9 +103,8 @@ void todoModifPostFetch( session& s, const url& name );
 */
 class todoCreate : public todoModifPost {
 public:
-    todoCreate( const boost::filesystem::path& m,
-		std::istream& is ) 
-	: todoModifPost(m,is) {}
+    todoCreate( const boost::filesystem::path& m, std::istream& is )
+        : todoModifPost(m,is) {}
 };
 
 void todoCreateFetch( session& s, const url& name );
@@ -114,15 +112,15 @@ void todoCreateFetch( session& s, const url& name );
 
 /** Comment an item
 
-    Commmenting on a item involves finding the file matching the unique 
-    identifier of that item, append the post at the end of that file 
+    Commmenting on a item involves finding the file matching the unique
+    identifier of that item, append the post at the end of that file
     and finally commit the file back into the repository.
 */
 class todoComment : public todoModifPost {
 public:
     todoComment( const boost::filesystem::path& m,
-		   std::istream& is ) 
-	: todoModifPost(m,is) {}
+        std::istream& is )
+        : todoModifPost(m,is) {}
 };
 
 void todoCommentFetch( session& s, const url& name );
@@ -140,8 +138,8 @@ void todoIndexWriteHtmlFetch( session& s, const url& name );
 void todoVoteAbandonFetch( session& s, const url& name );
 
 /** Callback when a vote on an item has successed.
-    
-    First the item's unique identifier is used to find the file 
+
+    First the item's unique identifier is used to find the file
     that need to be updated. The file is then searched for the matching
     'Score:' pattern and that line is modified to reflect the vote.
     Finally the file is committed back into the repository.
@@ -151,9 +149,9 @@ protected:
     const char *returnPath;
 
 public:
-    todoVoteSuccess( const boost::filesystem::path& m, 
-		     const char *retPath ) 
-	: todoModifPost(m), returnPath(retPath) {}
+    todoVoteSuccess( const boost::filesystem::path& m,
+        const char *retPath )
+        : todoModifPost(m), returnPath(retPath) {}
 };
 
 void todoVoteSuccessFetch( session& s, const url& name );
@@ -164,6 +162,6 @@ void todoMeta( session& s, std::istream& in, const url& name );
 
 /** Generate an HTML printout of an item
  */
-void todoWriteHtmlFetch( session& s, std::istream& in, const url& name );
+void todoWriteHtmlFetch( session& s, const url& name );
 
 #endif

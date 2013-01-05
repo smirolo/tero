@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -30,65 +30,23 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+#include "revsys.hh"
+
 template<const char *layoutPtr>
 void compose( session& s, const url& name )
 {
-    using namespace boost;
     using namespace boost::system;
     using namespace boost::filesystem;
 
-    static const boost::regex tmpl("<!-- widget '(\\S+)'(\\s+name='(\\S+)')?(\\s+value='(\\S+)')? -->");
-
-    ifstream strm;
     std::string layout(layoutPtr);
     path fixed(themeDir.value(s) / (!layout.empty() ? (layout + ".template")
-				    : name.pathname.filename()));
+            : name.pathname.filename()));
 
-    s.openfile(strm,fixed);
-    skipOverTags(s,strm);
-    while( !strm.eof() ) {
-	smatch m;
-	std::string line;
-	bool found = false;
-	std::getline(strm,line);
-	if( regex_search(line,m,tmpl) ) {
-	    std::string widget = m.str(1);
-	    std::string name = m.str(3);
-	    if( name.empty() ) name = widget;	    
-	    std::string value = m.str(5);
-	    if( value.empty() ) {
-			/* By default if a variable does not have a value, use the value
-			   of "document". */
-			session::variables::const_iterator look = s.find(name);
-			if( !s.found(look) ) {    
-				s.insert(name,document.value(s).string());
-				look = s.find(name);
-			}
-			value = look->second.value;
-	    }
-		
-	    found = true;
-	    s.out() << m.prefix();
-	    std::ostream& prevDisp = s.out();
-	    try {
-			path prev = current_path();
-			current_path(s.prefixdir(fixed));
-			dispatchDoc::instance()->fetch(s,widget,url(value));
-			current_path(prev);
-	    } catch( const std::runtime_error& e ) {
-			s.out(prevDisp);
-			s.feeds = NULL; /* ok here since those objects were
-							   allocated on the stack. */
-			++s.nErrs;
-			std::cerr << "[embed of '" << value << "'] " 
-					  << e.what() << std::endl;	
-			s.out() << "<p>" << e.what() << "</p>" << std::endl;
-	    }
-	    s.out() << m.suffix() << std::endl;
-	}
-	if( !found ) {
-	    s.out() << line << std::endl;
-	}
+    std::streambuf *buf = ::revisionsys::findRevOpenfile(s, fixed);
+    //    std::streambuf *buf = revisionsys::findRevOpenfile(s, fixed);
+    if( buf ) {
+        std::istream strm(buf);
+        compose(s, strm, fixed);
+        delete buf;
     }
-    strm.close();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
 
 void
 mailAddSessionVars( boost::program_options::options_description& opts,
-					boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 
 /* return a fully qualified mail dddress for delivery to the local SMTP server.
@@ -49,11 +49,11 @@ std::string qualifiedMailAddress( const session& s, const std::string& uid );
 void sendMail( const session& s, const Poco::Net::MailMessage& message );
 
 void sendMail( session& s,
-			   const std::string& recipient,
-			   const std::string& subject,
-			   const char *contentTemplate );
+    const std::string& recipient,
+    const std::string& subject,
+    const char *contentTemplate );
 
-/* A *mailthread* filter attempts to gather all mails that appear 
+/* A *mailthread* filter attempts to gather all mails that appear
    to belong to the same thread together. */
 class mailthread : public postFilter {
 protected:
@@ -65,8 +65,8 @@ protected:
 public:
     explicit mailthread( std::ostream& o ) : ostr(&o) {}
 
-    mailthread( std::ostream& o, postFilter *n ) 
-	: postFilter(n), ostr(&o) {}
+    mailthread( std::ostream& o, postFilter *n )
+        : postFilter(n), ostr(&o) {}
 
     virtual void filters( const post& );
     virtual void flush();
@@ -78,55 +78,64 @@ public:
 class mailAsPost : public rfc2822TokListener {
 protected:
     enum {
-	rfc2822Err,
-	rfc2822Time,
-	rfc2822Content,
-	rfc2822AuthorEmail,
-	rfc2822Title,
-    extScore
+        rfc2822Err,
+        rfc2822Time,
+        rfc2822Content,
+        rfc2822AuthorEmail,
+        rfc2822Title,
+        extScore
     } field;
-    
+
+    /* field name */
     std::string name;
+
+    /* post being reconstructed */
     post constructed;
-    
+
 public:
-    mailAsPost() { constructed.score = 0; }
+    /* indicates we actually did something and not just got a messageBreak
+       (mbox files start with a messageBreak). */
+    bool nontrivial;
+
+public:
+    mailAsPost() : nontrivial(false) { constructed.score = 0; }
 
     void newline(const char *line, int first, int last );
 
-    void token( rfc2822Token token, const char *line, 
-		int first, int last, bool fragment );
+    void token( rfc2822Token token, const char *line,
+        int first, int last, bool fragment );
 
     const post& unserialized() const { return constructed; }
 };
 
 
-
+/** Walks a directory and invokes a filter on all posts
+    in that directory. */
 class mailParser : public dirwalker {
 protected:
-    enum parseState {
-	startParse,
-	dateParse,
-	authorParse,
-	titleParse
-    };
-
     postFilter *filter;
 
-    /** Stop parsing after the first post is completed. 
-	(This is for todo items with embed comments).
-     */
+    /** Stop parsing after the first post is completed.
+        (This is for todo items with embed comments).
+    */
     bool stopOnFirst;
 
-public:
-    mailParser( postFilter& f, bool sof = false ) 
-	: filter(&f), stopOnFirst(sof) {}
-    
-    mailParser( const boost::regex& fm, 
-		postFilter& f, bool sof = false )
-	: dirwalker(fm), filter(&f), stopOnFirst(sof) {}
+    virtual void
+    addFile( session& s, const boost::filesystem::path& pathname ) const;
 
-    virtual void walk( session& s, std::istream& ins, const std::string& name ) const;
+    virtual void flush( session& s ) const;
+
+public:
+    mailParser( postFilter& f, bool sof = false )
+        : filter(&f), stopOnFirst(sof) {}
+
+    mailParser( const boost::regex& fm, postFilter& f, bool sof = false )
+        : dirwalker(fm), filter(&f), stopOnFirst(sof) {}
+
+    void fetchFile( session& s, const boost::filesystem::path& pathname ) const
+    {
+        addFile(s, pathname);
+    }
 
 };
 

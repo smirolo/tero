@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -24,34 +24,27 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "markup.hh"
+#include "revsys.hh"
 
 template<typename checker>
-void checkfileFetch( session& s, const url& name )
+void checkfileFetch( session& s, const slice<char>& text, const url& name )
 {
-    using namespace boost::filesystem; 
+    using namespace boost::filesystem;
 
     checker check;
-	path pathname = s.abspath(name);
-    slice<char> buffer = s.loadtext(pathname);
-    check.tokenize(buffer.begin(),buffer.size());
+    check.tokenize(text.begin(), text.size());
 
-    url href;
-    std::string projname;
-    path projdir = s.root(pathname,"dws.xml");
-    if( s.prefix(projdir,pathname) ) {
-		projname = s.subdirpart(projdir,pathname).string();
-		href = s.asUrl(pathname);
-    } else {
-		projname = pathname.string();
-    }
+    path pathname = s.abspath(name);
+    revisionsys *rev = revisionsys::findRev(s, pathname);
+    path filename = rev ? rev->relative(pathname) : name.pathname;
 
     s.out() << html::tr()
-	    << html::td() << html::a().href(href.string()) 
-	    << projname << html::a::end << html::td::end
-	    << html::td() << check.license() 
-	    << " (" << check.dates << "," << check.grantor << ")"
-	    << html::td::end
-	 << html::td() << check.nbCodeLines << html::td::end
-	 << html::td() << check.nbLines << html::td::end
-	 << html::tr::end;
+            << html::td() << html::a().href(name)
+            << filename << html::a::end << html::td::end
+            << html::td() << check.license()
+            << " (" << check.dates << "," << check.grantor << ")"
+            << html::td::end
+            << html::td() << check.nbCodeLines << html::td::end
+            << html::td() << check.nbLines << html::td::end
+            << html::tr::end;
 }

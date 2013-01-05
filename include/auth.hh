@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 #include "document.hh"
 
 /* This module implements <a href="/reps/whitepapers/doc/access.book">authentication</a> and de-authentication of users.
-   
+
    It relies on outside authentication services to do the  heavy duty work,
    PAM and LDAP for now.
 
@@ -49,25 +49,25 @@ extern sessionVariable userPassword;
 
 
 /** Exception thrown when there is a problem authenticating a contributor
-	with a (*uid*, *userPassword*) pair.
+    with a (*uid*, *userPassword*) pair.
 */
 class invalidAuthentication : public std::runtime_error {
 public:
-	
-	enum reason {
-		REASON_EMPTY_UID        = 0,
-		REASON_EMPTY_PASSWORD,
-		REASON_ALL_METHOD_FAILED,
-		REASON_PAM_START,
-		REASON_PAM_AUTHENTICATE,
-		REASON_LDAP_AUTHENTICATE,
-		REASON_LAST_REASON
-	};
 
-	static const char* message( const reason& r );
+   enum reason {
+       REASON_EMPTY_UID        = 0,
+       REASON_EMPTY_PASSWORD,
+       REASON_ALL_METHOD_FAILED,
+       REASON_PAM_START,
+       REASON_PAM_AUTHENTICATE,
+       REASON_LDAP_AUTHENTICATE,
+       REASON_LAST_REASON
+   };
 
-	explicit invalidAuthentication( const reason& r ) 
-		: std::runtime_error(message(r)) {}
+    static const char* message( const reason& r );
+
+    explicit invalidAuthentication( const reason& r )
+        : std::runtime_error(message(r)) {}
 
 };
 
@@ -84,36 +84,36 @@ extern sessionVariable ldapAdminPassword;
  */
 class LDAPException : public std::runtime_error {
 public:
-	explicit LDAPException( const std::string& w ) 
-		: std::runtime_error(w) {}
+    explicit LDAPException( const std::string& w )
+        : std::runtime_error(w) {}
 };
 
 
 /** Resource to bind to a LDAP server. The constructor does
-	the binding and the destructor does the unbinding.
+    the binding and the destructor does the unbinding.
  */
 class LDAPBound {
 private:
-	LDAP *ld;
+    LDAP *ld;
 
 public:
-	LDAPBound( const session& s,
-			   const std::string& who,
-			   const sessionVariable& password );
+    LDAPBound( const session& s,
+        const std::string& who,
+        const sessionVariable& password );
 
-	~LDAPBound();
+    ~LDAPBound();
 
-	/** Throws an LDAPException if *err* is non-zero. It will also add
-		additional information associated with the last LDAP error.
-	*/
-	void assertNoError( int err, const char* file, int line );
+    /** Throws an LDAPException if *err* is non-zero. It will also add
+        additional information associated with the last LDAP error.
+    */
+    void assertNoError( int err, const char* file, int line );
 
-	LDAP *_ld() const { return ld; }
+    LDAP *_ld() const { return ld; }
 };
 
 /* Helper macro useful to check error code returned by an LDAP API call. */
 #define LDAP_NO_ERROR(ldapb,calls) \
-	(ldapb).assertNoError(calls,__FILE__,__LINE__)
+    (ldapb).assertNoError(calls,__FILE__,__LINE__)
 
 
 std::string authContribDN( const session& s, const std::string& uid );
@@ -122,13 +122,13 @@ std::string authContribDN( const session& s, const std::string& uid );
 /** Add session variables related to this auth module.
  */
 void authAddSessionVars( boost::program_options::options_description& opts,
-						 boost::program_options::options_description& visible );
+    boost::program_options::options_description& visible );
 
 
 /** Web-based authentication checks the credentials passed to the CGI
-    against permissions granted on the server and returns a session 
-    identifier saved as a cookie in the browser on the client-side 
-    for further requests. 
+    against permissions granted on the server and returns a session
+    identifier saved as a cookie in the browser on the client-side
+    for further requests.
 */
 void loginFetch( session& s, const url& name );
 

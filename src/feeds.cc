@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -34,27 +34,27 @@ void feedIndex::flush()
 {
     provide();
     if( next ) {
-	bool firstTime = true;
-	const_iterator prev;
-	for( const_iterator p = first; p != last  ; ++p ) {
-	    if( firstTime || prev->guid != p->guid ) { 
-		next->filters(*p);
-		firstTime = false;
-		prev = p;
-	    }
-	}
-	next->flush();
+        bool firstTime = true;
+        const_iterator prev;
+        for( const_iterator p = first; p != last  ; ++p ) {
+            if( firstTime || prev->guid != p->guid ) {
+                next->filters(*p);
+                firstTime = false;
+                prev = p;
+            }
+        }
+        next->flush();
     }
 }
 #endif
 
 void feedCompact::filters( const post& p )
 {
-	if( !prevInit || p.guid != prev ) {
-		super::next->filters(p);
-		prevInit = true;
-		prev = p.guid;
-	}
+    if( !prevInit || p.guid != prev ) {
+        super::next->filters(p);
+        prevInit = true;
+        prev = p.guid;
+    }
 }
 
 
@@ -62,41 +62,41 @@ void feedCompact::filters( const post& p )
 void summarize::filters( const post& v )
 {
     if( next ) {
-	post p = v;
-	p.content = p.content.substr(0,std::min(length,p.content.size()));
-	next->filters(p);
+        post p = v;
+        p.content = p.content.substr(0,std::min(length,p.content.size()));
+        next->filters(p);
     }
 }
 
 
 void oneliner::filters( const post& p ) {
-    *ostr << html::tr() 
-	  << html::td() << p.time.date() << html::td::end
-	  << html::td() << p.author << html::td::end
-	  << html::td() << html::a().href(p.guid) 
-	  << p.title 
-	  << html::a::end << html::td::end;
+    *ostr << html::tr()
+          << html::td() << p.time.date() << html::td::end
+          << html::td() << p.author << html::td::end
+          << html::td() << html::a().href(p.guid)
+          << p.title
+          << html::a::end << html::td::end;
     *ostr << html::td()
-	  << p.score
-	  << html::td::end;
+          << p.score
+          << html::td::end;
     *ostr << html::tr::end;
 }
 
 
 void byTimeHtml::filters( const post& p ) {
-	if( prev_header.is_not_a_date_time() || prev_header != p.time ) {
-		*ostr << html::tr().classref("bytime-date")
-			  << html::td().colspan("3")
-			  << "Complete by " << p.time.date() << html::td::end
-			  << html::tr::end;
-	}
-    *ostr << html::tr() 
-		  << html::td() << p.score << html::td::end
-		  << html::td() << p.author << html::td::end
-		  << html::td() << html::a().href(p.guid) 
-		  << p.title 
-		  << html::a::end << html::td::end
-		  << html::tr::end;
-	prev_header = p.time;
+    if( prev_header.is_not_a_date_time() || prev_header != p.time ) {
+        *ostr << html::tr().classref("bytime-date")
+              << html::td().colspan("3")
+              << "Complete by " << p.time.date() << html::td::end
+              << html::tr::end;
+    }
+    *ostr << html::tr()
+          << html::td() << p.score << html::td::end
+          << html::td() << p.author << html::td::end
+          << html::td() << html::a().href(p.guid)
+          << p.title
+          << html::a::end << html::td::end
+          << html::tr::end;
+    prev_header = p.time;
 }
 

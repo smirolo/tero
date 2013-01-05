@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,8 @@ int main( int argc, char *argv[] )
 		}
 		
 		if( genCache ) {
-			cachedUrlDecorator successors(s);
+            /* XXX root is first link in set. */
+			cachedUrlDecorator successors(s, s.abspath(*s.inputs.begin()));
 			for( session::inputsType::const_iterator
 					 inp = s.inputs.begin(); inp != s.inputs.end(); ++inp ) {
 				linkLight::nexts.insert(*inp);

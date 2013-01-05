@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Fortylines LLC
+/* Copyright (c) 2009-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ std::string strip( const std::string& s ) {
     const char *seps = " \t\n\r";
     std::string::size_type first = s.find_first_not_of(seps);
     return ( first == std::string::npos ) ? std::string()
-	: s.substr(first,s.find_last_not_of(seps) - first + 1);
+        : s.substr(first,s.find_last_not_of(seps) - first + 1);
 }
 
 std::string normalize( const std::string& s ) {
@@ -44,12 +44,12 @@ std::string normalize( const std::string& s ) {
     size_t p = 0;
     while( p < s.size() && isspace(s[p]) ) ++p;
     while( p < s.size() ) {
-	if( isspace(s[p]) ) {
-	    while( p < s.size() && isspace(s[p]) ) ++p;
-	    if( p < s.size() ) result += ' ';
-	} else {
-	    result += s[p++];
-	}
+        if( isspace(s[p]) ) {
+            while( p < s.size() && isspace(s[p]) ) ++p;
+            if( p < s.size() ) result += ' ';
+        } else {
+            result += s[p++];
+        }
     }
     return result;
 }
@@ -59,8 +59,8 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
     boost::posix_time::ptime t;
 #if 0
     std::stringstream dts;
-    ::boost::posix_time::time_input_facet* input_facet 
-	  = new ::boost::posix_time::time_input_facet;
+    ::boost::posix_time::time_input_facet* input_facet
+          = new ::boost::posix_time::time_input_facet;
     dts.imbue(std::locale(dts.getloc(), input_facet));
     input_facet->format("%a, %e %b %Y %T");
     dts.str(s);
@@ -77,26 +77,26 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
     while( s[p] == ' ' ) ++p;
 
     const char *monthNames[] = {
-	"January",
-	"February",
-	"March",
-	"April",
-	"May",
-	"June",
-	"July",
-	"August",
-	"September",
-	"October",
-	"November",
-	"December"
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
     };
     for( const char **monthName = monthNames;
-	 monthName != &monthNames[12];
-	 ++monthName ) {	    
-	if( s.compare(p,3,*monthName,3) == 0 ) {
-	    month = std::distance(monthNames,monthName) + 1;
-	    break;
-	}
+         monthName != &monthNames[12];
+         ++monthName ) {
+        if( s.compare(p,3,*monthName,3) == 0 ) {
+            month = std::distance(monthNames,monthName) + 1;
+            break;
+        }
     }
 
     /* 4-digits year */
@@ -111,23 +111,23 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
     /* optional time formatted as 24-hour:minutes:seconds */
     while( s[p] == ' ' ) ++p;
     if( p < s.size() ) {
-	int hours = (s[p++] - '0') * 10;
-	hours += (s[p++] - '0');
-	if( s[p++] != ':' )
-	    boost::throw_exception(std::ios_base::failure("Parse date failure"));
-	
-	while( s[p] == ' ' ) ++p;
-	int minutes = (s[p++] - '0') * 10;
-	minutes += (s[p++] - '0');
-	if( s[p++] != ':' )
-	    boost::throw_exception(std::ios_base::failure("Parse date failure"));
-	
-	while( s[p] == ' ' ) ++p;
-	int seconds = (s[p++] - '0') * 10;
-	seconds += (s[p++] - '0');
+        int hours = (s[p++] - '0') * 10;
+        hours += (s[p++] - '0');
+        if( s[p++] != ':' )
+            boost::throw_exception(std::ios_base::failure("Parse date failure"));
 
-	t = boost::posix_time::ptime(boost::gregorian::date(year,month,day),
-				     boost::posix_time::time_duration(hours,minutes,seconds)); 
+        while( s[p] == ' ' ) ++p;
+        int minutes = (s[p++] - '0') * 10;
+        minutes += (s[p++] - '0');
+        if( s[p++] != ':' )
+            boost::throw_exception(std::ios_base::failure("Parse date failure"));
+
+        while( s[p] == ' ' ) ++p;
+        int seconds = (s[p++] - '0') * 10;
+        seconds += (s[p++] - '0');
+
+        t = boost::posix_time::ptime(boost::gregorian::date(year,month,day),
+            boost::posix_time::time_duration(hours,minutes,seconds));
     }
 
 #endif
@@ -138,7 +138,7 @@ std::string extractEmailAddress( const std::string& line ) {
     size_t estart = line.find('<');
     size_t efinish = line.rfind('>');
     if( estart < efinish ) {
-		return line.substr(estart + 1,efinish - estart - 1);
+        return line.substr(estart + 1,efinish - estart - 1);
     }
     return line;
 }
@@ -146,7 +146,7 @@ std::string extractEmailAddress( const std::string& line ) {
 std::string extractName( const std::string& line ) {
     size_t estart = line.find('<');
     if( estart != std::string::npos ) {
-	return strip(line.substr(0,estart));
+        return strip(line.substr(0,estart));
     }
     return line;
 }
@@ -157,22 +157,22 @@ namespace html {
     const char* a::name = "a";
     const detail::nodeEnd a::end(a::name);
     const char *a::attrNames[] = {
-	"href",
-	"title"
+        "href",
+        "title"
     };
 
     std::set<url> a::cached;
     std::set<url> a::uncached;
 
     a& a::href( const url& v ) {
-	attrValues[hrefAttr] = v.string();
-	if( v.protocol.empty() ) {
-	    std::set<url>::const_iterator found = cached.find(v);
-	    if( found == cached.end() ) {
-		uncached.insert(v);
-	    }
-	}
-	return *this;
+        attrValues[hrefAttr] = v.string();
+        if( v.protocol.empty() ) {
+            std::set<url>::const_iterator found = cached.find(v);
+            if( found == cached.end() ) {
+                uncached.insert(v);
+            }
+        }
+        return *this;
     }
 
     const char* body::name = "body";
@@ -184,23 +184,23 @@ namespace html {
     const char* div::name = "div";
     const detail::nodeEnd div::end(div::name,true);
     const char *div::attrNames[] = {
-	"class"
+        "class"
     };
 
     const char *h::names[] = {
-	"h1",
-	"h2",
-	"h3",
-	"h4",
-	"h5"
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5"
     };
 
     const char* form::name = "form";
     const detail::nodeEnd form::end(form::name);
     const char *form::attrNames[] = {
-	"action",
-	"class",
-	"method"
+        "action",
+        "class",
+        "method"
     };
 
     const char* head::name = "head";
@@ -209,8 +209,8 @@ namespace html {
     const char* img::name = "img";
     const detail::nodeEnd img::end(img::name);
     const char *img::attrNames[] = {
-	"class",
-	"src"
+        "class",
+        "src"
     };
 
     const char* input::name = "input";
@@ -221,11 +221,11 @@ namespace html {
     const char *input::zero = "0";
 
     const char *input::attrNames[] = {
-	"class",
-	"name",
-	"src",
-	"type",
-	"value"
+        "class",
+        "name",
+        "src",
+        "type",
+        "value"
     };
 
     const char* li::name = "li";
@@ -236,51 +236,51 @@ namespace html {
     const char* p::name = "p";
     const detail::nodeEnd p::end(p::name,true);
     const char *p::attrNames[] = {
-	"class"
+        "class"
     };
 
     const char* pre::name = "pre";
     const detail::nodeEnd pre::end(pre::name,true);
     const char *pre::attrNames[] = {
-	"class"
+        "class"
     };
 
     const char* span::name = "span";
     const detail::nodeEnd span::end(span::name);
     const char *span::attrNames[] = {
-	"class"
+        "class"
     };
 
     const char* table::name = "table";
     const detail::nodeEnd table::end(table::name,true);
     const char *table::attrNames[] = {
-	"class"
+        "class"
     };
 
 
     const char* td::name = "td";
     const detail::nodeEnd td::end(td::name,true);
     const char *td::attrNames[] = {
-	"class",
-	"colspan"
+        "class",
+        "colspan"
     };
 
     const char* th::name = "th";
     const detail::nodeEnd th::end(th::name,true);
     const char *th::attrNames[] = {
-	"class",
-	"colspan"
+        "class",
+        "colspan"
     };
 
     const char* tr::name = "tr";
     const detail::nodeEnd tr::end(tr::name,true);
     const char *tr::attrNames[] = {
-	"class"
+        "class"
     };
 
     const char* ul::name = "ul";
     const detail::nodeEnd ul::end(ul::name,true);
-    
+
 } // namespace html
 
 const char* author::name = "author";
