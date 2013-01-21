@@ -178,7 +178,8 @@ revisionsys::absolute( const boost::filesystem::path& pathname ) const
     } else {
         size_t rootSize = rootpath.string().size();
         size_t metaSize = strlen(metadir);
-        if( rootpath.string().compare(rootSize - metaSize,
+        if( rootSize > metaSize
+            && rootpath.string().compare(rootSize - metaSize,
                 metaSize, metadir) == 0) {
             return rootpath.string().substr(0, rootSize - metaSize) / pathname;
         }
@@ -199,7 +200,8 @@ revisionsys::relative( const boost::filesystem::path& pathname ) const
             boost::filesystem::path base = *iter_root;
             size_t rootSize = base.string().size();
             size_t metaSize = strlen(metadir);
-            if( rootSize != metaSize
+            if( rootSize > metaSize
+                //&& rootSize != metaSize
                 && base.string().compare(rootSize - metaSize,
                     metaSize, metadir) == 0) {
                 ++iter_path;
@@ -274,6 +276,7 @@ revisionsys::findRev( session& s, const boost::filesystem::path& pathname ) {
         }
     }
     if( !rev ) {
+        filesys::instance().rootpath = siteTop.value(s);
         return &filesys::instance();
     }
     return rev;

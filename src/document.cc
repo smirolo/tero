@@ -220,7 +220,7 @@ void dirwalker::recurse( session& s, revisionsys *rev,
     std::set<boost::filesystem::path> topdirs;
     std::set<boost::filesystem::path> topfiles;
     // XXX do not use rev if non-bare repo and HEAD.
-    if( rev ) {
+    if( strncmp(rev->metadir, "fs", 2) != 0 ) {
         for( rev_directory_iterator entry
                  = rev_directory_iterator(nodedir, s);
              entry != rev_directory_iterator(); ++entry ) {

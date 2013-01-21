@@ -62,7 +62,6 @@ void compose( session& s, std::istream& strm, const boost::filesystem::path& fix
 
     static const boost::regex tmpl("<!-- widget '(\\S+)'(\\s+name='(\\S+)')?(\\s+value='(\\S+)')? -->");
 
-    skipOverTags(s,strm);
     while( !strm.eof() ) {
         smatch m;
         std::string line;

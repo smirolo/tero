@@ -53,6 +53,9 @@ namespace {
 void checkInSiteTop( const session& s, const boost::filesystem::path& p ) {
     using namespace boost::system::errc;
     if( !s.prefix(siteTop.value(s),p) ) {
+        std::cerr << "error: " << siteTop.value(s)
+                  << " is not a leading prefix of "
+                  << p << std::endl;
         yoyo();
         boost::throw_exception(notLeadingPrefixError(
                 siteTop.value(s).string(),

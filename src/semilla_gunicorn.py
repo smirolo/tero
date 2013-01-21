@@ -62,4 +62,4 @@ def app(environ, start_response):
         line = output.pop(0)
 #   response_headers.append(('Content-Length', str(len('\n'.join(output)))))
     start_response(status, response_headers)
-    return iter(output)
+    return '\n'.join(output)
