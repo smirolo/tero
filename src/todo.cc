@@ -297,7 +297,6 @@ void todoIndexWriteHtmlFetch( session& s, const url& name )
     byScore order(s.out(), shortline);
     mailParser parser(order, true);
     parser.fetch(s, pathname);
-    order.flush();
 }
 
 
