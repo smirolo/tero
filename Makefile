@@ -79,12 +79,6 @@ smailui: smailui.cc libsemilla.a \
 		-lboost_filesystem -lboost_system -lPocoNet
 	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
-default.conf: $(shell dws context)
-	echo "binDir=/var/www/cgi-bin" > $@
-	echo "siteTop=/var/www" >> $@
-	echo "srcTop=/var/www/reps" >> $@
-	echo "themeDir=/usr/share/semilla/themes/default" >> $@
-
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 
 include $(buildTop)/share/dws/suffix.mk
@@ -98,7 +92,7 @@ install:: $(wildcard $(srcDir)/data/themes/default/*)
 	$(installDirs) $(DESTDIR)$(shareDir)/semilla
 	cp -Rf $(srcDir)/data/themes $(DESTDIR)$(shareDir)/semilla
 
-install:: default.conf
+install:: $(srcDir)/etc/semilla/default.conf
 	$(if $(findstring /etc/semilla,$(semillaConfFile)),\
 		$(installDirs) $(DESTDIR)$(dir $(semillaConfFile)))
 	$(if $(findstring /etc/semilla,$(semillaConfFile)),\
