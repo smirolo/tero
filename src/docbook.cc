@@ -650,10 +650,21 @@ void docbook::programlistingStart( session& s, const RAPIDXML::xml_node<>& node 
 
 void docbook::sectionEnd( session& s, const RAPIDXML::xml_node<>& node ) const {
     --sectionLevel;
+    if( !info ) {
+        s.out() << html::div::end;
+    }
 }
 
 void docbook::sectionStart( session& s, const RAPIDXML::xml_node<>& node ) const {
     ++sectionLevel;
+    if( !info ) {
+        RAPIDXML::xml_attribute<> *role = node.first_attribute("role");
+        if( role != NULL ) {
+            s.out() << html::div().classref(role->value());
+        } else {
+            s.out() << html::div();
+        }
+    }
 }
 
 void docbook::listEnd( session& s, const RAPIDXML::xml_node<>& node ) const {

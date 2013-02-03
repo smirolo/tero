@@ -74,7 +74,7 @@ int main( int argc, char *argv[] )
     using namespace std;
     using namespace boost::program_options;
     using namespace boost::filesystem;
-	
+
     std::stringstream mainout;
     session s("semillaId",mainout);
     s.privileged(false);
@@ -122,10 +122,10 @@ int main( int argc, char *argv[] )
 					try {
 						s.reset();
 						s.insert(document.name,l->string(),session::cmdline);
-						boost::filesystem::path cached 
+						boost::filesystem::path cached
 							= s.absCacheName(document.value(s));
-						cout << "generating " << cached << " (for " 
-							 << *l << ") ..." << endl;		
+						cout << "generating " << cached << " (for "
+							 << *l << ") ..." << endl;
 						/* \todo view != document, need to clear all session
 						   variables except the ones loaded from config file. */
 						boost::filesystem::ofstream out;
@@ -143,9 +143,9 @@ int main( int argc, char *argv[] )
 			}
 		}  else {
 			/* When we run as CGI, we will assume the path is a url relative
-			   to siteTop while running in shell command-line mode, we will 
+			   to siteTop while running in shell command-line mode, we will
 			   assume it is a regular filename. */
-			semDocs.fetch(s,document.name,document.value(s));	
+			semDocs.fetch(s,document.name,document.value(s));
 			if( s.runAsCGI() ) {
 				cout << httpHeaders
 					.contentType()
