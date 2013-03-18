@@ -164,8 +164,8 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 					if( !dispatchDoc::instance()->fetch(s,"author",link)) {
 						metaFileOwner(s,filename);
 					}
-					p.author = content.str();
-					p.authorEmail = authorEmail.value(s);
+					p.author = contrib::find(authorEmail.value(s),
+                        content.str());
 					content.str("");
 					if( !dispatchDoc::instance()->fetch(s,"date",link)) {
 						metaLastTime(s,filename);

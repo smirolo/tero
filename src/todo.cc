@@ -231,11 +231,11 @@ void todoCreateFetch( session& s, const url& name )
     p.score = 0;
     p.title = titleVar.value(s);
 
-    p.authorEmail = authorVar.value(s);
-    if( p.authorEmail.empty() ) {
-        revisionsys* rev = revisionsys::findRev(s,pathname);
+    p.author = contrib::find(authorVar.value(s));
+    if( !p.author ) {
+        revisionsys* rev = revisionsys::findRev(s, pathname);
         if( rev ) {
-            p.authorEmail = rev->configval("email");
+            p.author = contrib::find(rev->configval("email"));
         }
     }
     p.content = descrVar.value(s);
@@ -280,8 +280,7 @@ void todoCommentFetch( session& s, const url& name )
 #endif
     {
         post p;
-        p.author = authorVar.value(s);
-        p.authorEmail = authorEmail.value(s);
+        p.author = contrib::find(authorEmail.value(s), authorVar.value(s));
         p.content = descrVar.value(s);
         p.time = boost::posix_time::second_clock::local_time();
         p.guid = todoAdapter().fetch(s,postname).guid;

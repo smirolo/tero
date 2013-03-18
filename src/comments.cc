@@ -98,7 +98,7 @@ void sendPostToSMTP::filters( const post& p ) {
     message.set("Received",received.str());
     message.addRecipient(Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT,recipient.value(*mySession)));
     message.setSubject(p.title);
-    message.setSender(p.authorEmail);
+    message.setSender(p.author->email);
     message.setContent(p.content,Poco::Net::MailMessage::ENCODING_QUOTED_PRINTABLE);
 #if 0
     message.setContentType(const std::string& mediaType);
@@ -131,7 +131,7 @@ void commentPage( session& s, const url& name )
     std::stringstream sender;
     sender << authorVar.value(s)
            << " <" << s.client() << "@" << domainName.value(s) << ">";
-    p.authorEmail = sender.str();
+    p.author = contrib::find(sender.str());
     std::stringstream title;
     title << "Comment on " << postname;
     p.title = title.str();

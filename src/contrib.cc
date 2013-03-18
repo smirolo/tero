@@ -72,6 +72,8 @@ namespace {
 #endif
 	}
 
+
+
 void modifyPassword( LDAPBound& ldapb, session& s, const std::string& who )
 {
 	LDAP *ld = ldapb._ld();
@@ -139,6 +141,10 @@ void fetchLDAPProfile( LDAPBound& ldapb, session& s ) {
 
 } // anonymous
 
+void contrib::normalize() {
+    name = ::normalize(name);
+    email = ::normalize(email);
+}
 
 contrib::pointer_type contrib::find( const std::string& email, 
 									 const std::string& name )
@@ -166,13 +172,19 @@ std::ostream& operator<<( std::ostream& ostr, const by& v ) {
 		ostr << "<sup><img src=\"/static/images/icon_email.png\"></sup>"
 			 << html::a::end;
 	}
-	if( !v.ptr->google.empty() ) {
-		ostr << " <a rel=\"author\" href=\"https://profiles.google.com/"
-			 << v.ptr->google << "\">"
-			 << "<img src=\"http://ssl.gstatic.com/images/icons/gplus-16.png\" width=\"16\" height=\"16\">"
-			 << html::a::end;
-	}
-	return ostr;
+    if( !v.ptr->google.empty() ) {
+        ostr << " <a rel=\"author\" href=\"https://profiles.google.com/"
+             << v.ptr->google << "\">"
+             << "<img src=\"http://ssl.gstatic.com/images/icons/gplus-32.png\" width=\"32\" height=\"32\">"
+             << html::a::end;
+    }
+    if( !v.ptr->linkedin.empty() ) {
+        ostr << " <a rel=\"author\" href=\"http://www.linkedin.com/pub/"
+             << v.ptr->linkedin << "\">"
+             << "<img src=\"/static/img/linkedin-32.png\" width=\"32\" height=\"28\">"
+             << html::a::end;
+    }
+    return ostr;
 }
 
 

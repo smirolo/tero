@@ -185,8 +185,8 @@ void mailAsPost::token( rfc2822Token token, const char *line,
             }
             break;
         case rfc2822AuthorEmail:
-            constructed.author = extractName(value);
-            constructed.authorEmail = extractEmailAddress(value);
+            constructed.author = contrib::find(extractEmailAddress(value),
+                extractName(value));
             break;
         case rfc2822Title:
             constructed.title = value;
@@ -195,12 +195,18 @@ void mailAsPost::token( rfc2822Token token, const char *line,
             constructed.score = atoi(value.c_str());
             break;
         default: {
-            post::headersMap::iterator header
-                = constructed.moreHeaders.find(name);
-            if( header != constructed.moreHeaders.end() ) {
-                header->second += std::string(",") + value;
+            if( name.compare(0, 16, "x-Profile-Google") == 0 ) {
+                constructed.author->google = value;
+            } else if( name.compare(0, 18, "x-Profile-Linkedin") == 0 ) {
+                constructed.author->linkedin = value;
             } else {
-                constructed.moreHeaders[name] = value;
+                post::headersMap::iterator header
+                    = constructed.moreHeaders.find(name);
+                if( header != constructed.moreHeaders.end() ) {
+                    header->second += std::string(",") + value;
+                } else {
+                    constructed.moreHeaders[name] = value;
+                }
             }
         } break;
         }

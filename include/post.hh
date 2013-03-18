@@ -30,6 +30,7 @@
 #include <boost/date_time/gregorian/parsers.hpp>      // from_simple_string
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
+#include <boost/tr1/memory.hpp>
 #include "session.hh"
 
 /** A big part of the semilla presentation engine deals with posts.
@@ -56,6 +57,24 @@
 */
 
 
+class contrib {
+public:
+    typedef std::tr1::shared_ptr<contrib> pointer_type;
+
+public:
+    std::string email;
+    std::string name;
+    std::string google;
+    std::string linkedin;
+
+public:
+    void normalize();
+
+    static pointer_type find( const std::string& email,
+        const std::string& name = "" );
+};
+
+
 /** At the heart of every post there is a required date, author and
     full-length textual content.
 
@@ -69,9 +88,9 @@ public:
 
     // required
 
-    /** The full name of the author of the post.
+    /** Pointer to information about the author of the post.
      */
-    std::string author;
+    contrib::pointer_type author;
 
     /** Time at which the post was published.
      */
@@ -83,17 +102,13 @@ public:
 
     // optional
 
-    /** The e-mail address of the author of the post.
-     */
-    std::string authorEmail;
-
-	/** Depending on the post writer, links to the web version
-		of the post will be displayed either in the caption (html)
-		or the body (rss, email).
-		By default if this field is not set, links are generated
-		from the *title* (text) and *guid* (href).
-	 */
-	std::string link;
+    /** Depending on the post writer, links to the web version
+        of the post will be displayed either in the caption (html)
+        or the body (rss, email).
+        By default if this field is not set, links are generated
+        from the *title* (text) and *guid* (href).
+    */
+    std::string link;
 
     /** The title of the post will be displayed as header of pages
        and subject of e-mails.
@@ -101,7 +116,7 @@ public:
     std::string title;
 
     /** The post unique identifier is used in many case to associate
-	a post to a specific file.
+        a post to a specific file.
 
        Implementation Note:
        At some point the identifier was defined as a boost::uuids::uuid.
@@ -120,8 +135,8 @@ public:
     // second set of optionals used to implement cool features
 
     /** Each post as an associated score that can be used to sort
-	posts by relevance. Currently, we use the score as the basis
-	for the micro-payment system.
+        posts by relevance. Currently, we use the score as the basis
+        for the micro-payment system.
      */
     uint32_t score;
 
@@ -147,7 +162,6 @@ public:
 	author(p.author),
 	time(p.time),
 	content(p.content),
-	authorEmail(p.authorEmail),
 	link(p.link),
 	title(p.title),
 	guid(p.guid),

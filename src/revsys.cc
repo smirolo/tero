@@ -439,6 +439,7 @@ void gitcmd::checkins( const session& s,
     bool itemStarted = false;
     bool descrStarted = false;
     post ci;
+    std::string authorName;
     std::stringstream descr, link, title;
     std::istream strm(shellcmd(sstm.str()));
 
@@ -472,11 +473,12 @@ void gitcmd::checkins( const session& s,
             while( last < line.size() ) {
                 switch( line[last] ) {
                 case '<':
-                    ci.author = line.substr(first,last - first);
+                    authorName = line.substr(first,last - first);
                     first = last + 1;
                     break;
                 case '>':
-                    ci.authorEmail = line.substr(first,last - first);
+                    ci.author = contrib::find(line.substr(first,last - first),
+                        authorName);
                     first = last + 1;
                     break;
                 }

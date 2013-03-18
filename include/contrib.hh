@@ -27,28 +27,12 @@
 #define guardcontrib
 
 #include "document.hh"
-#include <boost/tr1/memory.hpp>
 
 /** Pages related to contributors such as registration of new contributors,
     profile management, password updates, etc.
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-
-class contrib {
-public:
-    typedef std::tr1::shared_ptr<contrib> pointer_type;
-
-public:
-    std::string email;
-    std::string name;
-    std::string google;
-
-public:
-    static pointer_type find( const std::string& email,
-        const std::string& name = "" );
-};
-
 
 class by {
 protected:

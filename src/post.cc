@@ -58,8 +58,6 @@ postAddSessionVars( boost::program_options::options_description& opts,
 
 void post::normalize() {
     title = ::normalize(title);
-    author = ::normalize(author);
-    authorEmail = ::normalize(authorEmail);
     guid = ::strip(guid);
     content = ::strip(content);
 }
@@ -69,11 +67,11 @@ bool post::valid() const {
     /* If there are any whitespaces in the guid, Thunderbird 3 will
        hang verifying the rss feed... */
     for( size_t i = 0; i < guid.size(); ++i ) {
-	if( isspace(guid[i]) ) {
-	    return false;
-	}
-    }    
-    return (!title.empty() & !authorEmail.empty() & !content.empty());
+        if( isspace(guid[i]) ) {
+            return false;
+        }
+    }
+    return (!title.empty() & !author->email.empty() & !content.empty());
 }
 
 
@@ -125,7 +123,7 @@ void htmlwriter::filters( const post& p ) {
               << html::h(1) << p.title << html::h(1).end()
               << html::a::end << std::endl;
     }
-    *ostr << by(contrib::find(p.authorEmail,p.author)) << " on " << p.time;
+    *ostr << by(p.author) << " on " << p.time;
     *ostr << html::div::end;
 
     /* body of the post */
@@ -145,11 +143,11 @@ void mailwriter::filters( const post& p ) {
     time_facet* facet(new time_facet(pubDate::format));
     (*ostr).imbue(std::locale((*ostr).getloc(), facet));
 
-    *ostr << "From " << from(contrib::find(p.authorEmail,p.author)) << std::endl;
-	*ostr << "Subject: " << (!p.title.empty() ? p.title : "(No Subject)") 
+    *ostr << "From " << from(p.author) << std::endl;
+	*ostr << "Subject: " << (!p.title.empty() ? p.title : "(No Subject)")
 		  << std::endl;
     *ostr << "Date: " << p.time << std::endl;
-    *ostr << "From: " << from(contrib::find(p.authorEmail,p.author)) << std::endl;    
+    *ostr << "From: " << from(p.author) << std::endl;
     *ostr << "Score: " << p.score << std::endl;
 
     for( post::headersMap::const_iterator header = p.moreHeaders.begin();
@@ -177,14 +175,14 @@ void rsswriter::filters( const post& p ) {
 	if( !p.link.empty() ) {
 		*ostr << p.link << std::endl;
 	}
-    *ostr << html::p() 
-		  << by(contrib::find(p.authorEmail,p.author)) << ":" << "<br />"
+    *ostr << html::p()
+		  << by(p.author) << ":" << "<br />"
 		  << p.content << html::p::end
 		  << "]]>" << description::end;
 
     *ostr << author();
     esc.attach(*ostr);
-    *ostr << p.authorEmail;
+    *ostr << p.author->email;
     esc.detach();
     *ostr << author::end;
 
