@@ -97,34 +97,34 @@ void blogByInterval( session& s, const url& name )
 #if 0
         std::string firstName = boost::filesystem::basename(name);
 #else
-		std::string firstName;
-		if( boost::regex_search(name.string(),m,
-								boost::regex(std::string(c.name) + "-(.*)")) ) {
-			firstName = m.str(1);
-		}
-#endif			
-		lower = c.first(firstName);
-		upper = c.last(firstName);
+        std::string firstName;
+        if( boost::regex_search(name.string(),m,
+                boost::regex(std::string(c.name) + "-(.*)")) ) {
+            firstName = m.str(1);
+        }
+#endif
+        lower = c.first(firstName);
+        upper = c.last(firstName);
     } catch( std::exception& e ) {
-		lower = c.first();
-		upper = c.last();
+        lower = c.first();
+        upper = c.last();
     }
 #if 0
     std::cerr << "[blogByInterval] from " << lower.time << " to " << upper.time
-	      << "(from " << lower.tag << " to " << upper.tag << ")"
-	      << std::endl;
+              << "(from " << lower.tag << " to " << upper.tag << ")"
+              << std::endl;
 #endif
     blogInterval<cmp> interval(&writer,lower,upper);
     blogSplat<cmp> feeds(&interval);
     if( !s.feeds ) {
-		s.feeds = &feeds;
+        s.feeds = &feeds;
     }
-    
+
     feedContent<defaultWriter,filePat>(s,s.abspath(name));
 
     if( s.feeds == &feeds ) {
-		s.feeds->flush();
-		s.feeds = NULL;
+        s.feeds->flush();
+        s.feeds = NULL;
     }
 }
 
@@ -188,22 +188,26 @@ void blogSetLinksFetch( session& s, const url& name )
     boost::filesystem::path blogroot
         = s.root(s.abspath(name),blogTrigger,true);
 
-     bySet<cmp> count(s.out(),s.asUrl(blogroot));
+    bySet<cmp> count(s.out(),s.asUrl(blogroot));
     blogSplat<cmp> feeds(&count);
 
     if( !s.feeds ) {
-	s.feeds = &feeds;
+        s.feeds = &feeds;
     }
 
-    /* workaround Ubuntu/gcc-4.4.3 is not happy with boost::regex(filePat) 
+    /* workaround Ubuntu/gcc-4.4.3 is not happy with boost::regex(filePat)
        passed as parameter to parser. */
     boost::regex pat(filePat);
     mailParser parser(pat,*s.feeds,false);
-    parser.fetch(s,blogroot);
+    parser.fetch(s, blogroot);
 
     if( s.feeds == &feeds ) {
-	s.feeds->flush();
-	s.feeds = NULL;
+#if 0
+        // XXX There is already one flush() in parser.fetch().
+        // Another one here would show the tags repeated twice.
+        s.feeds->flush();
+#endif
+        s.feeds = NULL;
     }
 }
 

@@ -131,6 +131,10 @@ void htmlwriter::filters( const post& p ) {
     contentHtmlwriter::filters(p);
     *ostr << html::div::end;
 
+    *ostr << html::div().classref("postContact");
+    *ostr << "Contact the author " << contact(p.author);
+    *ostr << html::div::end;
+
     *ostr << html::div::end;
     ++postNum;
 }

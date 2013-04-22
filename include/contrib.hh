@@ -44,6 +44,16 @@ public:
     explicit by( const contrib::pointer_type& p ) : ptr(p) {}
 };
 
+class contact {
+protected:
+    const contrib::pointer_type& ptr;
+
+public:
+    friend std::ostream& operator<<( std::ostream&, const contact& );
+
+    explicit contact( const contrib::pointer_type& p ) : ptr(p) {}
+};
+
 class from {
 protected:
     const contrib::pointer_type& ptr;

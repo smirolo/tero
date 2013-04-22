@@ -146,42 +146,44 @@ void contrib::normalize() {
     email = ::normalize(email);
 }
 
-contrib::pointer_type contrib::find( const std::string& email, 
-									 const std::string& name )
+contrib::pointer_type contrib::find( const std::string& email,
+    const std::string& name )
 {
-	pointer_type p(new contrib());
-	p->name = name;
-	p->email = email;
-	return p;
+    pointer_type p(new contrib());
+    p->name = name;
+    p->email = email;
+    return p;
 }
 
 
 std::ostream& operator<<( std::ostream& ostr, const by& v ) {
-	ostr << "by ";
-	if( !v.ptr->email.empty() ) {
-		ostr << html::a().href(std::string("mailto:") + v.ptr->email);
-	}
-	if( !v.ptr->name.empty() ) {
-		ostr << v.ptr->name;
-	} else if( !v.ptr->email.empty() ) {
-		ostr << v.ptr->email;
-	} else {
-		ostr << "anonymous";
-	}
-	if( !v.ptr->email.empty() ) {
-		ostr << "<sup><img src=\"/static/images/icon_email.png\"></sup>"
-			 << html::a::end;
-	}
-    if( !v.ptr->google.empty() ) {
-        ostr << " <a rel=\"author\" href=\"https://profiles.google.com/"
-             << v.ptr->google << "\">"
-             << "<img src=\"http://ssl.gstatic.com/images/icons/gplus-32.png\" width=\"32\" height=\"32\">"
+    ostr << "by ";
+    if( !v.ptr->name.empty() ) {
+        ostr << v.ptr->name;
+    } else if( !v.ptr->email.empty() ) {
+        ostr << v.ptr->email;
+    } else {
+        ostr << "anonymous";
+    }
+    return ostr;
+}
+
+std::ostream& operator<<( std::ostream& ostr, const contact& v ) {
+    if( !v.ptr->email.empty() ) {
+        ostr << html::a().href(std::string("mailto:") + v.ptr->email);
+        ostr << "<img src=\"/static/img/email-32.jpg\" width=\"32\" height=\"32\">"
              << html::a::end;
     }
     if( !v.ptr->linkedin.empty() ) {
         ostr << " <a rel=\"author\" href=\"http://www.linkedin.com/pub/"
              << v.ptr->linkedin << "\">"
-             << "<img src=\"/static/img/linkedin-32.png\" width=\"32\" height=\"28\">"
+             << "<img src=\"/static/img/linkedin-32.png\" width=\"32\" height=\"32\">"
+             << html::a::end;
+    }
+    if( !v.ptr->google.empty() ) {
+        ostr << " <a rel=\"author\" href=\"https://profiles.google.com/"
+             << v.ptr->google << "\">"
+             << "<img src=\"http://ssl.gstatic.com/images/icons/gplus-32.png\" width=\"32\" height=\"32\">"
              << html::a::end;
     }
     return ostr;
