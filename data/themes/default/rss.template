@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version='2.0'>
 <channel>
-	<title><!-- widget 'title' --></title>
+	<title><div class="title"><!-- Expand --></div></title>
 	<link>http://<!-- widget 'print' name='domainName' --></link>
-	<description><!-- widget 'title' --></description>
+	<description><div class="title"><!-- Expand --></div></description>
         <language>en-us</language>
 	<!--
 	<pubDate></pubDate>
 	<lastBuildDate></lastBuildDate>
 	-->
-	<!-- widget 'document' -->
+	<div class="document"><!-- Expand --></div>
 </channel>
 </rss>

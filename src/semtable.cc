@@ -52,8 +52,10 @@ char bookExt[] = "book";
 char corpExt[] = "corp";
 char rssExt[] = "rss";
 char blogExt[] = "blog";
-char blogIndex[] = "blogindex";
 char project[] = "project";
+char projectSidebar[] = "project_sidebar";
+char topMenu[] = "topMenu";
+char basePage[] = "base";
 char docPage[] = "document";
 char todos[] = "todos";
 char indexPage[] = "index";
@@ -71,6 +73,24 @@ char buildView[] = "Build View";
 fetchEntry entries[] = {
     { "author", boost::regex(".*\\.blog"),
 	  noAuth|noPipe, NULL,  textMeta<author>, NULL },
+
+    { "base", boost::regex(".*\\.rss"),
+	  noAuth|noPipe, compose<rssExt>, NULL, NULL },
+    /* We must do this through a "base" and not a "document" because
+       the feedback is different if the application is invoked from
+       the command line or through the cgi interface. */
+    { "base", boost::regex(".*/todo/create"),
+	  noAuth|noPipe, todoCreateFetch, NULL, NULL },
+    /* comments */
+    { "base", boost::regex(std::string("/comments/create")),
+	  noAuth|noPipe, commentPage, NULL, NULL },
+
+    /* default catch-all:
+       We use "always" here such that semcache will not generate .html
+       versions of style.css, etc. */
+    { "base",boost::regex(".*"),
+	  noAuth|noPipe, compose<basePage>, NULL, NULL },
+
     { "bytags", boost::regex(".*/blog/.*"),
 	  noAuth|noPipe, blogTagLinks<blogPat>, NULL, NULL },
     { "check", boost::regex(".*\\.c"),
@@ -93,123 +113,142 @@ fetchEntry entries[] = {
        source files in the absence of a more restrictive pattern. */
     { "checkstyle", boost::regex(".*"),
 	  noAuth|noPipe, checkstyleFetch, NULL, NULL },
+
+    /* The build "document" gives an overview of the set
+       of all projects at a glance and can be used to assess
+       the stability of the whole as a release candidate. */
+    { "content", boost::regex(".*/log/"),
+	  noAuth|noPipe, logviewFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.(cc|hh|tcc)$"),
+	  noAuth|noPipe, NULL, cppFetch, NULL },
+    { "content", boost::regex(".*\\.(c|h)$"),
+	  noAuth|noPipe, NULL, cppFetch, NULL },
+    { "content", boost::regex(".*\\.(cc|hh|tcc)/diff/[0-9a-f]{40}"),
+	  noAuth|noPipe, cppDiff, NULL, NULL },
+    { "content", boost::regex(".*\\.(c|h)/diff/[0-9a-f]{40}"),
+	  noAuth|noPipe, cppDiff, NULL, NULL },
+    { "content", boost::regex(".*\\.mk"),
+	  noAuth|noPipe, NULL, shFetch, NULL },
+    { "content", boost::regex(".*\\.py"),
+	  noAuth|noPipe, NULL, shFetch, NULL },
+    { "content", boost::regex(".*Makefile"),
+	  noAuth|noPipe, NULL, shFetch, NULL },
+    { "content", boost::regex(".*\\.mk/diff/[0-9a-f]{40}"),
+	  noAuth|noPipe, shDiff, NULL, NULL },
+    { "content", boost::regex(".*\\.py/diff/[0-9a-f]{40}"),
+	  noAuth|noPipe, shDiff, NULL, NULL },
+    { "content", boost::regex(".*Makefile/diff/[0-9a-f]{40}"),
+	  noAuth|noPipe, shDiff, NULL, NULL },
+     /* Widget to generate a rss feed. Attention: it needs
+       to be declared before any of the todoFilter::viewPat
+       (i.e. todos/.+) since an rss feed exists for todo items
+       as well. */
+    { "content", boost::regex("/index\\.rss"),
+	  noAuth|noPipe, rssSiteAggregate<docPage>, NULL, NULL },
+    { "content", boost::regex(".*\\.git/index\\.rss"),
+	  noAuth|noPipe, feedRepository<rsswriter>, NULL, NULL },
+    { "content", boost::regex(".*/index\\.rss"),
+	  noAuth|noPipe, feedLatestPosts<rsswriter,docPage>, NULL, NULL },
+    { "content", boost::regex(".*\\.todo/comment"),
+	  noAuth|noPipe, todoCommentFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.todo/voteAbandon"),
+	  noAuth|noPipe, todoVoteAbandonFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.todo/voteSuccess"),
+	  noAuth|noPipe, todoVoteSuccessFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.book"),
+      noAuth|noPipe, docbookFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.corp"),
+      noAuth|noPipe, docbookFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.blog"),
+      noAuth|noPipe, blogEntryFetch, NULL, NULL },
+    { "content", boost::regex(".*/blog/tags-.*"),
+      noAuth|noPipe, blogByIntervalTags<docPage,blogPat>, NULL, NULL },
+    { "content", boost::regex(".*/blog/tags/"),
+	  noAuth|noPipe, blogTagLinks<blogPat>, NULL, NULL },
+
+    { "content", boost::regex(".*/blog/archive-.*"),
+      noAuth|noPipe, blogByIntervalDate<docPage,blogPat>, NULL, NULL },
+    { "content", boost::regex(".*/blog/"),
+	  noAuth|noPipe, mostRecentBlogFetch, NULL, NULL },
+
+    /* contributors, accounts authentication */
+    { "content", boost::regex(".*/accounts/login/"),
+	  noAuth|noPipe, loginFetch, NULL, NULL },
+    { "content", boost::regex(".*/accounts/logout/"),
+	  noAuth|noPipe, logoutFetch, NULL, NULL },
+    { "content", boost::regex(".*/accounts/password_change/"),
+	  noAuth|noPipe, passwdChange, NULL, NULL },
+    { "content", boost::regex(".*/accounts/password_reset/"),
+	  noAuth|noPipe, passwdReset, NULL, NULL },
+    { "content", boost::regex(".*/accounts/register/complete/"),
+	  noAuth|noPipe, registerConfirm, NULL, NULL },
+    { "content", boost::regex(".*/accounts/register/"),
+	  noAuth|noPipe, registerEnter, NULL, NULL },
+    { "content", boost::regex(".*/accounts/unregister/"),
+	  noAuth|noPipe, unregisterEnter, NULL, NULL },
+    { "content", boost::regex(".*accounts/"),
+	  noAuth|noPipe, contribIdxFetch, NULL, NULL },
+    /* misc pages */
+    { "content", boost::regex(".*/commit/[0-9a-f]{40}"),
+	  noAuth|noPipe, changeShowDetails, NULL, NULL },
+    { "content", boost::regex(".*\\.eml"),
+	  noAuth|noPipe, mailParserFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.ics"),
+	  noAuth|noPipe, NULL, calendarFetch,  NULL },
+
+    { "content", boost::regex(".*/todo/"),
+	  noAuth|noPipe, todoIndexWriteHtmlFetch, NULL, NULL },
+    { "content", boost::regex(".*\\.todo"),
+	  noAuth|noPipe, todoWriteHtmlFetch, NULL, NULL },
+    { "content", boost::regex(".*dws\\.xml"),
+	  noAuth|noPipe, NULL, NULL, projindexFetch },
+    { "content", boost::regex(".*"),
+      noAuth|noPipe, NULL, textFetch, NULL },
+
 	// 1. XXX
     { "date", boost::regex(".*\\.blog"),
 	  noAuth|noPipe, NULL, textMeta<date>, NULL },
     { "dates", boost::regex(".*/blog/.*"),
 	  noAuth|noPipe, blogDateLinks<blogPat>, NULL, NULL },
 
-    /* The build "document" gives an overview of the set
-       of all projects at a glance and can be used to assess
-       the stability of the whole as a release candidate. */
-    { "document", boost::regex(".*/log/"),
-	  noAuth|noPipe, logviewFetch, NULL, NULL },
-
-    /* need this for tero.template */
-    { "document", boost::regex(".*\\.template"),
-	  noAuth|noPipe, NULL, formattedFetch, NULL },
-    { "document", boost::regex(".*\\.c"),
-	  noAuth|noPipe, NULL, cppFetch, NULL },
-    { "document", boost::regex(".*\\.h"),
-	  noAuth|noPipe, NULL, cppFetch, NULL },
-    { "document", boost::regex(".*\\.cc"),
-	  noAuth|noPipe, NULL, cppFetch, NULL },
-    { "document", boost::regex(".*\\.hh"),
-	  noAuth|noPipe, NULL, cppFetch, NULL },
-    { "document", boost::regex(".*\\.tcc"),
-	  noAuth|noPipe, NULL, cppFetch, NULL },
-    { "document", boost::regex(".*\\.c/diff/[0-9a-f]{40}"),
-	  noAuth|noPipe, cppDiff, NULL, NULL },
-    { "document", boost::regex(".*\\.h/diff/[0-9a-f]{40}"),
-	  noAuth|noPipe, cppDiff, NULL, NULL },
-    { "document", boost::regex(".*\\.cc/diff/[0-9a-f]{40}"),
-	  noAuth|noPipe, cppDiff, NULL, NULL },
-    { "document", boost::regex(".*\\.hh/diff/[0-9a-f]{40}"),
-	  noAuth|noPipe, cppDiff, NULL, NULL },
-    { "document", boost::regex(".*\\.tcc/diff/[0-9a-f]{40}"),
-	  noAuth|noPipe, cppDiff, NULL, NULL },
+    /* Documents split a page into a *content* and *sidebar* sections.
+       Both are based on the context as specified by url. */
+    { "document", boost::regex(".*/diff/[0-9a-f]{40}"),
+      noAuth|noPipe, compose<source>, NULL, NULL },
+    { "document", boost::regex(".*\\.(cc|hh|tcc)$"),
+      noAuth|noPipe, compose<source>, NULL, NULL },
+    { "document", boost::regex(".*\\.(c|h)$"),
+      noAuth|noPipe, compose<source>, NULL, NULL },
     { "document", boost::regex(".*\\.mk"),
-	  noAuth|noPipe, NULL, shFetch, NULL },
+      noAuth|noPipe, compose<source>, NULL, NULL },
     { "document", boost::regex(".*\\.py"),
-	  noAuth|noPipe, NULL, shFetch, NULL },
+      noAuth|noPipe, compose<source>, NULL, NULL },
     { "document", boost::regex(".*Makefile"),
-	  noAuth|noPipe, NULL, shFetch, NULL },
-    { "document", boost::regex(".*\\.mk/diff/[0-9a-f]{40}"), 
-	  noAuth|noPipe, shDiff, NULL, NULL },
-    { "document", boost::regex(".*\\.py/diff/[0-9a-f]{40}"), 
-	  noAuth|noPipe, shDiff, NULL, NULL },
-    { "document", boost::regex(".*Makefile/diff/[0-9a-f]{40}"),
-	  noAuth|noPipe, shDiff, NULL, NULL },
-    { "document", boost::regex(".*dws\\.xml"),
-	  noAuth|noPipe, NULL, NULL, projindexFetch },
-    /* Widget to generate a rss feed. Attention: it needs
-       to be declared before any of the todoFilter::viewPat
-       (i.e. todos/.+) since an rss feed exists for todo items
-       as well. */
-    { "document", boost::regex("/index\\.rss"),
-	  noAuth|noPipe, rssSiteAggregate<docPage>, NULL, NULL },
-    { "document", boost::regex(".*\\.git/index\\.rss"),
-	  noAuth|noPipe, feedRepository<rsswriter>, NULL, NULL },
-    { "document", boost::regex(".*/index\\.rss"),
-	  noAuth|noPipe, feedLatestPosts<rsswriter,docPage>, NULL, NULL },
-    { "document", boost::regex(".*/todo/"),
-	  noAuth|noPipe, todoIndexWriteHtmlFetch, NULL, NULL },
-    { "document", boost::regex(".*\\.todo/comment"),
-	  noAuth|noPipe, todoCommentFetch, NULL, NULL },
-    { "document", boost::regex(".*\\.todo/voteAbandon"),
-	  noAuth|noPipe, todoVoteAbandonFetch, NULL, NULL },
-    { "document", boost::regex(".*\\.todo/voteSuccess"),
-	  noAuth|noPipe, todoVoteSuccessFetch, NULL, NULL },
-    { "document", boost::regex(".*\\.blog"),
-      noAuth|noPipe, blogEntryFetch, NULL, NULL },
-    { "document", boost::regex(".*/blog/tags-.*"),
-      noAuth|noPipe, blogByIntervalTags<docPage,blogPat>, NULL, NULL },
-    { "document", boost::regex(".*/blog/tags/"),
-	  noAuth|noPipe, blogTagLinks<blogPat>, NULL, NULL },
-
-    { "document", boost::regex(".*/blog/archive-.*"),
-      noAuth|noPipe, blogByIntervalDate<docPage,blogPat>, NULL, NULL },
-    { "document", boost::regex(".*/blog/"),
-	  noAuth|noPipe, mostRecentBlogFetch, NULL, NULL },
-
-    /* contributors, accounts authentication */
-    { "document", boost::regex(".*/accounts/login/"),
-	  noAuth|noPipe, loginFetch, NULL, NULL },
-    { "document", boost::regex(".*/accounts/logout/"),
-	  noAuth|noPipe, logoutFetch, NULL, NULL },
-    { "document", boost::regex(".*/accounts/password_change/"),
-	  noAuth|noPipe, passwdChange, NULL, NULL },
-    { "document", boost::regex(".*/accounts/password_reset/"),
-	  noAuth|noPipe, passwdReset, NULL, NULL },
-    { "document", boost::regex(".*/accounts/register/complete/"),
-	  noAuth|noPipe, registerConfirm, NULL, NULL },
-    { "document", boost::regex(".*/accounts/register/"),
-	  noAuth|noPipe, registerEnter, NULL, NULL },
-    { "document", boost::regex(".*/accounts/unregister/"),
-	  noAuth|noPipe, unregisterEnter, NULL, NULL },
-    { "document", boost::regex(".*accounts/"),
-	  noAuth|noPipe, contribIdxFetch, NULL, NULL },
-    /* misc pages */
-    { "document", boost::regex(".*/commit/[0-9a-f]{40}"),
-	  noAuth|noPipe, changeShowDetails, NULL, NULL },
-    { "document", boost::regex(".*\\.eml"),
-	  noAuth|noPipe, mailParserFetch, NULL, NULL },
-    { "document", boost::regex(".*\\.ics"),
-	  noAuth|noPipe, NULL, calendarFetch,  NULL },
-    { "document", boost::regex(".*\\.todo"),
-	  noAuth|noPipe, todoWriteHtmlFetch, NULL, NULL },
-
-    /* We transform docbook formatted text into HTML for .book
-       and .corp "document" files and interpret all other unknown
-       extension files as raw text. In all cases we use a default
-       document.template interface "view" to present those files. */
+      noAuth|noPipe, compose<source>, NULL, NULL },
+    /* XXX We separate .book and .corp because some pages we donot
+       want to serve advertising into the sidebar. */
     { "document", boost::regex(".*\\.book"),
-	  noAuth|noPipe, docbookFetch, NULL, NULL },
+      noAuth|noPipe, compose<bookExt>, NULL, NULL },
     { "document", boost::regex(".*\\.corp"),
-	  noAuth|noPipe, docbookFetch, NULL, NULL },
+      noAuth|noPipe, compose<corpExt>, NULL, NULL },
+    { "document", boost::regex(".*dws\\.xml"),
+      noAuth|noPipe, compose<project>, NULL, NULL },
 
+    /* All files in the blog/ subpath will use a taylored *content*
+       and *sidebar*. */
+    { "document", boost::regex(".*/blog/.*"),
+      noAuth|noPipe, compose<blogExt>, NULL, NULL },
+
+    { "document", boost::regex(".*\\.todo"),
+      noAuth|noPipe, compose<todoExt>, NULL, NULL },
+    /* Composer and document for the todos index view */
+    { "document", boost::regex(".*/todo/"),
+      noAuth|noPipe, compose<todos>, NULL, NULL },
+    { "document", boost::regex("/"),
+      noAuth|noPipe, compose<indexPage>, NULL, NULL },
     { "document", boost::regex(".*"),
-	  noAuth|noPipe, NULL, textFetch, NULL },
+      noAuth|noPipe, compose<docPage>, NULL, NULL },
+
     /* homepage */
     { "feed", boost::regex(".*\\.git/index\\.feed"),
 	  noAuth|noPipe, feedRepository<htmlwriter>, NULL, NULL },
@@ -229,26 +268,18 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, metaValue, NULL, NULL },
 
     /* Widget to display a list of files which are part of a project.
-       This widget is used through different "view"s to browse
+       This widget is used through different "base"s to browse
        the source repository. */
     { "projfiles", boost::regex(".*"),
 	  noAuth|noPipe, projfilesFetch, NULL, NULL },
     /* A project dws.xml "document" file show a description,
        commits and unit test status of a single project through
-       a project "view". */
+       a project "base". */
     { "regressions", boost::regex(".*dws\\.xml"),
 	  noAuth|noPipe, regressionsFetch, NULL, NULL },
 
     { "relates", boost::regex(".*/blog/.*"),
 	  noAuth|noPipe, blogRelatedSubjects<blogPat>, NULL, NULL },
-
-    /* use always instead of whenFileExist here because the composer
-       is looking for template files into a themeDir and not the local
-       directory.
-       This is special, we cannot label them as 'document' nor 'view'
-       otherwise it creates infinite loops on feed fetches. */
-    { "template", boost::regex(".*\\.template"),
-	  noAuth|noPipe, compose<none>, NULL, NULL },
 
     /* Load title from the meta tags in a text file. */
     { "title", boost::regex(".*/log/"),
@@ -271,78 +302,9 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, projectTitle, NULL, NULL },
     { "title", boost::regex(".*"),
 	  noAuth|noPipe, metaFetch<title>, NULL, NULL },
-    /* If a template file matching the document's extension
-       is present in the theme directory, let's use it
-       as a composer. */
-    { "view", boost::regex(".*\\.todo"),
-	  noAuth|noPipe, compose<todoExt>, NULL, NULL },
-#if 0
-    { "view", boost::regex(".*\\.todo/comment"), always, todoCommentFetch },
-#endif
-    /* \todo we avoid to generate caches on the header menus for now. */
-    { "view", boost::regex(".*\\.corp"),
-	  noAuth|noPipe, compose<corpExt>, NULL, NULL },
-    { "view", boost::regex(".*\\.rss"),
-	  noAuth|noPipe, compose<rssExt>, NULL, NULL },
-    { "view", boost::regex(".*\\.blog"),
-	  noAuth|noPipe, compose<blogExt>, NULL, NULL },
-    { "view", boost::regex(".*\\.book"),
-	  noAuth|noPipe, compose<bookExt>, NULL, NULL },
-	// XXX
-    { "view", boost::regex(".*\\.c"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-    { "view", boost::regex(".*\\.h"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-    { "view", boost::regex(".*\\.cc"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-    { "view", boost::regex(".*\\.hh"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-    { "view", boost::regex(".*\\.tcc"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
 
-    { "view", boost::regex(".*\\.mk"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-    { "view", boost::regex(".*\\.py"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-    { "view", boost::regex(".*Makefile"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-    /* Composer for a project view */
-    { "view", boost::regex(".*dws\\.xml"),
-	  noAuth|noPipe, compose<project>, NULL, NULL },
-
-    /* We must do this through a "view" and not a "document" because
-       the feedback is different if the application is invoked from
-       the command line or through the cgi interface. */
-    { "view", boost::regex(".*/todo/create"),
-	  noAuth|noPipe, todoCreateFetch, NULL, NULL },
-
-    /* Composer and document for the todos index view */
-    { "view", boost::regex(".*/todo/"),
-	  noAuth|noPipe, compose<todos>, NULL, NULL },
-
-    /* comments */
-    { "view", boost::regex(std::string("/comments/create")),
-	  noAuth|noPipe, commentPage, NULL, NULL },
-
-    /* blog presentation */
-    { "view", boost::regex(".*/blog/"),
-      noAuth|noPipe, compose<blogIndex>, NULL, NULL },
-    { "view", boost::regex(".*/blog/.*"),
-      noAuth|noPipe, compose<blogExt>, NULL, NULL },
-
-    /* Source code "document" files are syntax-highlighted
-       and presented inside a source.template "view". */
-    { "view", boost::regex(".*/diff/[0-9a-f]{40}"),
-	  noAuth|noPipe, compose<source>, NULL, NULL },
-
-    { "view", boost::regex("/"),
-	  noAuth|noPipe, compose<indexPage>, NULL, NULL },
-
-    /* default catch-all:
-       We use "always" here such that semcache will not generate .html
-       versions of style.css, etc. */
-    { "view",boost::regex(".*"),
-	  noAuth|noPipe, compose<docPage>, NULL, NULL },
+    { "topMenu", boost::regex(".*"),
+	  noAuth|noPipe, compose<topMenu>, NULL, NULL },
 };
 
 dispatchDoc semDocs(entries,sizeof(entries)/sizeof(entries[0]));

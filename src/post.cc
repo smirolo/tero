@@ -132,8 +132,18 @@ void htmlwriter::filters( const post& p ) {
     *ostr << html::div::end;
 
     *ostr << html::div().classref("postContact");
-    *ostr << "Contact the author " << contact(p.author);
+    *ostr << html::div().classref("contactAuthor");
+    *ostr << "Contact the author "
+          << html::div() << contact(p.author) << html::div::end;
     *ostr << html::div::end;
+
+    /* social sharing */
+    *ostr << html::div().classref("shareNetwork");
+    *ostr << "Share with your network";
+    *ostr << "<div data-social-share-privacy='true'></div>" << std::endl;
+    *ostr << html::div::end;
+    *ostr << "<br />" << std::endl;
+    *ostr << html::div::end; // postContact
 
     *ostr << html::div::end;
     ++postNum;

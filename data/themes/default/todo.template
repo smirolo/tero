@@ -1,65 +1,45 @@
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.w3.org/1999/xhtml
-                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
+<div id="document">
+  <table>
+    <tr>
+      <td id="sidebar">
+         <div class="topMenu"><!-- Expand --></div>
+      </td>
 
-<head>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- widget 'title' --></title>
-<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
-</head>
+      <td id="entry">
+  <div id="title">
+    <h1><div class="title"><!-- Expand --></div><a href="index.rss">
+        <img class="imgrss"
+             src="/static/img/feed-icon-14x14.png" alt="RSS feed" /></a></h1>
+  </div>
+  <p><i>If you deeply care about a todo item, you have the opportunity to make a $1 contribution to it. The complete list of todo items is ordered by contributions and, of course, work always start with the begining of the list.</i></p><div id="paybutton"><!-- widget 'aws' --></div>
 
-<body>
-  <div id="wrap">
-    <!-- widget 'template' value='header.template' -->
+  <div class="content">
+    <!-- Expand -->
+  </div>
 
-  <div id="document">
-    <table>
-      <tr>
-	<td id="sidebar">
-	  <!-- widget 'template' value='topMenu.template' -->
-	</td>
-	<td id="entry">	  
-	  <div id="title">
-	    <h1><!-- widget 'title' -->	      
-	      <a href="index.rss">
-		<img class="imgrss"
-		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
-	      </a>
-	    </h1>
-	  </div>
-	  <p><i>If you deeply care about a todo item, you have the opportunity to make a $1 contribution to it. The complete list of todo items is ordered by contributions and, of course, work always start with the begining of the list.</i></p><div id="paybutton"><!-- widget 'aws' --></div>
-	  <!-- widget 'document' -->
-	  <div>
-	    <form method="post" class="post" action="/todoComment">
-	      <fieldset>       
-		<input type="hidden" name="href" value="<!-- tmpl_name 'document' -->"/>
-		<table width="100%">
-		  <tr>
-		    <td><label>From:</label></td>
-		    <td><input id="author" name="author"/></td>
-		  </tr>
-		  <tr>
-		    <td><label>Cc:</label></td>
-		    <td><input id="ccs" name="ccs"/></td>
-		  </tr>	  
-		</table>
-		<label>Comment</label><br />		
-		<textarea rows="20" id="description" name="descr"></textarea>
+  <div>
+    <form method="post" class="post" action="/todoComment">
+      <fieldset>
+        <input type="hidden" name="href" value="<!-- tmpl_name 'document' -->"/>
+        <table width="100%">
+          <tr>
+            <td><label>From:</label></td>
+            <td><input id="author" name="author"/></td>
+          </tr>
+          <tr>
+            <td><label>Cc:</label></td>
+            <td><input id="ccs" name="ccs"/></td>
+          </tr>
+        </table>
+        <label>Comment</label><br />
+        <textarea rows="20" id="description" name="descr"></textarea>
               </fieldset>
-	      <fieldset class="submit"> 
-		<input class="button" type="submit" name="submit" value="post" />
-              </fieldset> 	      
-	    </form>
-	  </div>
-	</td>
-
-      </tr>
-    </table>
+      <fieldset class="submit">
+        <input class="button" type="submit" name="submit" value="post" />
+      </fieldset>
+    </form>
   </div>
-  </div>
-
-  <!-- widget 'template' value='footer.template' -->
-
-</body>
-</html>
+      </td>
+    </tr>
+  </table>
+</div>

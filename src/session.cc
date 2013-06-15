@@ -65,7 +65,7 @@ void checkInSiteTop( const session& s, const boost::filesystem::path& p ) {
 
 } // anonymous
 
-urlVariable document("view","document to be displayed");
+urlVariable document("base","document to be displayed");
 
 pathVariable siteTop("siteTop","root directory that contains the web site");
 
@@ -713,6 +713,7 @@ void session::restore( int argc, char *argv[] )
                 << "configuration file which has precedence over"
                 << " environment variables which in turn as precedence"
                 << " over the session file." << endl;
+           exit(0);
        }
    }
 }

@@ -92,7 +92,7 @@ void byTimeHtml::filters( const post& p ) {
     }
     *ostr << html::tr()
           << html::td() << p.score << html::td::end
-          << html::td() << p.author << html::td::end
+          << html::td() << p.author->name << html::td::end
           << html::td() << html::a().href(p.guid)
           << p.title
           << html::a::end << html::td::end

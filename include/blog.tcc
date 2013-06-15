@@ -175,9 +175,9 @@ void bySet<cmp>::flush()
 	 link != links.end(); ++link ) {
 	strm.str("");
 	strm << "-" << link->first;
-	*ostr << html::a().href(root.string() + strm.str())
+	*ostr << "<li>" << html::a().href(root.string() + strm.str())
 		<< link->first << " (" << link->second << ")"
-		<< html::a::end << html::linebreak;
+		<< html::a::end << "</li>";
     }
 }
 

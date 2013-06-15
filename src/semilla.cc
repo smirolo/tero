@@ -104,6 +104,10 @@ int main( int argc, char *argv[] )
 				if( strncmp(argv[i],"--cache",7) == 0 ) {
 					genCache = true;
 				}
+				if( strncmp(argv[i],"--version",9) == 0 ) {
+                    std::cout << "Version 0.4" << std::endl;
+                    return 0;
+				}
 			}
 		}
 		

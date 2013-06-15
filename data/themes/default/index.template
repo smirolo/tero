@@ -1,26 +1,7 @@
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.w3.org/1999/xhtml
-                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- widget 'title' --></title>
-<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
-</head>
-
-<body>
-  <div id="wrap">
-    <!-- widget 'template' value='header.template' -->
-    
-    <div id="document">
-      <!-- live news feed -->	 
-      <h2 class="whatTitle"><a href="/resources/index.rss"><img src="/resources/feed-icon-14x14.png" alt="RSS feed" title="RSS feed"/></a>&nbsp;What's new?</h2>      
-      <!-- widget 'feed' -->
-    </div>
-    
+<div>
+  <!-- live news feed -->
+  <h2 class="whatTitle"><a href="/index.rss"><img src="/static/img/feed-icon-14x14.png" alt="RSS feed" title="RSS feed"/></a>&nbsp;What's new?</h2>
+  <div class="feed">
+    <!-- Expand -->
   </div>
-  
-  <!-- widget 'template' value='footer.template' -->
-
-</body>
-</html>
+</div>

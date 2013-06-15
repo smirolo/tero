@@ -136,7 +136,6 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 			boost::smatch m;
 			path filename(*entry);
 			url link(s.asUrl(filename));
-
 			if( is_regular_file(filename)
 				&& boost::regex_search(filename.string(),
 									   m,boost::regex(filePat)) ) {
@@ -146,11 +145,11 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 				   clause, we will pick-up which either information we
 				   can from the filesystem. */
 				const fetchEntry* e
-					= dispatchDoc::instance()->select("document",filename.string());
+					= dispatchDoc::instance()->select("content",filename.string());
 				if( e->nameFetch == blogEntryFetch ) {
 					/* \todo HACK! to insures *tags* are set correctly
 					   and non blog files are generated as posts. */
-					dispatchDoc::instance()->fetch(s,"document",link);
+					dispatchDoc::instance()->fetch(s,"content",link);
 				} else {
 					std::stringstream content;
 					std::ostream& prevDisp = s.out(content);
@@ -181,7 +180,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 					   this will create an infinite loop that only stops when
 					   the system runs out of file descriptor. I am not sure
 					   how to avoid or pop an error for this case yet. */
-					if( !dispatchDoc::instance()->fetch(s,"document",link)) {
+					if( !dispatchDoc::instance()->fetch(s,"content",link)) {
 						content << s.asUrl(filename);
 					}    
 					p.content = content.str();

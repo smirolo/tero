@@ -1,78 +1,64 @@
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.w3.org/1999/xhtml
-                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
-
-<head>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- widget 'title' --></title>
-<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
-</head>
-
-<body>
-  <div id="wrap">
-    <!-- widget 'template' value='header.template' -->
-
-  <div id="document">
-    <table class="document">
-      <tr>
-	<td id="sidebar">
-	  <!-- widget 'template' value='topMenu.template' -->
-	</td>
-	<td id="entry">	  
-	  <div id="title">
-	    <h1>Todo items
-	      <a href="/contrib/todos/index.rss">
-		<img class="imgrss"
-		     src="/resources/feed-icon-14x14.png" alt="RSS feed" />
-	      </a>
-	    </h1>
-	  </div>
-	  <p>Following fortylines <a href="http://fortylines.com/reps/whitepapers/doc/organization.book"> organizational principles</a>, features, bugs and issues are tracked as todo items with each item being its own text file living along side the other files in the source repository. The <a href="http://fortylines.com/reps/semilla/dws.xml">web presentation engine</a> provides an easy and convenient way to create, browse and comment on todo items but nothing prevents any contributors to manipulate todo items from the command line or with a text editor as it would be done with any other file in the source repository.</p>	  
-	  <a href="#todoCreate">Create todo</a>
-	  <table width="100%">
-	    <tr><th>date</th>
-	      <th>author</th>
-	      <th width="80%">title</th>
-	      <th>score</th>
-	    </tr>
-	  <!-- widget 'document' -->
-	  </table>
-	  <div>
-	    <a name="todoCreate"></a>
-	    <form method="post" class="post" action="/todoCreate">
-	      <fieldset>                 
-		<table width="100%">
-		  <tr>
-		    <td><label>Title:</label></td>
-		    <td><input id="title" name="title" /></td>
-		  </tr>
-		  <tr>
-		    <td><label>From:</label></td>
-		    <td><input id="author" name="author"/></td>
-		  </tr>
-		  <tr>
-		    <td><label>Cc:</label></td>
-		    <td><input id="ccs" name="ccs"/></td>
-		  </tr>	  
-		</table>		
-		<br />
-		<label>Description</label><br />		
-		<textarea rows="20" id="description" name="descr"></textarea>
-              </fieldset>
-	      <fieldset class="submit"> 
-		<input class="button" type="submit" name="submit" value="create" />
-              </fieldset> 	      
-	    </form>
-	  </div>
-	</td>
-
-     </tr>
-    </table>
-  </div>
-  </div>
-
-  <!-- widget 'template' value='footer.template' -->
-
-</body>
-</html>
+<div id="document">
+  <table>
+    <tr>
+      <td id="sidebar">
+        <div class="topMenu"><!-- Expand --></div>
+      </td>
+      <td id="entry">
+        <div id="title">
+          <h1>Todo items
+            <a href="/contrib/todos/index.rss">
+              <img class="imgrss"
+                   src="/static/img/feed-icon-14x14.png" alt="RSS feed" />
+            </a>
+          </h1>
+        </div>
+        <p>
+Following fortylines <a href="http://fortylines.com/reps/whitepapers/doc/organization.book">organizational principles</a>,
+features, bugs and issues are tracked as todo items with each item being its
+own text file living along side the other files in the source repository.
+The <a href="http://fortylines.com/reps/semilla/dws.xml">web presentation
+engine</a> provides an easy and convenient way to create, browse and comment
+on todo items but nothing prevents any contributors to manipulate todo items
+from the command line or with a text editor as it would be done with any other
+file in the source repository.</p>
+        <a href="#todoCreate">Create todo</a>
+        <table width="100%">
+          <tr><th>date</th>
+            <th>author</th>
+            <th width="80%">title</th>
+            <th>score</th>
+          </tr>
+          <div class="content"><!-- Expand --></div>
+        </table>
+        <div>
+          <a name="todoCreate"></a>
+          <form method="post" class="post" action="/todoCreate">
+            <fieldset>
+              <table width="100%">
+                <tr>
+                  <td><label>Title:</label></td>
+                  <td><input id="title" name="title" /></td>
+                </tr>
+                <tr>
+                  <td><label>From:</label></td>
+                  <td><input id="author" name="author"/></td>
+                </tr>
+                <tr>
+                  <td><label>Cc:</label></td>
+                  <td><input id="ccs" name="ccs"/></td>
+                </tr>
+              </table>
+              <br />
+              <label>Description</label><br />
+              <textarea rows="20" id="description" name="descr"></textarea>
+            </fieldset>
+            <fieldset class="submit">
+              <input class="button" type="submit" name="submit" value="create" />
+            </fieldset>
+          </form>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>

@@ -1,35 +1,20 @@
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.w3.org/1999/xhtml
-                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<title><!-- widget 'title' --></title>
-<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
-</head>
+<div id="document">
+  <table>
+    <tr>
+      <td id="sidebar">
+        <div class="sidebar">
+          <!-- Expand -->
+        </div>
+      </td>
 
-<body>
-  <div id="wrap">
-    <!-- widget 'template' value='header.template' -->
-
-    <!-- middle -->
-    <div id="document">
-    <table>
-      <tr>	
-	<td id="sidebar">
-	  <!-- widget 'template' value='topMenu.template' -->
-	</td>
-
-	<td id="entry">
-	  <div id="title"><h1><!-- widget 'title' --></h1></div>
-	  <!-- widget 'document' -->
-	</td>
-      </tr>
-    </table>
-  </div>
-  </div>
-
-  <!-- widget 'template' value='footer.template' -->
-
-</body>
-</html>
+      <td id="entry">
+        <div id="title">
+          <h1><div class="title"><!-- Expand --></div></h1>
+        </div>
+        <div class="content">
+          <!-- Expand -->
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>

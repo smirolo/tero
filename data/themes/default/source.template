@@ -1,47 +1,30 @@
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.w3.org/1999/xhtml
-                          http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
+<div id="document">
+  <table>
+    <tr>
+      <td id="sidebar">
+         <div class="topMenu"><!-- Expand --></div>
 
-<head>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<meta name="ROBOTS" content="NOINDEX, NOFOLLOW" />
-<title><!-- widget 'title' --></title>
-<link rel="stylesheet" type="text/css" media="screen" href="/resources/style.css" />
-</head>
+         <div class="MenuWidget">
+         <h1>History<a href="index.rss">
+          <img class="imgrss"
+               src="/static/img/feed-icon-14x14.png" alt="RSS feed" /></a></h1>
+          <p>
+          <div class="history"><!-- Expand --></div>
+          </p>
+         </div>
 
-<body>
-  <div id="wrap">
-    <!-- widget 'template' value='header.template' -->
-    
-  <div id="document">
-    <table>
-      <tr>
-	<td id="sidebar">
-	  <!-- widget 'template' value='topMenu.template' -->
+         <div class="'projfiles'"><!-- Expand --></div>
+      </td>
 
-	  <div class="MenuWidget">	    
-	    <h1>History<a href="index.rss">
-	      <img class="imgrss"
-		   src="/resources/feed-icon-14x14.png" alt="RSS feed" />
-	    </a></h1>
-	    <p>
-	      <!-- widget 'history' -->
-	    </p>
-	  </div>
-	  <!-- widget 'projfiles' -->
-	</td>
+      <td id="entry">
+        <div id="title">
+          <h1><div class="title"><!-- Expand --></div></h1>
+        </div>
+        <div class="content">
+          <!-- Expand -->
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
 
-	<td id="entry">
-	  <div id="title"><h1><!-- widget 'title' --></h1></div>
-	  <!-- widget 'document' -->
-	</td>
-      </tr>
-    </table>
-  </div>
-  </div>
-
-  <!-- widget 'template' value='footer.template' -->
-
-</body>
-</html>
