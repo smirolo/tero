@@ -41,8 +41,8 @@ libs		:=  libsemilla.a
 #shares		:=	semilla.pdf
 etcs		:= $(srcDir)/etc/pam.d/semilla.pam
 
-semillaConfFile	?=	/etc/semilla/default.conf
-sessionDir		?=	/var/db/semilla
+semillaConfFile ?=  $(etcDir)/semilla/default.conf
+sessionDir      ?=  $(LOCALSTATEDIR)/db/semilla
 
 #CPPFLAGS	+=	-DREADONLY
 
@@ -50,8 +50,8 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			checkstyle.o comments.o composer.o contrib.o \
 			cppfiles.o cpptok.o coverage.o \
 			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
-			logview.o mail.o markup.o project.o \
-			post.o rfc2822tok.o session.o shfiles.o shtok.o \
+			logview.o mail.o markdown.o markup.o project.o \
+			post.o rfc2822tok.o rfc5545tok.o session.o shfiles.o shtok.o \
 			todo.o webserve.o \
 			xmlesc.o xmltok.o
 
