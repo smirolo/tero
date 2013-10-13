@@ -98,8 +98,10 @@ public:
                     // XXX && with found a match
                     replaceDepth = elementDepth - 1;
                     state = composeInComposition;
+#if 0
                     std::cerr << "[found entry for " << att << " at depth "
                               << replaceDepth << "]" << std::endl;
+#endif
                     buffer.str("");
                     dispatchDoc::instance()->fetch(s, att, document.value(s));
                 }
@@ -121,10 +123,12 @@ public:
             if( elementDepth == replaceDepth ) {
                 // flushing
                 state = composeInitial;
+#if 0
                 std::cerr << "[restore after "
                           << std::string(&line[first], last - first)
                           << "at depth " << replaceDepth << "]"
                           << std::endl;
+#endif
             }
             --elementDepth;
             break;
@@ -156,6 +160,8 @@ public:
 
 pathVariable themeDir("themeDir",
     "directory that contains the user interface templates");
+
+const char templateExt[] = "html";
 
 void
 composerAddSessionVars( boost::program_options::options_description& opts,

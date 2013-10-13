@@ -33,6 +33,7 @@
 #include "project.hh"
 #include "revsys.hh"
 #include "decorator.hh"
+#include "popen_streambuf.h"
 
 /** Execute git commands
 
@@ -337,15 +338,14 @@ std::streambuf* gitcmd::shellcmd( const std::string& cmdline )
        where the git config can be found by walking up the tree structure. */
     boost::filesystem::initial_path();
     boost::filesystem::current_path(rootpath);
+#if 0
     std::cerr << "[gitshell] in " << boost::filesystem::current_path()
               << ": " << sstm.str() << std::endl;
-    FILE *git_output = popen(sstm.str().c_str(), "r");
-    if( git_output == NULL ) {
+#endif
+    popen_streambuf *buf = new popen_streambuf();
+    if( buf->open(sstm.str().c_str(), "r") == NULL ) {
         boost::throw_exception(system_error(1, system_category(), sstm.str()));
     }
-    std::streambuf *buf
-        = new stream_buffer<file_descriptor_source>(fileno(git_output),
-            close_handle);
 
     boost::filesystem::current_path(boost::filesystem::initial_path());
     return buf;

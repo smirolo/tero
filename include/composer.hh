@@ -41,9 +41,12 @@ void
 composerAddSessionVars( boost::program_options::options_description& all,
     boost::program_options::options_description& visible );
 
-/** Path to the directory containing the template HTML files (.template)
+/** Path to the directory containing the template HTML files
  */
 extern pathVariable themeDir;
+
+extern const char templateExt[];
+
 
 /** Use the *layout* template HTML to display document *pathname*.
  */

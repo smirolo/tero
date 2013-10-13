@@ -46,14 +46,12 @@ void mostRecentFilter::filters( const post& p )
 
 
 url
-mostRecentBlogEntry( session& s, const boost::filesystem::path& pathname )
+mostRecentBlogEntry( session& s, const url& name )
 {
     /* \todo This should take into account the *date* inside the post,
        not just the timestamp on the file. */
-    using namespace boost::filesystem;
-
-    boost::filesystem::path blogroot
-        = s.root(s.abspath(pathname), blogTrigger, true);
+    boost::filesystem::path blogroot = s.abspath(
+        s.root(name, blogTrigger, true));
 
     mostRecentFilter mostRecent(NULL);
     mailParser walker(boost::regex(blogPat), mostRecent, true);
@@ -102,7 +100,7 @@ void blogEntryFetch( session& s, const url& name )
 
 void mostRecentBlogTitle( session& s, const url& name )
 {
-    slice<char> text = s.loadtext(s.abspath(mostRecentBlogEntry(s,s.abspath(name))));
+    slice<char> text = s.loadtext(s.abspath(mostRecentBlogEntry(s, name)));
     mailAsPost listener;
     rfc2822Tokenizer tok(listener);
     tok.tokenize(text.begin(),text.size());
@@ -114,5 +112,5 @@ void mostRecentBlogTitle( session& s, const url& name )
 
 void mostRecentBlogFetch( session& s, const url& name )
 {
-    blogEntryFetch(s,mostRecentBlogEntry(s,s.abspath(name)));
+    blogEntryFetch(s,mostRecentBlogEntry(s, name));
 }

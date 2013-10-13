@@ -185,10 +185,10 @@ void bySet<cmp>::flush()
 template<typename cmp, const char *filePat>
 void blogSetLinksFetch( session& s, const url& name )
 {
-    boost::filesystem::path blogroot
-        = s.root(s.abspath(name),blogTrigger,true);
+    url urlroot = s.root(name, blogTrigger, true);
+    boost::filesystem::path blogroot = s.abspath(urlroot);
 
-    bySet<cmp> count(s.out(),s.asUrl(blogroot));
+    bySet<cmp> count(s.out(), urlroot);
     blogSplat<cmp> feeds(&count);
 
     if( !s.feeds ) {
@@ -228,8 +228,8 @@ void blogRelatedSubjects( session& s, const url& name )
 {
     using namespace boost::filesystem;
 
-    boost::filesystem::path blogroot
-        = s.root(s.abspath(name), blogTrigger, true);
+    boost::filesystem::path blogroot = s.abspath(
+        s.root(name, blogTrigger, true));
 
     post p;
     if( !is_regular_file(s.abspath(name)) ) {

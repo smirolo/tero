@@ -139,11 +139,11 @@ void dispatchDoc::fetch( session& s,
         if( buf ) {
             std::istream strm(buf);
             doc->streamFetch(s, strm, value);
-            /* XXX When we add the "delete buf" statement, subsequent
-               git commands do not return any output. None-the-less
-               the streambuf does not seem to be deleted by the istream
-               destructor... */
         }
+        /* The streambuf is not deleted by the istream destructor
+           yet we still want to make sure the istream destructor
+           is called before the streambuf is deleted. */
+        if( buf ) delete buf;
         current_path(prevcwd);
 
     } else if( doc->nameFetch ) {

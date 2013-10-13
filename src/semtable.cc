@@ -296,7 +296,7 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, docbookMeta, NULL, NULL },
     { "title", boost::regex(".*\\.todo"),
 	  noAuth|noPipe, NULL, todoMeta, NULL },
-    { "title", boost::regex(".*\\.template"),
+    { "title", boost::regex(std::string(".*\\.") + templateExt),
 	  noAuth|noPipe, NULL, textMeta<title>, NULL },
     { "title", boost::regex(".*dws\\.xml"),
 	  noAuth|noPipe, projectTitle, NULL, NULL },

@@ -719,6 +719,42 @@ void session::restore( int argc, char *argv[] )
 }
 
 
+url
+session::root( const url& leaf,
+    const boost::filesystem::path& trigger, bool keepTrigger ) const
+{
+#if 0
+    using namespace boost::filesystem;
+    using namespace boost::system::errc;
+
+    checkInSiteTop(*this, abspath(leaf));
+
+    /* We remove from the url pathname while checking existance
+       on the underlying filesystem. This prevents soft links
+       to be transformed in unexpected urls. */
+    path dirname = leaf.pathname;
+    if( !is_directory(abspath(dirname)) ) {
+        dirname = dirname.parent_path();
+    }
+    bool foundProject = boost::filesystem::exists(
+        abspath(dirname.string() / trigger));
+    while( !foundProject && !dirname.string().empty() ) {
+        dirname.remove_leaf();
+        foundProject = boost::filesystem::exists(
+            abspath(dirname.string() / trigger));
+    }
+
+    url result = url(leaf.protocol, leaf.host, leaf.port,
+        foundProject ? (
+            keepTrigger ? (dirname.string() / trigger) : dirname) : path(""));
+    std::cerr << "XXX root(" << leaf << ") returns " << result << std::endl;
+    return result;
+#else
+    return asUrl(root(abspath(leaf), trigger, keepTrigger));
+#endif
+}
+
+
 boost::filesystem::path
 session::root( const boost::filesystem::path& leaf,
     const boost::filesystem::path& trigger, bool keepTrigger ) const
@@ -888,14 +924,7 @@ session::cacheName( const url& href ) const
 boost::filesystem::path
 session::absCacheName( const url& href ) const
 {
-#if 0
-    url cached = cacheName(url(href.protocol,href.host,href.port,
-#else
-            // \todo temporary kludge
-    url cached = cacheName(url("",href.host,href.port,
-#endif
-            boost::filesystem::path("/")
-            / subdirpart(siteTop.value(*this),abspath(href))));
+    url cached = cacheName(url("", href.host, href.port, href.pathname));
     return cacheTop.value(*this) / cached.pathname;
 }
 

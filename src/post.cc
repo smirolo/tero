@@ -138,9 +138,11 @@ void htmlwriter::filters( const post& p ) {
     *ostr << html::div::end;
 
     /* social sharing */
-    *ostr << html::div().classref("shareNetwork");
+    *ostr << html::div();
     *ostr << "Share with your network";
+    *ostr << html::div().classref("shareNetwork");
     *ostr << "<div data-social-share-privacy='true'></div>" << std::endl;
+    *ostr << html::div::end;
     *ostr << html::div::end;
     *ostr << "<br />" << std::endl;
     *ostr << html::div::end; // postContact

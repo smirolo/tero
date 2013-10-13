@@ -84,11 +84,26 @@ void oneliner::filters( const post& p ) {
 
 
 void byTimeHtml::filters( const post& p ) {
-    if( prev_header.is_not_a_date_time() || prev_header != p.time ) {
+    using namespace boost::gregorian;
+    using namespace boost::posix_time;
+
+    time_facet* facet(new time_facet(pubDate::shortFormat));
+    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
+
+    if( prev_header.is_not_a_date_time() ) {
         *ostr << html::tr().classref("bytime-date")
               << html::td().colspan("3")
-              << "Complete by " << p.time.date() << html::td::end
+              << "Complete by " << p.time << html::td::end
               << html::tr::end;
+    } else if( prev_header != p.time ) {
+        boost::posix_time::ptime iter = prev_header;
+        do {
+            iter = iter + days(1);
+            *ostr << html::tr().classref("bytime-date")
+                  << html::td().colspan("3")
+                  << "Complete by " << iter << html::td::end
+                  << html::tr::end;
+        } while( iter != p.time );
     }
     *ostr << html::tr()
           << html::td() << p.score << html::td::end

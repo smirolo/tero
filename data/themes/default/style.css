@@ -165,7 +165,7 @@ th {
 }
 
 
-/* Styles specific to the header (header.template) */
+/* Styles specific to the header */
 #header {
     float: top;
     background: #E00000;           /* light background */
@@ -203,7 +203,7 @@ th.headerMenuItem {
     margin-right: auto;
 }
 
-/* Styles specific to the footer (footer.template) */
+/* Styles specific to the footer */
 #footer {
     text-align: center;
     position: relative;
@@ -222,7 +222,7 @@ th.headerMenuItem {
     border-top-width: 10px;    
 } 
 
-/* Styles specific to the topMenu (topMenu.template) */
+/* Styles specific to the topMenu */
 div.MenuWidget {
     padding: 10px 5px 10px 5px; 
     margin: 10px 10px 0px 10px;

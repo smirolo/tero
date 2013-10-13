@@ -386,6 +386,15 @@ public:
      */
     void restore( int argc, char *argv[] );
 
+    /* Look for a relative *trigger* from *leaf* to *siteTop*
+       and return the stem such that stem / *trigger* is the absolute
+       url to the trigger.
+
+       If *trigger* cannot be found, the method returns an empty pathname.
+    */
+    url root( const url& leaf,
+        const boost::filesystem::path& trigger, bool keepTrigger ) const;
+
     /* look for a relative pathname *trigger* from *leaf* to the root
        of the filesystem and return the stem such that stem / *trigger*
        is the absolute pathname to the trigger.

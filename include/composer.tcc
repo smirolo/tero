@@ -39,7 +39,8 @@ void compose( session& s, const url& name )
     using namespace boost::filesystem;
 
     std::string layout(layoutPtr);
-    path fixed(themeDir.value(s) / (!layout.empty() ? (layout + ".template")
+    path fixed(themeDir.value(s) /
+        (!layout.empty() ? (layout + "." + templateExt)
             : name.pathname.filename()));
 
     std::streambuf *buf = ::revisionsys::findRevOpenfile(s, fixed);
