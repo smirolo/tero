@@ -305,11 +305,9 @@ std::streambuf* revisionsys::findRevOpenfile(
     const boost::filesystem::path& pathname,
     const std::string& commit )
 {
-#if 1
     if( boost::filesystem::exists(pathname) ) {
         return filesys::instance().openfile(pathname, commit);
     } else {
-#endif
         revisionsys* rev = findRev(s, pathname);
         if( rev ) {
             if( strncmp(rev->metadir, "fs", 2) != 0 ) {
@@ -318,9 +316,7 @@ std::streambuf* revisionsys::findRevOpenfile(
                 return rev->openfile(pathname, commit);
             }
         }
-#if 1
     }
-#endif
     return NULL;
 }
 
@@ -428,7 +424,6 @@ void gitcmd::checkins( const session& s,
     const boost::filesystem::path& pathname,
     postFilter& filter ) {
     using namespace boost::filesystem;
-    boost::filesystem::path project = projectName(s,rootpath);
     url base = s.asUrl(absolute(""));
 
     /* shows only the last 2 commits */
@@ -494,8 +489,11 @@ void gitcmd::checkins( const session& s,
             /* more description */
             if( !descrStarted ) {
                 link.str("");
-                link << project << " &nbsp;&mdash;&nbsp; ";
-                link << html::a().href(ci.guid) << basename(path(ci.guid)) << html::a::end << "<br />";
+                link << projectName(s, rootpath)
+                     << " &nbsp;&mdash;&nbsp; "
+                     << html::a().href(ci.guid)
+                     << basename(path(ci.guid))
+                     << html::a::end << "<br />";
                 descr.str("");
                 descrStarted = true;
             }

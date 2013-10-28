@@ -56,16 +56,21 @@ std::string normalize( const std::string& s ) {
 
 
 boost::posix_time::ptime from_mbox_string( const std::string& s ) {
-    boost::posix_time::ptime t;
-#if 0
-    std::stringstream dts;
-    ::boost::posix_time::time_input_facet* input_facet
-          = new ::boost::posix_time::time_input_facet;
-    dts.imbue(std::locale(dts.getloc(), input_facet));
-    input_facet->format("%a, %e %b %Y %T");
-    dts.str(s);
-    dts >> t;
-#else
+
+    static const char* formats[] = {
+        "%Y-%m-%dT%H:%M:%S",
+        "%a, %e %b %Y %T"
+    };
+
+    boost::posix_time::ptime timestamp;
+    std::istringstream is(s);
+    is.imbue(std::locale(std::locale::classic(),
+            new boost::posix_time::time_input_facet(formats[0])));
+    is >> timestamp;
+    std::cerr << "XXX timestamp is: " << timestamp << std::endl;
+    if( timestamp != boost::posix_time::ptime() ) return timestamp;
+
+    /* XXX Legacy code to deal with issues when using input_facets. */
 
     size_t p = s.find(',') + 1;
     /* day of the month */
@@ -106,7 +111,7 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
     year += (s[p++] - '0') * 100;
     year += (s[p++] - '0') * 10;
     year += (s[p++] - '0');
-    t = boost::posix_time::ptime(boost::gregorian::date(year,month,day));
+    timestamp = boost::posix_time::ptime(boost::gregorian::date(year,month,day));
 
     /* optional time formatted as 24-hour:minutes:seconds */
     while( s[p] == ' ' ) ++p;
@@ -126,12 +131,12 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
         int seconds = (s[p++] - '0') * 10;
         seconds += (s[p++] - '0');
 
-        t = boost::posix_time::ptime(boost::gregorian::date(year,month,day),
+        timestamp = boost::posix_time::ptime(
+            boost::gregorian::date(year,month,day),
             boost::posix_time::time_duration(hours,minutes,seconds));
     }
 
-#endif
-    return t;
+    return timestamp;
 }
 
 std::string extractEmailAddress( const std::string& line ) {
@@ -303,8 +308,18 @@ const detail::nodeEnd rsslink::end(rsslink::name);
 
 const char* pubDate::name = "pubDate";
 const detail::nodeEnd pubDate::end(pubDate::name);
-const char *pubDate::format = "%a, %e %b %Y %H:%M:%S UT";
-const char *pubDate::shortFormat = "%B %e, %Y";
+
+boost::posix_time::time_facet* pubDate::format() {
+    // not creating a new object here leads to basic_string:S_create exceptions.
+    return new boost::posix_time::time_facet("%a, %e %b %Y %H:%M:%S UT");
+}
+
+
+boost::posix_time::time_facet* pubDate::shortFormat() {
+    // not creating a new object here leads to basic_string:S_create exceptions.
+    return new boost::posix_time::time_facet("%a, %e %b %Y");
+}
+
 
 const char* rss::name = "rss";
 const detail::nodeEnd rss::end(rss::name);

@@ -87,8 +87,7 @@ void byTimeHtml::filters( const post& p ) {
     using namespace boost::gregorian;
     using namespace boost::posix_time;
 
-    time_facet* facet(new time_facet(pubDate::shortFormat));
-    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
+    (*ostr).imbue(std::locale((*ostr).getloc(), pubDate::shortFormat()));
 
     if( prev_header.is_not_a_date_time() ) {
         *ostr << html::tr().classref("bytime-date")

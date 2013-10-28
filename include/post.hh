@@ -274,6 +274,9 @@ protected:
 
 public:
     explicit ostreamWriter( std::ostream& o ) : ostr(&o) {}
+
+    ostreamWriter( std::ostream& o, postFilter *n )
+        : passThruFilter(n), ostr(&o) {}
 };
 
 /** Write post content as formatted html.
@@ -282,13 +285,38 @@ class contentHtmlwriter : public ostreamWriter {
 public:
     explicit contentHtmlwriter( std::ostream& o ) : ostreamWriter(o) {}
 
+    contentHtmlwriter( std::ostream& o, postFilter *n ) : ostreamWriter(o, n) {}
+
     virtual void filters( const post& );
 };
 
 
-/** Write posts as formatted html.
+class titleHtmlwriter : public ostreamWriter {
+public:
+    explicit titleHtmlwriter( std::ostream& o ) : ostreamWriter(o) {}
+
+    titleHtmlwriter( std::ostream& o, postFilter *n ) : ostreamWriter(o, n) {}
+
+    virtual void filters( const post& );
+};
+
+
+/** Write a "Share with your Network" div after the post is outputed.
  */
-class htmlwriter : public contentHtmlwriter {
+class contactHtmlwriter : public ostreamWriter {
+public:
+    explicit contactHtmlwriter( std::ostream& o ) : ostreamWriter(o) {}
+
+    contactHtmlwriter( std::ostream& o, postFilter *n ) : ostreamWriter(o, n) {}
+
+    virtual void filters( const post& );
+};
+
+
+/** Write posts as formatted html while marking a difference in style
+    between odd and even posts.
+ */
+class stripedHtmlwriter : public ostreamWriter {
 protected:
 
     /** The counter of posts that have been written so far is used
@@ -297,17 +325,33 @@ protected:
     */
     size_t postNum;
 
-    /* True when the title should not be printed. This is used
+public:
+    explicit stripedHtmlwriter( std::ostream& o )
+        : ostreamWriter(o), postNum(0) {}
+
+    stripedHtmlwriter( std::ostream& o, postFilter *n )
+        : ostreamWriter(o, n), postNum(0) {}
+
+    virtual void filters( const post& );
+};
+
+
+/** Write posts as formatted html.
+ */
+class htmlwriter : public ostreamWriter {
+protected:
+    /* XXX True when the title should not be printed. This is used
        when a title is explicitely specified in the template
        and it would be duplicated. */
-    bool notitle;
+
+    contentHtmlwriter content;
+    titleHtmlwriter title;
+    stripedHtmlwriter striped;
 
 public:
     explicit htmlwriter( std::ostream& o )
-        : contentHtmlwriter(o), postNum(0), notitle(false) {}
-
-    htmlwriter( std::ostream& o, bool n )
-        : contentHtmlwriter(o), postNum(0), notitle(n) {}
+        : ostreamWriter(o),
+          content(o), title(o, &content), striped(o, &title) {}
 
     virtual void filters( const post& );
 };

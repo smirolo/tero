@@ -161,7 +161,6 @@ public:
 pathVariable themeDir("themeDir",
     "directory that contains the user interface templates");
 
-const char templateExt[] = "html";
 
 void
 composerAddSessionVars( boost::program_options::options_description& opts,

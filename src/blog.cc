@@ -36,6 +36,7 @@ char blogPat[] = ".*\\.blog$";
 const char *blogTrigger = "blog";
 
 
+
 void mostRecentFilter::filters( const post& p )
 {
     if( firstTime || p.time > mostRecentPost.time ) {
@@ -84,8 +85,10 @@ void blogEntryFetch( session& s, const url& name )
        in the feedContent() context or not showing up in the stand-alone
        context.
     */
+    contentHtmlwriter content(s.out());
+    contactHtmlwriter contact(s.out(), &content);
 
-    htmlwriter feeds(s.out(), true);
+    stripedHtmlwriter feeds(s.out(), &contact);
     if( !s.feeds ) {
         s.feeds = &feeds;
     }

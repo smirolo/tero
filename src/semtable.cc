@@ -47,18 +47,17 @@
 #include "auth.hh"
 
 char none[] = "";
-char todoExt[] = "todo";
-char bookExt[] = "book";
-char corpExt[] = "corp";
-char rssExt[] = "rss";
-char blogExt[] = "blog";
-char project[] = "project";
-char projectSidebar[] = "project_sidebar";
-char topMenu[] = "topMenu";
-char basePage[] = "base";
+char todoExt[] = "todo.html";
+char bookExt[] = "book.html";
+char rssExt[] = "index.rss";
+char blogExt[] = "blog.html";
+char project[] = "project.html";
+char topMenu[] = "topMenu.html";
+char docLayout[] = "document.html";
+char basePage[] = "base.html";
 char docPage[] = "document";
-char todos[] = "todos";
-char indexPage[] = "index";
+char todos[] = "todos.html";
+char indexPage[] = "index.html";
 char author[] = "author";
 char feed[] = "feed";
 char source[] = "source";
@@ -139,16 +138,6 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, shDiff, NULL, NULL },
     { "content", boost::regex(".*Makefile/diff/[0-9a-f]{40}"),
 	  noAuth|noPipe, shDiff, NULL, NULL },
-     /* Widget to generate a rss feed. Attention: it needs
-       to be declared before any of the todoFilter::viewPat
-       (i.e. todos/.+) since an rss feed exists for todo items
-       as well. */
-    { "content", boost::regex("/index\\.rss"),
-	  noAuth|noPipe, rssSiteAggregate<docPage>, NULL, NULL },
-    { "content", boost::regex(".*\\.git/index\\.rss"),
-	  noAuth|noPipe, feedRepository<rsswriter>, NULL, NULL },
-    { "content", boost::regex(".*/index\\.rss"),
-	  noAuth|noPipe, feedLatestPosts<rsswriter,docPage>, NULL, NULL },
     { "content", boost::regex(".*\\.todo/comment"),
 	  noAuth|noPipe, todoCommentFetch, NULL, NULL },
     { "content", boost::regex(".*\\.todo/voteAbandon"),
@@ -156,8 +145,6 @@ fetchEntry entries[] = {
     { "content", boost::regex(".*\\.todo/voteSuccess"),
 	  noAuth|noPipe, todoVoteSuccessFetch, NULL, NULL },
     { "content", boost::regex(".*\\.book"),
-      noAuth|noPipe, docbookFetch, NULL, NULL },
-    { "content", boost::regex(".*\\.corp"),
       noAuth|noPipe, docbookFetch, NULL, NULL },
     { "content", boost::regex(".*\\.blog"),
       noAuth|noPipe, blogEntryFetch, NULL, NULL },
@@ -191,13 +178,14 @@ fetchEntry entries[] = {
     /* misc pages */
     { "content", boost::regex(".*/commit/[0-9a-f]{40}"),
 	  noAuth|noPipe, changeShowDetails, NULL, NULL },
+    { "content", boost::regex(".*/tests/.+\\.xml"),
+      noAuth|noPipe, NULL, NULL, junitContent },
+    { "content", boost::regex(".*/todo/"),
+	  noAuth|noPipe, todoIndexWriteHtmlFetch, NULL, NULL },
     { "content", boost::regex(".*\\.eml"),
 	  noAuth|noPipe, mailParserFetch, NULL, NULL },
     { "content", boost::regex(".*\\.ics"),
 	  noAuth|noPipe, NULL, calendarFetch,  NULL },
-
-    { "content", boost::regex(".*/todo/"),
-	  noAuth|noPipe, todoIndexWriteHtmlFetch, NULL, NULL },
     { "content", boost::regex(".*\\.todo"),
 	  noAuth|noPipe, todoWriteHtmlFetch, NULL, NULL },
     { "content", boost::regex(".*dws\\.xml"),
@@ -208,6 +196,8 @@ fetchEntry entries[] = {
 	// 1. XXX
     { "date", boost::regex(".*\\.blog"),
 	  noAuth|noPipe, NULL, textMeta<date>, NULL },
+    { "date", boost::regex(".*/tests/.+\\.xml"),
+      noAuth|noPipe, junitDate, NULL, NULL },
     { "dates", boost::regex(".*/blog/.*"),
 	  noAuth|noPipe, blogDateLinks<blogPat>, NULL, NULL },
 
@@ -225,20 +215,26 @@ fetchEntry entries[] = {
       noAuth|noPipe, compose<source>, NULL, NULL },
     { "document", boost::regex(".*Makefile"),
       noAuth|noPipe, compose<source>, NULL, NULL },
-    /* XXX We separate .book and .corp because some pages we donot
-       want to serve advertising into the sidebar. */
     { "document", boost::regex(".*\\.book"),
       noAuth|noPipe, compose<bookExt>, NULL, NULL },
-    { "document", boost::regex(".*\\.corp"),
-      noAuth|noPipe, compose<corpExt>, NULL, NULL },
     { "document", boost::regex(".*dws\\.xml"),
       noAuth|noPipe, compose<project>, NULL, NULL },
+
+     /* Widget to generate a rss feed. Attention: it needs
+       to be declared before any of the todoFilter::viewPat
+       (i.e. todos/.+) since an rss feed exists for todo items
+       as well. */
+    { "document", boost::regex("/index\\.rss"),
+      noAuth|noPipe, rssSiteAggregate<docPage>, NULL, NULL },
+    { "document", boost::regex(".*\\.git/index\\.rss"),
+      noAuth|noPipe, feedRepository<rsswriter>, NULL, NULL },
+    { "document", boost::regex(".*/index\\.rss"),
+      noAuth|noPipe, feedLatestPosts<rsswriter, docPage>, NULL, NULL },
 
     /* All files in the blog/ subpath will use a taylored *content*
        and *sidebar*. */
     { "document", boost::regex(".*/blog/.*"),
       noAuth|noPipe, compose<blogExt>, NULL, NULL },
-
     { "document", boost::regex(".*\\.todo"),
       noAuth|noPipe, compose<todoExt>, NULL, NULL },
     /* Composer and document for the todos index view */
@@ -247,7 +243,7 @@ fetchEntry entries[] = {
     { "document", boost::regex("/"),
       noAuth|noPipe, compose<indexPage>, NULL, NULL },
     { "document", boost::regex(".*"),
-      noAuth|noPipe, compose<docPage>, NULL, NULL },
+      noAuth|noPipe, compose<docLayout>, NULL, NULL },
 
     /* homepage */
     { "feed", boost::regex(".*\\.git/index\\.feed"),
@@ -292,12 +288,8 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, mostRecentBlogTitle, NULL, NULL },
     { "title", boost::regex(".*\\.book"),
 	  noAuth|noPipe, docbookMeta, NULL, NULL },
-    { "title", boost::regex(".*\\.corp"),
-	  noAuth|noPipe, docbookMeta, NULL, NULL },
     { "title", boost::regex(".*\\.todo"),
 	  noAuth|noPipe, NULL, todoMeta, NULL },
-    { "title", boost::regex(std::string(".*\\.") + templateExt),
-	  noAuth|noPipe, NULL, textMeta<title>, NULL },
     { "title", boost::regex(".*dws\\.xml"),
 	  noAuth|noPipe, projectTitle, NULL, NULL },
     { "title", boost::regex(".*"),

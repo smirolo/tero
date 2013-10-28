@@ -45,9 +45,6 @@ composerAddSessionVars( boost::program_options::options_description& all,
  */
 extern pathVariable themeDir;
 
-extern const char templateExt[];
-
-
 /** Use the *layout* template HTML to display document *pathname*.
  */
 template<const char *layout>

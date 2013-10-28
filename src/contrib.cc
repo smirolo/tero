@@ -171,13 +171,13 @@ std::ostream& operator<<( std::ostream& ostr, const by& v ) {
 std::ostream& operator<<( std::ostream& ostr, const contact& v ) {
     if( !v.ptr->email.empty() ) {
         ostr << html::a().href(std::string("mailto:") + v.ptr->email);
-        ostr << "<img src=\"/static/img/email-32.jpg\" width=\"32\" height=\"32\">"
+        ostr << "<img src=\"/static/icons/email-32.jpg\" width=\"32\" height=\"32\">"
              << html::a::end;
     }
     if( !v.ptr->linkedin.empty() ) {
         ostr << " <a rel=\"author\" href=\"http://www.linkedin.com/pub/"
              << v.ptr->linkedin << "\">"
-             << "<img src=\"/static/img/linkedin-32.png\" width=\"32\" height=\"32\">"
+             << "<img src=\"/static/icons/linkedin-32.png\" width=\"32\" height=\"32\">"
              << html::a::end;
     }
     if( !v.ptr->google.empty() ) {

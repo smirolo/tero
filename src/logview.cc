@@ -50,6 +50,73 @@ void logAddSessionVars( boost::program_options::options_description& all,
 }
 
 
+int attrAsInt( RAPIDXML::xml_node<> *node, const char *name ) {
+    RAPIDXML::xml_attribute<> *attr = node->first_attribute(name);
+    return attr ? atoi(attr->value()) : 0;
+}
+
+
+boost::posix_time::ptime
+attrAsDate( RAPIDXML::xml_node<> *node, const char *name ) {
+    RAPIDXML::xml_attribute<> *attr = node->first_attribute(name);
+    return attr ? from_mbox_string(attr->value()) : boost::posix_time::ptime();
+}
+
+void junitDate( session& s, const url& name )
+{
+    RAPIDXML::xml_document<> *doc = s.loadxml(s.abspath(name));
+    RAPIDXML::xml_node<> *testsuite = doc->first_node();
+    if( testsuite != NULL ) {
+        s.out().imbue(std::locale(s.out().getloc(), pubDate::shortFormat()));
+        s.out() <<  attrAsDate(testsuite, "timestamp");
+    }
+#if 0
+    /* XXX generates a pointer being freed was not allocated */
+    if( doc ) delete doc;
+#endif
+}
+
+
+void junitContent( session& s, const slice<char>& text, const url& name )
+{
+    using namespace RAPIDXML;
+
+    RAPIDXML::xml_document<> *doc = s.loadxml(s.abspath(name));
+
+    xml_node<> *testsuite = doc->first_node();
+    if( testsuite != NULL ) {
+        int nbFailures = attrAsInt(testsuite, "failures");
+        int nbErrors = attrAsInt(testsuite, "errors");
+        int nbTests = attrAsInt(testsuite, "tests");
+
+        if( (nbErrors + nbFailures) > 0  ) {
+            const char *sep = "";
+            if( nbFailures > 0 ) {
+                s.out() << nbFailures << " failures" << std::endl;
+                sep = ",";
+            }
+            if( nbErrors > 0 ) {
+                s.out() << nbErrors << " errors" << std::endl;
+            }
+            s.out() << " out of " << nbTests << " tests." << std::endl;
+        } else {
+            s.out() << nbTests << " tests passed." << std::endl;
+        }
+
+        for( xml_node<> *testcase = testsuite->first_node("testcase");
+             testcase != NULL; testcase = testcase->next_sibling("testcase") ) {
+            xml_attribute<> *name = testcase->first_attribute("name");
+            if( name ) {
+                // XXX implement: output testcase if failed.
+                // std::cerr << "testcase: " << name->value() << std::endl;
+            }
+        }
+    }
+
+    if( doc ) delete doc;
+}
+
+
 void logviewFetch( session& s, const url& name )
 {
 

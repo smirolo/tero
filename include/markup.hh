@@ -698,8 +698,8 @@ public:
 
     /** format string used for printing date_time
      */
-    static const char *format;
-    static const char *shortFormat;
+    static boost::posix_time::time_facet* format();
+    static boost::posix_time::time_facet* shortFormat();
 
     explicit pubDate( boost::posix_time::ptime t )
     : markup(name,NULL,NULL,0), time(t) {}
@@ -707,9 +707,7 @@ public:
     template<typename ch, typename tr>
     friend std::basic_ostream<ch, tr>&
     operator<<( std::basic_ostream<ch, tr>& ostr, const pubDate& v ) {
-        boost::posix_time::time_facet*
-            facet(new boost::posix_time::time_facet(format));
-        ostr.imbue(std::locale(ostr.getloc(), facet));
+        ostr.imbue(std::locale(ostr.getloc(), format()));
         ostr << static_cast<const detail::markup&>(v)
              << v.time
              << end;
@@ -762,11 +760,7 @@ std::basic_ostream<ch, tr>&
 mbox_string( std::basic_ostream<ch, tr>& ostr,
     const boost::posix_time::ptime& time )
 {
-    using namespace boost::gregorian;
-    using namespace boost::posix_time;
-
-    time_facet* facet(new time_facet(pubDate::format));
-    ostr.imbue(std::locale(ostr.getloc(), facet));
+    ostr.imbue(std::locale(ostr.getloc(), pubDate::format()));
     ostr << time;
     return ostr;
 }
@@ -809,7 +803,7 @@ writelink( std::basic_ostream<charT,traitsT>& ostr,
     } else {
         ostr << html::a().href((base / leaf).string());
     }
-    ostr << leaf << html::a::end;
+    ostr << leaf.string() << html::a::end;
     return ostr;
 }
 

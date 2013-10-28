@@ -24,10 +24,11 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 
-/** Replace all <!-- widget ... --> statements in a template file
-    by the appropriate html.
+/** Replace all HTMLNode whose class attribute matching entries["name"]
+    (from semtable.cc) in a template file by the html outputed by
+    the associated function.
 
-   Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
+    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
 #include "revsys.hh"
@@ -40,11 +41,9 @@ void compose( session& s, const url& name )
 
     std::string layout(layoutPtr);
     path fixed(themeDir.value(s) /
-        (!layout.empty() ? (layout + "." + templateExt)
-            : name.pathname.filename()));
+        (!layout.empty() ? layout : name.pathname.filename()));
 
     std::streambuf *buf = ::revisionsys::findRevOpenfile(s, fixed);
-    //    std::streambuf *buf = revisionsys::findRevOpenfile(s, fixed);
     if( buf ) {
         std::istream strm(buf);
         compose(s, strm, fixed);

@@ -66,7 +66,7 @@
 const char* session::configFile = CONFIG_FILE;
 const char* session::sessionDir = SESSION_DIR;
 
-char except[] = "exception";
+char except[] = "exception.html";
 extern dispatchDoc semDocs;
 
 int main( int argc, char *argv[] )

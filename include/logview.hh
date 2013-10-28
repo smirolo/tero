@@ -37,6 +37,12 @@
 void logAddSessionVars( boost::program_options::options_description& all,
     boost::program_options::options_description& visible );
 
+/** Display information from a JUnit file.
+ */
+void junitDate( session& s, const url& name );
+
+void junitContent( session& s, const slice<char>& text, const url& name );
+
 void logviewFetch( session& s, const url& name );
 
 /** Display test unit regressions as provided by a regression.log

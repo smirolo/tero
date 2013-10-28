@@ -27,8 +27,6 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #include "markup.hh"
-#include "project.hh" /* XXX for srcTop while we cannot reliably
-                              process all files under siteTop. */
 
 template<typename cmp>
 void feedOrdered<cmp>::provide()
@@ -221,7 +219,7 @@ template<const char*varname>
 void htmlSiteAggregate( session& s, const url& name )
 {
     feedLatestPosts<htmlwriter,varname>(s,
-        s.asUrl(srcTop.value(s) / "index.feed"));
+        s.asUrl(siteTop.value(s) / "index.feed"));
 }
 
 
@@ -231,7 +229,7 @@ void rssSiteAggregate( session& s, const url& name )
     absUrlDecorator d(siteTop.value(s),s);
     d.attach(s.out());
     feedLatestPosts<rsswriter,varname>(s,
-        s.asUrl(srcTop.value(s) / name.pathname.leaf()));
+        s.asUrl(siteTop.value(s) / name.pathname.leaf()));
     d.detach();
 }
 

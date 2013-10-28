@@ -25,9 +25,10 @@
 
 #include "mail.hh"
 #include "markup.hh"
-#include <boost/date_time/date_facet.hpp>
 #include "decorator.hh"
 #include "contrib.hh"
+
+#include "composer.hh"
 
 /** Posts.
 
@@ -89,92 +90,93 @@ void retainedFilter::provide() {
 void retainedFilter::flush()
 {
     if( next ) {
-	provide();
-	for( const_iterator p = first; p != last; ++p ) {
-	    next->filters(*p);
-	}
-	next->flush();
+        provide();
+        for( const_iterator p = first; p != last; ++p ) {
+            next->filters(*p);
+        }
+        next->flush();
     }
 }
 
 
 void contentHtmlwriter::filters( const post& p ) {
+    *ostr << html::div().classref("postBody");
     *ostr << p.content;
+    *ostr << html::div::end;
 }
 
 
-void htmlwriter::filters( const post& p ) {
-    using namespace boost::gregorian;
-    using namespace boost::posix_time;
-
-    time_facet* facet(new time_facet(pubDate::shortFormat));
-    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
-
-    *ostr << html::div().classref( (postNum % 2 == 0) ?
-        "postEven" : "postOdd");
-
+void titleHtmlwriter::filters( const post& p ) {
     /* caption for the post */
     *ostr << html::div().classref("postCaption");
     if( !p.link.empty() ) {
         *ostr << p.link << std::endl;
 
-    } else if( !notitle && !p.title.empty() ) {
+    } else if( !p.title.empty() ) {
         *ostr << html::a().href(p.guid)
               << html::h(1) << p.title << html::h(1).end()
               << html::a::end << std::endl;
     }
     *ostr << by(p.author) << " on " << p.time;
     *ostr << html::div::end;
+    if( next ) {
+        next->filters(p);
+    }
+}
 
-    /* body of the post */
-    *ostr << html::div().classref("postBody");
-    contentHtmlwriter::filters(p);
-    *ostr << html::div::end;
 
+void contactHtmlwriter::filters( const post& p ) {
+    if( next ) {
+        next->filters(p);
+    }
     *ostr << html::div().classref("postContact");
     *ostr << html::div().classref("contactAuthor");
     *ostr << "Contact the author "
           << html::div() << contact(p.author) << html::div::end;
     *ostr << html::div::end;
+}
 
-    /* social sharing */
-    *ostr << html::div();
-    *ostr << "Share with your network";
-    *ostr << html::div().classref("shareNetwork");
-    *ostr << "<div data-social-share-privacy='true'></div>" << std::endl;
-    *ostr << html::div::end;
-    *ostr << html::div::end;
-    *ostr << "<br />" << std::endl;
-    *ostr << html::div::end; // postContact
+
+void stripedHtmlwriter::filters( const post& p ) {
+
+    (*ostr).imbue(std::locale((*ostr).getloc(), pubDate::shortFormat()));
+
+    *ostr << html::div().classref( (postNum % 2 == 0) ?
+        "postEven" : "postOdd");
+
+    if( next ) {
+        next->filters(p);
+    }
 
     *ostr << html::div::end;
     ++postNum;
 }
 
+void htmlwriter::filters( const post& p ) {
+    striped.filters(p);
+}
+
 
 void mailwriter::filters( const post& p ) {
-    using namespace boost::gregorian;
-    using namespace boost::posix_time;
 
-    time_facet* facet(new time_facet(pubDate::format));
-    (*ostr).imbue(std::locale((*ostr).getloc(), facet));
+    (*ostr).imbue(std::locale((*ostr).getloc(), pubDate::format()));
 
     *ostr << "From " << from(p.author) << std::endl;
-	*ostr << "Subject: " << (!p.title.empty() ? p.title : "(No Subject)")
-		  << std::endl;
+    *ostr << "Subject: " << (!p.title.empty() ? p.title : "(No Subject)")
+          << std::endl;
     *ostr << "Date: " << p.time << std::endl;
     *ostr << "From: " << from(p.author) << std::endl;
     *ostr << "Score: " << p.score << std::endl;
 
     for( post::headersMap::const_iterator header = p.moreHeaders.begin();
-	 header != p.moreHeaders.end(); ++header ) {
-		*ostr << header->first << ": " << header->second << std::endl;
+         header != p.moreHeaders.end(); ++header ) {
+        *ostr << header->first << ": " << header->second << std::endl;
     }
 
     *ostr << std::endl << std::endl;
-	if( !p.link.empty() ) {
-		*ostr << p.link << std::endl;
-	}
+    if( !p.link.empty() ) {
+        *ostr << p.link << std::endl;
+    }
     /* \todo avoid description starting with "From " */
     *ostr << p.content << std::endl << std::endl;
 }
