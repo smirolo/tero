@@ -27,6 +27,7 @@
 #define guardcalendar
 
 #include "document.hh"
+#include "rfc5545tok.hh"
 
 /**
    Display a calendar as an HTML page.
@@ -42,7 +43,7 @@ calendarAddSessionVars( boost::program_options::options_description& all,
     boost::program_options::options_description& visible );
 
 
-class calendar {
+class calendar : public rfc5545TokListener {
 protected:
     typedef void
     (calendar::* walkNodePtr)( const std::string& s ) const;
@@ -61,7 +62,11 @@ protected:
     walkNodeEntry* walker( const std::string& s ) const;
 
 public:
-    void parse( session& s, std::istream& ins ) const;
+    virtual void newline(const char *line, int first, int last );
+
+    virtual void token( rfc5545Token token, const char *line,
+        int first, int last, bool fragment );
+
 };
 
 

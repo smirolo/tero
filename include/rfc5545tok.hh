@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, Fortylines LLC
+/* Copyright (c) 2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,56 +23,56 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardrf2822tok
-#define guardrf2822tok
+#ifndef guardrfc5545
+#define guardrfc5545
 
+#include <iostream>
 #include <iterator>
 
 /**
-   tokenizer for the Internet Message Format (http://tools.ietf.org/html/rfc2822)
+   Display a calendar as an HTML page.
+   See: iCalendar - RFC5545 (http://tools.ietf.org/html/rfc5545)
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
-
-enum rfc2822Token {
-    rfc2822Err,
-    rfc2822FieldName,
-    rfc2822Colon,
-    rfc2822FieldBody,
-    rfc2822MessageBody,
-    rfc2822MessageBreak
+enum rfc5545Token {
+    rfc5545Err,
+    rfc5545FieldName,
+    rfc5545Colon,
+    rfc5545FieldBody
 };
 
-extern const char *rfc2822TokenTitles[];
+
+extern const char *rfc5545TokenTitles[];
 
 template<typename ch, typename tr>
 inline std::basic_ostream<ch, tr>&
-operator<<( std::basic_ostream<ch, tr>& ostr, rfc2822Token v ) {
-    return ostr << rfc2822TokenTitles[v];
+operator<<( std::basic_ostream<ch, tr>& ostr, rfc5545Token v ) {
+    return ostr << rfc5545TokenTitles[v];
 }
 
 
-/** Interface for callbacks from the rfc2822Tokenizer
+/** Interface for callbacks from the rfc5545Tokenizer
  */
-class rfc2822TokListener {
+class rfc5545TokListener {
 public:
-    rfc2822TokListener() {}
+    rfc5545TokListener() {}
 
     virtual void newline(const char *line, int first, int last ) = 0;
 
-    virtual void token( rfc2822Token token, const char *line,
+    virtual void token( rfc5545Token token, const char *line,
         int first, int last, bool fragment ) = 0;
 };
 
 
 template<typename charT, typename traitsT = std::char_traits<charT> >
-class htmlrfc2822TokListener : public rfc2822TokListener {
+class htmlrfc5545TokListener : public rfc5545TokListener {
 protected:
     std::basic_ostream<charT,traitsT> *ostr;
 
 public:
-    explicit htmlrfc2822TokListener( std::basic_ostream<charT,traitsT>& o )
+    explicit htmlrfc5545TokListener( std::basic_ostream<charT,traitsT>& o )
         : ostr(&o) {}
 
 public:
@@ -80,32 +80,31 @@ public:
         *ostr << std::endl;
     }
 
-    void token( rfc2822Token token, const char *line,
+    void token( rfc5545Token token, const char *line,
         int first, int last, bool fragment ) {
-        *ostr << "<span class=\"" << rfc2822TokenTitles[token] << "\">";
-        std::copy(&line[first],&line[last],
-            std::ostream_iterator<charT>(*ostr));
+        *ostr << "<span class=\"" << rfc5545TokenTitles[token] << "\">";
+        std::copy(&line[first],&line[last],std::ostream_iterator<charT>(*ostr));
         *ostr << "</span>";
     }
 };
 
 
-/** Tokenizer for rfc2822
+/** Tokenizer for rfc5545 (calendars)
  */
-class rfc2822Tokenizer {
+class rfc5545Tokenizer {
 protected:
     void *state;
-    rfc2822Token tok;
-    rfc2822TokListener *listener;
+    rfc5545Token tok;
+    rfc5545TokListener *listener;
 
 public:
-    rfc2822Tokenizer()
-        : state(NULL), tok(rfc2822Err), listener(NULL) {}
+    rfc5545Tokenizer()
+        : state(NULL), tok(rfc5545Err), listener(NULL) {}
 
-    explicit rfc2822Tokenizer( rfc2822TokListener& l )
-        : state(NULL), tok(rfc2822Err), listener(&l) {}
+    explicit rfc5545Tokenizer( rfc5545TokListener& l )
+        : state(NULL), tok(rfc5545Err), listener(&l) {}
 
-    void attach( rfc2822TokListener& l ) { listener = &l; }
+    void attach( rfc5545TokListener& l ) { listener = &l; }
 
     size_t tokenize( const char *line, size_t n );
 };

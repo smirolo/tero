@@ -32,6 +32,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+
 sessionVariable month("month","month");
 
 
@@ -120,21 +121,22 @@ calendar::walkNodeEntry* calendar::walker( const std::string& s ) const {
 }
 
 
-void calendar::parse( session& s, std::istream& ins ) const {
+void calendar::newline(const char *line, int first, int last )
+{
+}
 
+
+void calendar::token( rfc5545Token token, const char *line,
+    int first, int last, bool fragment )
+{
+#if 0
     static const boost::regex syntax("^(\\S+):(.+)");
 
-    size_t lineCount = 0;
-    while( !ins.eof() ) {
-        boost::smatch m;
-        std::string line;
-        std::getline(ins,line);
-        ++lineCount;
-        if( regex_match(line,m,syntax) ) {
-            walkNodeEntry *w = walker(m.str(1));
-            if( w ) (this->*(w->start))(m.str(2));
-        }
+    if( regex_match(line,m,syntax) ) {
+        walkNodeEntry *w = walker(m.str(1));
+        if( w ) (this->*(w->start))(m.str(2));
     }
+#endif
 }
 
 
@@ -145,7 +147,12 @@ void calendarFetch( session& s, std::istream& in, const url& name )
     using namespace boost::posix_time;
 
     calendar c;
-    c.parse(s,in);
+    rfc5545Tokenizer tok(c);
+    while( !in.eof() ) {
+        std::string line;
+        std::getline(in, line);
+        tok.tokenize(line.c_str(), line.size());
+    }
 
     date today;
     std::string ms = month.value(s);
