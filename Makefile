@@ -51,7 +51,7 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 			cppfiles.o cpptok.o coverage.o \
 			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o \
-			post.o rfc2822tok.o session.o shfiles.o shtok.o \
+			post.o rfc2822tok.o rfc5545tok.o session.o shfiles.o shtok.o \
 			todo.o webserve.o \
 			xmlesc.o xmltok.o
 
