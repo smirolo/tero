@@ -67,7 +67,6 @@ boost::posix_time::ptime from_mbox_string( const std::string& s ) {
     is.imbue(std::locale(std::locale::classic(),
             new boost::posix_time::time_input_facet(formats[0])));
     is >> timestamp;
-    std::cerr << "XXX timestamp is: " << timestamp << std::endl;
     if( timestamp != boost::posix_time::ptime() ) return timestamp;
 
     /* XXX Legacy code to deal with issues when using input_facets. */

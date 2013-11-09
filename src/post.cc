@@ -133,7 +133,7 @@ void contactHtmlwriter::filters( const post& p ) {
     *ostr << html::div().classref("contactAuthor");
     *ostr << "Contact the author "
           << html::div() << contact(p.author) << html::div::end;
-    *ostr << html::div::end;
+    *ostr << html::div::end << html::div::end;
 }
 
 
