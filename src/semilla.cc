@@ -87,7 +87,6 @@ int main( int argc, char *argv[] )
 		s.opts.add(genOptions);
 		s.visible.add(genOptions);
 		docAddSessionVars(s.opts,s.visible);
-		authAddSessionVars(s.opts,s.visible);
 		changelistAddSessionVars(s.opts,s.visible);
 		composerAddSessionVars(s.opts,s.visible);
 		postAddSessionVars(s.opts,s.visible);
@@ -95,6 +94,9 @@ int main( int argc, char *argv[] )
 		calendarAddSessionVars(s.opts,s.visible);
 		commentAddSessionVars(s.opts,s.visible);
 		logAddSessionVars(s.opts,s.visible);
+#ifdef AUTH_ENABLE
+		authAddSessionVars(s.opts,s.visible);
+#endif
 	
 		s.restore(argc,argv);
 		

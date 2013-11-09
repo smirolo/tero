@@ -158,6 +158,8 @@ fetchEntry entries[] = {
     { "content", boost::regex(".*/blog/"),
 	  noAuth|noPipe, mostRecentBlogFetch, NULL, NULL },
 
+#ifdef AUTH_ENABLE
+    // XXX disable authentication - we don't require it so far.
     /* contributors, accounts authentication */
     { "content", boost::regex(".*/accounts/login/"),
 	  noAuth|noPipe, loginFetch, NULL, NULL },
@@ -175,6 +177,7 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, unregisterEnter, NULL, NULL },
     { "content", boost::regex(".*accounts/"),
 	  noAuth|noPipe, contribIdxFetch, NULL, NULL },
+#endif
     /* misc pages */
     { "content", boost::regex(".*/commit/[0-9a-f]{40}"),
 	  noAuth|noPipe, changeShowDetails, NULL, NULL },

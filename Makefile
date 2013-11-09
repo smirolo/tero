@@ -46,8 +46,8 @@ sessionDir      ?=  $(LOCALSTATEDIR)/db/semilla
 
 #CPPFLAGS	+=	-DREADONLY
 
-libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
-			checkstyle.o comments.o composer.o contrib.o \
+libsemillaObjs	:= blog.o booktok.o calendar.o changelist.o \
+			checkstyle.o contrib.o comments.o composer.o \
 			cppfiles.o cpptok.o coverage.o \
 			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
 			logview.o mail.o markup.o project.o \
@@ -57,6 +57,8 @@ libsemillaObjs	:= 	auth.o blog.o booktok.o calendar.o changelist.o \
 
 libpayprocObjs	:=	aws.o payment.o paypal.o	
 
+libsemilla_auth.o: auth.o auth_ldap.o
+
 libsemilla.a: $(libsemillaObjs)
 
 libpayproc.a: $(libpayprocObjs)
@@ -65,13 +67,13 @@ libpayproc.a: $(libpayprocObjs)
 # This is not the case on Ubuntu lucid.
 LDFLAGS		+=	-ldl
 
-registerDeps	:= -lpam 
+#registerDeps	:= -lpam -lldap
 
 semilla: semilla.cc semtable.o libsemilla.a \
-		-lcryptopp -luriparser $(registerDeps) \
+		-lcryptopp -luriparser \
 		-lboost_date_time -lboost_random -lboost_regex -lboost_program_options \
 		-lboost_iostreams -lboost_filesystem -lboost_system -lPocoNet
-	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@ -lldap
+	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@ $(registerDeps)
 
 smailui: smailui.cc libsemilla.a \
 		-lcryptopp -luriparser -lpam \
