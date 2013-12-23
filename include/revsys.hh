@@ -119,8 +119,14 @@ public:
 
     static std::streambuf* findRevOpenfile(
         session& s,
-        const boost::filesystem::path& pathname,
-        const std::string& commit = "HEAD" );
+        const boost::filesystem::path& pathname );
+
+    /** Load a text file using the most appropriate revision control
+        system based on *pathname* */
+    static slice<char> loadtext(
+        session& s,
+        const boost::filesystem::path& pathname );
+
 };
 
 class rev_directory_iterator;

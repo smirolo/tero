@@ -119,8 +119,7 @@ void dispatchDoc::fetch( session& s,
         path prevcwd = current_path();
         path dir = s.prefixdir(p);
         current_path(dir);
-        revisionsys *rev = revisionsys::findRev(s, p);
-        text = rev->loadtext(rev->relative(p), "HEAD");
+        text = revisionsys::loadtext(s, p);
 #if 0
         std::cerr << "!!! [document] fetch text " << value << " of " << text.size() << " bytes" << std::endl;
 #endif

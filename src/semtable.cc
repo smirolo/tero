@@ -57,6 +57,7 @@ char docLayout[] = "document.html";
 char basePage[] = "base.html";
 char docPage[] = "document";
 char todos[] = "todos.html";
+char financials[] = "financials.html";
 char indexPage[] = "index.html";
 char author[] = "author";
 char feed[] = "feed";
@@ -231,6 +232,8 @@ fetchEntry entries[] = {
       noAuth|noPipe, rssSiteAggregate<docPage>, NULL, NULL },
     { "document", boost::regex(".*\\.git/index\\.rss"),
       noAuth|noPipe, feedRepository<rsswriter>, NULL, NULL },
+    { "document", boost::regex(".*/log/index\\.rss"),
+      noAuth|noPipe, logSummaries<rsswriter>, NULL, NULL },
     { "document", boost::regex(".*/index\\.rss"),
       noAuth|noPipe, feedLatestPosts<rsswriter, docPage>, NULL, NULL },
 
@@ -243,6 +246,8 @@ fetchEntry entries[] = {
     /* Composer and document for the todos index view */
     { "document", boost::regex(".*/todo/"),
       noAuth|noPipe, compose<todos>, NULL, NULL },
+    { "document", boost::regex(".*/financials/"),
+      noAuth|noPipe, compose<financials>, NULL, NULL },
     { "document", boost::regex("/"),
       noAuth|noPipe, compose<indexPage>, NULL, NULL },
     { "document", boost::regex(".*"),
@@ -250,9 +255,11 @@ fetchEntry entries[] = {
 
     /* homepage */
     { "feed", boost::regex(".*\\.git/index\\.feed"),
-	  noAuth|noPipe, feedRepository<htmlwriter>, NULL, NULL },
+      noAuth|noPipe, feedRepository<htmlwriter>, NULL, NULL },
+    { "feed", boost::regex(".*/log/index\\.feed"),
+      noAuth|noPipe, logSummaries<htmlwriter>, NULL, NULL },
     { "feed", boost::regex(".*/index\\.feed"),
-	  noAuth|noPipe, feedLatestPosts<htmlwriter,feed>, NULL, NULL },
+      noAuth|noPipe, feedLatestPosts<htmlwriter,feed>, NULL, NULL },
     { "feed", boost::regex("/"),
       noAuth|noPipe, htmlSiteAggregate<feed>, NULL, NULL },
     { "history", boost::regex(".*dws\\.xml"),

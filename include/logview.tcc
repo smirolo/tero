@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2013, Fortylines LLC
+/* Copyright (c) 2012-2013, Fortylines LLC
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -23,37 +23,21 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef guardlogview
-#define guardlogview
 
-#include "document.hh"
-#include "markup.hh"
+void writeLogSummaries( session& s, const url& name );
 
-/** show projects and their status taken out of log files
-
-    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
-*/
-
-void logAddSessionVars( boost::program_options::options_description& all,
-    boost::program_options::options_description& visible );
-
-/** Display information from a JUnit file.
- */
-void junitDate( session& s, const url& name );
-
-void junitContent( session& s, const slice<char>& text, const url& name );
-
-void logviewFetch( session& s, const url& name );
-
-/** Summaries of build logs to be included in a feed.
- */
 template<typename defaultWriter>
-void logSummaries( session& s, const url& name );
+void logSummaries( session& s, const url& name )
+{
+    defaultWriter writer(s.out());
+    if( !s.feeds ) {
+        s.feeds = &writer;
+    }
 
-/** Display test unit regressions as provided by a regression.log
- */
-void regressionsFetch( session& s, const url& name );
+    writeLogSummaries(s, name);
 
-#include "logview.tcc"
-
-#endif
+    if( s.feeds == &writer ) {
+        s.feeds->flush();
+        s.feeds = NULL;
+    }
+}

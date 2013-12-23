@@ -96,6 +96,8 @@ public:
 };
 
 
+/** Reading directly from the filesystem.
+ */
 class filesys : public revisionsys {
 protected:
     static filesys _instance;
@@ -302,22 +304,43 @@ revisionsys::findRevByMetadir( session& s, const std::string& metadir ) {
 
 std::streambuf* revisionsys::findRevOpenfile(
     session& s,
-    const boost::filesystem::path& pathname,
-    const std::string& commit )
+    const boost::filesystem::path& pathname )
 {
+    static const std::string head("HEAD");
     if( boost::filesystem::exists(pathname) ) {
-        return filesys::instance().openfile(pathname, commit);
+        return filesys::instance().openfile(pathname, head);
     } else {
         revisionsys* rev = findRev(s, pathname);
         if( rev ) {
             if( strncmp(rev->metadir, "fs", 2) != 0 ) {
-                return rev->openfile(rev->relative(pathname), commit);
+                return rev->openfile(rev->relative(pathname), head);
             } else {
-                return rev->openfile(pathname, commit);
+                return rev->openfile(pathname, head);
             }
         }
     }
     return NULL;
+}
+
+
+slice<char> revisionsys::loadtext(
+    session& s,
+    const boost::filesystem::path& pathname )
+{
+    static const std::string head("HEAD");
+    if( boost::filesystem::exists(pathname) ) {
+        return filesys::instance().loadtext(pathname, head);
+    } else {
+        revisionsys* rev = findRev(s, pathname);
+        if( rev ) {
+            if( strncmp(rev->metadir, "fs", 2) != 0 ) {
+                return rev->loadtext(rev->relative(pathname), head);
+            } else {
+                return rev->loadtext(pathname, head);
+            }
+        }
+    }
+    return slice<char>();
 }
 
 
@@ -445,7 +468,7 @@ void gitcmd::checkins( const session& s,
         if( line.compare(0, 6, "commit") == 0 ) {
             if( descrStarted ) {
                 if( !firstFile ) descr << html::pre::end;
-                ci.link = link.str();
+                ci.link = url(link.str());
                 ci.title = title.str();
                 ci.content = descr.str();
                 ci.normalize();
@@ -521,7 +544,7 @@ void gitcmd::checkins( const session& s,
     }
     if( descrStarted ) {
         if( !firstFile ) descr << html::pre::end;
-        ci.link = link.str();
+        ci.link = url(link.str());
         ci.title = title.str();
         ci.content = descr.str();
         ci.normalize();

@@ -108,7 +108,7 @@ public:
         By default if this field is not set, links are generated
         from the *title* (text) and *guid* (href).
     */
-    std::string link;
+    url link;
 
     /** The title of the post will be displayed as header of pages
        and subject of e-mails.

@@ -289,14 +289,8 @@ slice<char> session::loadtext( const boost::filesystem::path& pathname )
         return found->second;
     }
 
-    revisionsys *rev = revisionsys::findRev(*this, pathname);
-    if( rev != NULL ) {
-        boost::filesystem::path
-            localpathname = rev->relative(pathname);
-        texts[pathname] = rev->loadtext(localpathname, "HEAD");
-        return texts[pathname];
-    }
-    return slice<char>();
+    texts[pathname] = revisionsys::loadtext(*this, pathname);
+    return texts[pathname];
 }
 
 
