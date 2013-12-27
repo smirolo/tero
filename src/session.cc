@@ -26,15 +26,13 @@
 
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/iostreams/stream.hpp>
+#include <cstdlib>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/regex.hpp>
 #include "session.hh"
-#include <uriparser/Uri.h>
 #include "markup.hh"
 #include "revsys.hh"
 
