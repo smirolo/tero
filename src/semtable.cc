@@ -36,15 +36,14 @@
 #include "logview.hh"
 #include "checkstyle.hh"
 #include "calendar.hh"
-#include "comments.hh"
 #include "contrib.hh"
 #include "todo.hh"
 #include "blog.hh"
 #include "webserve.hh"
-#include "payment.hh"
 #include "cppfiles.hh"
 #include "shfiles.hh"
-#include "auth.hh"
+
+namespace tero {
 
 char none[] = "";
 char todoExt[] = "todo.html";
@@ -65,6 +64,7 @@ char source[] = "source";
 char date[] = "date";
 char title[] = "title";
 char buildView[] = "Build View";
+char domainNameMeta[] = "domainName";
 
 
 /* The pattern need to be inserted in more specific to more
@@ -81,9 +81,6 @@ fetchEntry entries[] = {
        the command line or through the cgi interface. */
     { "base", boost::regex(".*/todo/create"),
 	  noAuth|noPipe, todoCreateFetch, NULL, NULL },
-    /* comments */
-    { "base", boost::regex(std::string("/comments/create")),
-	  noAuth|noPipe, commentPage, NULL, NULL },
 
     /* default catch-all:
        We use "always" here such that semcache will not generate .html
@@ -253,6 +250,9 @@ fetchEntry entries[] = {
     { "document", boost::regex(".*"),
       noAuth|noPipe, compose<docLayout>, NULL, NULL },
 
+    { "domainName", boost::regex(".*"),
+      noAuth|noPipe, metaFetch<domainNameMeta>, NULL, NULL },
+
     /* homepage */
     { "feed", boost::regex(".*\\.git/index\\.feed"),
       noAuth|noPipe, feedRepository<htmlwriter>, NULL, NULL },
@@ -310,3 +310,5 @@ fetchEntry entries[] = {
 };
 
 dispatchDoc semDocs(entries,sizeof(entries)/sizeof(entries[0]));
+
+}

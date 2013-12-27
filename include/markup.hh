@@ -36,6 +36,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 namespace detail {
 
     class nodeEnd {
@@ -807,5 +809,6 @@ writelink( std::basic_ostream<charT,traitsT>& ostr,
     return ostr;
 }
 
+}
 
 #endif

@@ -37,6 +37,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 enum docbookToken {
     bookEof,
     abbrevEnd,
@@ -850,5 +852,7 @@ public:
 
     docbookToken read();
 };
+
+}
 
 #endif

@@ -35,6 +35,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 template<typename vT>
 class slice {
 public:
@@ -112,5 +114,6 @@ operator<<( std::basic_ostream<ch, tr>& ostr, const slice<const char>& v ) {
     return ostr;
 }
 
+}
 
 #endif

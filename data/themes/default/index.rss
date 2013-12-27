@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version='2.0'>
-<channel>
-	<title><div class="title"><!-- Expand --></div></title>
-	<link>http://<!-- widget 'print' name='domainName' --></link>
-	<description><div class="title"><!-- Expand --></div></description>
-        <language>en-us</language>
-	<!--
-	<pubDate></pubDate>
-	<lastBuildDate></lastBuildDate>
-	-->
-	<div class="document"><!-- Expand --></div>
+<rss version='2.0' xmlns:lj='http://www.livejournal.org/rss/lj/1.0/' xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tero Feed</title>
+    <description>Keep updated with changes to <div class="domainName"></div></description>
+    <link>http://<div class="domainName"></div></link>
+    <atom:link href="index.rss" rel="self" type="application/rss+xml" />
+    <div class="document">
+      <!-- Expand -->
+    </div>
 </channel>
 </rss>

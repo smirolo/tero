@@ -30,6 +30,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 
 #define advance(state) { trans = &&state; goto advancePointer; }
 
@@ -167,4 +169,6 @@ linenumSep:
  message:
 	tok = errMessage;
 	advance(message);
+}
+
 }

@@ -29,6 +29,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 template<typename charT, typename traitsT>
 basicDecoratorChain<charT,traitsT>::~basicDecoratorChain() {
     detach();
@@ -430,4 +432,6 @@ void rangeAnnotate<charT,traitsT>::newline(const char *line, int first, int last
         std::string begSpan("<span class=\"coverage\">|</span>");
         super::nextBuf->sputn(begSpan.c_str(),begSpan.size());
     }
+}
+
 }

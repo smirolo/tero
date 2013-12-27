@@ -28,6 +28,8 @@
 #include <pwd.h>
 #include "markup.hh"
 
+namespace tero {
+
 template<typename cmp>
 void feedOrdered<cmp>::provide()
 {
@@ -248,4 +250,6 @@ void feedSummary( session& s, const url& name ) {
         s.feeds->flush();
         s.feeds = NULL;
     }
+}
+
 }

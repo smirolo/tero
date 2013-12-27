@@ -38,6 +38,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 urlVariable nextpage("q","next page in a process pipeline");
 
@@ -560,4 +561,6 @@ void metaFileOwner( session& s, const boost::filesystem::path& pathname ) {
     s.insert("author",author);
     s.insert("authorEmail",authorEmail);
     s.out() << author;
+}
+
 }

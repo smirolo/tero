@@ -28,9 +28,6 @@
 
 #include <ostream>
 #include "session.hh"
-#if 0
-#include "document.hh"
-#endif
 #include "tokenize.hh"
 
 /* Decorators are used to highjack the underlying buffer of an ostream
@@ -43,6 +40,8 @@
 
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
+
+namespace tero {
 
 // forward declaration
 template<typename charT, typename traitsT = std::char_traits<charT> >
@@ -438,9 +437,6 @@ public:
    void newline(const char *line, int first, int last );
 };
 
-#include "decorator.tcc"
-
-
 typedef basicDecorator<char> decorator;
 typedef basicDecoratorChain<char> decoratorChain;
 typedef basicHtmlEscaper<char> htmlEscaper;
@@ -451,6 +447,10 @@ typedef basicHrefLight<char> hrefLight;
 typedef basicCppLight<char> cppLight;
 typedef noteAnnotate<char> noteDecorator;
 typedef rangeAnnotate<char> rangeDecorator;
+
+}
+
+#include "decorator.tcc"
 
 
 #endif

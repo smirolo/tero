@@ -56,6 +56,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 class contrib {
 public:
@@ -514,5 +515,6 @@ void
 postAddSessionVars( boost::program_options::options_description& all,
 		    boost::program_options::options_description& visible );
 
+}
 
 #endif

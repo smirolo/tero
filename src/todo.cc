@@ -37,14 +37,17 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 static const char *todoExt = ".todo";
 
+#if 0
 article
 todoAdapter::fetch( session& s, const boost::filesystem::path& p ) {
-    return article(boost::filesystem::basename(p.filename()),
+    return article(,
         "vote for todo item",1);
 }
-
+#endif
 
 const boost::regex todoFilter::viewPat(".*todos/.+");
 
@@ -283,7 +286,7 @@ void todoCommentFetch( session& s, const url& name )
         p.author = contrib::find(authorEmail.value(s), authorVar.value(s));
         p.content = descrVar.value(s);
         p.time = boost::posix_time::second_clock::local_time();
-        p.guid = todoAdapter().fetch(s,postname).guid;
+        p.guid = boost::filesystem::basename(postname.filename());
         p.score = 0;
         comment.filters(p);
    }
@@ -349,7 +352,7 @@ void todoVoteSuccessFetch( session& s, const url& name )
         return;
     }
 
-    std::string tag = todoAdapter().fetch(s,postname).guid;
+    std::string tag = boost::filesystem::basename(postname.filename());
 
     /* make temporary file */
     char tmpname[FILENAME_MAX] = "/tmp/vote-XXXXXX";
@@ -451,4 +454,6 @@ todoWriteHtmlFetch( session& s, const url& name )
     htmlwriter writer(s.out());
     mailParser parser(writer);
     parser.fetchFile(s, s.abspath(name));
+}
+
 }

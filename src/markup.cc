@@ -30,6 +30,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 /* \todo review memory usage for this function. */
 std::string strip( const std::string& s ) {
@@ -329,3 +330,5 @@ const char *rss::attrNames[] = {
 
 const char* title::name = "title";
 const detail::nodeEnd title::end(title::name);
+
+}

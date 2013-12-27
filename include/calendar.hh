@@ -36,6 +36,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 extern sessionVariable month;
 
 void
@@ -72,5 +74,7 @@ public:
 
 void calendarFetch( session& s, std::istream& in,
     const url& name );
+
+}
 
 #endif

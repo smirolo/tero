@@ -28,9 +28,12 @@
 
 #include "session.hh"
 
+namespace tero {
+
 void cppFetch( session& s, std::istream& in, const url& name );
 
 void cppDiff( session& s, const url& name );
 
+}
 
 #endif

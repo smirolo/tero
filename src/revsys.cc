@@ -40,6 +40,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 extern pathVariable binDir;
 
 /** interaction with a git repository.
@@ -762,3 +764,6 @@ void rev_directory_iterator_increment(
 }
 
 }
+
+}
+

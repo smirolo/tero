@@ -29,7 +29,6 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include "auth.hh"
 #include "feeds.hh"
 #include "changelist.hh"
 #include "composer.hh"
@@ -38,12 +37,10 @@
 #include "logview.hh"
 #include "checkstyle.hh"
 #include "calendar.hh"
-#include "comments.hh"
 #include "contrib.hh"
 #include "todo.hh"
 #include "blog.hh"
 #include "webserve.hh"
-#include "payment.hh"
 #include "cppfiles.hh"
 #include "shfiles.hh"
 
@@ -63,17 +60,23 @@
 #error "VERSION should be defined when compiling this file"
 #endif
 
-const char* session::configFile = CONFIG_FILE;
-const char* session::sessionDir = SESSION_DIR;
+const char* tero::session::configFile = CONFIG_FILE;
+const char* tero::session::sessionDir = SESSION_DIR;
 
 char except[] = "exception.html";
+
+namespace tero {
+
 extern dispatchDoc semDocs;
+
+}
 
 int main( int argc, char *argv[] )
 {
     using namespace std;
     using namespace boost::program_options;
     using namespace boost::filesystem;
+    using namespace tero;
 
     std::stringstream mainout;
     session s("semillaId",mainout);
@@ -92,7 +95,6 @@ int main( int argc, char *argv[] )
 		postAddSessionVars(s.opts,s.visible);
 		projectAddSessionVars(s.opts,s.visible);
 		calendarAddSessionVars(s.opts,s.visible);
-		commentAddSessionVars(s.opts,s.visible);
 		logAddSessionVars(s.opts,s.visible);
 #ifdef AUTH_ENABLE
 		authAddSessionVars(s.opts,s.visible);

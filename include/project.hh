@@ -36,6 +36,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 extern pathVariable srcTop;
 
 void
@@ -108,5 +110,6 @@ public:
 
 void projfilesFetch( session& s, const url& name );
 
+}
 
 #endif

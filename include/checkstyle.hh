@@ -37,6 +37,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 
 enum licenseCode {
     unknownLicense,
@@ -177,6 +179,7 @@ public:
     }
 };
 
+}
 
 #include "checkstyle.tcc"
 

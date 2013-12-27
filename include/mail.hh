@@ -37,6 +37,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 void
 mailAddSessionVars( boost::program_options::options_description& opts,
     boost::program_options::options_description& visible );
@@ -140,5 +142,7 @@ public:
 };
 
 void mailParserFetch( session&s, const url& name );
+
+}
 
 #endif

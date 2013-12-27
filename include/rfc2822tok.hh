@@ -34,6 +34,7 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 enum rfc2822Token {
     rfc2822Err,
@@ -109,5 +110,7 @@ public:
 
     size_t tokenize( const char *line, size_t n );
 };
+
+}
 
 #endif

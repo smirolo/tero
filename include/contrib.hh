@@ -34,6 +34,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 class by {
 protected:
     const contrib::pointer_type& ptr;
@@ -102,5 +104,7 @@ void passwdChange( session& s, const url& name );
     and e-mail that password to the contributor.
 */
 void passwdReset( session& s, const url& name );
+
+}
 
 #endif

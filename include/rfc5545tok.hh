@@ -36,6 +36,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 enum rfc5545Token {
     rfc5545Err,
     rfc5545FieldName,
@@ -108,5 +110,7 @@ public:
 
     size_t tokenize( const char *line, size_t n );
 };
+
+}
 
 #endif

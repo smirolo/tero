@@ -32,6 +32,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 sessionVariable month("month","month");
 
@@ -208,4 +209,6 @@ void calendarFetch( session& s, std::istream& in, const url& name )
         s.out() << html::tr::end;
     }
     s.out() << html::table::end;
+}
+
 }

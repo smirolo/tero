@@ -26,6 +26,8 @@
 #include "feeds.hh"
 #include "project.hh"
 
+namespace tero {
+
 char allFilesPat[] = ".*";
 
 #if 0
@@ -112,5 +114,7 @@ void byTimeHtml::filters( const post& p ) {
           << html::a::end << html::td::end
           << html::tr::end;
     prev_header = p.time;
+}
+
 }
 

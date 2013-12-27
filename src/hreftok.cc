@@ -34,6 +34,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 const char *hrefTokenTitles[] = {
     "hrefErr",
@@ -176,3 +177,4 @@ advancePointer:
     }
 }
 
+}

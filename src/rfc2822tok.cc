@@ -37,6 +37,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 const char *rfc2822TokenTitles[] = {
     "err",
@@ -198,3 +199,6 @@ messageBreakCR:
     return last;
     //    goto headers;
 }
+
+}
+

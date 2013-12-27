@@ -39,7 +39,7 @@
 
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
-
+namespace tero {
 
 urlVariable smtpHost("smtpHost",
     "host to connect to in order to send emails");
@@ -49,18 +49,20 @@ sessionVariable smtpLogin("smtpLogin",
     "login to the $smtpHost:$smtpPort");
 sessionVariable smtpPassword("smtpPassword",
     "password $smtpHost:$smtpPort");
+}
 
 namespace {
 
-    void validate( const session& s ) {
-        assert( !smtpHost.value(s).empty() );
-        assert( smtpPort.value(s) != 0);
-        assert( !smtpLogin.value(s).empty() );
-        assert( !smtpPassword.value(s).empty() );
+    void validate( const tero::session& s ) {
+        assert( !tero::smtpHost.value(s).empty() );
+        assert( tero::smtpPort.value(s) != 0);
+        assert( !tero::smtpLogin.value(s).empty() );
+        assert( !tero::smtpPassword.value(s).empty() );
     }
 
 } // anonymous
 
+namespace tero {
 
 void
 mailAddSessionVars( boost::program_options::options_description& opts,
@@ -263,4 +265,6 @@ void mailParserFetch( session& s, const url& name )
      */
     filter->flush();
 #endif
+}
+
 }

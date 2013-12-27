@@ -46,6 +46,7 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 /** On flush (i.e. provide), the feedOrdered retained filter will sort
     its posts using the *cmp* operator and pass it to the next filter
@@ -224,6 +225,7 @@ void htmlSiteAggregate( session& s, const url& name );
 template<const char* varname>
 void rssSiteAggregate( session& s, const url& name );
 
+}
 
 #include "feeds.tcc"
 

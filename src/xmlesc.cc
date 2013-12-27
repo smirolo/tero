@@ -33,6 +33,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 const char *xmlEscTokenTitles[] = {
     "escErr",
@@ -175,4 +176,6 @@ advancePointer:
     }
     tok = escData;
     advance(data);
+}
+
 }

@@ -53,7 +53,7 @@ public:
 
     /** Load one build log and generate a post for it.
      */
-    void parse( session& s, const boost::filesystem::path& logname );
+    void parse( tero::session& s, const boost::filesystem::path& logname );
 };
 
 
@@ -95,9 +95,9 @@ public:
 };
 
 
-void LogParser::parse( session& s, const boost::filesystem::path& logname )
+void LogParser::parse( tero::session& s, const boost::filesystem::path& logname )
 {
-    std::streambuf *buf = revisionsys::findRevOpenfile(s, logname);
+    std::streambuf *buf = tero::revisionsys::findRevOpenfile(s, logname);
     std::istream input(buf);
     while( !input.eof() ) {
         boost::smatch m;
@@ -126,6 +126,8 @@ void LogViewParser::newProjectStatus( const std::string& projectName,
 
 void LogSummary::newProjectStatus( const std::string& projectName,
     const std::string& status, int exitCode ) {
+    using namespace tero;
+
     content << html::tr()
             << html::td()
             << projectName
@@ -138,6 +140,9 @@ void LogSummary::newProjectStatus( const std::string& projectName,
 
 
 } // anonymous
+
+
+namespace tero {
 
 pathVariable indexFile("indexFile",
     "index file with projects dependencies information");
@@ -355,8 +360,6 @@ void writeLogSummaries( session& s, const url& name )
 {
     using namespace boost::filesystem;
 
-    std::cerr << "XXX [logSummaries]" << std::endl;
-
     path base = s.abspath(name);
     while( !base.string().empty() && !is_directory(base) ) {
         base.remove_leaf();
@@ -527,3 +530,6 @@ void regressionsFetch( session& s, const url& name )
 	s.out() << html::table::end << html::p::end;
     }   
 }
+
+}
+

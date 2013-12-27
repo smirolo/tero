@@ -26,6 +26,8 @@
 #include "markup.hh"
 #include "revsys.hh"
 
+namespace tero {
+
 template<typename checker>
 void checkfileFetch( session& s, const slice<char>& text, const url& name )
 {
@@ -47,4 +49,6 @@ void checkfileFetch( session& s, const slice<char>& text, const url& name )
             << html::td() << check.nbCodeLines << html::td::end
             << html::td() << check.nbLines << html::td::end
             << html::tr::end;
+}
+
 }

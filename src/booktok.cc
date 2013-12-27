@@ -32,6 +32,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 const char* docbookKeywords[] = {
 	"abbrev",
@@ -493,4 +494,6 @@ docbookToken docbookStreamTokenizer::read() {
 	tok.tokenize(s.c_str(),s.size());
     }
     return tokens.empty() ? bookEof : *tokens.begin();
+}
+
 }

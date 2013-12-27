@@ -36,6 +36,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 pathVariable srcTop("srcTop","path to document top");
 
@@ -298,4 +299,6 @@ void projfilesFetch( session& s, const url& name )
 {
     projfiles p;
     p.fetch(s,s.abspath(name));
+}
+
 }

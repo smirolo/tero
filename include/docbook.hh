@@ -50,6 +50,9 @@
     We load the text *buffer* and keep it around in order to parse
     the XML only once.)
 */
+
+namespace tero {
+
 class docbook : public text {
 protected:
 
@@ -132,5 +135,7 @@ void docbookFetch( session& s, const url& name );
     class docbookMeta : public meta
  */
 void docbookMeta( session& s, const url& name );
+
+}
 
 #endif

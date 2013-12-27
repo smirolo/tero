@@ -33,6 +33,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 class composerListener : public xmlTokListener {
 protected:
     session& s;
@@ -197,4 +199,6 @@ compose( session& s, std::istream& strm, const boost::filesystem::path& fixed )
         cmpl.newline(NULL, 0, 0);
         std::getline(strm, line);
     }
+}
+
 }

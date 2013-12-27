@@ -30,6 +30,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 const char *rfc5545TokenTitles[] = {
     "rfc5545Err",
     "fieldName",
@@ -108,5 +110,6 @@ fieldBodyCRLF:
 entryPoint:
     tok = rfc5545FieldName;
     advance(fieldName);
+}
 
 }

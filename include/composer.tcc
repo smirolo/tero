@@ -33,6 +33,8 @@
 
 #include "revsys.hh"
 
+namespace tero {
+
 template<const char *layoutPtr>
 void compose( session& s, const url& name )
 {
@@ -43,10 +45,12 @@ void compose( session& s, const url& name )
     path fixed(themeDir.value(s) /
         (!layout.empty() ? layout : name.pathname.filename()));
 
-    std::streambuf *buf = ::revisionsys::findRevOpenfile(s, fixed);
+    std::streambuf *buf = revisionsys::findRevOpenfile(s, fixed);
     if( buf ) {
         std::istream strm(buf);
         compose(s, strm, fixed);
         delete buf;
     }
+}
+
 }

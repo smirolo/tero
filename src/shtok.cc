@@ -31,6 +31,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 const char *shTokenTitles[] = {
     "shErr",
@@ -100,3 +101,6 @@ token:
 	advance(code);
     }
 }
+
+}
+

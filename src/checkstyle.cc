@@ -35,9 +35,9 @@
 */
 
 
-namespace { 
+namespace {
 
-class errTokWriter : public errTokListener {
+class errTokWriter : public tero::errTokListener {
 public:
 	typedef std::map<int,std::string> annotationsType;
 	annotationsType& annotations;
@@ -54,7 +54,7 @@ public:
     void newline( const char *line, int first, int last ) {
     }
     
-    void token( errToken token, const char *line, 
+    void token( tero::errToken token, const char *line, 
 				int first, int last, bool fragment ) {
 		if( fragment ) {
 			frag += std::string(&line[first],last - first);
@@ -67,19 +67,22 @@ public:
 				tokval = std::string(&line[first],last - first);
 			}
 			switch( token ) {
-			case errFilename:
+			case tero::errFilename:
 				record = ( filename == boost::filesystem::path(tokval) );
 				break;;
-			case errLineNum:
+			case tero::errLineNum:
 				if( record ) {				
 					lineNum = atoi(tokval.c_str());					
 				}
 				break;
-			case errMessage:
+			case tero::errMessage:
 				if( record ) {
 					annotations[lineNum] += tokval;
 				}
 				break;
+			default:
+                /* Nothing to do excepts shutup gcc warnings. */
+                break;
 			}
 		}
     }
@@ -87,6 +90,8 @@ public:
 
 }; // anonymous
 
+
+namespace tero {
 
 const char *licenseCodeTitles[] = {
     "unknown",
@@ -308,4 +313,4 @@ lintAnnotate::lintAnnotate( session& s,
 	init(s,key,info);
 }
 
-
+}

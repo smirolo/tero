@@ -34,7 +34,7 @@
 
 namespace {
 
-    void parseInfo( session& s, const RAPIDXML::xml_node<>& r ) {
+    void parseInfo( tero::session& s, const RAPIDXML::xml_node<>& r ) {
         using namespace RAPIDXML;
 
         /* We found an <info> tag, let's parse the meta information
@@ -57,6 +57,8 @@ namespace {
 
 }  // anonymous namespace
 
+
+namespace tero {
 
 docbook::walkNodeEntry docbook::walkers[] = {
     { "abbrev", &docbook::any, &docbook::any },
@@ -881,4 +883,6 @@ void docbookFetch( session& s, const url& name )
         d.walk(s,*root);
     }
     d.leftDec->detach();
+}
+
 }

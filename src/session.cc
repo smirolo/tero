@@ -50,8 +50,10 @@ void yoyo()
 
 namespace {
 
-void checkInSiteTop( const session& s, const boost::filesystem::path& p ) {
+void checkInSiteTop( const tero::session& s, const boost::filesystem::path& p ) {
     using namespace boost::system::errc;
+    using namespace tero;
+
     if( !s.prefix(siteTop.value(s),p) ) {
         std::cerr << "error: " << siteTop.value(s)
                   << " is not a leading prefix of "
@@ -64,6 +66,8 @@ void checkInSiteTop( const session& s, const boost::filesystem::path& p ) {
 }
 
 } // anonymous
+
+namespace tero {
 
 urlVariable document("base","document to be displayed");
 
@@ -720,7 +724,7 @@ session::root( const url& leaf,
 #if 0
     using namespace boost::filesystem;
     using namespace boost::system::errc;
-
+    
     checkInSiteTop(*this, abspath(leaf));
 
     /* We remove from the url pathname while checking existance
@@ -741,7 +745,6 @@ session::root( const url& leaf,
     url result = url(leaf.protocol, leaf.host, leaf.port,
         foundProject ? (
             keepTrigger ? (dirname.string() / trigger) : dirname) : path(""));
-    std::cerr << "XXX root(" << leaf << ") returns " << result << std::endl;
     return result;
 #else
     return asUrl(root(abspath(leaf), trigger, keepTrigger));
@@ -832,33 +835,34 @@ session::subdirpart( const boost::filesystem::path& rootp,
 #if 0
     std::cerr << "[subdirpart] (" << rootp << "," << leafp << ")" << std::endl;
 #endif
+    path root = rootp;
+    path leaf = leafp;
 
-    char realp[FILENAME_MAX];
-    path root, leaf;
-    if( boost::filesystem::exists(rootp) ) {
-        realpath(rootp.string().c_str(),realp);
-        root = path(realp);
-    } else {
-        root = rootp;
-    }
-    if( boost::filesystem::exists(leafp) ) {
-        realpath(leafp.string().c_str(),realp);
-        if( boost::filesystem::is_directory(leafp) ) {
-            /* realpath() will remove the trailing '/' on directory names.
-               We need to keep it through if we want to generate accurate urls.
-            */
-            size_t len = strlen(realp);
-            if( len + 1 < FILENAME_MAX ) {
-                realp[len] = '/';
-                realp[len + 1] = '\0';
-            }
+    if( leaf.string().compare(0, root.string().size(), root.string()) != 0 ) {
+        /* If we don't have a common prefix, let's try to follow links
+           and try again. */
+        char realp[FILENAME_MAX];
+        if( boost::filesystem::exists(rootp) ) {
+            realpath(rootp.string().c_str(),realp);
+            root = path(realp);
         }
-        leaf = path(realp);
-    } else {
-        leaf = leafp;
+        if( (leaf.string().compare(0, root.string().size(), root.string()) != 0)
+            && boost::filesystem::exists(leafp) ) {
+            realpath(leafp.string().c_str(),realp);
+            if( boost::filesystem::is_directory(leafp) ) {
+                /* realpath() will remove the trailing '/' on directory
+                   names. We need to keep it through if we want
+                   to generate accurate urls. */
+                size_t len = strlen(realp);
+                if( len + 1 < FILENAME_MAX ) {
+                    realp[len] = '/';
+                    realp[len + 1] = '\0';
+                }
+            }
+            leaf = path(realp);
+        }
     }
-
-    if( leaf.string().compare(0,root.string().size(),root.string()) != 0 ) {
+    if( leaf.string().compare(0, root.string().size(), root.string()) != 0 ) {
         boost::throw_exception(notLeadingPrefixError(root.string(),
                 leaf.string()));
     }
@@ -920,5 +924,7 @@ session::absCacheName( const url& href ) const
 {
     url cached = cacheName(url("", href.host, href.port, href.pathname));
     return cacheTop.value(*this) / cached.pathname;
+}
+
 }
 

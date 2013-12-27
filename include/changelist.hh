@@ -33,6 +33,7 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 /** Add session variables related to changelist module.
 */
@@ -149,5 +150,6 @@ void feedRepository( session& s, const url& name ) {
     }
 }
 
+}
 
 #endif

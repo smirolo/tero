@@ -31,6 +31,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 const char *xmlTokenTitles[] = {
     "xmlErr",
@@ -292,3 +293,6 @@ startComment2:
     tok = xmlContent;
     advance(content);
 }
+
+}
+

@@ -25,6 +25,7 @@
 
 #include "markup.hh"
 
+namespace tero {
 
 template<typename cmp>
 void blogSplat<cmp>::filters( const post& v ) {
@@ -282,4 +283,4 @@ void blogRelatedSubjects( session& s, const url& name )
     }
 }
 
-
+}

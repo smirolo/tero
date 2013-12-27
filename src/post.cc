@@ -35,6 +35,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 sessionVariable titleVar("title","title of a post");
 sessionVariable authorVar("author","author of a post");
 sessionVariable authorEmail("authorEmail","email for the author of a post");
@@ -58,9 +60,9 @@ postAddSessionVars( boost::program_options::options_description& opts,
 
 
 void post::normalize() {
-    title = ::normalize(title);
-    guid = ::strip(guid);
-    content = ::strip(content);
+    title = tero::normalize(title);
+    guid = tero::strip(guid);
+    content = tero::strip(content);
 }
 
 
@@ -216,4 +218,6 @@ void rsswriter::filters( const post& p ) {
 void subjectWriter::filters( const post& p ) {
     *ostr << html::a().href(p.guid) << p.title << html::a::end 
 		  << "<br/>" << std::endl;
+}
+
 }

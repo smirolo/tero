@@ -30,6 +30,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 const char *mdTokenTitles[] = {
     "err",
@@ -132,6 +133,7 @@ entryPoint:
         advance(lineEnd);
     }
     advance(para);
+}
 
 }
 

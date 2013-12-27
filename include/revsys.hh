@@ -33,6 +33,8 @@
 #include <boost/filesystem/operations.hpp>
 #endif
 
+namespace tero {
+
 class historyref {
 public:
     historyref() {}
@@ -217,6 +219,6 @@ private:
       { return m_imp == rhs.m_imp; }
 };
 
-
+}
 
 #endif

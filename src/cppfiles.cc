@@ -28,6 +28,8 @@
 #include "changelist.hh"
 #include "decorator.hh"
 
+namespace tero {
+
 void cppFetch( session& s, std::istream& in, const url& name )
 {
     linkLight leftLinkStrm(s, siteTop.value(s));
@@ -74,4 +76,6 @@ void cppDiff( session& s, const url& name )
     }
 
     changediff(s,srcpath,leftRevision,rightRevision,&leftChain,&rightChain);
+}
+
 }

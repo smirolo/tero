@@ -49,6 +49,7 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 /** This error is thrown when we are trying to retrieve the value
     of a variable from the current session and that variable does
@@ -446,5 +447,7 @@ public:
     boost::filesystem::path absCacheName( const url& link ) const;
 
 };
+
+}
 
 #endif

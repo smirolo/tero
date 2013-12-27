@@ -33,6 +33,7 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 /** Add the command line options which are referenced (*all*) and the subset
     printed in the command line help (*visible*).
@@ -52,6 +53,8 @@ void compose( session& s, const url& name );
 
 void compose( session& s, std::istream& strm,
     const boost::filesystem::path& fixed );
+
+}
 
 #include "composer.tcc"
 

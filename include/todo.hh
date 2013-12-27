@@ -28,7 +28,6 @@
 
 #include "document.hh"
 #include "mail.hh"
-#include "adapter.hh"
 #include <boost/uuid/uuid.hpp>
 
 /** Pages related to todo items.
@@ -36,7 +35,9 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
+#if 0 // XXX deprecated
 /** An adapter is used to associate identifiers and pathnames
  */
 class todoAdapter : public adapter {
@@ -45,7 +46,7 @@ public:
 
     boost::filesystem::path asPath( const boost::uuids::uuid& id ) const;
 };
-
+#endif
 
 class todoFilter : public passThruFilter {
 public:
@@ -163,5 +164,7 @@ void todoMeta( session& s, std::istream& in, const url& name );
 /** Generate an HTML printout of an item
  */
 void todoWriteHtmlFetch( session& s, const url& name );
+
+}
 
 #endif

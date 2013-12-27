@@ -36,6 +36,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 pathVariable binDir("binDir","path to external executables");
 
 void
@@ -134,7 +136,7 @@ void changediff( session& s, const boost::filesystem::path& pathname,
         if( buf ) {
             std::istream input(buf);
             /* \todo the session is not a parameter to between files... */
-            ::text doc(*primary,*secondary);
+            tero::text doc(*primary,*secondary);
             doc.showSideBySide(s,input,text,false);
             s.out() << html::table::end;
             delete buf;
@@ -199,4 +201,5 @@ void feedRepositoryPopulate( session& s, const url& name )
     }
 }
 
+}
 

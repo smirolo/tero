@@ -32,6 +32,7 @@
 #include "checkstyle.hh"
 #include "coverage.hh"
 
+namespace tero {
 
 boost::filesystem::path lintPath( session& s, const std::string& projectName ) {
     return siteTop.value(s)
@@ -97,4 +98,6 @@ void shDiff( session& s, const url& name )
 
     changediff(s,srcpath,leftRevision,rightRevision,
         &leftLinkText,&rightLinkText);
+}
+
 }

@@ -36,6 +36,7 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 boost::posix_time::ptime
 getmtime( const boost::filesystem::path& pathname )
@@ -341,4 +342,6 @@ void pathSeg( const char** first, const char **segAfterLast,
  done:
 	*first = p;
 	*segAfterLast = last;
+}
+
 }

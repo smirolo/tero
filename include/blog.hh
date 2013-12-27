@@ -34,6 +34,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 extern char blogPat[];
 extern const char *blogTrigger;
 
@@ -151,6 +153,8 @@ void mostRecentBlogFetch( session& s, const url& name );
 void mostRecentBlogTitle( session& s, const url& name );
 
 void blogByIntervalTitle( session& s, const url& name );
+
+}
 
 #include "blog.tcc"
 

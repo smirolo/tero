@@ -26,20 +26,18 @@
 # -*- Makefile -*-
 
 include $(shell dws context)
-version :=	0.4
+version :=  0.4
 include $(buildTop)/share/dws/prefix.mk
 
 
-CXXFLAGS	+= -g
+CXXFLAGS    += -g
 
-bins 		:=	semilla
-#bins 		:=	semilla smailui
-#libs		:=	libsemilla.a libpayproc.a
-libs		:=  libsemilla.a
+bins        :=  semilla
+libs        :=  libsemilla.a
 # \todo documentation specific to the project is currently broken. 
 #       It needs to be written up anyway :).
 #shares		:=	semilla.pdf
-etcs		:= $(srcDir)/etc/pam.d/semilla.pam
+etcs        := $(srcDir)/etc/pam.d/semilla.pam
 
 semillaConfFile ?=  $(etcDir)/semilla/default.conf
 sessionDir      ?=  $(LOCALSTATEDIR)/db/semilla
@@ -47,23 +45,17 @@ sessionDir      ?=  $(LOCALSTATEDIR)/db/semilla
 #CPPFLAGS	+=	-DREADONLY
 
 libsemillaObjs	:= blog.o booktok.o calendar.o changelist.o \
-			checkstyle.o contrib.o comments.o composer.o \
+			checkstyle.o contrib.o composer.o \
 			cppfiles.o cpptok.o coverage.o \
 			docbook.o document.o errtok.o feeds.o hreftok.o revsys.o \
-			logview.o mail.o markup.o project.o \
+			logview.o mail.o markdown.o markup.o project.o \
 			post.o rfc2822tok.o rfc5545tok.o session.o shfiles.o shtok.o \
 			todo.o webserve.o \
 			xmlesc.o xmltok.o
 
-libpayprocObjs	:=	aws.o payment.o paypal.o	
-
-libsemilla_auth.o: auth.o auth_ldap.o
-
 libsemilla.a: $(libsemillaObjs)
 
-libpayproc.a: $(libpayprocObjs)
-
-# On Ubuntu jaunty, libpam.a requires this library. 
+# On Ubuntu jaunty, libpam.a requires this library.
 # This is not the case on Ubuntu lucid.
 LDFLAGS		+=	-ldl
 
@@ -74,12 +66,6 @@ semilla: semilla.cc semtable.o libsemilla.a \
 		-lboost_date_time -lboost_random -lboost_regex -lboost_program_options \
 		-lboost_iostreams -lboost_filesystem -lboost_system -lPocoNet
 	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@ $(registerDeps)
-
-smailui: smailui.cc libsemilla.a \
-		-lcryptopp -luriparser -lpam \
-		-lboost_date_time -lboost_regex -lboost_program_options \
-		-lboost_filesystem -lboost_system -lPocoNet
-	$(LINK.cc) -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@
 
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)
 

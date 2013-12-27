@@ -36,6 +36,8 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 // forward declaration
 template<typename charT, typename traitsT >
 class basicDecorator;
@@ -319,5 +321,7 @@ void textFetch( session& s, std::istream& in,
  */
 void formattedFetch( session& s, std::istream& in,
     const url& name );
+
+}
 
 #endif

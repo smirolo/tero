@@ -34,6 +34,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 void logAddSessionVars( boost::program_options::options_description& all,
     boost::program_options::options_description& visible );
 
@@ -53,6 +55,8 @@ void logSummaries( session& s, const url& name );
 /** Display test unit regressions as provided by a regression.log
  */
 void regressionsFetch( session& s, const url& name );
+
+}
 
 #include "logview.tcc"
 

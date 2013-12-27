@@ -32,9 +32,10 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 char blogPat[] = ".*\\.blog$";
 const char *blogTrigger = "blog";
-
 
 
 void mostRecentFilter::filters( const post& p )
@@ -116,4 +117,6 @@ void mostRecentBlogTitle( session& s, const url& name )
 void mostRecentBlogFetch( session& s, const url& name )
 {
     blogEntryFetch(s,mostRecentBlogEntry(s, name));
+}
+
 }

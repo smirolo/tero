@@ -34,6 +34,7 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 /** Parsing error while loading the coverage information.
 */
@@ -62,5 +63,7 @@ public:
         return ranges.empty();
     }
 };
+
+}
 
 #endif

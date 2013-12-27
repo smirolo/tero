@@ -28,6 +28,8 @@
 
 #include <iterator>
 
+namespace tero {
+
 /**
    Tokenizers for the different text files in our source repository.
 
@@ -372,5 +374,7 @@ public:
 
     size_t tokenize( const char *line, size_t n );
 };
+
+}
 
 #endif

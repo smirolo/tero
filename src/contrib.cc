@@ -31,7 +31,6 @@
 #include "composer.hh"
 #include "contrib.hh"
 #include "markup.hh"
-#include "auth.hh"
 
 
 /** Pages related to contributors.
@@ -39,10 +38,11 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 void contrib::normalize() {
-    name = ::normalize(name);
-    email = ::normalize(email);
+    name = tero::normalize(name);
+    email = tero::normalize(email);
 }
 
 contrib::pointer_type contrib::find( const std::string& email,
@@ -131,6 +131,8 @@ void contribIdxFetch( session& s, const url& name )
 		}
     }
 #endif
+}
+
 }
 
 

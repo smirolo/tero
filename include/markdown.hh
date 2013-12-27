@@ -34,6 +34,7 @@
    Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
 
 enum mdToken {
     mdErr,
@@ -107,5 +108,7 @@ public:
 
     size_t tokenize( const char *line, size_t n );
 };
+
+}
 
 #endif

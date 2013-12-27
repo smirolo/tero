@@ -46,6 +46,8 @@
     Primary Author(s): Sebastien Mirolo <smirolo@fortylines.com>
 */
 
+namespace tero {
+
 /** returns the latest modification time of a file given its *pathname*.
  */
 boost::posix_time::ptime
@@ -286,5 +288,6 @@ typedef basic_cgi_parser cgi_parser;
 void
 pathSeg( const char** first, const char **segAfterLast, const char *afterLast );
 
+}
 
 #endif
