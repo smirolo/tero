@@ -185,9 +185,9 @@ boost::regex(
 
     boost::smatch m;
     std::string text = licenseText.str();
-    for( licenseCode license = MITLicense; license < 5; ++license ) {
+    for( int license = MITLicense; license < 5; ++license ) {
         if( boost::regex_match(text, m, licenses_regex[license - 1]) ) {
-            licenseType = license;
+            licenseType = (licenseCode)license;
             dates = m.str(1);
             grantor = m.str(2);
             break;
