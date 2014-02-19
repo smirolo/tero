@@ -42,7 +42,10 @@ namespace tero {
 
 enum licenseCode {
     unknownLicense,
-    BSDLicense
+    MITLicense,
+    BSD2ClauseLicense,
+    BSD3ClauseLicense,
+    ProprietaryLicense
 };
 
 extern const char *licenseCodeTitles[];
@@ -56,12 +59,13 @@ operator<<( std::basic_ostream<ch, tr>& ostr, licenseCode v ) {
 
 class checker {
 public:
-    slice<const char> licenseText;
+    std::stringstream licenseText;
 
 protected:
     enum stateCode {
         start,
         readLicense,
+        normalizeLicense, // replace multiple spaces by a single whitespace.
         doneLicense
     };
     stateCode state;
@@ -70,6 +74,8 @@ protected:
     licenseCode licenseType;
 
     void cache();
+
+    void normalize( const char *line, int first, int last );
 
 public:
     /* \todo get through accessors */

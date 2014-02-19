@@ -58,17 +58,27 @@ std::string normalize( const std::string& s ) {
 
 boost::posix_time::ptime from_mbox_string( const std::string& s ) {
 
+    using namespace boost::posix_time;
+
     static const char* formats[] = {
         "%Y-%m-%dT%H:%M:%S",
-        "%a, %e %b %Y %T"
+        "%a, %e %b %Y %T",
+        "%a, %e %b %Y %T ",
+    };
+
+    const std::locale inputs[] = {
+        std::locale(std::locale::classic(), new time_input_facet(formats[0])),
+        std::locale(std::locale::classic(), new time_input_facet(formats[1])),
+        std::locale(std::locale::classic(), new time_input_facet(formats[2])),
     };
 
     boost::posix_time::ptime timestamp;
     std::istringstream is(s);
-    is.imbue(std::locale(std::locale::classic(),
-            new boost::posix_time::time_input_facet(formats[0])));
-    is >> timestamp;
-    if( timestamp != boost::posix_time::ptime() ) return timestamp;
+    for( size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i ) {
+        is.imbue(inputs[i]);
+        is >> timestamp;
+        if( timestamp != boost::posix_time::not_a_date_time ) return timestamp;
+    }
 
     /* XXX Legacy code to deal with issues when using input_facets. */
 

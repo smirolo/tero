@@ -95,66 +95,154 @@ namespace tero {
 
 const char *licenseCodeTitles[] = {
     "unknown",
-    "BSD"
+    "MIT",
+    "BSD 2-Clause",
+    "BSD 3-Clause",
+    "Proprietary"
 };
 
 
 void checker::cache() {
-    static const boost::regex 
-	bsdex("\\S?\\S?\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), ([^#]*)\\s+"
-    "\\S?\\s*All rights reserved.\\s+"
-"\\S?\\s+"
-"\\S?\\s*Redistribution and use in source and binary forms, with or without\\s+"
-	      "\\S?\\s*modification, are permitted provided that the following conditions are met:\\s+"
-"\\S?\\s*\\* Redistributions of source code must retain the above copyright\\s+"
-	      "\\S?\\s*notice, this list of conditions and the following disclaimer.\\s+"
-	      "\\S?\\s*\\* Redistributions in binary form must reproduce the above copyright\\s+"
-	      "\\S?\\s*notice, this list of conditions and the following disclaimer in the\\s+"
-	      "\\S?\\s*documentation and/or other materials provided with the distribution.\\s+"
 
-"\\S?\\s*\\* Neither the name of (.*) nor the\\s+"
-"\\S?\\s*names of its contributors may be used to endorse or promote products\\s+"
-	      "\\S?\\s*derived from this software without specific prior written permission.\\s+"
-	      "\\S?\\s+"
-"\\S?\\s*THIS SOFTWARE IS PROVIDED BY (.*) ''AS IS'' AND ANY\\s+"
-"\\S?\\s*EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\\s+"
-"\\S?\\s*WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\\s+"
-"\\S?\\s*DISCLAIMED. IN NO EVENT SHALL (.*) BE LIABLE FOR ANY\\s+"
-"\\S?\\s*DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\\s+"
-"\\S?\\s*\\(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\\s+"
-"\\S?\\s*LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION\\) HOWEVER CAUSED AND\\s+"
-"\\S?\\s*ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\\s+"
-"\\S?\\s*\\(INCLUDING NEGLIGENCE OR OTHERWISE\\) ARISING IN ANY WAY OUT OF THE USE OF THIS\\s+"
-"\\S?\\s*SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE\\..*");
+    static const boost::regex licenses_regex[] = {
+        // MIT license
+        // -----------
+boost::regex(
+"\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), ([^#]*)"
+" Permission is hereby granted, free of charge, to any person obtaining a copy"
+" of this software and associated documentation files \\(the \"Software\"\\),"
+" to deal in the Software without restriction, including without limitation"
+" the rights to use, copy, modify, merge, publish, distribute, sublicense,"
+" and/or sell copies of the Software, and to permit persons to whom the"
+" Software is furnished to do so, subject to the following conditions:"
+" The above copyright notice and this permission notice shall be included in"
+" all copies or substantial portions of the Software\\."
+" THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR"
+" IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,"
+" FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT\\. IN NO EVENT SHALL THE"
+" AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER"
+" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,"
+" OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN"
+" THE SOFTWARE\\.\\s*"),
+
+        // BSD 2-Clause
+        // ------------
+        boost::regex(
+"\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), ([^#]*)"
+" All rights reserved\\."
+" Redistribution and use in source and binary forms, with or without"
+" modification, are permitted provided that the following conditions are met:"
+" 1\\. Redistributions of source code must retain the above copyright notice,"
+" this list of conditions and the following disclaimer\\."
+" 2\\. Redistributions in binary form must reproduce the above copyright"
+" notice, this list of conditions and the following disclaimer in the"
+" documentation and/or other materials provided with the distribution\\."
+" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS"
+" \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED"
+" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR"
+" PURPOSE ARE DISCLAIMED\\. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR"
+" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,"
+" EXEMPLARY, OR CONSEQUENTIAL DAMAGES \\(INCLUDING, BUT NOT LIMITED TO,"
+" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;"
+" OR BUSINESS INTERRUPTION\\) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,"
+" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT \\(INCLUDING NEGLIGENCE OR"
+" OTHERWISE\\) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF"
+" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE\\.\\s*"),
+
+        // BSD 3-Clause
+        // ------------
+        boost::regex(
+"\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), ([^#]*)"
+" All rights reserved\\."
+" Redistribution and use in source and binary forms, with or without"
+" modification, are permitted provided that the following conditions are met:"
+" 1\\. Redistributions of source code must retain the above copyright notice,"
+" this list of conditions and the following disclaimer\\."
+" 2\\. Redistributions in binary form must reproduce the above copyright"
+" notice, this list of conditions and the following disclaimer in the"
+" documentation and/or other materials provided with the distribution\\."
+" 3\\. Neither the name of the copyright holder nor the names of its"
+" contributors may be used to endorse or promote products derived from this"
+" software without specific prior written permission\\."
+" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\""
+" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE"
+" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE"
+" ARE DISCLAIMED\\. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE"
+" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR"
+" CONSEQUENTIAL DAMAGES \\(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF"
+" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS"
+" INTERRUPTION\\) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN"
+" CONTRACT, STRICT LIABILITY, OR TORT \\(INCLUDING NEGLIGENCE OR OTHERWISE\\)"
+" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE"
+" POSSIBILITY OF SUCH DAMAGE\\.\\s*"),
+
+        // Proprietary
+        // -----------
+        boost::regex(
+"\\s*Copyright \\(c\\) (\\d+(?:-\\d+)?), ([^#]*)"
+" All rights reserved\\.\\s*"),
+    };
 
     boost::smatch m;
-    std::string s(licenseText.begin(),licenseText.size());
-    if( boost::regex_search(s,m,bsdex) ) {
-	licenseType = BSDLicense;
-	dates = m.str(1);
-	grantor = m.str(2);
+    std::string text = licenseText.str();
+    for( licenseCode license = MITLicense; license < 5; ++license ) {
+        if( boost::regex_match(text, m, licenses_regex[license - 1]) ) {
+            licenseType = license;
+            dates = m.str(1);
+            grantor = m.str(2);
+            break;
+        }
     }
     cached = true;
 }
 
 
-cppChecker::cppChecker() 
-    : comment(emptyLine),    
+void checker::normalize( const char *line, int first, int last )
+{
+    std::string s(&line[first], &line[last]);
+    if( state == start ) {
+        boost::smatch m;
+        if( !boost::regex_search(s, m, boost::regex("Copyright")) ) return;
+        state = readLicense;
+    }
+    while( first < last ) {
+        switch( state ) {
+        case normalizeLicense:
+            while( first < last && isspace(line[first]) ) ++first;
+            state = readLicense;
+            break;
+        case readLicense:
+            while( first < last && !isspace(line[first]) ) {
+                licenseText << line[first++];
+            }
+            licenseText << ' ';
+            state = normalizeLicense;
+            break;
+        default:
+            /* Nothing to do except prevent gcc from complaining. */
+            return;
+        }
+    }
+}
+
+
+cppChecker::cppChecker()
+    : comment(emptyLine),
       tokenizer(*this)
 
 {
 }
 
-    
-void cppChecker::newline(const char *line, 
-			 int first, int last ) {	
+
+void cppChecker::newline(const char *line, int first, int last ) {
     switch( state ) {
     case readLicense:
-	licenseText += slice<const char>(&line[first],&line[last]);
-	break;
+        licenseText << ' ';
+        state = normalizeLicense;
+        break;
     default:
-	/* Nothing to do except prevent gcc from complaining. */   
-	break;
+        /* Nothing to do except prevent gcc from complaining. */
+        break;
     }
     ++nbLines;
     if( comment == codeLine ) ++nbCodeLines;
@@ -162,83 +250,65 @@ void cppChecker::newline(const char *line,
 }
 
 
-void cppChecker::token( cppToken token, const char *line, 
-			  int first, int last, bool fragment ) {
+void cppChecker::token( cppToken token, const char *line,
+                        int first, int last, bool fragment ) {
     switch( token ) {
     case cppComment:
-	switch( state ) {
-	case start:
-	    state = readLicense;
-	case readLicense:
-	    licenseText += slice<const char>(&line[first],&line[last]);
-	    if( !fragment ) state = doneLicense;
-	    break;
-	default:
-	    /* Nothing to do except prevent gcc from complaining. */
-	    break;
-	}
-	/* \todo we donot mark comment lines correctly but it does not
-	   matter because if there is any code on the line, it will
-	   be correctly marked as a "codeLine". */
-	if( fragment ) comment = commentLine;
-	break;
+        normalize(line, first, last);
+        if( (state == readLicense || state == normalizeLicense)
+            && !fragment ) state = doneLicense;
+        /* XXX we donot mark comment lines correctly but it does not
+           matter because if there is any code on the line, it will
+           be correctly marked as a "codeLine". */
+        if( fragment ) comment = commentLine;
+        break;
     default:
-	comment = codeLine;
-	switch( state ) {
-	case readLicense:
-	    state = doneLicense;
-	    break;
-	default:
-	    /* Nothing to do except prevent gcc from complaining. */
-	    break;
-	}
-	break;
+        comment = codeLine;
+        switch( state ) {
+        case readLicense:
+            state = doneLicense;
+            break;
+        default:
+            /* Nothing to do except prevent gcc from complaining. */
+            break;
+        }
+        break;
     }
 }
 
 
-void shChecker::newline(const char *line, int first, int last ) 
+void shChecker::newline(const char *line, int first, int last )
 {
     switch( state ) {
     case readLicense:
-	licenseText += slice<const char>(&line[first],&line[last]);
-	break;
+        licenseText << ' ';
+        state = normalizeLicense;
+        break;
     default:
-	/* Nothing to do except prevent gcc from complaining. */   
-	break;
+        /* Nothing to do except prevent gcc from complaining. */
+        break;
     }
     ++nbLines;
     /* \todo count codeLines... */
 }
 
 
-void shChecker::token( shToken token, const char *line, 
-			 int first, int last, bool fragment )
+void shChecker::token( shToken token, const char *line,
+                       int first, int last, bool fragment )
 {
     switch( token ) {
     case shComment:
-	switch( state ) {
-	case start: {
-	    boost::smatch m;
-	    std::string s(&line[first],&line[last]);
-	    if( !boost::regex_search(s,m,boost::regex("Copyright")) ) break;
-	    state = readLicense;	    	    
-	}
-	case readLicense:
-	    licenseText += slice<const char>(&line[first],&line[last]);
-	    if( !fragment ) state = doneLicense;
-	    break;
-	default:
-	    /* Nothing to do except prevent gcc from complaining. */   
-	    break;
-	}
-	break;
+        if( first < last && line[first] == '#' ) ++first;
+        normalize(line, first, last);
+        if( (state == readLicense || state == normalizeLicense)
+            && !fragment ) state = doneLicense;
+        break;
     case shCode:
-	state = doneLicense;
-	break;
+        state = doneLicense;
+        break;
     default:
-	/* Nothing to do excepts shutup gcc warnings. */
-	break;
+        /* Nothing to do excepts shutup gcc warnings. */
+        break;
     }
 }
 

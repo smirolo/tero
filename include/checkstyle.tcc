@@ -43,9 +43,11 @@ void checkfileFetch( session& s, const slice<char>& text, const url& name )
     s.out() << html::tr()
             << html::td() << html::a().href(name)
             << filename << html::a::end << html::td::end
-            << html::td() << check.license()
-            << " (" << check.dates << "," << check.grantor << ")"
-            << html::td::end
+            << html::td() << check.license();
+    if( !check.grantor.empty() ) {
+        s.out() << " (" << check.dates << "," << check.grantor << ")";
+    }
+    s.out() << html::td::end
             << html::td() << check.nbCodeLines << html::td::end
             << html::td() << check.nbLines << html::td::end
             << html::tr::end;

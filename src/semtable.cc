@@ -60,7 +60,7 @@ char financials[] = "financials.html";
 char indexPage[] = "index.html";
 char author[] = "author";
 char feed[] = "feed";
-char source[] = "source";
+char source[] = "source.html";
 char date[] = "date";
 char title[] = "title";
 char buildView[] = "Build View";
@@ -106,14 +106,12 @@ fetchEntry entries[] = {
 	  noAuth|noPipe, NULL, NULL, checkfileFetch<shChecker> },
     { "check", boost::regex(".*Makefile"),
 	  noAuth|noPipe, NULL, NULL, checkfileFetch<shChecker> },
-    /* Widget to display status of static analysis of a project
-       source files in the absence of a more restrictive pattern. */
-    { "checkstyle", boost::regex(".*"),
-	  noAuth|noPipe, checkstyleFetch, NULL, NULL },
 
     /* The build "document" gives an overview of the set
        of all projects at a glance and can be used to assess
        the stability of the whole as a release candidate. */
+    { "content", boost::regex(".*/checkstyle/"),
+      noAuth|noPipe, checkstyleFetch, NULL, NULL },
     { "content", boost::regex(".*/log/"),
 	  noAuth|noPipe, logviewFetch, NULL, NULL },
     { "content", boost::regex(".*\\.(cc|hh|tcc)$"),
@@ -238,7 +236,7 @@ fetchEntry entries[] = {
        and *sidebar*. */
     { "document", boost::regex(".*/blog/.*"),
       noAuth|noPipe, compose<blogExt>, NULL, NULL },
-    { "document", boost::regex(".*\\.todo"),
+     { "document", boost::regex(".*\\.todo"),
       noAuth|noPipe, compose<todoExt>, NULL, NULL },
     /* Composer and document for the todos index view */
     { "document", boost::regex(".*/todo/"),
