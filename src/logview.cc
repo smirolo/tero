@@ -168,7 +168,7 @@ int attrAsInt( RAPIDXML::xml_node<> *node, const char *name ) {
 boost::posix_time::ptime
 attrAsDate( RAPIDXML::xml_node<> *node, const char *name ) {
     RAPIDXML::xml_attribute<> *attr = node->first_attribute(name);
-    return attr ? from_mbox_string(attr->value()) : boost::posix_time::ptime();
+    return attr ? parse_datetime(attr->value()) : boost::posix_time::ptime();
 }
 
 void junitDate( session& s, const url& name )

@@ -181,7 +181,7 @@ void mailAsPost::token( rfc2822Token token, const char *line,
         switch( field ) {
         case rfc2822Time:
             try {
-                constructed.time = from_mbox_string(value);
+                constructed.time = parse_datetime(value);
             } catch( std::exception& e ) {
                 std::cerr << "unable to reconstruct time from " << value << std::endl;
             }

@@ -125,7 +125,9 @@ std::string strip( const std::string& s );
 
 std::string normalize( const std::string& s );
 
-boost::posix_time::ptime from_mbox_string( const std::string& s );
+/** Attempts to parse a string into an UTC timestamp.
+ */
+boost::posix_time::ptime parse_datetime( const std::string& str );
 
 std::string extractEmailAddress( const std::string& line );
 

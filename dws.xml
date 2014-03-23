@@ -16,13 +16,13 @@
 		</description>
 		<base>buildTop</base>
 		<default>dws.mk</default>
-      </pathname>      
+      </pathname>
       <pathname name="sessionDir">
 		<description>
 		  The directory where session files are stored. Whenever semilla needs to keep state between two http requests, it will store (name,value) pairs into a session file.
 		</description>
 		<default>/var/db/semilla</default>
-      </pathname>      
+      </pathname>
       <pathname name="themeDir">
 		<description>
 		  themeDir is a directory containing templates and css for the site
@@ -89,6 +89,7 @@
 		  <dep name="poco">
 			<include>(Poco)/Net/SMTPClientSession.h</include>
 			<lib>PocoNet</lib>
+			<lib>PocoFoundation</lib>
 		  </dep>
 		</alternate>
 		<alternate name="Fedora">

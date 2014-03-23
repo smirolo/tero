@@ -170,7 +170,7 @@ void feedContent( session& s, const boost::filesystem::path& pathname ) {
 						metaLastTime(s,filename);
 					}
 					try {
-						p.time = from_mbox_string(content.str());
+						p.time = parse_datetime(content.str());
 					} catch( std::exception& e ) {
 						std::cerr << "error: unable to reconstruct time from \"" << content.str() << '"' << std::endl;
 					}

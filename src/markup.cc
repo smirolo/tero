@@ -24,6 +24,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "markup.hh"
+#include "Poco/DateTimeParser.h"
 
 /** Markups.
 
@@ -55,99 +56,39 @@ std::string normalize( const std::string& s ) {
     return result;
 }
 
+/**
+   returns a datetime as UTC.
+--date=iso (or --date=iso8601) shows timestamps in ISO 8601
+           format.
 
-boost::posix_time::ptime from_mbox_string( const std::string& s ) {
+boost::posix_time::ptime:
+"Defines a non-adjusted time system with nano-second/micro-second resolution and stable calculation properties."
 
-    using namespace boost::posix_time;
-
-    static const char* formats[] = {
-        "%Y-%m-%dT%H:%M:%S",
-        "%a, %e %b %Y %T",
-        "%a, %e %b %Y %T ",
-    };
-
-    const std::locale inputs[] = {
-        std::locale(std::locale::classic(), new time_input_facet(formats[0])),
-        std::locale(std::locale::classic(), new time_input_facet(formats[1])),
-        std::locale(std::locale::classic(), new time_input_facet(formats[2])),
-    };
-
-    boost::posix_time::ptime timestamp;
-    std::istringstream is(s);
-    for( size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i ) {
-        is.imbue(inputs[i]);
-        is >> timestamp;
-        if( timestamp != boost::posix_time::not_a_date_time ) return timestamp;
-    }
-
-    /* XXX Legacy code to deal with issues when using input_facets. */
-
-    size_t p = s.find(',') + 1;
-    /* day of the month */
-    while( s[p] == ' ' ) ++p;
-    int day = s[p++] - '0';
-    if( s[p] >= '0' && s[p] <= '9' ) day = day * 10 + s[p++] - '0';
-    /* month */
-    int month = 0;
-    while( s[p] == ' ' ) ++p;
-
-    const char *monthNames[] = {
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
-    };
-    for( const char **monthName = monthNames;
-         monthName != &monthNames[12];
-         ++monthName ) {
-        if( s.compare(p,3,*monthName,3) == 0 ) {
-            month = std::distance(monthNames,monthName) + 1;
-            break;
-        }
-    }
-
-    /* 4-digits year */
-    while( s[p] != ' ' ) ++p;
-    while( s[p] == ' ' ) ++p;
-    int year = (s[p++] - '0') * 1000;
-    year += (s[p++] - '0') * 100;
-    year += (s[p++] - '0') * 10;
-    year += (s[p++] - '0');
-    timestamp = boost::posix_time::ptime(boost::gregorian::date(year,month,day));
-
-    /* optional time formatted as 24-hour:minutes:seconds */
-    while( s[p] == ' ' ) ++p;
-    if( p < s.size() ) {
-        int hours = (s[p++] - '0') * 10;
-        hours += (s[p++] - '0');
-        if( s[p++] != ':' )
-            boost::throw_exception(std::ios_base::failure("Parse date failure"));
-
-        while( s[p] == ' ' ) ++p;
-        int minutes = (s[p++] - '0') * 10;
-        minutes += (s[p++] - '0');
-        if( s[p++] != ':' )
-            boost::throw_exception(std::ios_base::failure("Parse date failure"));
-
-        while( s[p] == ' ' ) ++p;
-        int seconds = (s[p++] - '0') * 10;
-        seconds += (s[p++] - '0');
-
-        timestamp = boost::posix_time::ptime(
-            boost::gregorian::date(year,month,day),
-            boost::posix_time::time_duration(hours,minutes,seconds));
-    }
-
-    return timestamp;
+ */
+boost::posix_time::ptime parse_datetime( const std::string& str ) {
+    int timeZoneDifferential = 0;
+    Poco::DateTime parsed = Poco::DateTimeParser::parse(str, timeZoneDifferential);
+    /* From the Poco documentation:
+       "The date and time stored in a DateTime is always in UTC"
+       "A Timestamp stores a monotonic* time value with (theoretical)
+       microseconds resolution."
+       "std::time_t TimeStamp::epochTime() const returns the timestamp
+       expressed in time_t. time_t base time is midnight, January 1, 1970.
+       Resolution is one second."
+       C++ Reference:
+       "For historical reasons, it is generally implemented as an integral
+       value representing the number of seconds elapsed since 00:00 hours,
+       Jan 1, 1970 UTC."
+       From boost documentation:
+       "boost::posix_time::ptime defines a non-adjusted time system with
+       nano-second/micro-second resolution and stable calculation properties."
+       "ptime::from_time_t creates a ptime from the time_t parameter.
+       The seconds held in the time_t are added to a time point of 1970-Jan-01."
+     */
+    return boost::posix_time::from_time_t(
+        parsed.timestamp().epochTime());
 }
+
 
 std::string extractEmailAddress( const std::string& line ) {
     size_t estart = line.find('<');

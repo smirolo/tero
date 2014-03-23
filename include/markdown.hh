@@ -27,6 +27,7 @@
 #define guardmarkdown
 
 #include <iterator>
+#include <iostream>
 
 /**
    tokenizer for Markdown (http://daringfireball.net/projects/markdown)

@@ -64,7 +64,8 @@ LDFLAGS		+=	-ldl
 semilla: semilla.cc semtable.o libsemilla.a \
 		-lcryptopp -luriparser \
 		-lboost_date_time -lboost_random -lboost_regex -lboost_program_options \
-		-lboost_iostreams -lboost_filesystem -lboost_system -lPocoNet
+		-lboost_iostreams -lboost_filesystem -lboost_system \
+		-lPocoNet -lPocoFoundation
 	$(LINK.cc) -DVERSION=\"$(version)\" -DCONFIG_FILE=\"$(semillaConfFile)\" -DSESSION_DIR=\"$(sessionDir)\" $(filter %.cc %.o %.a %.so,$^) $(LOADLIBES) $(LDLIBS) -o $@ $(registerDeps)
 
 semilla.fo: $(call bookdeps,$(srcDir)/doc/semilla.book)

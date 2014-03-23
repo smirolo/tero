@@ -456,7 +456,6 @@ void gitcmd::checkins( const session& s,
     sstm << " log --date=rfc --name-only -2 ";
 
     bool firstFile = true;
-    bool itemStarted = false;
     bool descrStarted = false;
     post ci;
     std::string authorName;
@@ -478,7 +477,6 @@ void gitcmd::checkins( const session& s,
                 descrStarted = false;
             }
             firstFile = true;
-            itemStarted = true;
             ci = post();
             // XXX lcstr[strlen(lcstr) - 1] = '\0'; // remove trailing '\n'
             title.str("");
@@ -506,7 +504,7 @@ void gitcmd::checkins( const session& s,
             }
         } else if ( line.compare(0,5,"Date:") == 0 ) {
             try {
-                ci.time = from_mbox_string(line.substr(5));
+                ci.time = parse_datetime(line.substr(5));
             } catch( std::exception& e ) {
                 std::cerr << "!!! exception " << e.what() << std::endl;
             }
