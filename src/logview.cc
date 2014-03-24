@@ -95,23 +95,68 @@ public:
 };
 
 
-void LogParser::parse( tero::session& s, const boost::filesystem::path& logname )
+void LogParser::parse( tero::session& s,
+    const boost::filesystem::path& logname )
 {
+    typedef std::map<std::string, boost::posix_time::time_duration> statusMap;
+    statusMap pass;
+    statusMap fail;
     std::streambuf *buf = tero::revisionsys::findRevOpenfile(s, logname);
     std::istream input(buf);
     while( !input.eof() ) {
         boost::smatch m;
         std::string line;
         getline(input, line);
-        if( boost::regex_match(line, m,
-                boost::regex("(^|.*\\s)(\\S+): completed in (.*)")) ) {
-            newProjectStatus(m.str(2), m.str(3), 0);
-        } else if( boost::regex_match(line, m,
-                boost::regex("(^|.*\\s)(\\S+): error \\((\\d+)\\) after (.*)")) ) {
-            newProjectStatus(m.str(2), m.str(4), atoi(m.str(3).c_str()));
+        if( boost::regex_match(line, m, boost::regex(
+            "(^|.*\\s)(\\S+):(\\S+): completed in (.*)")) ) {
+            std::string projectName = m.str(2);
+            if( fail.find(projectName) == fail.end() ) {
+                // project is not recorded as failed, so it is OK
+                // to speculatively add it to the pass set.
+                std::stringstream noexcept(m.str(4));
+                boost::posix_time::time_duration buildTime;
+                if( noexcept >> buildTime ) {
+                    statusMap::iterator iter = pass.find(projectName);
+                    if( iter != pass.end() ) {
+                        iter->second += buildTime;
+                    } else {
+                        pass[projectName] = buildTime;
+                    }
+                }
+            }
+        } else if( boost::regex_match(line, m, boost::regex(
+            "(^|.*\\s)(\\S+):(\\S+): error after (\\S+) \\((\\d+)\\)")) ) {
+            std::string projectName = m.str(2);
+            std::stringstream noexcept(m.str(4));
+            boost::posix_time::time_duration buildTime;
+            /*XXX not used: int exitCode = atoi(m.str(5).c_str());*/
+            pass.erase(projectName);
+            if( noexcept >> buildTime ) {
+                statusMap::iterator iter = fail.find(projectName);
+                if( iter != fail.end() ) {
+                    iter->second += buildTime;
+                } else {
+                    fail[projectName] = buildTime;
+                }
+            } else {
+                fail[projectName] = boost::posix_time::time_duration();
+            }
         }
     }
     delete buf;
+
+    for( statusMap::const_iterator iter = fail.begin();
+         iter != fail.end(); ++iter ) {
+        std::stringstream totalTime;
+        totalTime << iter->second;
+        newProjectStatus(iter->first, totalTime.str(), 1 /*exitCode*/);
+    }
+    for( statusMap::const_iterator iter = pass.begin();
+         iter != pass.end(); ++iter ) {
+        std::stringstream totalTime;
+        totalTime << iter->second;
+        newProjectStatus(iter->first, totalTime.str(), 0);
+    }
 }
 
 
